@@ -18,6 +18,7 @@ export interface ActiveRequest {
   description: string | null;
   hashtiVerified: boolean;
   status: string;
+  createdByRole: "CUSTOMER" | "AGENT";
   createdAt: string;
   updatedAt: string;
 }
