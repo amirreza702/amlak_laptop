@@ -1,9 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
-
-import { usePropertySearch } from "../hooks/usePropertySearch";
+import { useSearchPage } from "../hooks/useSearchPage";
 
 import { PropertyFiltersPanel } from "./PropertyFiltersPanel";
 import { SearchBar } from "./SearchBar";
@@ -27,14 +25,10 @@ export function PropertySearchPage() {
     getActiveFilterCount,
     search,
     isSearching,
-  } = usePropertySearch();
-
-  const [activePanel, setActivePanel] =
-    useState<"filters" | "smart" | null>(null);
-
-  const closePanel = () => {
-    setActivePanel(null);
-  };
+    activePanel,
+    setActivePanel,
+    closePanel,
+  } = useSearchPage();
 
   return (
     <main
