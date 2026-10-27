@@ -31,7 +31,7 @@ import { X } from "lucide-react";
 
 import type {
   PropertySearchState,
-} from "../hooks/usePropertySearch";
+} from "../types/search";
 
 /**
  * =========================================================
