@@ -12,11 +12,7 @@ function notifyAuthStateChanged(): void {
   }
 }
 
-/**
- * قرارداد عمومی کاربر مطابق پاسخ‌های فعلی بک‌اند.
- * پاسخ /auth/me فقط id، mobile و role را برمی‌گرداند؛
- * پاسخ ورود علاوه بر آن isActive را نیز دارد.
- */
+/** قرارداد عمومی کاربر مطابق پاسخ‌های احراز هویت فعلی بک‌اند. */
 export type UserRole = "CUSTOMER" | "OWNER" | "AGENT" | "HASHTI";
 
 export interface UserPublic {
@@ -24,6 +20,9 @@ export interface UserPublic {
   mobile: string;
   role: UserRole;
   isActive?: boolean;
+  /** فقط حساب مدیر ارشد مجوز ورود به صفحه /admin دارد. */
+  isSuperAdmin?: boolean;
+  adminPermissions?: string[];
 }
 
 /** نام قدیمی برای جلوگیری از شکستن importهای موجود. */
@@ -63,10 +62,7 @@ async function readJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function getErrorMessage(
-  response: Response,
-  fallback: string
-): Promise<string> {
+async function getErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const data = await readJson<ApiErrorResponse>(response);
     return data.message || fallback;
@@ -76,9 +72,7 @@ async function getErrorMessage(
 }
 
 // ثبت‌نام؛ طبق قرارداد Backend ایجاد Session را انجام نمی‌دهد.
-export async function registerUser(
-  input: RegisterUserInput
-): Promise<RegisterUserResponse> {
+export async function registerUser(input: RegisterUserInput): Promise<RegisterUserResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -87,9 +81,7 @@ export async function registerUser(
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(response, "ثبت‌نام انجام نشد. اطلاعات را بررسی کنید.")
-    );
+    throw new Error(await getErrorMessage(response, "ثبت‌نام انجام نشد. اطلاعات را بررسی کنید."));
   }
 
   return readJson<RegisterUserResponse>(response);
@@ -109,12 +101,7 @@ export async function loginUser(
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(
-        response,
-        "ورود ناموفق بود. لطفاً اطلاعات را بررسی کنید."
-      )
-    );
+    throw new Error(await getErrorMessage(response, "ورود ناموفق بود. لطفاً اطلاعات را بررسی کنید."));
   }
 
   const result = await readJson<AuthResponse>(response);
@@ -130,9 +117,7 @@ export async function getCurrentUser(): Promise<UserPublic> {
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(response, "ابتدا وارد حساب کاربری خود شوید.")
-    );
+    throw new Error(await getErrorMessage(response, "ابتدا وارد حساب کاربری خود شوید."));
   }
 
   const data = await readJson<CurrentUserResponse>(response);
@@ -147,9 +132,7 @@ export async function logoutUser(): Promise<{ message: string }> {
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(response, "خطا در خروج از حساب کاربری.")
-    );
+    throw new Error(await getErrorMessage(response, "خطا در خروج از حساب کاربری."));
   }
 
   const result = await readJson<{ message: string }>(response);
@@ -157,14 +140,10 @@ export async function logoutUser(): Promise<{ message: string }> {
   return result;
 }
 
-/**
- * نام‌های قدیمی حفظ شده‌اند تا مصرف‌کننده‌های فعلی بدون تغییر نام
- * توابع همچنان کار کنند؛ نوع خروجی اکنون UserPublic است، نه پروفایل فرضی مشاور.
- */
+/** نام‌های قدیمی حفظ شده‌اند تا مصرف‌کننده‌های فعلی بدون تغییر نام توابع همچنان کار کنند. */
 export const loginAgent = loginUser;
 export const getCurrentAgent = getCurrentUser;
 export const logoutAgent = logoutUser;
-
 
 /** اطلاعات امن کاربر برای فهرست مدیریت هشتی */
 export interface AdminUser {
@@ -189,15 +168,10 @@ export interface AdminUser {
 
 export interface AdminUsersResponse {
   items: AdminUser[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
-/** دریافت فهرست مدیریتی؛ مجوز HASHTI در بک‌اند کنترل می‌شود. */
+/** دریافت فهرست مدیریتی؛ مجوز در بک‌اند کنترل می‌شود. */
 export async function getAdminUsers(filters: {
   search?: string;
   role?: UserRole | "";
