@@ -17,9 +17,7 @@ const userSelect = {
   adminPermissions: true, createdAt: true, updatedAt: true,
   customer: { select: { id: true, firstName: true, lastName: true } },
   owner: { select: { id: true, firstName: true, lastName: true } },
-  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, address: true, isVerified: true,
-    subscriptions: { orderBy: { createdAt: "desc" as const }, take: 1, select: { id: true, status: true, planId: true, startsAt: true, expiresAt: true, subscriptionPlan: { select: { code: true, name: true, level: true } } } },
-  } },
+  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, address: true, isVerified: true } },
 } satisfies Prisma.UserSelect;
 
 export async function createInitialSuperAdmin(data: { mobile: string; passwordHash: string }) {
@@ -85,11 +83,10 @@ export async function getOwner(ownerId: string) {
   return prisma.owner.findUnique({ where: { id: ownerId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, properties: { include: { property: { select: { id: true, city: true, district: true, address: true, status: true } } } }, _count: { select: { properties: true, evaluations: true } } } });
 }
 
-export async function listAgents(data: { search?: string; isActive?: boolean; isVerified?: boolean; subscriptionStatus?: string; page: number; limit: number }) {
+export async function listAgents(data: { search?: string; isActive?: boolean; isVerified?: boolean; page: number; limit: number }) {
   const where: Prisma.AgentWhereInput = {};
   if (typeof data.isActive === "boolean") where.user = { is: { isActive: data.isActive } };
   if (typeof data.isVerified === "boolean") where.isVerified = data.isVerified;
-  if (data.subscriptionStatus) where.subscriptions = { some: { status: data.subscriptionStatus } };
   if (data.search?.trim()) {
     const q = data.search.trim();
     where.OR = [
@@ -98,14 +95,14 @@ export async function listAgents(data: { search?: string; isActive?: boolean; is
     ];
   }
   const [items, total] = await prisma.$transaction([
-    prisma.agent.findMany({ where, include: { user: { select: { id: true, mobile: true, isActive: true, createdAt: true } }, subscriptions: { orderBy: { createdAt: "desc" }, take: 5, include: { subscriptionPlan: true } }, _count: { select: { propertyAgents: true, evaluations: true } } }, orderBy: { user: { createdAt: "desc" } }, skip: (data.page - 1) * data.limit, take: data.limit }),
+    prisma.agent.findMany({ where, include: { user: { select: { id: true, mobile: true, isActive: true, createdAt: true } }, _count: { select: { propertyAgents: true, evaluations: true } } }, orderBy: { user: { createdAt: "desc" } }, skip: (data.page - 1) * data.limit, take: data.limit }),
     prisma.agent.count({ where }),
   ]);
   return { items, total };
 }
 
 export async function getAgent(agentId: string) {
-  return prisma.agent.findUnique({ where: { id: agentId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, subscriptions: { orderBy: { createdAt: "desc" }, include: { subscriptionPlan: true } }, _count: { select: { propertyAgents: true, evaluations: true, contactAccessLogs: true } } } });
+  return prisma.agent.findUnique({ where: { id: agentId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, _count: { select: { propertyAgents: true, evaluations: true, contactAccessLogs: true } } } });
 }
 
 async function writeAudit(tx: Prisma.TransactionClient, data: {
@@ -147,20 +144,6 @@ export async function setAgentVerification(data: { actorUserId: string; agentId:
   });
 }
 
-export async function setAgentSubscription(data: { actorUserId: string; agentId: string; planId: string; status: string; startsAt: Date; expiresAt: Date | null; reason: string }) {
-  return prisma.$transaction(async (tx) => {
-    const agent = await tx.agent.findUnique({ where: { id: data.agentId }, select: { id: true, userId: true } });
-    if (!agent) throw new Error("AGENT_NOT_FOUND");
-    const before = await tx.agentSubscription.findFirst({ where: { agentId: data.agentId }, orderBy: { createdAt: "desc" }, include: { subscriptionPlan: { select: { code: true, name: true } } } });
-    const plan = await tx.subscriptionPlan.findUnique({ where: { id: data.planId }, select: { id: true, status: true } });
-    if (!plan) throw new Error("SUBSCRIPTION_PLAN_NOT_FOUND");
-    if (plan.status !== "ACTIVE") throw new Error("SUBSCRIPTION_PLAN_INACTIVE");
-    const after = await tx.agentSubscription.create({ data: { agentId: data.agentId, planId: data.planId, status: data.status, startsAt: data.startsAt, expiresAt: data.expiresAt }, include: { subscriptionPlan: true } });
-    await writeAudit(tx, { actorUserId: data.actorUserId, targetUserId: agent.userId, targetType: "AGENT_SUBSCRIPTION", targetId: after.id, operation: "SET_AGENT_SUBSCRIPTION", reason: data.reason, before, after });
-    return after;
-  });
-}
-
 export async function updateStaffPermissions(data: { actorUserId: string; userId: string; permissions: AdminPermission[]; reason: string }) {
   return prisma.$transaction(async (tx) => {
     const before = await tx.user.findUnique({ where: { id: data.userId }, select: { id: true, mobile: true, role: true, isSuperAdmin: true, adminPermissions: true } });
@@ -185,10 +168,6 @@ export async function listAudit(data: { targetType?: string; targetId?: string; 
     prisma.adminAuditLog.count({ where }),
   ]);
   return { items, total };
-}
-
-export async function listSubscriptionPlans() {
-  return prisma.subscriptionPlan.findMany({ where: { status: "ACTIVE" }, orderBy: [{ level: "asc" }, { name: "asc" }], select: { id: true, code: true, name: true, level: true, monthlyContactLimit: true, status: true } });
 }
 
 

@@ -1,22 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { getAdminAgents, getAdminAgentDetails, getAdminAgentHistory, getAdminSubscriptionPlans, setAdminAgentVerification, setAdminAgentSubscription, setAdminAgentStatus, updateAdminManagedProfile, type AdminAgent, type AdminAgentDetails, type AdminAuditEntry, type SubscriptionPlan } from "@/features/admin/api/adminApi";
+import { getAdminAgents, getAdminAgentDetails, getAdminAgentHistory, setAdminAgentVerification, setAdminAgentStatus, updateAdminManagedProfile, type AdminAgent, type AdminAgentDetails, type AdminAuditEntry } from "@/features/admin/api/adminApi";
 import { getCurrentUser } from "@/features/auth/api/authApi";
 
 export function useAdminAgents() {
   const [items, setItems] = useState<AdminAgent[]>([]);
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [active, setActive] = useState("");
   const [verified, setVerified] = useState("");
-  const [subscriptionStatus, setSubscriptionStatus] = useState("");
   const [reason, setReason] = useState("");
-  const [planId, setPlanId] = useState("");
-  const [startsAt, setStartsAt] = useState(new Date().toISOString().slice(0, 10));
-  const [expiresAt, setExpiresAt] = useState("");
-  const [subscriptionAgent, setSubscriptionAgent] = useState<AdminAgent | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -37,13 +31,11 @@ export function useAdminAgents() {
     try {
       const user = await getCurrentUser();
       if (user.role !== "HASHTI") throw new Error("دسترسی کارکنان هشتی لازم است.");
-      const result = await getAdminAgents({ search, isActive: active, isVerified: verified, subscriptionStatus, page, limit: 20 });
+      const result = await getAdminAgents({ search, isActive: active, isVerified: verified, page, limit: 20 });
       setItems(result.items); setTotal(result.pagination.total); setTotalPages(result.pagination.totalPages);
-      const planResult = await getAdminSubscriptionPlans(); setPlans(planResult.items);
-      if (!planId && planResult.items[0]) setPlanId(planResult.items[0].id);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا در دریافت مشاوران."); }
     finally { setLoading(false); }
-  }, [search, active, verified, subscriptionStatus, page, planId]);
+  }, [search, active, verified, page]);
   useEffect(() => { void load(); }, [load]);
 
   async function verify(agent: AdminAgent) {
@@ -55,13 +47,6 @@ export function useAdminAgents() {
     if (reason.trim().length < 3) { setError("برای تغییر وضعیت حساب، دلیل وارد کنید."); return; }
     try { await setAdminAgentStatus(agent.id, !agent.user.isActive, reason.trim()); setReason(""); await load(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "تغییر وضعیت حساب ناموفق بود."); }
-  }
-  async function saveSubscription() {
-    if (!subscriptionAgent || !planId || reason.trim().length < 3) { setError("مشاور، طرح و دلیل معتبر را انتخاب کنید."); return; }
-    try {
-      await setAdminAgentSubscription(subscriptionAgent.id, { planId, status: "ACTIVE", startsAt: new Date(startsAt).toISOString(), ...(expiresAt ? { expiresAt: new Date(expiresAt).toISOString() } : {}), reason: reason.trim() });
-      setReason(""); setSubscriptionAgent(null); await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "ثبت اشتراک ناموفق بود."); }
   }
   async function showProfile(agent: AdminAgent) {
     try { const result = await getAdminAgentDetails(agent.id); setProfile(result.item); }
@@ -106,12 +91,11 @@ export function useAdminAgents() {
     }
   }
   return {
-    items, plans, searchInput, setSearchInput, search, setSearch, active, setActive, verified, setVerified,
-    subscriptionStatus, setSubscriptionStatus, reason, setReason, planId, setPlanId, startsAt, setStartsAt,
-    expiresAt, setExpiresAt, subscriptionAgent, setSubscriptionAgent, page, setPage, total, totalPages,
+    items, searchInput, setSearchInput, search, setSearch, active, setActive, verified, setVerified,
+    reason, setReason, page, setPage, total, totalPages,
     loading, error, history, setHistory, historyAgent, setHistoryAgent, profile, setProfile, editingProfile, setEditingProfile,
     editFirstName, setEditFirstName, editLastName, setEditLastName, editAgencyName, setEditAgencyName,
-    editAddress, setEditAddress, editReason, setEditReason, load, verify, accountStatus, saveSubscription,
+    editAddress, setEditAddress, editReason, setEditReason, load, verify, accountStatus,
     showProfile, showHistory, beginProfileEdit, saveProfileEdit,
   };
 }

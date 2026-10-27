@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import {
   ADMIN_PERMISSIONS, createInitialSuperAdmin, getAdminUser, listAdminUsers,
   listOwners, getOwner, listAgents, getAgent, setUserStatus, setAgentVerification,
-  setAgentSubscription, updateStaffPermissions, listAudit, listSubscriptionPlans,
+  updateStaffPermissions, listAudit,
   type AdminPermission, createStaffAccount, listStaffAccounts,
 } from "../repository/adminRepository";
 import { UserRole } from "@prisma/client";
@@ -53,7 +53,7 @@ export async function adminOwners(input: { search?: string; isActive?: boolean; 
 export const adminOwnerDetails = async (ownerId: string) => {
   const owner = await getOwner(ownerId); if (!owner) throw new Error("OWNER_NOT_FOUND"); return owner;
 };
-export async function adminAgents(input: { search?: string; isActive?: boolean; isVerified?: boolean; subscriptionStatus?: string; page: number; limit: number }) {
+export async function adminAgents(input: { search?: string; isActive?: boolean; isVerified?: boolean; page: number; limit: number }) {
   pageArgs(input.page, input.limit); return listAgents(input);
 }
 export const adminAgentDetails = async (agentId: string) => {
@@ -65,14 +65,6 @@ export async function adminSetUserStatus(input: { actorUserId: string; userId: s
 export async function adminSetAgentVerification(input: { actorUserId: string; agentId: string; isVerified: boolean; reason: unknown }) {
   return setAgentVerification({ ...input, reason: reasonValue(input.reason) });
 }
-export async function adminSetAgentSubscription(input: { actorUserId: string; agentId: string; planId: string; status: string; startsAt: string; expiresAt?: string | null; reason: unknown }) {
-  const startsAt = new Date(input.startsAt);
-  const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
-  if (!Number.isFinite(startsAt.getTime()) || (expiresAt && !Number.isFinite(expiresAt.getTime()))) throw new Error("INVALID_SUBSCRIPTION_DATE");
-  if (expiresAt && expiresAt <= startsAt) throw new Error("INVALID_SUBSCRIPTION_DATE");
-  if (!["ACTIVE", "SUSPENDED", "CANCELLED", "EXPIRED"].includes(input.status)) throw new Error("INVALID_SUBSCRIPTION_STATUS");
-  return setAgentSubscription({ ...input, startsAt, expiresAt, reason: reasonValue(input.reason) });
-}
 export async function adminUpdateStaffPermissions(input: { actorUserId: string; userId: string; permissions: unknown; reason: unknown }) {
   if (!Array.isArray(input.permissions) || input.permissions.some(p => typeof p !== "string" || !(ADMIN_PERMISSIONS as readonly string[]).includes(p))) throw new Error("INVALID_PERMISSIONS");
   return updateStaffPermissions({ actorUserId: input.actorUserId, userId: input.userId, permissions: input.permissions as AdminPermission[], reason: reasonValue(input.reason) });
@@ -80,9 +72,6 @@ export async function adminUpdateStaffPermissions(input: { actorUserId: string; 
 export async function adminAudit(input: { targetType?: string; targetId?: string; targetUserId?: string; actorUserId?: string; page: number; limit: number }) {
   pageArgs(input.page, input.limit); return listAudit(input);
 }
-export const adminPlans = listSubscriptionPlans;
-
-
 export async function adminCreateStaffAccount(input: { actorUserId: string; mobile: unknown; password: unknown; permissions: unknown; reason: unknown }) {
   if (!Array.isArray(input.permissions) || input.permissions.some(p => typeof p !== "string" || !(ADMIN_PERMISSIONS as readonly string[]).includes(p))) throw new Error("INVALID_PERMISSIONS");
   const mobile = safeMobile(input.mobile);

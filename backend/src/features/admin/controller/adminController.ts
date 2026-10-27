@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware"
 import {
   bootstrapSuperAdmin, adminUsers, adminUserDetails, adminOwners, adminOwnerDetails,
   adminAgents, adminAgentDetails, adminSetUserStatus, adminSetAgentVerification,
-  adminSetAgentSubscription, adminUpdateStaffPermissions, adminAudit, adminPlans, adminCreateStaffAccount, adminStaffAccounts,
+  adminUpdateStaffPermissions, adminAudit, adminCreateStaffAccount, adminStaffAccounts,
 } from "../service/adminService";
 
 function actorId(req: Request) { return (req as AuthenticatedRequest).user?.id; }
@@ -24,10 +24,8 @@ function sendError(res: Response, error: unknown) {
   const message = error instanceof Error ? error.message : "";
   const known: Record<string, [number, string]> = {
     USER_NOT_FOUND: [404, "User not found"], OWNER_NOT_FOUND: [404, "Owner not found"], AGENT_NOT_FOUND: [404, "Agent not found"],
-    SUBSCRIPTION_PLAN_NOT_FOUND: [404, "Subscription plan not found"], SUBSCRIPTION_PLAN_INACTIVE: [400, "Subscription plan is inactive"],
     INVALID_PAGINATION: [400, "Invalid page or limit"], INVALID_ROLE: [400, "Invalid role"], INVALID_MOBILE: [400, "Invalid Iranian mobile number"],
     PASSWORD_TOO_SHORT: [400, "Password must contain at least 12 characters"], REASON_REQUIRED: [400, "A reason of 3 to 1000 characters is required"],
-    INVALID_SUBSCRIPTION_DATE: [400, "Invalid subscription dates"], INVALID_SUBSCRIPTION_STATUS: [400, "Invalid subscription status"],
     INVALID_PERMISSIONS: [400, "One or more permissions are invalid"], NOT_STAFF_ACCOUNT: [400, "Target account is not a Hashti staff account"],
     CANNOT_EDIT_SUPER_ADMIN: [403, "The super-admin account cannot be edited here"],
     CANNOT_EDIT_OWN_PERMISSIONS: [403, "Staff cannot change their own permissions"],
@@ -77,7 +75,7 @@ export async function ownerDetailsController(req: Request, res: Response) {
 }
 export async function listAgentsController(req: Request, res: Response) {
   try {
-    const result = await adminAgents({ search: queryString(req.query.search), isActive: queryBool(req.query.isActive), isVerified: queryBool(req.query.isVerified), subscriptionStatus: queryString(req.query.subscriptionStatus), ...pagination(req) });
+    const result = await adminAgents({ search: queryString(req.query.search), isActive: queryBool(req.query.isActive), isVerified: queryBool(req.query.isVerified), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
@@ -92,15 +90,6 @@ export async function setAgentVerificationController(req: Request, res: Response
     return res.status(200).json({ item: await adminSetAgentVerification({ actorUserId, agentId: routeParam(req, "agentId"), isVerified: req.body.isVerified, reason: req.body.reason }) });
   } catch (error) { return sendError(res, error); }
 }
-export async function setAgentSubscriptionController(req: Request, res: Response) {
-  try {
-    const actorUserId = actorId(req);
-    if (!actorUserId) return res.status(401).json({ message: "Authentication required" });
-    const { planId, status, startsAt, expiresAt, reason } = req.body ?? {};
-    if (typeof planId !== "string" || typeof status !== "string" || typeof startsAt !== "string") return res.status(400).json({ message: "planId, status and startsAt are required" });
-    return res.status(201).json({ item: await adminSetAgentSubscription({ actorUserId, agentId: routeParam(req, "agentId"), planId, status, startsAt, expiresAt, reason }) });
-  } catch (error) { return sendError(res, error); }
-}
 export async function updateStaffPermissionsController(req: Request, res: Response) {
   try {
     const actorUserId = actorId(req);
@@ -113,9 +102,6 @@ export async function auditController(req: Request, res: Response) {
     const result = await adminAudit({ targetType: queryString(req.query.targetType), targetId: queryString(req.query.targetId), targetUserId: queryString(req.query.targetUserId), actorUserId: queryString(req.query.actorUserId), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
-}
-export async function plansController(_req: Request, res: Response) {
-  try { return res.status(200).json({ items: await adminPlans() }); } catch (error) { return sendError(res, error); }
 }
 
 
