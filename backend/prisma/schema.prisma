@@ -327,7 +327,7 @@ model PropertySearchRequest {
   updatedAt DateTime @updatedAt
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  createdByUser User @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdByUser User @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
 
   // سوابق مشاهده اطلاعات تماس این درخواست توسط مشاوران
   contactAccessLogs ContactAccessLog[]
