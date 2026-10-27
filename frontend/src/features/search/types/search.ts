@@ -43,16 +43,6 @@ export interface PropertySearchResult {
   updatedAt: string;
 }
 
-/**
- * ------------------------------------------------------------
- * پاسخ کامل API جستجو
- * ------------------------------------------------------------
- */
-interface PropertySearchResponse {
-  count: number;
-  items: PropertySearchResult[];
-}
-
 export interface PropertySearchState {
   transactionType: TransactionType | "";
   propertyType: PropertyType | "";
