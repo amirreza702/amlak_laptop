@@ -119,13 +119,7 @@ export default function PropertyLocationPicker({ value, onChange, city }: Proper
             <li key={`${item.lat}-${item.lon}-${index}`}>
               <button
                 type="button"
-                onClick={() => {
-                  const position = { latitude: item.lat, longitude: item.lon };
-                  setPreview(position);
-                  onChange(null);
-                  setResults([]);
-                  setSearchError("مکان پیدا شد؛ برای تأیید نهایی، روی نقطه دقیق نقشه دابل‌کلیک کنید.");
-                }}
+                onClick={() => chooseSearchResult({ latitude: item.lat, longitude: item.lon })}
                 className="w-full rounded-lg px-3 py-2 text-right text-sm leading-6 hover:bg-blue-50"
               >
                 {item.label}
