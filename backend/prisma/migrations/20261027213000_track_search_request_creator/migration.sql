@@ -23,7 +23,7 @@ ALTER TABLE "property_search_requests"
 ALTER TABLE "property_search_requests"
   ADD CONSTRAINT "property_search_requests_createdByUserId_fkey"
   FOREIGN KEY ("createdByUserId") REFERENCES "users"("id")
-  ON DELETE RESTRICT ON UPDATE CASCADE;
+  ON DELETE CASCADE ON UPDATE CASCADE;
 
 CREATE INDEX "property_search_requests_createdByUserId_idx"
   ON "property_search_requests"("createdByUserId");
