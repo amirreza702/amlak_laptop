@@ -1,4 +1,5 @@
 import type { PropertyFormData } from "../types/property";
+import type { PropertyType, TransactionType } from "../types/propertyRegistration";
 
 // API هم‌مبدأ؛ از localhost ثابت استفاده نمی‌کنیم.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -57,7 +58,7 @@ export async function createProperty(
 }
 
 export interface PropertyRegistrationPayload {
-  propertyType: "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
+  propertyType: PropertyType;
   city: string;
   district: string;
   address: string;
@@ -76,7 +77,7 @@ export interface PropertyRegistrationResponse {
 }
 
 export interface PropertyListingPayload {
-  transactionType: "SALE" | "FULL_DEPOSIT" | "RENT";
+  transactionType: TransactionType;
   salePrice: string | null;
   depositAmount: string | null;
   rentAmount: string | null;
