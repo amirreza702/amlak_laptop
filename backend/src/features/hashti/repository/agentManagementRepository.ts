@@ -34,8 +34,6 @@ export async function findManagedAgents(query: AgentManagementQuery) {
     ? { verificationStatus }
     : {};
 
-  const now = new Date();
-
   const [total, rows] = await Promise.all([
     prisma.agent.count({ where }),
     prisma.agent.findMany({

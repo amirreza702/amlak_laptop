@@ -90,32 +90,6 @@ export const accessCustomerContactController = async (
     }
 
     /**
-     * Agent اشتراک فعال ندارد
-     */
-    if (
-      error instanceof Error &&
-      error.message ===
-        "Active subscription not found"
-    ) {
-      return res.status(403).json({
-        message: error.message,
-      });
-    }
-
-    /**
-     * سقف مصرف ماهانه تمام شده است
-     */
-    if (
-      error instanceof Error &&
-      error.message ===
-        "Monthly contact access limit reached"
-    ) {
-      return res.status(403).json({
-        message: error.message,
-      });
-    }
-
-    /**
      * خطای پیش‌بینی‌نشده
      */
     console.error(

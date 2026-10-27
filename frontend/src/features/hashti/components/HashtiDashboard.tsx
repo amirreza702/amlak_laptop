@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import {
+  CheckCircle2,
   FileSearch,
   LoaderCircle,
   LockKeyhole,
