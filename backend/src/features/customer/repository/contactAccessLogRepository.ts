@@ -24,14 +24,14 @@ type PrismaClientLike =
  */
 export const createContactAccessLog = async (
   agentId: string,
-  customerId: string,
+  customerId: string | null,
   searchRequestId: string,
   db: PrismaClientLike = prisma
 ) => {
   return db.contactAccessLog.create({
     data: {
       agentId,
-      customerId,
+      ...(customerId ? { customerId } : {}),
       searchRequestId,
     },
   });
