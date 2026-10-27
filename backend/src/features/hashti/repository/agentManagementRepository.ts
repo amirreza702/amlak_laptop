@@ -17,13 +17,8 @@ export interface ContactAccessLogQuery {
   offset: number;
 }
 
-function getUtcMonthStart(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-}
-
 /**
- * فهرست مدیریتی مشاوران همراه با اشتراک فعال و سهمیه مصرف ماه جاری.
+ * فهرست مدیریتی مشاوران برای بررسی و تأیید هشتی.
  * شناسه‌های کاربری و اطلاعات تماس فقط در خروجی ویژه هشتی برمی‌گردند.
  */
 export async function findManagedAgents(query: AgentManagementQuery) {
@@ -40,7 +35,6 @@ export async function findManagedAgents(query: AgentManagementQuery) {
     : {};
 
   const now = new Date();
-  const periodStart = getUtcMonthStart();
 
   const [total, rows] = await Promise.all([
     prisma.agent.count({ where }),
@@ -68,58 +62,11 @@ export async function findManagedAgents(query: AgentManagementQuery) {
             createdAt: true,
           },
         },
-        subscriptions: {
-          where: {
-            status: "ACTIVE",
-            startsAt: { lte: now },
-            OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
-          },
-          orderBy: { startsAt: "desc" },
-          take: 1,
-          select: {
-            id: true,
-            status: true,
-            startsAt: true,
-            expiresAt: true,
-            subscriptionPlan: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-                level: true,
-                monthlyContactLimit: true,
-              },
-            },
-          },
-        },
-        contactAccessUsages: {
-          where: { periodStart },
-          take: 1,
-          select: { usedCount: true, periodStart: true },
-        },
       },
     }),
   ]);
 
-  const agents = rows.map(({ subscriptions, contactAccessUsages, ...agent }) => {
-    const subscription = subscriptions[0] ?? null;
-    const usedCount = contactAccessUsages[0]?.usedCount ?? 0;
-    const monthlyLimit = subscription?.subscriptionPlan.monthlyContactLimit ?? 0;
-
-    return {
-      ...agent,
-      subscription,
-      usage: {
-        periodStart,
-        usedCount,
-        monthlyLimit,
-        remainingCount: Math.max(0, monthlyLimit - usedCount),
-        hasActiveSubscription: Boolean(subscription),
-      },
-    };
-  });
-
-  return { agents, total, periodStart };
+  return { agents: rows, total };
 }
 
 /**

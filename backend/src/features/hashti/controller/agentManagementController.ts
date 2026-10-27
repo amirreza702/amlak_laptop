@@ -63,7 +63,6 @@ export async function getManagedAgentsController(
 
     return res.status(200).json({
       agents: result.agents,
-      periodStart: result.periodStart,
       pagination: { total: result.total, limit, offset },
     });
   } catch (error) {

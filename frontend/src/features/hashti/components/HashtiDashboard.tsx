@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import {
-  CheckCircle2,
   FileSearch,
   LoaderCircle,
   LockKeyhole,
@@ -47,11 +46,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
   } = useHashtiSecurityOperations();
   const {
     verificationFilter, setVerificationFilter, agentVerificationNotes, setAgentVerificationNotes,
-    managedAgents, adminSubscriptionPlans, subscriptionPlansError, selectedPlanByAgent, setSelectedPlanByAgent,
-    subscriptionStartsAt, setSubscriptionStartsAt, subscriptionExpiresAt, setSubscriptionExpiresAt,
-    busySubscriptionAgentId, subscriptionActionError, subscriptionActionMessage,
-    agentsBusy, agentsError, agentsMessage, busyAgentId, loadManagedAgents, reviewAgent,
-    assignOrUpgradeSubscription,
+    managedAgents, agentsBusy, agentsError, agentsMessage, busyAgentId, loadManagedAgents, reviewAgent,
   } = useHashtiAgentManagement();
   const {
     auditLogs, auditAgentId, setAuditAgentId, auditFrom, setAuditFrom, auditTo, setAuditTo,
@@ -88,7 +83,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MiniFeature icon={<Users className="h-5 w-5" />} title="مشاوران و اشتراک" detail="صف تأیید، اشتراک فعال و سهمیه ماهانه از API سرور خوانده می‌شود." />
+          <MiniFeature icon={<Users className="h-5 w-5" />} title="مدیریت مشاوران" detail="فهرست مشاوران و صف تأیید هشتی." />
           <MiniFeature icon={<FileSearch className="h-5 w-5" />} title="مغایرت املاک" detail="بررسی مشابهت، ایجاد پرونده و ثبت تصمیم فعال است." />
           <MiniFeature icon={<LockKeyhole className="h-5 w-5" />} title="بازنشانی رمز" detail="رمز کاربر با شناسهٔ User قابل تغییر است." />
           <MiniFeature icon={<ShieldCheck className="h-5 w-5" />} title="سوابق دسترسی" detail="سوابق دسترسی به موقعیت دقیق ملک قابل مشاهده است." />
@@ -99,7 +94,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">مدیریت و تأیید مشاوران</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">فهرست از پایگاه داده خوانده می‌شود و اطلاعات اشتراک/مصرف نیز از رکوردهای موجود محاسبه می‌شود.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">فهرست مشاوران از پایگاه داده خوانده می‌شود.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <select value={verificationFilter} onChange={(event) => setVerificationFilter(event.target.value as "pending" | "verified" | "rejected" | "all")} className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
@@ -117,20 +112,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           یادداشت تصمیم هشتی (برای رد مشاور الزامی)
           <textarea rows={2} value={agentVerificationNotes} onChange={(event) => setAgentVerificationNotes(event.target.value)} maxLength={2000} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" placeholder="دلیل رد یا توضیح تصمیم را وارد کنید" />
         </label>
-        <div className="mt-4 grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 sm:grid-cols-2">
-          <p className="text-sm leading-6 text-slate-600 sm:col-span-2">
-            تخصیص اشتراک از طرف هشتی انجام می‌شود. پرداخت آنلاین یا ثبت مبلغ در این جریان وجود ندارد. تاریخ شروع فقط هنگام ایجاد اشتراک جدید لازم است؛ برای ارتقا فقط پلن بالاتر انتخاب کنید.
-          </p>
-          <label className="space-y-1 text-sm font-medium">تاریخ شروع اشتراک جدید
-            <input type="datetime-local" value={subscriptionStartsAt} onChange={(event) => setSubscriptionStartsAt(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" />
-          </label>
-          <label className="space-y-1 text-sm font-medium">تاریخ انقضا (اختیاری)
-            <input type="datetime-local" value={subscriptionExpiresAt} onChange={(event) => setSubscriptionExpiresAt(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" />
-          </label>
-          {subscriptionPlansError && <p role="alert" className="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{subscriptionPlansError}</p>}
-        </div>
-        {subscriptionActionError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{subscriptionActionError}</p>}
-        {subscriptionActionMessage && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{subscriptionActionMessage}</p>}
         {agentsError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{agentsError}</p>}
         {agentsMessage && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{agentsMessage}</p>}
         {agentsBusy && managedAgents.length === 0 ? (
@@ -147,11 +128,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                     <p className="mt-1 text-sm" dir="ltr">{agent.user.mobile}</p>
                     <p className="mt-1 text-xs text-slate-500">شناسه مشاور: {idText(agent.id)}</p>
                     <p className="mt-2 text-sm text-slate-600">وضعیت حساب: {agent.user.isActive ? "فعال" : "غیرفعال"}</p>
-                  </div>
-                  <div className="space-y-1 text-sm sm:text-left">
-                    <p>اشتراک: <b>{agent.subscription?.subscriptionPlan.name ?? "بدون اشتراک فعال"}</b></p>
-                    <p>مصرف ماه جاری: {agent.usage.usedCount.toLocaleString("fa-IR")} از {agent.usage.monthlyLimit.toLocaleString("fa-IR")}</p>
-                    <p>باقی‌مانده: {agent.usage.remainingCount.toLocaleString("fa-IR")}</p>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -176,45 +152,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                 </div>
                 {agent.verificationNotes && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-600">یادداشت آخرین تصمیم: {agent.verificationNotes}</p>}
                 {agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-400">آخرین بررسی: {new Date(agent.verificationReviewedAt).toLocaleString("fa-IR")}</p>}
-                <div className="mt-4 border-t border-slate-100 pt-4">
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                    <label className="space-y-1 text-sm font-medium">
-                      پلن اشتراک
-                      <select
-                        value={selectedPlanByAgent[agent.id] ?? ""}
-                        onChange={(event) => setSelectedPlanByAgent((current) => ({ ...current, [agent.id]: event.target.value }))}
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
-                      >
-                        <option value="">انتخاب پلن فعال</option>
-                        {adminSubscriptionPlans.map((plan) => (
-                          <option
-                            key={plan.id}
-                            value={plan.id}
-                            disabled={Boolean(agent.subscription && plan.level <= agent.subscription.subscriptionPlan.level)}
-                          >
-                            {plan.name} · {plan.monthlyContactLimit.toLocaleString("fa-IR")} دسترسی ماهانه
-                            {agent.subscription && plan.level <= agent.subscription.subscriptionPlan.level ? " (سطح برابر/پایین‌تر)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void assignOrUpgradeSubscription(agent)}
-                      disabled={
-                        busySubscriptionAgentId === agent.id ||
-                        !selectedPlanByAgent[agent.id] ||
-                        (agent.subscription
-                          ? (adminSubscriptionPlans.find((plan) => plan.id === selectedPlanByAgent[agent.id])?.level ?? 0) <= agent.subscription.subscriptionPlan.level
-                          : !subscriptionStartsAt)
-                      }
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#043873] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      {busySubscriptionAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      {agent.subscription ? "ارتقای اشتراک" : "ایجاد اشتراک"}
-                    </button>
-                  </div>
-                </div>
               </article>
             ))}
           </div>
@@ -356,7 +293,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         <section id="admin-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div>
             <h2 className="text-lg font-bold">سوابق عملیات مدیریتی هشتی</h2>
-            <p className="mt-2 text-sm leading-7 text-slate-600">در این قسمت رویدادهایی مانند تغییر وضعیت تأیید مشاور، ایجاد/ارتقای اشتراک و بازنشانی رمز ثبت‌شده نمایش داده می‌شود. گذرواژه یا هش آن در گزارش ذخیره نمی‌شود.</p>
+            <p className="mt-2 text-sm leading-7 text-slate-600">در این قسمت رویدادهایی مانند تغییر وضعیت تأیید مشاور و بازنشانی رمز ثبت‌شده نمایش داده می‌شود. گذرواژه یا هش آن در گزارش ذخیره نمی‌شود.</p>
           </div>
           <form onSubmit={(event) => void loadAdminAuditLogs(event)} className="mt-4 grid gap-3 sm:grid-cols-3">
             <label className="space-y-1 text-sm font-medium">نوع رویداد (اختیاری)

@@ -42,29 +42,8 @@ export interface ManagedAgent {
   verificationNotes: string | null;
   verificationReviewedBy: string | null;
   user: { id: string; mobile: string; isActive: boolean; createdAt: string };
-  subscription: {
-    id: string;
-    status: string;
-    startsAt: string;
-    expiresAt: string | null;
-    subscriptionPlan: { id: string; code: string; name: string; level: number; monthlyContactLimit: number };
-  } | null;
-  usage: {
-    periodStart: string;
-    usedCount: number;
-    monthlyLimit: number;
-    remainingCount: number;
-    hasActiveSubscription: boolean;
-  };
 }
 
-export interface AdminSubscriptionPlan {
-  id: string;
-  code: string;
-  name: string;
-  level: number;
-  monthlyContactLimit: number;
-}
 export interface ContactAccessAuditLog {
   id: string;
   accessedAt: string;

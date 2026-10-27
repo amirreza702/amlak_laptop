@@ -19,7 +19,6 @@ import type {
   DuplicateMatch,
   DuplicateReview,
   ExactLocationLog,
-  AdminSubscriptionPlan,
   ContactAccessAuditLog,
   ManagedAgent,
 } from "@/features/hashti/types/hashti";
@@ -30,10 +29,6 @@ export async function getHashtiAgents(
   return requestJson(
     "/hashti/agents?verificationStatus=" + verificationStatus + "&limit=100&offset=0"
   );
-}
-
-export async function getHashtiSubscriptionPlans(): Promise<{ plans: AdminSubscriptionPlan[] }> {
-  return requestJson("/subscription-plans");
 }
 
 export async function getHashtiAdminAuditLogs(
@@ -51,11 +46,6 @@ export async function getHashtiContactAccessLogs(
 
 export async function reviewHashtiAgent(agentId: string, payload: { verificationStatus: "PENDING" | "VERIFIED" | "REJECTED"; notes: string | null }): Promise<{ agent: ManagedAgent }> {
   return requestJson("/hashti/agents/" + encodeURIComponent(agentId) + "/verification", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-}
-
-export async function changeHashtiAgentSubscription(agentId: string, payload: { planId: string } | { planId: string; startsAt: string; expiresAt?: string }): Promise<unknown> {
-  const isUpgrade = !("startsAt" in payload);
-  return requestJson("/hashti/agents/" + encodeURIComponent(agentId) + "/subscriptions", { method: isUpgrade ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 }
 
 export async function getHashtiDuplicateMatches(propertyId: string): Promise<{ matches: DuplicateMatch[] }> {
