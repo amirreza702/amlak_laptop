@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CustomerFavoriteButton } from "@/features/customer/components/CustomerFavoriteButton";
-import { usePropertyDetail } from "../hooks/usePropertyDetail";
+import { usePropertyDetail, type PropertyListing } from "../hooks/usePropertyDetail";
 
 /**
  * ============================================================
