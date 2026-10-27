@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-interface PropertyListing {
+export interface PropertyListing {
   id: string;
   propertyId: string;
   transactionType: string;
