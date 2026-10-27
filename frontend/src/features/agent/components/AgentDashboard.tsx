@@ -88,7 +88,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       )}
 
       {profileState === "verified" && selectedTool === "property-management" && <PropertyRegistrationPanel mode="agent" />}
-      {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel />}
+      {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
         <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
