@@ -1,4 +1,3 @@
-
 import bcrypt from "bcrypt";
 import { createHash, randomBytes } from "crypto";
 import { UserRole } from "@prisma/client";
@@ -47,10 +46,7 @@ export const registerUserService = async ({
     throw new Error("ROLE_NOT_ALLOWED");
   }
 
-  
   // قواعد کسب‌وکار ثبت‌نام
-
-  // نام و نام خانوادگی برای ساخت پروفایل نقش‌محور لازم‌اند.
   const normalizedFirstName = firstName.trim();
   const normalizedLastName = lastName.trim();
   if (!normalizedFirstName || !normalizedLastName) {
@@ -69,7 +65,6 @@ export const registerUserService = async ({
     throw new Error("PASSWORD_TOO_SHORT");
   }
 
-
   const existingUser = await findUserByMobile(normalizedMobile);
 
   if (existingUser) {
@@ -79,7 +74,7 @@ export const registerUserService = async ({
   const passwordHash = await bcrypt.hash(password, 12);
 
   return createUser({
-    mobile:normalizedMobile,
+    mobile: normalizedMobile,
     passwordHash,
     role,
     firstName: normalizedFirstName,
@@ -102,10 +97,7 @@ export const loginUserService = async (
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  const passwordIsValid = await bcrypt.compare(
-    password,
-    user.passwordHash
-  );
+  const passwordIsValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!passwordIsValid) {
     throw new Error("INVALID_CREDENTIALS");
@@ -148,6 +140,8 @@ export const loginUserService = async (
       mobile: user.mobile,
       role: user.role,
       isActive: user.isActive,
+      isSuperAdmin: user.isSuperAdmin,
+      adminPermissions: user.adminPermissions,
       createdAt: user.createdAt,
     },
   };
@@ -156,9 +150,7 @@ export const loginUserService = async (
 /**
  * اعتبارسنجی Session و شناسایی کاربر
  */
-export const getAuthenticatedUserService = async (
-  sessionToken: string
-) => {
+export const getAuthenticatedUserService = async (sessionToken: string) => {
   // نشست‌های صادرشده با نسخه قبلی، زمان آخرین فعالیت ثبت‌شده ندارند؛
   // برای اعمال دقیق مهلت عدم فعالیت، کاربر باید یک بار دوباره وارد شود.
   if (!sessionToken.startsWith("h1_")) {
@@ -194,6 +186,8 @@ export const getAuthenticatedUserService = async (
     id: session.user.id,
     mobile: session.user.mobile,
     role: session.user.role,
+    isSuperAdmin: session.user.isSuperAdmin,
+    adminPermissions: session.user.adminPermissions,
     expiresAt,
   };
 };
@@ -201,14 +195,10 @@ export const getAuthenticatedUserService = async (
 /**
  * خروج کاربر و حذف فقط Session فعلی
  */
-export const logoutUserService = async (
-  sessionToken: string
-) => {
+export const logoutUserService = async (sessionToken: string) => {
   const tokenHash = hashSessionToken(sessionToken);
-
   await deleteSessionByTokenHash(tokenHash);
 };
-
 
 /**
  * بازنشانی مدیریتی رمز عبور توسط کارکنان هشتی
@@ -229,11 +219,7 @@ export const adminResetUserPasswordService = async (
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
-
-  const user = await resetUserPasswordAndSessions(
-    userId,
-    passwordHash
-  );
+  const user = await resetUserPasswordAndSessions(userId, passwordHash);
 
   return {
     id: user.id,
@@ -241,8 +227,6 @@ export const adminResetUserPasswordService = async (
     role: user.role,
   };
 };
-
-
 
 /**
  * Administrative password reset that records the event atomically with the
@@ -275,7 +259,6 @@ export const adminResetUserPasswordWithAuditService = async (input: {
     reason: input.reason,
   });
 };
-
 
 export const listAdminUsersService = async (data: {
   search?: string;
