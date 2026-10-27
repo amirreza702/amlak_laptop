@@ -6,10 +6,7 @@ import { getActiveSearchRequests, getAgentContact, getAgentProfile, updateAgentP
 import type { ActiveRequest, ContactResult } from "../types/agent";
 import { useAgentRequestFilters } from "./useAgentRequestFilters";
 
-/**
- * مدیریت وضعیت پروفایل، درخواست‌ها و دسترسی تماس مشاور.
- * این Hook منطق و ارتباط با API را از کامپوننت نمایشی جدا می‌کند.
- */
+/** مدیریت وضعیت پروفایل، درخواست‌ها و دسترسی تماس مشاور. */
 export function useAgentDashboard(user: UserPublic) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -76,7 +73,69 @@ export function useAgentDashboard(user: UserPublic) {
       }
     })();
 
-  
+    return () => { active = false; };
+  }, [user.mobile]);
+
+  const loadRequests = useCallback(async () => {
+    setLoadingRequests(true);
+    setRequestsError(null);
+    try {
+      setRequests(await getActiveSearchRequests());
+    } catch (error: unknown) {
+      setRequestsError(error instanceof Error ? error.message : "دریافت درخواست‌ها انجام نشد.");
+    } finally {
+      setLoadingRequests(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (profileState === "verified") void loadRequests();
+  }, [profileState, loadRequests]);
+
+  const openContact = async (requestId: string) => {
+    if (!profileId) {
+      setRequestsError("شناسهٔ پروفایل مشاور در دسترس نیست؛ دریافت آن به API سمت سرور نیاز دارد.");
+      return;
+    }
+    setBusyId(requestId);
+    setRequestsError(null);
+    setActionMessage(null);
+    try {
+      const result = await getAgentContact(profileId, requestId);
+      setContacts((current) => ({ ...current, [requestId]: result.customer }));
+      setActionMessage("دسترسی به اطلاعات تماس از سرور دریافت شد.");
+    } catch (error: unknown) {
+      setRequestsError(error instanceof Error ? error.message : "دسترسی به اطلاعات تماس انجام نشد.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!profileId) return;
+    setIsSavingProfile(true);
+    setProfileSaveError(null);
+    setProfileSaveMessage(null);
+    try {
+      const updated = await updateAgentProfile(profileId, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        agencyName: agencyName.trim() || null,
+        address: address.trim() || null,
+      });
+      setFirstName(updated.firstName);
+      setLastName(updated.lastName);
+      setAgencyName(updated.agencyName ?? "");
+      setAddress(updated.address ?? "");
+      setProfileSaveMessage("اطلاعات پروفایل مشاور ذخیره شد.");
+    } catch (error: unknown) {
+      setProfileSaveError(error instanceof Error ? error.message : "ذخیرهٔ پروفایل مشاور انجام نشد.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   return {
     selectedTool, setSelectedTool,
     profileId, profileState, profileError, profileReviewNotes,
