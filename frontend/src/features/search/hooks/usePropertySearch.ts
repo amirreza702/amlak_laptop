@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { searchProperties } from "../api/propertySearchApi";
 
-import type { PropertySearchState, PropertySearchResult, TransactionType, PropertyType } from "../types/search";
+import type { PropertySearchState, PropertySearchResult } from "../types/search";
 
 const INITIAL_SEARCH_STATE: PropertySearchState = {
   transactionType: "",
