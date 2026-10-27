@@ -3,7 +3,7 @@ import type {
   PropertySearchState,
   PropertyType,
   TransactionType,
-} from "../hooks/usePropertySearch";
+} from "../types/search";
 
 interface PropertySearchResponse {
   count: number;
