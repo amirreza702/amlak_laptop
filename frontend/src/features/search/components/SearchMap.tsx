@@ -24,7 +24,7 @@ import { useCallback, useState } from "react";
 import type {
   PropertySearchResult,
   PropertySearchState,
-} from "../hooks/usePropertySearch";
+} from "../types/search";
 
 import type { MapBounds } from "@/shared/components/map/MapViewport";
 
