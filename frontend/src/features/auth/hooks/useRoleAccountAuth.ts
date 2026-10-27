@@ -138,9 +138,9 @@ export function useRoleAccountAuth(role: AccountPortalRole) {
 
       // پس از ورود کارکنان هشتی، کاربر را به همان صفحه مدیریتی برگردان
       // که پیش از ورود درخواست کرده بود؛ فقط مسیرهای داخلی پنل پذیرفته می‌شوند.
-      if (role === "HASHTI" && typeof window !== "undefined") {
+      if (role === "HASHTI" && result.user.isSuperAdmin === true && typeof window !== "undefined") {
         const returnTo = new URLSearchParams(window.location.search).get("returnTo");
-        if (returnTo?.startsWith("/admin/")) {
+        if (returnTo === "/admin" || returnTo?.startsWith("/admin/")) {
           window.location.assign(returnTo);
           return;
         }
