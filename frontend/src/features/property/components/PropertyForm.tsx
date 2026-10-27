@@ -11,7 +11,6 @@ import { usePropertyForm } from "../hooks/usePropertyForm";
 
 import { PropertyFields } from "./ui/PropertyFields";
 import { PropertySubmitButton } from "./ui/PropertySubmitButton";
-import { PropertyFormLayout } from "./layout/PropertyFormLayout";
 
 interface PropertyFormProps {
   agentId: string;
@@ -38,7 +37,7 @@ export function PropertyForm({
   }
 
   return (
-    <PropertyFormLayout>
+    <div className="space-y-8">
 
       {/* Brand */}
       <div className="mb-8 flex items-center gap-4">
@@ -166,6 +165,6 @@ export function PropertyForm({
 
       </Card>
 
-    </PropertyFormLayout>
+    </div>
   );
 }
