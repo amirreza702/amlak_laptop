@@ -5,7 +5,7 @@ import { BadgeCheck, Contact, FileText, LoaderCircle, LockKeyhole, RefreshCw, Sa
 import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
 import { useAgentRequestFilters } from "../hooks/useAgentRequestFilters";
-import { agentApiRequest as requestJson } from "../api/agentApi";
+import { getActiveSearchRequests, getAgentContact, getAgentProfile, updateAgentProfile } from "../api/agentApi";
 import type { AgentProfile, ActiveRequest, ContactResult } from "../types/agent";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { OwnerAgentRequestsPanel } from "./OwnerAgentRequestsPanel";
@@ -66,7 +66,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     (async () => {
       try {
         // شناسه پروفایل همیشه از نشست معتبر سرور استخراج می‌شود، نه از مرورگر.
-        const profile = await requestJson<AgentProfile>("/agents/me/profile");
+        const profile = await getAgentProfile();
 
         if (!active) return;
         setProfileId(profile.id);
@@ -97,7 +97,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     setLoadingRequests(true);
     setRequestsError(null);
     try {
-      setRequests(await requestJson<ActiveRequest[]>("/search-requests/active"));
+      setRequests(await getActiveSearchRequests());
     } catch (error: unknown) {
       setRequestsError(error instanceof Error ? error.message : "دریافت درخواست‌ها انجام نشد.");
     } finally {
@@ -118,10 +118,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     setRequestsError(null);
     setActionMessage(null);
     try {
-      const result = await requestJson<ContactResult>(
-        `/agents/${encodeURIComponent(profileId)}/search-requests/${encodeURIComponent(requestId)}/contact`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
-      );
+      const result = await getAgentContact(profileId, requestId);
       setContacts((current) => ({ ...current, [requestId]: result.customer }));
       setActionMessage("دسترسی به اطلاعات تماس از سرور دریافت شد.");
     } catch (error: unknown) {
@@ -138,19 +135,12 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     setProfileSaveError(null);
     setProfileSaveMessage(null);
     try {
-      const updated = await requestJson<AgentProfile>(
-        `/agents/${encodeURIComponent(profileId)}/profile`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            agencyName: agencyName.trim() || null,
-            address: address.trim() || null,
-          }),
-        }
-      );
+      const updated = await updateAgentProfile(profileId, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        agencyName: agencyName.trim() || null,
+        address: address.trim() || null,
+      });
       setFirstName(updated.firstName);
       setLastName(updated.lastName);
       setAgencyName(updated.agencyName ?? "");
