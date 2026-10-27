@@ -10,6 +10,7 @@
  */
 
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   createCustomerSearchRequest,
@@ -31,19 +32,51 @@ export async function createCustomerSearchRequestController(
   res: Response
 ) {
   try {
-    const result =
-      await createCustomerSearchRequest(
-        req.params.customerId,
-        req.body
-      );
+    const user = (req as AuthenticatedRequest).user;
+    if (!user || user.role !== "CUSTOMER") {
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
-    res.status(201).json(result);
+    const result = await createCustomerSearchRequest(
+      req.params.customerId,
+      req.body,
+      { id: user.id, role: "CUSTOMER", mobile: user.mobile }
+    );
+
+    return res.status(201).json(result);
   } catch (error: any) {
     res.status(400).json({
       message:
         error.message ||
         "خطا در ایجاد درخواست جستجو",
     });
+  }
+}
+
+/**
+ * ایجاد درخواست جست‌وجو توسط مشاور تأییدشده.
+ * هویت، نقش و شماره تماس ثبت‌کننده فقط از نشست معتبر سرور گرفته می‌شود.
+ */
+export async function createAgentSearchRequestController(req: Request, res: Response) {
+  const user = (req as AuthenticatedRequest).user;
+  if (!user || user.role !== "AGENT") {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  try {
+    const result = await createCustomerSearchRequest(
+      null,
+      req.body,
+      { id: user.id, role: "AGENT", mobile: user.mobile }
+    );
+    return res.status(201).json(result);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "خطا در ایجاد درخواست جستجو";
+    if (message === "City is required" || message === "Budget cannot be negative") {
+      return res.status(400).json({ message });
+    }
+    console.error("Error creating agent search request:", error);
+    return res.status(400).json({ message });
   }
 }
 
