@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { BadgeCheck, Contact, FileText, LoaderCircle, LockKeyhole, RefreshCw, Save, ShieldAlert, UserRound } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
-import { useAgentRequestFilters } from "../hooks/useAgentRequestFilters";
-import { getActiveSearchRequests, getAgentContact, getAgentProfile, updateAgentProfile } from "../api/agentApi";
-import type { AgentProfile, ActiveRequest, ContactResult } from "../types/agent";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { OwnerAgentRequestsPanel } from "./OwnerAgentRequestsPanel";
+import { useAgentDashboard } from "../hooks/useAgentDashboard";
 
 
 function displayMoney(value: string | number | null) {
@@ -25,22 +23,13 @@ function propertyName(value: string) {
 }
 
 export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [profileState, setProfileState] = useState<"checking" | "verified" | "pending" | "rejected" | "unknown" | "error">("checking");
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [profileReviewNotes, setProfileReviewNotes] = useState<string | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [agencyName, setAgencyName] = useState("");
-  const [address, setAddress] = useState("");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null);
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
-  const [requests, setRequests] = useState<ActiveRequest[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
-  const [requestsError, setRequestsError] = useState<string | null>(null);
   const {
+    selectedTool, setSelectedTool,
+    profileId, profileState, profileError, profileReviewNotes,
+    firstName, setFirstName, lastName, setLastName,
+    agencyName, setAgencyName, address, setAddress,
+    isSavingProfile, profileSaveMessage, profileSaveError,
+    requests, loadingRequests, requestsError,
     visibleRequests,
     requestSearch, setRequestSearch,
     requestFilter, setRequestFilter,
@@ -52,45 +41,10 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     requestFrom, setRequestFrom,
     requestTo, setRequestTo,
     resetRequestFilters,
-  } = useAgentRequestFilters(requests);
-  const [contacts, setContacts] = useState<Record<string, ContactResult["customer"]>>({});
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setProfileId(null);
-    setProfileState("checking");
-    setProfileError(null);
-
-    (async () => {
-      try {
-        // شناسه پروفایل همیشه از نشست معتبر سرور استخراج می‌شود، نه از مرورگر.
-        const profile = await getAgentProfile();
-
-        if (!active) return;
-        setProfileId(profile.id);
-        setFirstName(profile.firstName);
-        setLastName(profile.lastName);
-        setAgencyName(profile.agencyName ?? "");
-        setAddress(profile.address ?? "");
-        setProfileReviewNotes(profile.verificationNotes ?? null);
-        if (profile.verificationStatus === "VERIFIED" && profile.isVerified) {
-          setProfileState("verified");
-        } else if (profile.verificationStatus === "REJECTED") {
-          setProfileState("rejected");
-        } else {
-          setProfileState("pending");
-        }
-      } catch (error: unknown) {
-        if (active) {
-          setProfileState("error");
-          setProfileError(error instanceof Error ? error.message : "بررسی وضعیت حساب مشاور انجام نشد.");
-        }
-      }
-    })();
-
-    return () => { active = false; };
+    contacts, busyId, actionMessage,
+    loadRequests, openContact, saveProfile,
+  } = useAgentDashboard(user);
+  return () => { active = false; };
   }, [user.mobile]);
 
   const loadRequests = useCallback(async () => {
