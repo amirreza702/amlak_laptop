@@ -64,14 +64,20 @@ export function usePropertyRegistration() {
         throw new Error(validationError);
       }
 
+      // اعتبارسنجی بالا برای نمایش خطا است؛ این guard همچنین null نبودن مختصات را برای TypeScript تضمین می‌کند.
+      const selectedCoordinates = coordinates;
+      if (!selectedCoordinates) {
+        throw new Error("لطفاً موقعیت ملک را روی نقشه انتخاب کنید.");
+      }
+
       const body = await createPropertyRecord({
         propertyType,
         city: city.trim(),
         district: district.trim(),
         address: address.trim(),
         postalCode: postalCode.trim() || null,
-        latitudeExact: coordinates.latitude,
-        longitudeExact: coordinates.longitude,
+        latitudeExact: selectedCoordinates.latitude,
+        longitudeExact: selectedCoordinates.longitude,
         area: area.trim() ? Number(area) : null,
         rooms: rooms.trim() ? Number(rooms) : null,
         floor: floor.trim() ? Number(floor) : null,
