@@ -335,6 +335,8 @@ model PropertySearchRequest {
   
 
   @@index([customerId, createdAt])
+  @@index([createdByUserId])
+  @@index([createdByRole])
   @@index([city])
   @@index([status])
   @@map("property_search_requests")
