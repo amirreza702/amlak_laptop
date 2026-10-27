@@ -3,10 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, LoaderCircle, UserRoundPlus } from "lucide-react";
 import { agentApiRequest } from "../api/agentApi";
-import type {
-  CustomerRequestPropertyType,
-  CustomerRequestTransactionType,
-} from "@/features/customer/types/customerSearchRequest";
+type CustomerRequestTransactionType = "SALE" | "FULL_DEPOSIT" | "RENT";
+type CustomerRequestPropertyType = "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
 
 const inputClassName = "w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-[#043873] focus:ring-2 focus:ring-[#043873]/10";
 
@@ -32,7 +30,7 @@ interface CreatedRequest {
   createdByRole: "AGENT" | "CUSTOMER";
 }
 
-export function AgentCreateSearchRequestPanel() {
+export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () => void }) {
   const [transactionType, setTransactionType] = useState<CustomerRequestTransactionType>("SALE");
   const [propertyType, setPropertyType] = useState<CustomerRequestPropertyType>("APARTMENT");
   const [city, setCity] = useState("");
@@ -73,6 +71,7 @@ export function AgentCreateSearchRequestPanel() {
         }),
       });
       setCreated(result);
+      onCreated?.();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "ثبت درخواست انجام نشد.");
     } finally {
