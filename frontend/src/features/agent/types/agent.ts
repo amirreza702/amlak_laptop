@@ -24,25 +24,3 @@ export interface ActiveRequest {
 export interface ContactResult {
   customer: { id: string; firstName: string; lastName: string; mobile: string };
 }
-export interface SubscriptionPlan {
-  id: string;
-  code: string;
-  name: string;
-  level: number;
-  monthlyContactLimit: number;
-}
-export interface ActiveAgentSubscription {
-  id: string;
-  status: string;
-  startsAt: string;
-  expiresAt: string | null;
-  plan: SubscriptionPlan;
-}
-export interface AgentContactUsage {
-  periodStart: string;
-  usedCount: number;
-  monthlyLimit: number;
-  remainingCount: number;
-  hasActiveSubscription: boolean;
-  subscriptionPlan: { id: string; code: string; name: string; level: number } | null;
-}

@@ -6,7 +6,7 @@ import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
 import { useAgentRequestFilters } from "../hooks/useAgentRequestFilters";
 import { agentApiRequest as requestJson } from "../api/agentApi";
-import type { AgentContactUsage, AgentProfile, ActiveAgentSubscription, ActiveRequest, ContactResult, SubscriptionPlan } from "../types/agent";
+import type { AgentProfile, ActiveRequest, ContactResult } from "../types/agent";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { OwnerAgentRequestsPanel } from "./OwnerAgentRequestsPanel";
 
@@ -56,11 +56,6 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   const [contacts, setContacts] = useState<Record<string, ContactResult["customer"]>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
-  const [currentSubscription, setCurrentSubscription] = useState<ActiveAgentSubscription | null>(null);
-  const [contactUsage, setContactUsage] = useState<AgentContactUsage | null>(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -97,40 +92,6 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
 
     return () => { active = false; };
   }, [user.mobile]);
-
-  useEffect(() => {
-    if (!profileId) return;
-    let active = true;
-
-    (async () => {
-      setSubscriptionLoading(true);
-      setSubscriptionError(null);
-      try {
-        const [plansResult, subscriptionResult, usageResult] = await Promise.all([
-          requestJson<{ plans: SubscriptionPlan[] }>("/subscription-plans"),
-          requestJson<{ subscription: ActiveAgentSubscription | null }>(
-            "/agents/" + encodeURIComponent(profileId) + "/subscriptions/current"
-          ),
-          requestJson<{ usage: AgentContactUsage }>(
-            "/agents/" + encodeURIComponent(profileId) + "/subscriptions/usage"
-          ),
-        ]);
-
-        if (!active) return;
-        setSubscriptionPlans(plansResult.plans);
-        setCurrentSubscription(subscriptionResult.subscription);
-        setContactUsage(usageResult.usage);
-      } catch (error: unknown) {
-        if (active) {
-          setSubscriptionError(error instanceof Error ? error.message : "دریافت اطلاعات اشتراک انجام نشد.");
-        }
-      } finally {
-        if (active) setSubscriptionLoading(false);
-      }
-    })();
-
-    return () => { active = false; };
-  }, [profileId]);
 
   const loadRequests = useCallback(async () => {
     setLoadingRequests(true);
@@ -249,53 +210,6 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
           <h2 className="font-bold">حساب مشاور تأیید شده است</h2>
           <p className="mt-2">امکانات پنل بر اساس وضعیت حساب و سطح دسترسی شما نمایش داده می‌شود.</p>
-        </section>
-      )}
-
-      {profileId && profileState !== "checking" && (
-        <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-bold">اشتراک و سهمیهٔ دسترسی به اطلاعات تماس</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            نمایش اطلاعات این بخش از API سرور انجام می‌شود. تخصیص یا ارتقای اشتراک فعلاً توسط هشتی انجام می‌شود؛ پرداخت آنلاین در این مسیر پیاده‌سازی نشده است.
-          </p>
-          {subscriptionLoading ? (
-            <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت اطلاعات اشتراک...</p>
-          ) : subscriptionError ? (
-            <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{subscriptionError}</p>
-          ) : (
-            <>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">اشتراک فعلی</p>
-                  <p className="mt-1 font-bold">{currentSubscription?.plan.name ?? "بدون اشتراک فعال"}</p>
-                </div>
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">مصرف ماه جاری</p>
-                  <p className="mt-1 font-bold">{(contactUsage?.usedCount ?? 0).toLocaleString("fa-IR")} از {(contactUsage?.monthlyLimit ?? 0).toLocaleString("fa-IR")}</p>
-                </div>
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">سهمیه باقی‌مانده</p>
-                  <p className="mt-1 font-bold">{(contactUsage?.remainingCount ?? 0).toLocaleString("fa-IR")}</p>
-                </div>
-              </div>
-              <h3 className="mt-5 font-bold">پلن‌های فعال هشتی</h3>
-              {subscriptionPlans.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-500">در حال حاضر پلن فعالی ثبت نشده است.</p>
-              ) : (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {subscriptionPlans.map((plan) => (
-                    <article key={plan.id} className="rounded-xl border border-slate-200 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-bold">{plan.name}</p>
-                        {currentSubscription?.plan.id === plan.id && <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800">پلن فعلی</span>}
-                      </div>
-                      <p className="mt-2 text-sm text-slate-600">سقف دسترسی ماهانه: {plan.monthlyContactLimit.toLocaleString("fa-IR")} درخواست تماس</p>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
         </section>
       )}
 

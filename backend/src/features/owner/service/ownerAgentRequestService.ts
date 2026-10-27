@@ -1,13 +1,16 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import {
-  closeOwnerAgentRequest, createOwnerAgentRequest, createOwnerRequestAccessLog, createUsage,
-  findActiveOwnerAgentRequests, findActiveOwnerRequestForProperty, findActiveSubscriptionForAgent,
-  findOwnedProperty, findOwnerAgentRequests, findOwnerRequestAccessLog, findOwnerRequestForAccess,
-  findUsage, incrementUsage,
+  closeOwnerAgentRequest,
+  createOwnerAgentRequest,
+  createOwnerRequestAccessLog,
+  findActiveOwnerAgentRequests,
+  findActiveOwnerRequestForProperty,
+  findOwnedProperty,
+  findOwnerAgentRequests,
+  findOwnerRequestAccessLog,
+  findOwnerRequestForAccess,
 } from "../repository/ownerAgentRequestRepository";
-
-const periodStart = (now: Date) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
 export async function createOwnerAgentRequestService(ownerId: string, input: { propertyId?: unknown; description?: unknown }) {
   const propertyId = typeof input.propertyId === "string" ? input.propertyId.trim() : "";
@@ -29,6 +32,10 @@ export async function closeOwnerAgentRequestService(ownerId: string, requestId: 
 
 export const getActiveOwnerAgentRequestsService = () => findActiveOwnerAgentRequests();
 
+/**
+ * دسترسی مشاور تأییدشده به اطلاعات مالک بدون اشتراک پولی یا سهمیه ماهانه.
+ * دسترسی‌ها ثبت می‌شوند و درخواست تکراری دوباره‌شماری نمی‌شود.
+ */
 export async function accessOwnerRequestContactService(agentId: string, requestId: string) {
   const request = await findOwnerRequestForAccess(requestId);
   if (!request) throw new Error("Active owner request not found");
@@ -42,24 +49,10 @@ export async function accessOwnerRequestContactService(agentId: string, requestI
   const prior = await findOwnerRequestAccessLog(agentId, requestId);
   if (prior) return toPayload(prior);
 
-  const now = new Date();
-  const subscription = await findActiveSubscriptionForAgent(agentId, now);
-  if (!subscription) throw new Error("Active subscription not found");
-  const start = periodStart(now);
-
   const access = await prisma.$transaction(async (tx) => {
     const existing = await findOwnerRequestAccessLog(agentId, requestId, tx);
     if (existing) return existing;
-
-    let usage = await findUsage(agentId, start, tx);
-    if (!usage) usage = await createUsage(agentId, start, tx);
-    if (usage.usedCount >= subscription.subscriptionPlan.monthlyContactLimit) {
-      throw new Error("Monthly contact access limit reached");
-    }
-
-    const log = await createOwnerRequestAccessLog(agentId, requestId, tx);
-    await incrementUsage(agentId, start, tx);
-    return log;
+    return createOwnerRequestAccessLog(agentId, requestId, tx);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
   return toPayload(access);

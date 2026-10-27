@@ -12,13 +12,6 @@ import {
 import { getCurrentCustomerProfileController } from "../controller/currentCustomerProfileController";
 import { accessCustomerContactController } from "../controller/contactAccessController";
 import {
-  createAgentSubscriptionController,
-  upgradeAgentSubscriptionController,
-  getSubscriptionPlansController,
-  getAgentCurrentSubscriptionController,
-  getAgentContactUsageController,
-} from "../controller/agentSubscriptionController";
-import {
   getCustomerProfileController,
   updateCustomerProfileController,
 } from "../controller/customerController";
