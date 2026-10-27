@@ -32,10 +32,11 @@ export const accessCustomerContact = async (
   // شماره تماس ثبت‌کننده در زمان ایجاد از نشست معتبر سرور ذخیره شده است.
   // در درخواست مشاور، این شماره متعلق به مشاور ثبت‌کننده است.
   const contact = {
-    id: customer?.id ?? searchRequest.createdByUserId,
+    id: customer?.id ?? searchRequest.createdByUserId ?? "unknown",
     firstName: customer?.firstName ?? (searchRequest.createdByRole === "AGENT" ? "مشاور املاک" : "مشتری"),
     lastName: customer?.lastName ?? "",
-    mobile: searchRequest.requesterMobile,
+    // برای درخواست‌های قدیمی که پیش از افزودن metadata ثبت شده‌اند، شماره مشتری از رابطه قبلی خوانده می‌شود.
+    mobile: searchRequest.requesterMobile ?? customer?.user.mobile ?? "",
   };
 
   const existingAccess = await findContactAccessLog(agentId, searchRequestId);
