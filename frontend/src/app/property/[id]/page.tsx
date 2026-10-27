@@ -6,7 +6,7 @@
  * Build به اطلاعات ملک‌ها وابسته نیست. فقط یک فایل fallback
  * ساخته می‌شود و اطلاعات واقعی با CSR در مرورگر بارگیری می‌شوند.
  */
-import PropertyDetailClient from "./PropertyDetailClient";
+import { PropertyDetailClient } from "@/features/property/components/PropertyDetailClient";
 
 /**
  * خروجی استاتیک Next.js برای مسیر پویا به یک پارامتر نیاز دارد.
