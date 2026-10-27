@@ -76,7 +76,7 @@ export async function createAgentSearchRequestController(req: Request, res: Resp
       return res.status(400).json({ message });
     }
     console.error("Error creating agent search request:", error);
-    return res.status(400).json({ message });
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
 
