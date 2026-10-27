@@ -24,7 +24,7 @@ import {
 import type {
   PropertySearchResult,
   PropertySearchState,
-} from "@/features/search/hooks/usePropertySearch";
+} from "@/features/search/types/search";
 
 import { MapPropertyMarker } from "../MapPropertyMarker";
 
