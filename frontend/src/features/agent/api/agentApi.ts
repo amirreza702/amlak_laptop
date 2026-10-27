@@ -12,3 +12,43 @@ export async function agentApiRequest<T>(path: string, init?: RequestInit): Prom
   }
   return body as T;
 }
+
+
+import type { ActiveRequest, AgentProfile, ContactResult } from "../types/agent";
+
+export interface AgentProfileUpdate {
+  firstName: string;
+  lastName: string;
+  agencyName: string | null;
+  address: string | null;
+}
+
+/** دریافت پروفایل مشاور از نشست معتبر سرور. */
+export function getAgentProfile(): Promise<AgentProfile> {
+  return agentApiRequest<AgentProfile>("/agents/me/profile");
+}
+
+/** دریافت درخواست‌های فعال مشتریان. */
+export function getActiveSearchRequests(): Promise<ActiveRequest[]> {
+  return agentApiRequest<ActiveRequest[]>("/search-requests/active");
+}
+
+/** دریافت اطلاعات تماس مشتری برای یک درخواست؛ مجوز نهایی را سرور بررسی می‌کند. */
+export function getAgentContact(agentId: string, requestId: string): Promise<ContactResult> {
+  return agentApiRequest<ContactResult>(
+    `/agents/${encodeURIComponent(agentId)}/search-requests/${encodeURIComponent(requestId)}/contact`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
+  );
+}
+
+/** ذخیره مشخصات پروفایل مشاور. */
+export function updateAgentProfile(agentId: string, data: AgentProfileUpdate): Promise<AgentProfile> {
+  return agentApiRequest<AgentProfile>(
+    `/agents/${encodeURIComponent(agentId)}/profile`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+}
