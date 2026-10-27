@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { createPropertyListing, createPropertyRecord } from "../api/propertyApi";
 import type { Coordinates, PropertyType, TransactionType } from "../types/propertyRegistration";
+import { validatePropertyRegistration } from "../utils/validatePropertyRegistration";
 
 /**
  * تمام state، اعتبارسنجی و ارسال فرم ثبت ملک در این Hook نگهداری می‌شود.
@@ -52,17 +53,15 @@ export function usePropertyRegistration() {
         return;
       }
 
-      if (!coordinates || !Number.isFinite(coordinates.latitude) || !Number.isFinite(coordinates.longitude)) {
-        throw new Error("برای ثبت ملک، محل دقیق آن را روی نقشه انتخاب کنید.");
-      }
-      if (transactionType === "SALE" && !(Number(salePrice) > 0)) {
-        throw new Error("قیمت فروش باید بیشتر از صفر باشد.");
-      }
-      if (transactionType === "FULL_DEPOSIT" && !(Number(depositAmount) > 0)) {
-        throw new Error("مبلغ رهن کامل باید بیشتر از صفر باشد.");
-      }
-      if (transactionType === "RENT" && !(Number(rentAmount) > 0)) {
-        throw new Error("مبلغ اجاره باید بیشتر از صفر باشد.");
+      const validationError = validatePropertyRegistration({
+        coordinates,
+        transactionType,
+        salePrice,
+        depositAmount,
+        rentAmount,
+      });
+      if (validationError) {
+        throw new Error(validationError);
       }
 
       const body = await createPropertyRecord({
