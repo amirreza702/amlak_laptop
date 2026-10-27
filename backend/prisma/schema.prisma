@@ -304,9 +304,9 @@ model PropertySearchRequest {
   // مشتری حساب‌دار فقط برای درخواست‌هایی که مستقیماً از حساب مشتری ثبت می‌شوند.
   customerId      String?
   // ثبت‌کننده همیشه از نشست احراز‌شده سمت سرور تعیین می‌شود.
-  createdByUserId String
-  createdByRole   UserRole
-  requesterMobile String
+  createdByUserId String?
+  createdByRole   UserRole?
+  requesterMobile String?
   
 
   transactionType TransactionType
@@ -327,7 +327,7 @@ model PropertySearchRequest {
   updatedAt DateTime @updatedAt
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  createdByUser User @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
 
   // سوابق مشاهده اطلاعات تماس این درخواست توسط مشاوران
   contactAccessLogs ContactAccessLog[]
