@@ -1,3 +1,5 @@
+import type { ActiveRequest, AgentProfile, ContactResult } from "../types/agent";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 /** API client مخصوص قابلیت‌های مشاور؛ خطاهای دامنه‌ای به پیام فارسی تبدیل می‌شوند. */
@@ -13,8 +15,6 @@ export async function agentApiRequest<T>(path: string, init?: RequestInit): Prom
   return body as T;
 }
 
-
-import type { ActiveRequest, AgentProfile, ContactResult } from "../types/agent";
 
 export interface AgentProfileUpdate {
   firstName: string;
