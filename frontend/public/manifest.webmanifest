@@ -1,0 +1,28 @@
+{
+  "id": "/",
+  "name": "هشتی | سامانه هوشمند املاک",
+  "short_name": "هشتی",
+  "description": "سامانه ثبت و جستجوی آگهی‌های ملکی هشتی",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfbf7",
+  "theme_color": "#062a5b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/hashti-browser-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/hashti-browser-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

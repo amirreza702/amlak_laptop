@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: amlak
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    command: sh -c "npx prisma generate && npx prisma db push && npx tsx watch src/app.ts"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:1234@db:5432/amlak
+      CHOKIDAR_USEPOLLING: "true"
+      CORS_ORIGINS: "http://localhost:3000"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  # نسخهٔ استاتیک PWA؛ تنها فرانت‌اند فعال روی پورت 3000.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.static
+      args:
+        # This URL is embedded in the static browser bundle at build time.
+        # Override it for deployments where the browser reaches the API elsewhere.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

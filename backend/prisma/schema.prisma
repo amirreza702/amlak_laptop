@@ -1,0 +1,1235 @@
+// ============================================================
+// Hashti - Prisma Database Schema
+// PostgreSQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+// نقش کاربر
+enum UserRole {
+  CUSTOMER
+  OWNER
+  AGENT
+  HASHTI
+}
+
+// نوع ملک
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  LAND
+  SHOP
+  OFFICE
+  GARDEN
+}
+
+// نوع معامله
+enum TransactionType {
+  SALE
+  FULL_DEPOSIT
+  RENT
+}
+
+// وضعیت ثبت و انتشار ملک
+enum ListingStatus {
+  DRAFT
+  PENDING_OWNER_APPROVAL
+  PENDING_HASHTI_VERIFICATION
+  PUBLISHED
+  REJECTED
+  EXPIRED
+  PAUSED
+  SOLD
+  RENTED
+}
+
+// وضعیت سکونت
+enum OccupancyStatus {
+  VACANT
+  OWNER_OCCUPIED
+  TENANT_OCCUPIED
+}
+
+// منبع ثبت ملک
+enum RegistrationSource {
+  OWNER
+  AGENT
+  HASHTI
+}
+
+// وضعیت مالکیت
+enum OwnershipType {
+  SIX_DANG
+  SHARED
+}
+
+// نوع سند
+enum DocumentType {
+  SINGLE_SHEET
+  OLD_DEED
+  OFFICIAL_CONTRACT
+  ORDINARY_CONTRACT
+}
+
+// وضعیت زمین
+enum LandTenure {
+  FREEHOLD
+  ENDOWMENT
+}
+
+// وضعیت تأیید مالک
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// وضعیت ارتباط مشاور با ملک
+enum PropertyAgentStatus {
+  ACTIVE
+  REVOKED
+}
+
+// وضعیت درخواست بازدید
+enum ViewingRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+// وضعیت گفتگو
+enum ConversationStatus {
+  OPEN
+  IN_PROGRESS
+  VIEWING_SCHEDULED
+  VIEWING_COMPLETED
+  CLOSED
+}
+
+// وضعیت رسانه
+enum MediaType {
+  MAIN_IMAGE
+  IMAGE
+  FLOOR_PLAN
+}
+
+// وضعیت بازسازی
+enum RenovationStatus {
+  NO_RENOVATION
+  PARTIAL
+  FULL
+}
+
+// نوع تغییر قیمت
+enum PriceChangeType {
+  INITIAL
+  PRICE_CHANGE
+}
+
+// نوع تغییر مهم ملک
+enum PropertyHistoryAction {
+  CREATED
+  UPDATED
+  OWNERSHIP_CHANGED
+  VERIFICATION_CHANGED
+  LISTING_CHANGED
+  LOCATION_CHANGED
+  PRICE_CHANGED
+  ARCHIVED
+  RESTORED
+  OTHER
+}
+
+// نتیجه بررسی تشابه
+enum DuplicateDecision {
+  SAME_PROPERTY
+  DIFFERENT_PROPERTY
+}
+
+// وضعیت تور 360
+enum TourStatus {
+  REQUESTED
+  PAID
+  SCHEDULED
+  CAPTURED
+  PROCESSING
+  PUBLISHED
+  CANCELLED
+}
+
+// نوع ارزیابی
+enum EvaluationType {
+  CUSTOMER_TO_AGENT
+  OWNER_TO_AGENT
+  AGENT_TO_CUSTOMER
+  AGENT_TO_OWNER
+  CUSTOMER_TO_PROPERTY
+  CUSTOMER_TO_OWNER
+  OWNER_TO_CUSTOMER
+  AGENT_TO_PROPERTY
+  HASHTI_TO_AGENT
+}
+
+// وضعیت ارزیابی
+enum EvaluationStatus {
+  SUBMITTED
+  CALCULATED
+  APPROVED
+  REJECTED
+}
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  mobile       String   @unique
+  passwordHash String?
+  role         UserRole
+  isActive     Boolean  @default(true)
+  // Elevated access is separate from the HASHTI role and defaults to disabled.
+  isSuperAdmin Boolean  @default(false)
+
+  adminPermissions String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer?
+  owner    Owner?
+  agent    Agent?
+
+  notifications Notification[]
+  messages      Message[]
+  sessions Session[]
+
+  // رابطه‌های افزوده‌شده برای ردیابی بررسی مشاوران و رویدادهای مدیریتی.
+  reviewedAgents  Agent[]         @relation("AgentVerificationReviewer")
+  adminAuditLogs AdminAuditLog[] @relation("AdminAuditActor")
+
+  auditTargets    AdminAuditLog[] @relation("AdminAuditTarget")
+  @@map("users")
+}
+
+// ============================================================
+// USER SESSION
+// ============================================================
+
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ============================================================
+// CUSTOMER
+// ============================================================
+
+model Customer {
+  id        String @id @default(uuid())
+  userId    String @unique
+  firstName String
+  lastName  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  viewingRequests ViewingRequest[]
+  evaluations     Evaluation[]
+  favorites       CustomerPropertyFavorite[]
+
+  searchRequests PropertySearchRequest[]
+
+  // سوابق مشاهده اطلاعات تماس توسط مشاوران
+  contactAccessLogs ContactAccessLog[]
+
+  @@map("customers")
+}
+
+// ============================================================
+// CUSTOMER PROPERTY FAVORITE
+// ============================================================
+
+model CustomerPropertyFavorite {
+  id         String @id @default(uuid())
+  customerId String
+  propertyId String
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // هر مشتری هر ملک را فقط یک بار می‌تواند علاقه‌مندی کند
+  @@unique([customerId, propertyId])
+
+  // علاقه‌مندی‌های یک مشتری بر اساس زمان
+  @@index([customerId, createdAt])
+
+  // علاقه‌مندی‌های یک ملک
+  @@index([propertyId])
+
+  @@map("customer_property_favorites")
+}
+
+// ============================================================
+// CUSTOMER PROPERTY SEARCH REQUEST
+// ============================================================
+
+model PropertySearchRequest {
+  id              String @id @default(uuid())
+
+  customerId      String
+  
+
+  transactionType TransactionType
+  propertyType    PropertyType
+  city            String
+
+  // بودجه تقریبی مشتری
+  budget Decimal?
+
+  // خواسته‌ها و جزئیات قابل مذاکره
+  description String?
+
+  hashtiVerified Boolean @default(false)
+
+  status String @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // سوابق مشاهده اطلاعات تماس این درخواست توسط مشاوران
+  contactAccessLogs ContactAccessLog[]
+
+  
+
+  @@index([customerId, createdAt])
+  @@index([city])
+  @@index([status])
+  @@map("property_search_requests")
+}
+
+// ============================================================
+// OWNER
+// ============================================================
+
+model Owner {
+  id        String @id @default(uuid())
+  userId    String @unique
+  firstName String
+  lastName  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  properties  PropertyOwner[]
+  evaluations Evaluation[]
+  agentRequests OwnerAgentRequest[]
+
+  @@map("owners")
+}
+
+// ============================================================
+// AGENT
+// ============================================================
+
+model Agent {
+  id         String  @id @default(uuid())
+  userId     String  @unique
+  firstName  String
+  lastName   String
+  agencyName String?
+  address    String?
+  isVerified Boolean @default(false)
+
+  // وضعیت دقیق بررسی افزوده می‌شود؛ isVerified برای سازگاری قبلی حذف نمی‌شود.
+  verificationStatus     VerificationStatus @default(PENDING)
+  verificationReviewedAt DateTime?
+  verificationReviewedBy String?
+  verificationNotes      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationReviewer User? @relation("AgentVerificationReviewer", fields: [verificationReviewedBy], references: [id], onDelete: SetNull)
+
+  propertyAgents PropertyAgent[]
+  evaluations    Evaluation[]
+
+  // سوابق مشاهده اطلاعات تماس مشتریان
+  contactAccessLogs ContactAccessLog[]
+
+//سوابق اشتراک
+  subscriptions      AgentSubscription[]
+contactAccessUsages ContactAccessUsage[]
+  ownerAgentRequestAccessLogs OwnerAgentRequestAccessLog[]
+
+
+
+  @@index([verificationStatus])
+  @@map("agents")
+}
+
+// ============================================================
+// CONTACT ACCESS LOG
+// ============================================================
+//
+// ثبت سابقه دسترسی مشاور به اطلاعات تماس مشتری.
+//
+// نکته:
+// در این مرحله فقط دسترسی به Contact مشتری از طریق
+// PropertySearchRequest را پوشش می‌دهیم.
+//
+// بعداً می‌توان همین مفهوم را برای Contact مالک نیز
+// گسترش داد.
+//
+
+model ContactAccessLog {
+  id String @id @default(uuid())
+
+  // مشاوری که اطلاعات تماس را مشاهده کرده است
+  agentId String
+
+  // مشتری صاحب اطلاعات تماس
+  customerId String
+
+  // درخواست ملکی که از طریق آن Contact مشاهده شده است
+  searchRequestId String
+
+  // زمان مشاهده اطلاعات تماس
+  accessedAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  searchRequest PropertySearchRequest @relation(fields: [searchRequestId], references: [id], onDelete: Cascade)
+
+  // هر مشاور برای هر درخواست فقط یک بار Contact را مشاهده می‌کند
+  //
+  // بنابراین مشاهده دوباره همان Contact برای همان درخواست
+  // نباید یک دسترسی جدید محسوب شود.
+  @@unique([agentId, searchRequestId])
+
+  // دسترسی‌های هر مشاور
+  @@index([agentId, accessedAt])
+
+  // دسترسی‌های هر مشتری
+  @@index([customerId, accessedAt])
+
+  // دسترسی‌های مربوط به یک درخواست
+  @@index([searchRequestId])
+
+  @@map("contact_access_logs")
+}
+
+// ============================================================
+// HASHTI STAFF
+// ============================================================
+
+model HashtiStaff {
+  id        String  @id @default(uuid())
+  firstName String
+  lastName  String
+  mobile    String  @unique
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hashti_staff")
+}
+
+// ============================================================
+// PROPERTY
+// ============================================================
+
+model Property {
+  id String @id @default(uuid())
+
+  // ----------------------------
+  // Basic information
+  // ----------------------------
+
+  propertyType       PropertyType
+  registrationSource RegistrationSource
+
+  city     String
+  district String
+  address  String
+
+  postalCode String?
+
+  // ----------------------------
+  // Exact location
+  // ----------------------------
+
+  latitudeExact  Float
+  longitudeExact Float
+
+  // Approximate public location
+  latitudePublic  Float?
+  longitudePublic Float?
+
+  // ----------------------------
+  // Physical characteristics
+  // ----------------------------
+
+  area       Float?
+  rooms      Int?
+  yearBuilt  Int?
+  floor      Int?
+  unitNumber String?
+  totalUnits Int?
+
+  // ----------------------------
+  // Parking
+  // ----------------------------
+
+  parkingCount  Int?
+  parkingType   String?
+  parkingNumber String?
+
+  // ----------------------------
+  // Facilities
+  // ----------------------------
+
+  hasElevator Boolean?
+  hasStorage  Boolean?
+  hasBalcony  Boolean?
+  hasYard     Boolean?
+
+  heatingSystem String?
+  coolingSystem String?
+
+  // ----------------------------
+  // Legal information
+  // ----------------------------
+
+  documentType  DocumentType?
+  ownershipType OwnershipType?
+  landTenure    LandTenure?
+
+  // ----------------------------
+  // Description
+  // ----------------------------
+
+  description String?
+
+  renovationStatus RenovationStatus?
+  renovationYear   Int?
+
+  // ----------------------------
+  // Occupancy
+  // ----------------------------
+
+  occupancyStatus OccupancyStatus @default(VACANT)
+
+  // ----------------------------
+  // Current listing / activity
+  // ----------------------------
+
+  isActive       Boolean   @default(true)
+  lastConfirmedAt DateTime?
+  confirmUntil   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ----------------------------
+  // Relations
+  // ----------------------------
+
+  listing PropertyListing?
+
+  owners PropertyOwner[]
+  agents PropertyAgent[]
+  ownerAgentRequests OwnerAgentRequest[]
+
+  media PropertyMedia[]
+
+  priceHistory PriceHistory[]
+
+  history PropertyHistory[]
+
+  verificationCases VerificationCase[]
+
+  duplicateReviewsAsPrimary   DuplicateReview[] @relation("PrimaryProperty")
+  duplicateReviewsAsCandidate DuplicateReview[] @relation("CandidateProperty")
+
+  viewingRequests ViewingRequest[]
+
+  virtualTours VirtualTour360[]
+
+  evaluations Evaluation[]
+
+  favorites CustomerPropertyFavorite[]
+
+  archive PropertyArchive?
+
+  @@index([city, district])
+  @@index([propertyType])
+  @@index([registrationSource])
+  @@index([occupancyStatus])
+  @@index([confirmUntil])
+  @@map("properties")
+}
+
+// ============================================================
+// PROPERTY LISTING
+// ============================================================
+
+model PropertyListing {
+  id         String @id @default(uuid())
+  propertyId String @unique
+
+  transactionType TransactionType
+
+  // Current prices
+  salePrice     Decimal?
+  depositAmount Decimal?
+  rentAmount    Decimal?
+
+  status ListingStatus @default(DRAFT)
+
+  publishedAt DateTime?
+  rejectedAt  DateTime?
+  expiredAt   DateTime?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([transactionType])
+  @@index([status])
+  @@index([salePrice])
+  @@index([depositAmount])
+  @@index([rentAmount])
+  @@map("property_listings")
+}
+
+// ============================================================
+// PROPERTY OWNER
+// ============================================================
+
+model PropertyOwner {
+  propertyId String
+  ownerId    String
+
+  // سهم مالکیت بر اساس دانگ
+  share Float
+
+  isPrimary Boolean @default(false)
+
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, ownerId])
+  @@index([ownerId])
+  @@map("property_owners")
+}
+
+
+// ============================================================
+// OWNER REQUEST FOR AGENT SERVICES
+// ============================================================
+
+model OwnerAgentRequest {
+  id          String   @id @default(uuid())
+  ownerId     String
+  propertyId  String
+  description String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  accessLogs OwnerAgentRequestAccessLog[]
+
+  @@index([ownerId, createdAt])
+  @@index([propertyId, status])
+  @@index([status, createdAt])
+  @@map("owner_agent_requests")
+}
+
+model OwnerAgentRequestAccessLog {
+  id                   String   @id @default(uuid())
+  agentId              String
+  ownerAgentRequestId  String
+  accessedAt           DateTime @default(now())
+
+  agent       Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  ownerRequest OwnerAgentRequest @relation(fields: [ownerAgentRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, ownerAgentRequestId])
+  @@index([agentId, accessedAt])
+  @@index([ownerAgentRequestId])
+  @@map("owner_agent_request_access_logs")
+}
+
+// ============================================================
+// PROPERTY AGENT
+// ============================================================
+
+model PropertyAgent {
+  propertyId String
+  agentId    String
+
+  status PropertyAgentStatus @default(ACTIVE)
+
+  approvedByOwner Boolean   @default(false)
+  approvedAt      DateTime?
+
+  registeredAt      DateTime @default(now())
+  isFirstRegistrant Boolean  @default(false)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, agentId])
+  @@index([agentId])
+  @@map("property_agents")
+}
+
+// ============================================================
+// PUBLIC PROPERTY MEDIA
+// ============================================================
+
+model PropertyMedia {
+  id         String @id @default(uuid())
+  propertyId String
+
+  type MediaType
+  url  String
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, sortOrder])
+  @@map("property_media")
+}
+
+// ============================================================
+// PRICE HISTORY
+// ============================================================
+
+model PriceHistory {
+  id         String @id @default(uuid())
+  propertyId String
+
+  changeType PriceChangeType
+
+  salePrice     Decimal?
+  depositAmount Decimal?
+  rentAmount    Decimal?
+
+  changedAt DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, changedAt])
+  @@map("price_history")
+}
+
+// ============================================================
+// PROPERTY HISTORY
+// ============================================================
+
+model PropertyHistory {
+  id         String @id @default(uuid())
+  propertyId String
+
+  action PropertyHistoryAction
+
+  field    String?
+  oldValue String?
+  newValue String?
+
+  performedBy String?
+  reason      String?
+
+  createdAt DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, createdAt])
+  @@map("property_history")
+}
+
+// ============================================================
+// VERIFICATION CASE
+// ============================================================
+
+model VerificationCase {
+  id         String @id @default(uuid())
+  propertyId String
+
+  status VerificationStatus @default(PENDING)
+
+  reviewedBy String?
+  reviewedAt DateTime?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property  Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  documents VerificationDocument[]
+
+  @@index([propertyId, status])
+  @@map("verification_cases")
+}
+
+// ============================================================
+// PRIVATE VERIFICATION DOCUMENT
+// ============================================================
+
+model VerificationDocument {
+  id                 String @id @default(uuid())
+  verificationCaseId String
+
+  documentType String
+  fileUrl      String
+
+  createdAt DateTime @default(now())
+
+  verificationCase VerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
+
+  @@map("verification_documents")
+}
+
+// ============================================================
+// DUPLICATE PROPERTY REVIEW
+// ============================================================
+
+model DuplicateReview {
+  id String @id @default(uuid())
+
+  primaryPropertyId   String
+  candidatePropertyId String
+
+  similarityScore Float
+
+  decision DuplicateDecision?
+
+  reviewedBy String?
+  reviewedAt DateTime?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  primaryProperty Property @relation("PrimaryProperty", fields: [primaryPropertyId], references: [id], onDelete: Cascade)
+
+  candidateProperty Property @relation("CandidateProperty", fields: [candidatePropertyId], references: [id], onDelete: Cascade)
+
+  @@index([primaryPropertyId])
+  @@index([candidatePropertyId])
+  @@map("duplicate_reviews")
+}
+
+// ============================================================
+// 360 TOUR
+// ============================================================
+
+model VirtualTour360 {
+  id         String @id @default(uuid())
+  propertyId String
+
+  status TourStatus @default(REQUESTED)
+
+  publishedUrl String?
+
+  requestedAt DateTime  @default(now())
+  scheduledAt DateTime?
+  capturedAt  DateTime?
+  publishedAt DateTime?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  orders TourOrder[]
+
+  @@index([propertyId, status])
+  @@map("virtual_tours_360")
+}
+
+// ============================================================
+// 360 TOUR ORDER
+// ============================================================
+
+model TourOrder {
+  id        String @id @default(uuid())
+  tourId    String
+  paymentId String?
+
+  amount Decimal
+
+  createdAt DateTime @default(now())
+
+  tour VirtualTour360 @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_orders")
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+
+model Payment {
+  id String @id @default(uuid())
+
+  amount Decimal
+
+  gateway       String?
+  transactionId String?
+
+  status String
+
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+// ============================================================
+// VIEWING REQUEST
+// ============================================================
+
+model ViewingRequest {
+  id         String @id @default(uuid())
+  propertyId String
+  customerId String
+
+  proposedAt DateTime
+
+  message String?
+
+  status ViewingRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  conversation Conversation?
+
+  @@index([propertyId, status])
+  @@index([customerId, status])
+  @@map("viewing_requests")
+}
+
+// ============================================================
+// CONVERSATION
+// ============================================================
+
+model Conversation {
+  id               String @id @default(uuid())
+  viewingRequestId String @unique
+
+  status ConversationStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  viewingRequest ViewingRequest @relation(fields: [viewingRequestId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+
+  @@map("conversations")
+}
+
+// ============================================================
+// MESSAGE
+// ============================================================
+
+model Message {
+  id             String @id @default(uuid())
+  conversationId String
+  senderId       String
+
+  body String
+
+  createdAt DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+
+model Notification {
+  id     String @id @default(uuid())
+  userId String
+
+  title   String
+  message String
+
+  isRead Boolean @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// EVALUATION
+// ============================================================
+
+model Evaluation {
+  id String @id @default(uuid())
+
+  type EvaluationType
+
+  evaluatorUserId String
+
+  customerId String?
+  ownerId    String?
+  agentId    String?
+  propertyId String?
+
+  // Raw evaluation input
+  score   Int?
+  comment String?
+
+  status EvaluationStatus @default(SUBMITTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  owner    Owner?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  agent    Agent?    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  result EvaluationResult?
+
+  @@index([type])
+  @@index([agentId])
+  @@index([propertyId])
+  @@map("evaluations")
+}
+
+// ============================================================
+// EVALUATION RESULT
+// ============================================================
+
+model EvaluationResult {
+  id           String @id @default(uuid())
+  evaluationId String @unique
+
+  // Result calculated by Hashti formula
+  calculatedScore Float
+
+  formulaVersion String
+
+  approvedBy String?
+  approvedAt DateTime?
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@map("evaluation_results")
+}
+
+// ============================================================
+// EVALUATION FORMULA
+// ============================================================
+
+model EvaluationFormula {
+  id String @id @default(uuid())
+
+  name    String
+  version String
+
+  definition Json
+
+  isActive Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([name, version])
+  @@map("evaluation_formulas")
+}
+
+// ============================================================
+// EXACT LOCATION ACCESS LOG
+// ============================================================
+
+model ExactLocationAccessLog {
+  id         String @id @default(uuid())
+  propertyId String
+
+  userId String
+
+  accessedAt DateTime @default(now())
+  reason     String?
+
+  @@index([propertyId, accessedAt])
+  @@index([userId, accessedAt])
+  @@map("exact_location_access_logs")
+}
+
+// ============================================================
+// PROPERTY ARCHIVE
+// ============================================================
+
+model PropertyArchive {
+  id         String @id @default(uuid())
+  propertyId String @unique
+
+  // Minimal summary retained after archival
+  propertyType    PropertyType
+  city            String
+  district        String
+  transactionType TransactionType?
+
+  archivedReason String?
+
+  archivedAt DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_archives")
+}
+
+// ============================================================
+// Agent Subscription
+// ============================================================
+
+model AgentSubscription {
+  id                  String   @id @default(uuid())
+  agentId             String
+
+  
+  status              String   @default("ACTIVE")
+
+  planId String
+  
+
+  startsAt            DateTime
+  expiresAt           DateTime?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  subscriptionPlan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([agentId, status])
+  @@index([expiresAt])
+  @@index([planId])
+  @@map("agent_subscriptions")
+}
+
+model ContactAccessUsage {
+  id         String   @id @default(uuid())
+  agentId    String
+  periodStart DateTime
+
+  usedCount  Int      @default(0)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, periodStart])
+  @@index([agentId, periodStart])
+  @@map("contact_access_usage")
+}
+
+// ============================================================
+// ADMIN AUDIT LOG
+// ============================================================
+// سوابق مدیریتی مستقل نگه داشته می‌شوند؛ حذف کاربر نباید گزارش را حذف کند.
+
+model AdminAuditLog {
+  id           String    @id @default(uuid())
+  actorUserId  String?
+  actorMobile  String?
+  actorRole    UserRole?
+  action       String
+  targetType   String
+  targetId     String?
+  targetUserId String?
+  operation    String?
+  reason       String?
+  before       Json?
+  after        Json?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+
+  actor  User? @relation("AdminAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  target User? @relation("AdminAuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([action, createdAt])
+  @@index([operation, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+
+model SubscriptionPlan {
+  id                  String   @id @default(uuid())
+
+  code                String   @unique
+  name                String
+  level               Int
+  monthlyContactLimit Int
+
+  status              String   @default("ACTIVE")
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subscriptions AgentSubscription[]
+
+  @@index([level])
+  @@index([status])
+  @@map("subscription_plans")
+}
