@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, type FormEvent } from "react";
-import { createPropertyListing, createPropertyRecord } from "../api/propertyApi";
+import { usePropertyRegistration } from "../hooks/usePropertyRegistration";
+import type { PropertyType, TransactionType } from "../types/propertyRegistration";
 
 // نقشه به صورت client-only بارگذاری می‌شود تا Leaflet در Static Export به window وابسته نشود.
 const PropertyLocationPicker = dynamic(
@@ -12,9 +12,6 @@ const PropertyLocationPicker = dynamic(
     loading: () => <div className="flex h-72 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500 sm:h-96">در حال بارگذاری نقشه...</div>,
   }
 );
-
-type PropertyType = "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
-type TransactionType = "SALE" | "FULL_DEPOSIT" | "RENT";
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
   { value: "APARTMENT", label: "آپارتمان" },
@@ -38,95 +35,18 @@ interface PropertyRegistrationPanelProps {
   mode: "owner" | "agent";
 }
 
-interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
-
 export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelProps) {
-  const [propertyType, setPropertyType] = useState<PropertyType>("APARTMENT");
-  const [transactionType, setTransactionType] = useState<TransactionType>("SALE");
-  const [city, setCity] = useState("شاهرود");
-  const [district, setDistrict] = useState("");
-  const [address, setAddress] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const [area, setArea] = useState("");
-  const [rooms, setRooms] = useState("");
-  const [floor, setFloor] = useState("");
-  const [salePrice, setSalePrice] = useState("");
-  const [depositAmount, setDepositAmount] = useState("");
-  const [rentAmount, setRentAmount] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null);
-  const [listingCreated, setListingCreated] = useState(false);
-
-  async function submitListing(propertyId: string) {
-    await createPropertyListing(propertyId, {
-      transactionType,
-      salePrice: transactionType === "SALE" ? salePrice.trim() : null,
-      depositAmount: transactionType === "FULL_DEPOSIT" ? depositAmount.trim() : null,
-      rentAmount: transactionType === "RENT" ? rentAmount.trim() : null,
-    });
-    setListingCreated(true);
-    setMessage("اطلاعات ملک و معامله با موفقیت ثبت شد. آگهی هنوز منتشر نشده و برای انتشار باید مراحل بررسی و تأیید هشتی طی شود.");
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      // اگر خود ملک قبلاً ثبت شده و فقط ثبت Listing ناموفق بوده، ملک را دوباره ایجاد نکن.
-      if (createdPropertyId && !listingCreated) {
-        await submitListing(createdPropertyId);
-        return;
-      }
-
-      if (!coordinates || !Number.isFinite(coordinates.latitude) || !Number.isFinite(coordinates.longitude)) {
-        throw new Error("برای ثبت ملک، محل دقیق آن را روی نقشه انتخاب کنید.");
-      }
-      if (transactionType === "SALE" && !(Number(salePrice) > 0)) {
-        throw new Error("قیمت فروش باید بیشتر از صفر باشد.");
-      }
-      if (transactionType === "FULL_DEPOSIT" && !(Number(depositAmount) > 0)) {
-        throw new Error("مبلغ رهن کامل باید بیشتر از صفر باشد.");
-      }
-      if (transactionType === "RENT" && !(Number(rentAmount) > 0)) {
-        throw new Error("مبلغ اجاره باید بیشتر از صفر باشد.");
-      }
-
-      const body = await createPropertyRecord({
-        propertyType,
-        city: city.trim(),
-        district: district.trim(),
-        address: address.trim(),
-        postalCode: postalCode.trim() || null,
-        latitudeExact: coordinates.latitude,
-        longitudeExact: coordinates.longitude,
-        area: area.trim() ? Number(area) : null,
-        rooms: rooms.trim() ? Number(rooms) : null,
-        floor: floor.trim() ? Number(floor) : null,
-      });
-
-      const propertyId = body.property?.id;
-      if (!propertyId) {
-        throw new Error("پاسخ سرور شناسه ملک را برنگرداند؛ پیش از ثبت مجدد، فهرست املاک را بررسی کنید.");
-      }
-
-      setCreatedPropertyId(propertyId);
-      await submitListing(propertyId);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "ثبت اطلاعات ناموفق بود.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
+  const {
+    propertyType, setPropertyType,
+    transactionType, setTransactionType,
+    city, setCity, district, setDistrict, address, setAddress,
+    postalCode, setPostalCode, coordinates, setCoordinates,
+    area, setArea, rooms, setRooms, floor, setFloor,
+    salePrice, setSalePrice, depositAmount, setDepositAmount,
+    rentAmount, setRentAmount,
+    busy, error, message, createdPropertyId, listingCreated,
+    submit,
+  } = usePropertyRegistration();
   return (
     <section dir="rtl" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-5">
