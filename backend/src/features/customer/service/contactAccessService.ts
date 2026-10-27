@@ -24,35 +24,28 @@ export const accessCustomerContact = async (
     throw new Error("Only active search requests can be accessed");
   }
 
-  const customer = await findCustomerById(searchRequest.customerId);
-  if (!customer) throw new Error("Customer not found");
+  const customer = searchRequest.customerId
+    ? await findCustomerById(searchRequest.customerId)
+    : null;
+  if (searchRequest.customerId && !customer) throw new Error("Customer not found");
+
+  // شماره تماس ثبت‌کننده در زمان ایجاد از نشست معتبر سرور ذخیره شده است.
+  // در درخواست مشاور، این شماره متعلق به مشاور ثبت‌کننده است.
+  const contact = {
+    id: customer?.id ?? searchRequest.createdByUserId,
+    firstName: customer?.firstName ?? (searchRequest.createdByRole === "AGENT" ? "مشاور املاک" : "مشتری"),
+    lastName: customer?.lastName ?? "",
+    mobile: searchRequest.requesterMobile,
+  };
 
   const existingAccess = await findContactAccessLog(agentId, searchRequestId);
-  if (existingAccess) {
-    return {
-      access: existingAccess,
-      customer: {
-        id: customer.id,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        mobile: customer.user.mobile,
-      },
-    };
-  }
+  if (existingAccess) return { access: existingAccess, customer: contact };
 
   const access = await prisma.$transaction(async (tx) => {
     const existing = await findContactAccessLog(agentId, searchRequestId, tx);
     if (existing) return existing;
-    return createContactAccessLog(agentId, customer.id, searchRequestId, tx);
+    return createContactAccessLog(agentId, customer?.id ?? null, searchRequestId, tx);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
-  return {
-    access,
-    customer: {
-      id: customer.id,
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      mobile: customer.user.mobile,
-    },
-  };
+  return { access, customer: contact };
 };
