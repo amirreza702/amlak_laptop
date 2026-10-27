@@ -2,6 +2,7 @@ import { Router } from "express";
 import { UserRole } from "@prisma/client";
 import {
   createCustomerSearchRequestController,
+  createAgentSearchRequestController,
   getCustomerSearchRequestController,
   getCustomerSearchRequestsController,
   closeCustomerSearchRequestController,
@@ -44,6 +45,15 @@ router.put(
   requireRole(UserRole.CUSTOMER),
   requireOwnProfile("customer", "customerId"),
   updateCustomerProfileController
+);
+
+// ثبت درخواست توسط مشاور تأییدشده؛ اطلاعات ثبت‌کننده از نشست خوانده می‌شود.
+router.post(
+  "/agents/me/search-requests",
+  authMiddleware,
+  requireRole(UserRole.AGENT),
+  requireVerifiedAgent,
+  createAgentSearchRequestController
 );
 
 // درخواست‌های جست‌وجو: فقط صاحب درخواست
