@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Coordinates } from "../types/propertyRegistration";
+import { usePropertyLocationPicker } from "../hooks/usePropertyLocationPicker";
 
 interface PropertyLocationPickerProps {
   value: Coordinates | null;
@@ -80,88 +81,15 @@ function MapSizeHandler({ position }: { position: Coordinates | null }) {
 }
 
 export default function PropertyLocationPicker({ value, onChange, city }: PropertyLocationPickerProps) {
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState("");
-  const [results, setResults] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
-  const [preview, setPreview] = useState<Coordinates | null>(value);
-
-  async function searchPlace() {
-    const term = query.trim();
-    if (!term || searching) return;
-
-    setSearching(true);
-    setSearchError("");
-    setResults([]);
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 12000);
-
-    try {
-      const params = new URLSearchParams({
-        q: [term, city.trim(), "ایران"].filter(Boolean).join(", "),
-        format: "jsonv2",
-        limit: "5",
-        "accept-language": "fa",
-      });
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-        {
-          headers: { Accept: "application/json" },
-          signal: controller.signal,
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("سرویس جست‌وجوی مکان پاسخ مناسبی نداد. کمی بعد دوباره تلاش کنید یا نقطه را مستقیماً روی نقشه انتخاب کنید.");
-      }
-
-      const data = await response.json() as Array<{ display_name: string; lat: string; lon: string }>;
-      const places = data
-        .map((item) => ({ label: item.display_name, lat: Number(item.lat), lon: Number(item.lon) }))
-        .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon));
-
-      setResults(places);
-      if (places.length === 0) {
-        setSearchError("مکانی پیدا نشد؛ عبارت دیگری جست‌وجو کنید یا نقطه را مستقیماً روی نقشه انتخاب کنید.");
-      } else {
-        // پس از جست‌وجو، نقشه فوراً به اولین نتیجه نزدیک می‌شود؛
-        // فهرست نتایج هم باز می‌ماند تا کاربر در صورت نیاز محل دقیق‌تری برگزیند.
-        const firstPlace = places[0];
-        setPreview({ latitude: firstPlace.lat, longitude: firstPlace.lon });
-        onChange(null);
-        setSearchError("نقشه به محدوده مکان پیدا‌شده منتقل شد؛ برای انتخاب نتیجه دقیق‌تر، یکی از نشانی‌های فهرست را بزنید.");
-      }
-    } catch (cause) {
-      if (cause instanceof Error && cause.name === "AbortError") {
-        setSearchError("پاسخ جست‌وجوی مکان بیش از ۱۲ ثانیه طول کشید. اتصال اینترنت یا دسترسی به سرویس نقشه را بررسی کنید؛ می‌توانید نقطه را مستقیماً روی نقشه انتخاب کنید.");
-      } else {
-        setSearchError(cause instanceof Error
-          ? cause.message
-          : "جست‌وجوی مکان ناموفق بود. می‌توانید نقطه را مستقیماً روی نقشه انتخاب کنید.");
-      }
-    } finally {
-      window.clearTimeout(timeoutId);
-      setSearching(false);
-    }
-  }
+  const {
+    query, setQuery, searching, searchError, setSearchError, results, preview,
+    searchPlace, previewPosition, selectPosition, chooseSearchResult,
+  } = usePropertyLocationPicker({ value, onChange, city });
 
   const markerPosition = preview ?? value;
   const center: [number, number] = markerPosition
     ? [markerPosition.latitude, markerPosition.longitude]
     : defaultCenter;
-
-  function previewPosition(position: Coordinates) {
-    setPreview(position);
-    onChange(null);
-    setSearchError("");
-  }
-
-  function selectPosition(position: Coordinates) {
-    setPreview(position);
-    onChange(position);
-    setSearchError("موقعیت انتخاب شد و مختصات آن برای ثبت ملک تأیید شده است.");
-  }
 
   return (
     <div className="space-y-3">
