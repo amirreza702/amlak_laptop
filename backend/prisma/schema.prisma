@@ -212,6 +212,7 @@ model User {
   customer Customer?
   owner    Owner?
   agent    Agent?
+  createdSearchRequests PropertySearchRequest[] @relation("SearchRequestCreator")
 
   notifications Notification[]
   messages      Message[]
@@ -300,7 +301,12 @@ model CustomerPropertyFavorite {
 model PropertySearchRequest {
   id              String @id @default(uuid())
 
-  customerId      String
+  // مشتری حساب‌دار فقط برای درخواست‌هایی که مستقیماً از حساب مشتری ثبت می‌شوند.
+  customerId      String?
+  // ثبت‌کننده همیشه از نشست احراز‌شده سمت سرور تعیین می‌شود.
+  createdByUserId String
+  createdByRole   UserRole
+  requesterMobile String
   
 
   transactionType TransactionType
@@ -320,7 +326,8 @@ model PropertySearchRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdByUser User @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
 
   // سوابق مشاهده اطلاعات تماس این درخواست توسط مشاوران
   contactAccessLogs ContactAccessLog[]
@@ -409,7 +416,7 @@ model ContactAccessLog {
   agentId String
 
   // مشتری صاحب اطلاعات تماس
-  customerId String
+  customerId String?
 
   // درخواست ملکی که از طریق آن Contact مشاهده شده است
   searchRequestId String
@@ -419,7 +426,7 @@ model ContactAccessLog {
 
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   searchRequest PropertySearchRequest @relation(fields: [searchRequestId], references: [id], onDelete: Cascade)
 
