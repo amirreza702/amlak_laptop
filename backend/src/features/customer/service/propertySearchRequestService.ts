@@ -59,75 +59,42 @@ const validateCustomer = async (
  * ایجاد درخواست جستجوی ملک
  */
 export const createCustomerSearchRequest = async (
-  customerId: string,
+  customerId: string | null,
   data: {
-    transactionType:
-      | "SALE"
-      | "FULL_DEPOSIT"
-      | "RENT";
-
-    propertyType:
-      | "APARTMENT"
-      | "HOUSE"
-      | "VILLA"
-      | "LAND"
-      | "SHOP"
-      | "OFFICE"
-      | "GARDEN";
-
+    transactionType: "SALE" | "FULL_DEPOSIT" | "RENT";
+    propertyType: "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
     city: string;
-
     budget?: number;
-
     description?: string;
-  }
+  },
+  creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string }
 ) => {
-  /**
-   * ابتدا بررسی می‌کنیم مشتری وجود دارد.
-   */
-  const customer =
-    await findCustomerById(customerId);
-
-  if (!customer) {
-    throw new Error("Customer not found");
+  // فقط درخواست ثبت‌شده توسط حساب مشتری باید به پروفایل مشتری متصل باشد.
+  if (creator.role === "CUSTOMER") {
+    if (!customerId) throw new Error("Customer not found");
+    const customer = await findCustomerById(customerId);
+    if (!customer || customer.userId !== creator.id) {
+      throw new Error("Customer not found");
+    }
+  } else if (customerId !== null) {
+    throw new Error("Agent-created requests cannot be assigned to a customer profile");
   }
 
-  /**
-   * شهر باید مقدار داشته باشد.
-   */
-  if (!data.city.trim()) {
-    throw new Error("City is required");
+  if (!data.city.trim()) throw new Error("City is required");
+  if (data.budget !== undefined && (!Number.isFinite(data.budget) || data.budget < 0)) {
+    throw new Error("Budget cannot be negative");
   }
 
-  /**
-   * بودجه اگر ارسال شده باشد،
-   * نباید منفی باشد.
-   */
-  if (
-    data.budget !== undefined &&
-    data.budget < 0
-  ) {
-    throw new Error(
-      "Budget cannot be negative"
-    );
-  }
-
-  /**
-   * ایجاد درخواست
-   */
   return createPropertySearchRequest({
     customerId,
-
+    createdByUserId: creator.id,
+    createdByRole: creator.role,
+    requesterMobile: creator.mobile,
     transactionType: data.transactionType,
-
     propertyType: data.propertyType,
-
     city: data.city.trim(),
-
     budget: data.budget,
-
-    description:
-      data.description?.trim() || null,
+    description: data.description?.trim() || null,
   });
 };
 
