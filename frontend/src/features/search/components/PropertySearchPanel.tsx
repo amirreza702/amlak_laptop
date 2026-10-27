@@ -7,11 +7,11 @@ import {
   Search,
 } from "lucide-react";
 
-import {
+import type {
   PropertySearchState,
   PropertyType,
   TransactionType,
-} from "../hooks/usePropertySearch";
+} from "../types/search";
 
 interface PropertySearchPanelProps {
   filters: PropertySearchState;
