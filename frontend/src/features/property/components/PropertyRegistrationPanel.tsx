@@ -2,8 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, type FormEvent } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+import { createPropertyListing, createPropertyRecord } from "../api/propertyApi";
 
 // نقشه به صورت client-only بارگذاری می‌شود تا Leaflet در Static Export به window وابسته نشود.
 const PropertyLocationPicker = dynamic(
@@ -65,28 +64,12 @@ export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelPro
   const [listingCreated, setListingCreated] = useState(false);
 
   async function submitListing(propertyId: string) {
-    const listingResponse = await fetch(`${API_URL}/properties/${propertyId}/listing`, {
-      method: "POST",
-      credentials: "include",
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        transactionType,
-        salePrice: transactionType === "SALE" ? salePrice.trim() : null,
-        depositAmount: transactionType === "FULL_DEPOSIT" ? depositAmount.trim() : null,
-        rentAmount: transactionType === "RENT" ? rentAmount.trim() : null,
-      }),
+    await createPropertyListing(propertyId, {
+      transactionType,
+      salePrice: transactionType === "SALE" ? salePrice.trim() : null,
+      depositAmount: transactionType === "FULL_DEPOSIT" ? depositAmount.trim() : null,
+      rentAmount: transactionType === "RENT" ? rentAmount.trim() : null,
     });
-    const listingBody = await listingResponse.json().catch(() => ({})) as { message?: string; code?: string };
-    if (!listingResponse.ok) {
-      if (listingResponse.status === 401) {
-        throw new Error("نشست ورود معتبر نیست یا منقضی شده است. بدون بستن فرم، دوباره وارد حساب شوید و سپس ثبت معامله را ادامه دهید.");
-      }
-      if (listingBody.code === "AGENT_NOT_VERIFIED") {
-        throw new Error("حساب مشاور هنوز توسط هشتی تأیید نشده است؛ پس از تأیید حساب می‌توانید اطلاعات معامله را ثبت کنید.");
-      }
-      throw new Error(listingBody.message || `ثبت اطلاعات معامله ناموفق بود (خطای ${listingResponse.status}). می‌توانید دوباره تلاش کنید.`);
-    }
     setListingCreated(true);
     setMessage("اطلاعات ملک و معامله با موفقیت ثبت شد. آگهی هنوز منتشر نشده و برای انتشار باید مراحل بررسی و تأیید هشتی طی شود.");
   }
@@ -117,39 +100,18 @@ export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelPro
         throw new Error("مبلغ اجاره باید بیشتر از صفر باشد.");
       }
 
-      const response = await fetch(`${API_URL}/properties`, {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-        headers: { "Content-Type": "application/json" },
-        // شناسه مالک/مشاور ارسال نمی‌شود؛ Route آن را از نشست معتبر استخراج می‌کند.
-        body: JSON.stringify({
-          propertyType,
-          city: city.trim(),
-          district: district.trim(),
-          address: address.trim(),
-          postalCode: postalCode.trim() || null,
-          latitudeExact: coordinates.latitude,
-          longitudeExact: coordinates.longitude,
-          area: area.trim() ? Number(area) : null,
-          rooms: rooms.trim() ? Number(rooms) : null,
-          floor: floor.trim() ? Number(floor) : null,
-        }),
+      const body = await createPropertyRecord({
+        propertyType,
+        city: city.trim(),
+        district: district.trim(),
+        address: address.trim(),
+        postalCode: postalCode.trim() || null,
+        latitudeExact: coordinates.latitude,
+        longitudeExact: coordinates.longitude,
+        area: area.trim() ? Number(area) : null,
+        rooms: rooms.trim() ? Number(rooms) : null,
+        floor: floor.trim() ? Number(floor) : null,
       });
-      const body = await response.json().catch(() => ({})) as {
-        message?: string;
-        code?: string;
-        property?: { id?: string };
-      };
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("نشست ورود معتبر نیست یا منقضی شده است. فرم حفظ شده؛ دوباره وارد حساب شوید و سپس ثبت را ادامه دهید.");
-        }
-        if (body.code === "AGENT_NOT_VERIFIED") {
-          throw new Error("حساب مشاور هنوز توسط هشتی تأیید نشده است؛ پس از تأیید حساب می‌توانید ملک ثبت کنید.");
-        }
-        throw new Error(body.message || `ثبت ملک ناموفق بود (خطای ${response.status}). اطلاعات را بررسی و دوباره تلاش کنید.`);
-      }
 
       const propertyId = body.property?.id;
       if (!propertyId) {
