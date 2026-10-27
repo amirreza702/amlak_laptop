@@ -3,15 +3,11 @@
 import { useEffect, useState } from "react";
 import { CircleMarker, MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-
-export interface PropertyCoordinates {
-  latitude: number;
-  longitude: number;
-}
+import type { Coordinates } from "../types/propertyRegistration";
 
 interface PropertyLocationPickerProps {
-  value: PropertyCoordinates | null;
-  onChange: (value: PropertyCoordinates | null) => void;
+  value: Coordinates | null;
+  onChange: (value: Coordinates | null) => void;
   city: string;
 }
 
@@ -21,8 +17,8 @@ function MapClickHandler({
   onPreview,
   onSelect,
 }: {
-  onPreview: (value: PropertyCoordinates) => void;
-  onSelect: (value: PropertyCoordinates) => void;
+  onPreview: (value: Coordinates) => void;
+  onSelect: (value: Coordinates) => void;
 }) {
   useMapEvents({
     click(event) {
@@ -41,7 +37,7 @@ function MapClickHandler({
  * نقشه گاهی داخل پنل/بخش تازه بازشده اندازه واقعی والد را در شروع تشخیص نمی‌دهد.
  * تغییر اندازه ظرف را مشاهده می‌کنیم تا نقشه و کاشی‌ها کامل رندر شوند.
  */
-function MapSizeHandler({ position }: { position: PropertyCoordinates | null }) {
+function MapSizeHandler({ position }: { position: Coordinates | null }) {
   const map = useMap();
 
   useEffect(() => {
@@ -88,7 +84,7 @@ export default function PropertyLocationPicker({ value, onChange, city }: Proper
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [results, setResults] = useState<Array<{ label: string; lat: number; lon: number }>>([]);
-  const [preview, setPreview] = useState<PropertyCoordinates | null>(value);
+  const [preview, setPreview] = useState<Coordinates | null>(value);
 
   async function searchPlace() {
     const term = query.trim();
@@ -155,13 +151,13 @@ export default function PropertyLocationPicker({ value, onChange, city }: Proper
     ? [markerPosition.latitude, markerPosition.longitude]
     : defaultCenter;
 
-  function previewPosition(position: PropertyCoordinates) {
+  function previewPosition(position: Coordinates) {
     setPreview(position);
     onChange(null);
     setSearchError("");
   }
 
-  function selectPosition(position: PropertyCoordinates) {
+  function selectPosition(position: Coordinates) {
     setPreview(position);
     onChange(position);
     setSearchError("موقعیت انتخاب شد و مختصات آن برای ثبت ملک تأیید شده است.");
