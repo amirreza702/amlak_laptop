@@ -6,6 +6,7 @@ import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { OwnerAgentRequestsPanel } from "./OwnerAgentRequestsPanel";
+import { AgentCreateSearchRequestPanel } from "./AgentCreateSearchRequestPanel";
 import { useAgentDashboard } from "../hooks/useAgentDashboard";
 
 
@@ -50,7 +51,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       <aside aria-label="ابزارهای پنل مشاور" className="fixed inset-y-0 right-0 z-30 w-16 overflow-x-hidden overflow-y-auto border-l border-slate-200 bg-white p-1.5 shadow-sm sm:p-2 lg:w-64 lg:p-3">
         <h2 className="hidden px-3 py-2 text-base font-black text-slate-900 lg:block">پنل مشاور</h2>
         <nav className="grid grid-cols-1 gap-1.5 lg:gap-2" aria-label="ابزارهای مشاور">
-          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["requests", "درخواست‌ها"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
+          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["create-request", "ثبت درخواست مشتری"], ["requests", "درخواست‌ها"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
             <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 min-w-0 items-center justify-center rounded-lg border px-1 py-2 text-center text-[11px] font-semibold leading-4 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:justify-start lg:px-3 lg:text-right lg:text-sm ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><span className="hidden lg:inline">{label}</span><span className="lg:hidden">{label.slice(0,2)}</span></button>
           ))}
         </nav>
@@ -87,6 +88,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       )}
 
       {profileState === "verified" && selectedTool === "property-management" && <PropertyRegistrationPanel mode="agent" />}
+      {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel />}
 
       {profileState === "verified" && (
         <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
@@ -164,6 +166,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
                         <p className="mt-1 text-sm text-slate-600">بودجه: {displayMoney(request.budget)}</p>
                         {request.description && <p className="mt-2 text-sm leading-7 text-slate-600">{request.description}</p>}
                         <p className="mt-2 text-xs text-slate-400">کد درخواست: <span dir="ltr" className="font-mono">{request.id}</span></p>
+                        <p className="mt-1 text-xs text-slate-500">ثبت‌کننده: {request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p>
                       </div>
                       <span className={`rounded-full px-3 py-1 text-xs font-bold ${request.hashtiVerified ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{request.hashtiVerified ? "بررسی هشتی شده" : "در انتظار بررسی هشتی"}</span>
                     </div>
