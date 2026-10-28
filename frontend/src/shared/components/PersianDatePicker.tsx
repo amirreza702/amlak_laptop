@@ -45,7 +45,7 @@ function partsOf(date: Date): PersianParts {
 // تبدیل تاریخ شمسی به روز میلادی با جست‌وجو؛ بدون وابستگی جدید به کتابخانه.
 function findGregorianDate(year: number, month: number, day: number): Date {
   const start = Date.UTC(year + 621, 0, 1, 12);
-  for (let offset = -100; offset <= 400; offset += 1) {
+  for (let offset = -100; offset <= 500; offset += 1) {
     const candidate = new Date(start + offset * DAY_MS);
     const parts = partsOf(candidate);
     if (parts.year === year && parts.month === month && parts.day === day) return candidate;
