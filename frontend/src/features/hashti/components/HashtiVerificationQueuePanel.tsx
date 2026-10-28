@@ -115,7 +115,7 @@ export function HashtiVerificationQueuePanel() {
               <div><h3 className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</h3>
                 <p className="mt-1 text-sm text-slate-600">{item.property.address}</p>
                 <p className="mt-1 text-xs text-slate-500">پرونده: <span dir="ltr" className="font-mono">{item.id}</span></p>
-                <p className="mt-1 text-xs text-slate-500">ملک: <span dir="ltr" className="font-mono">{item.propertyId}</span> · ثبت: {new Date(item.createdAt).toLocaleString("fa-IR")}</p>
+                <p className="mt-1 text-xs text-slate-500">ملک: <span dir="ltr" className="font-mono">{item.propertyId}</span> · ثبت: {formatPersianDateTime(item.createdAt)}</p>
                 <p className="mt-1 text-sm text-slate-700">وضعیت: {({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.status]}</p>
               </div>
               {item.status === "PENDING" && <div className="flex gap-2">
