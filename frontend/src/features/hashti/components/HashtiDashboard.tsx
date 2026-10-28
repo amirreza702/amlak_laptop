@@ -22,6 +22,8 @@ import { UserNotificationsPanel } from "@/features/notification/components/UserN
 import { HashtiUserManagementPanel } from "./HashtiUserManagementPanel";
 import { HashtiVerificationQueuePanel } from "./HashtiVerificationQueuePanel";
 import { HashtiPropertyAdminToolsPanel } from "./HashtiPropertyAdminToolsPanel";
+import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
+import { formatPersianDateTime } from "@/shared/utils/date";
 
 
 
@@ -152,7 +154,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                   )}
                 </div>
                 {agent.verificationNotes && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-600">یادداشت آخرین تصمیم: {agent.verificationNotes}</p>}
-                {agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-400">آخرین بررسی: {new Date(agent.verificationReviewedAt).toLocaleString("fa-IR")}</p>}
+                {agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-400">آخرین بررسی: {formatPersianDateTime(agent.verificationReviewedAt)}</p>}
               </article>
             ))}
           </div>
@@ -164,8 +166,8 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         <p className="mt-2 text-sm leading-7 text-slate-600">این گزارش، دسترسی‌های ثبت‌شده برای مشاهده شمارهٔ مشتری را نشان می‌دهد؛ گزارش عمومی تمام رویدادهای مدیریتی در مدل فعلی دیتابیس وجود ندارد.</p>
         <form onSubmit={(event) => void loadContactAuditLogs(event)} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-sm">شناسه مشاور (اختیاری)<input value={auditAgentId} onChange={(event) => setAuditAgentId(event.target.value)} dir="ltr" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-          <label className="space-y-1 text-sm">از زمان<input type="datetime-local" value={auditFrom} onChange={(event) => setAuditFrom(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-          <label className="space-y-1 text-sm">تا زمان<input type="datetime-local" value={auditTo} onChange={(event) => setAuditTo(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          <PersianDatePicker label="از زمان" mode="datetime" value={auditFrom} onChange={setAuditFrom} />
+          <PersianDatePicker label="تا زمان" mode="datetime" value={auditTo} onChange={setAuditTo} />
           <div className="flex items-end"><button type="submit" disabled={auditBusy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#043873] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{auditBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} دریافت گزارش</button></div>
         </form>
         {auditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{auditError}</p>}
@@ -176,7 +178,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                 <p className="font-bold">{log.agent.firstName} {log.agent.lastName} · <span dir="ltr">{log.agent.user.mobile}</span></p>
                 <p className="mt-1 text-sm text-slate-600">مشتری: {log.customer.firstName} {log.customer.lastName} · <span dir="ltr">{log.customer.user.mobile}</span></p>
                 <p className="mt-1 text-sm text-slate-600">درخواست: {log.searchRequest.city} · {log.searchRequest.transactionType} · {log.searchRequest.propertyType}</p>
-                <p className="mt-1 text-xs text-slate-500">زمان: {new Date(log.accessedAt).toLocaleString("fa-IR")}</p>
+                <p className="mt-1 text-xs text-slate-500">زمان: {formatPersianDateTime(log.accessedAt)}</p>
                 <p className="mt-1 text-xs text-slate-500">کد رویداد: {idText(log.id)}</p>
               </article>
             ))}
@@ -320,7 +322,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                       <p className="mt-1 text-sm text-slate-600">عامل: {log.actorMobile ?? "حساب حذف‌شده یا نامشخص"} · نقش: {log.actorRole ?? "نامشخص"}</p>
                       <p className="mt-1 text-sm text-slate-600">هدف: {log.targetType} · {log.targetId ? idText(log.targetId) : "بدون شناسه"}</p>
                     </div>
-                    <p className="text-xs text-slate-500">{new Date(log.createdAt).toLocaleString("fa-IR")}</p>
+                    <p className="text-xs text-slate-500">{formatPersianDateTime(log.createdAt)}</p>
                   </div>
                   {log.details !== null && log.details !== undefined && (
                     <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs leading-6 text-slate-700 whitespace-pre-wrap">{JSON.stringify(log.details, null, 2)}</pre>
