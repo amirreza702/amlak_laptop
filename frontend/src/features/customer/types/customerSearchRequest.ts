@@ -22,7 +22,7 @@ export interface CreateCustomerSearchRequestInput {
   transactionType: CustomerRequestTransactionType;
   propertyType: CustomerRequestPropertyType;
   city: string;
-  budget?: number;
+  budget: number;
   description?: string;
 }
 
