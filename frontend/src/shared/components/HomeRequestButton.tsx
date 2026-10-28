@@ -18,7 +18,7 @@ export function HomeRequestButton() {
         </div>
         <div className="text-right">
           <p className="text-sm font-bold">سپردن / درخواست ملک</p>
-          <p className="text-[11px] text-slate-400">بهترین ملک‌ها را برای شما پیدا می‌کنیم</p>
+          <p className="text-[11px] text-slate-400">پیگیری درخواست ملک بر اساس شرایط شما</p>
         </div>
       </div>
       <ArrowLeft className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:-translate-x-1 group-hover:text-[#043873]" />
