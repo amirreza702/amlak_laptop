@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useCustomerDashboardData } from "../hooks/useCustomerDashboardData";
+import { formatPersianDate } from "@/shared/utils/date";
 import { useCustomerRequestFilters } from "../hooks/useCustomerRequestFilters";
 import type {
   CustomerRequestPropertyType,
@@ -58,8 +59,7 @@ function money(value: string | number | null): string {
   return Number.isFinite(number) ? new Intl.NumberFormat("fa-IR").format(number) + " تومان" : String(value);
 }
 function prettyDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("fa-IR");
+  return formatPersianDate(value);
 }
 function transactionLabel(value: string): string {
   return transactionOptions.find((option) => option.value === value)?.label ?? value;
