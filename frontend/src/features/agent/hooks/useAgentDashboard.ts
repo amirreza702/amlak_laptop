@@ -144,7 +144,6 @@ export function useAgentDashboard(user: UserPublic) {
     requests, loadingRequests, requestsError,
     visibleRequests,
     requestSearch, setRequestSearch,
-    requestFilter, setRequestFilter,
     requestTransaction, setRequestTransaction,
     requestPropertyType, setRequestPropertyType,
     requestCity, setRequestCity,
