@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRoundCog } from "lucide-react";
 
 import { hashtiManagementRequest as requestJson } from "../api/hashtiUserManagementApi";
+import { formatPersianDateTime } from "@/shared/utils/date";
 import type {
   HashtiAuditLog as AuditLog,
   HashtiManagedProfileType as ProfileType,
