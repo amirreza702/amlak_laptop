@@ -2,6 +2,7 @@
 
 import { Bell, Check, LoaderCircle } from "lucide-react";
 import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
+import { formatPersianDateTime } from "@/shared/utils/date";
 
 export function UserNotificationsPanel({ userId }: { userId: string }) {
   const { items, loading, busyId, error, load, markRead } = useUserNotifications(userId);
@@ -30,7 +31,7 @@ export function UserNotificationsPanel({ userId }: { userId: string }) {
                 <div>
                   <h3 className="font-bold">{item.title}</h3>
                   <p className="mt-1 text-sm leading-7 text-slate-600">{item.message}</p>
-                  <time className="mt-2 block text-xs text-slate-400">{new Date(item.createdAt).toLocaleString("fa-IR")}</time>
+                  <time className="mt-2 block text-xs text-slate-400">{formatPersianDateTime(item.createdAt)}</time>
                 </div>
                 {!item.isRead && (
                   <button type="button" onClick={() => void markRead(item.id)} disabled={busyId === item.id} aria-label="علامت‌گذاری به‌عنوان خوانده‌شده" className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50">
