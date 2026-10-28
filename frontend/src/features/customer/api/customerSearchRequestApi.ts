@@ -57,15 +57,14 @@ export async function getCurrentCustomerProfile(): Promise<CustomerProfileForReq
 }
 
 /**
- * ثبت درخواست با endpoint موجود Backend.
- * شناسه از endpoint امن پروفایل خود مشتری به دست آمده است و Backend نیز مالکیت آن را کنترل می‌کند.
+ * ثبت درخواست مشتری؛ شناسه پروفایل، نقش و موبایل را Backend از Session می‌گیرد.
+ * Client فقط معیارهای جست‌وجوی ملک را ارسال می‌کند.
  */
 export async function createCustomerSearchRequest(
-  customerId: string,
   data: CreateCustomerSearchRequestInput
 ): Promise<CustomerSearchRequestResult> {
   const response = await fetch(
-    `${API_URL}/customers/${encodeURIComponent(customerId)}/search-requests`,
+    `${API_URL}/customers/me/search-requests`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
