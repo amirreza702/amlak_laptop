@@ -308,7 +308,7 @@ export function useCustomerSearchRequest() {
       event.preventDefault();
       setRequestError(null);
 
-      if (authStatus !== "customer" || user?.role !== "CUSTOMER" || !customerProfile?.id) {
+      if (authStatus !== "customer" || user?.role !== "CUSTOMER") {
         setRequestError("برای ثبت درخواست باید با حساب مشتری وارد شوید.");
         return;
       }
@@ -340,7 +340,7 @@ export function useCustomerSearchRequest() {
 
       setIsRequestSubmitting(true);
       try {
-        const result = await createCustomerSearchRequest(customerProfile.id, payload);
+        const result = await createCustomerSearchRequest(payload);
         setCreatedRequest(result);
       } catch (error: unknown) {
         setRequestError(
@@ -349,7 +349,7 @@ export function useCustomerSearchRequest() {
       } finally {
         setIsRequestSubmitting(false);
       }
-    }, [authStatus, customerProfile, requestValues, user]
+    }, [authStatus, requestValues, user]
   );
 
   const startAnotherRequest = useCallback(() => {
