@@ -213,6 +213,7 @@ model User {
   owner    Owner?
   agent    Agent?
   createdSearchRequests PropertySearchRequest[] @relation("SearchRequestCreator")
+  createdProperties Property[] @relation("PropertyCreator")
 
   notifications Notification[]
   messages      Message[]
