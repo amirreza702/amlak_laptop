@@ -64,7 +64,7 @@ export const createCustomerSearchRequest = async (
     transactionType: "SALE" | "FULL_DEPOSIT" | "RENT";
     propertyType: "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
     city: string;
-    budget?: number;
+    budget: number;
     description?: string;
   },
   creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string }
@@ -81,7 +81,10 @@ export const createCustomerSearchRequest = async (
   }
 
   if (!data.city.trim()) throw new Error("City is required");
-  if (data.budget !== undefined && (!Number.isFinite(data.budget) || data.budget < 0)) {
+  if (data.budget === undefined || data.budget === null) {
+    throw new Error("Budget is required");
+  }
+  if (!Number.isFinite(data.budget) || data.budget < 0) {
     throw new Error("Budget cannot be negative");
   }
 
@@ -316,14 +319,15 @@ export const updateCustomerSearchRequest = async (
   /**
    * بودجه نباید منفی باشد.
    */
+  if (data.budget === null) {
+    throw new Error("Budget is required");
+  }
+
   if (
     data.budget !== undefined &&
-    data.budget !== null &&
-    data.budget < 0
+    (!Number.isFinite(data.budget) || data.budget < 0)
   ) {
-    throw new Error(
-      "Budget cannot be negative"
-    );
+    throw new Error("Budget cannot be negative");
   }
 
   return updatePropertySearchRequest(
