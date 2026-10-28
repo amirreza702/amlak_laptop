@@ -2,6 +2,7 @@
 
 import { type AdminUser, type UserRole } from "@/features/auth/api/authApi";
 import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
+import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
 
 const roles: Record<UserRole, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" };
 const profileName = (user: AdminUser) => {
@@ -56,7 +57,7 @@ export default function AdminUsersPage() {
                 <tbody>{users.map(user => <tr key={user.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
-                  <td className="px-4 py-3">{user.agent ? (user.agent.isVerified ? "تأییدشده" : "تأییدنشده") : "—"}</td><td className="px-4 py-3 text-slate-600">{new Date(user.createdAt).toLocaleDateString("fa-IR")}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || Boolean(user.isSuperAdmin)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
+                  <td className="px-4 py-3">{user.agent ? (user.agent.isVerified ? "تأییدشده" : "تأییدنشده") : "—"}</td><td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || Boolean(user.isSuperAdmin)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
                 </tr>)}</tbody>
               </table></div>
             )}
@@ -68,7 +69,7 @@ export default function AdminUsersPage() {
               </div>
             </footer>
           </section>
-          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-3 text-sm">شناسه: <span dir="ltr">{selectedUser.id}</span></p><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {new Date(selectedUser.createdAt).toLocaleString("fa-IR")} | آخرین بروزرسانی: {new Date(selectedUser.updatedAt).toLocaleString("fa-IR")}</p>{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"} | تأیید مشاور: {selectedUser.agent.isVerified ? "تأییدشده" : "تأییدنشده"}</p>}{selectedUser.role === "HASHTI" && <p className="mt-1 text-sm">سطح دسترسی: {selectedUser.isSuperAdmin ? "مدیر ارشد هشتی" : (selectedUser.adminPermissions || []).join("، ") || "بدون مجوز"}</p>}</section>}
+          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-3 text-sm">شناسه: <span dir="ltr">{selectedUser.id}</span></p><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {formatPersianDateTime(selectedUser.createdAt)} | آخرین بروزرسانی: {formatPersianDateTime(selectedUser.updatedAt)}</p>{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"} | تأیید مشاور: {selectedUser.agent.isVerified ? "تأییدشده" : "تأییدنشده"}</p>}{selectedUser.role === "HASHTI" && <p className="mt-1 text-sm">سطح دسترسی: {selectedUser.isSuperAdmin ? "مدیر ارشد هشتی" : (selectedUser.adminPermissions || []).join("، ") || "بدون مجوز"}</p>}</section>}
         </>}
       </div>
     </main>
