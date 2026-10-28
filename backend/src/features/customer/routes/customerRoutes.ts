@@ -56,7 +56,15 @@ router.post(
   createAgentSearchRequestController
 );
 
-// درخواست‌های جست‌وجو: فقط صاحب درخواست
+// ثبت درخواست مشتری بدون نیاز به ارسال شناسه پروفایل از فرانت‌اند.
+router.post(
+  "/customers/me/search-requests",
+  authMiddleware,
+  requireRole(UserRole.CUSTOMER),
+  createCustomerSearchRequestController
+);
+
+// مسیر قدیمی برای سازگاری؛ هویت همچنان از Session استخراج و بررسی می‌شود.
 router.post(
   "/customers/:customerId/search-requests",
   authMiddleware,
