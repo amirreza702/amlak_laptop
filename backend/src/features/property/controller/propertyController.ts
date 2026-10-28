@@ -27,12 +27,34 @@ export async function registerPropertyController(
   req: Request,
   res: Response
 ) {
-  try {
-    const result = await registerProperty(req.body);
+  const user = (req as AuthenticatedRequest).user;
 
-    res.status(201).json(result);
+  if (!user) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  // نقش و مشخصات ثبت‌کننده فقط از نشست معتبر پذیرفته می‌شوند.
+  if (user.role !== "OWNER" && user.role !== "AGENT") {
+    return res.status(403).json({ message: "نقش ثبت‌کننده مجاز نیست." });
+  }
+
+  try {
+    // شناسه پروفایل مخالف نقش سشن را از ورودی حذف می‌کنیم.
+    const { ownerId, agentId, ...propertyData } = req.body ?? {};
+    const registrationData = {
+      ...propertyData,
+      ...(user.role === "OWNER" ? { ownerId } : { agentId }),
+    };
+
+    const result = await registerProperty(registrationData, {
+      id: user.id,
+      mobile: user.mobile,
+      role: user.role,
+    });
+
+    return res.status(201).json(result);
   } catch (error: any) {
-    res.status(400).json({
+    return res.status(400).json({
       message: error.message || "خطای ناشناخته در ثبت ملک",
     });
   }
