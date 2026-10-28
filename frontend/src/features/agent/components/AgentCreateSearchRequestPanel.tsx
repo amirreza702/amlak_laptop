@@ -48,13 +48,14 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
       setError("شهر موردنظر را وارد کنید.");
       return;
     }
-    let numericBudget: number | undefined;
-    if (budget.trim()) {
-      numericBudget = Number(budget);
-      if (!Number.isFinite(numericBudget) || numericBudget < 0) {
-        setError("بودجه باید عددی معتبر و صفر یا بیشتر باشد.");
-        return;
-      }
+    if (!budget.trim()) {
+      setError("وارد کردن بودجه الزامی است.");
+      return;
+    }
+    const numericBudget = Number(budget);
+    if (!Number.isFinite(numericBudget) || numericBudget < 0) {
+      setError("بودجه باید عددی معتبر و صفر یا بیشتر باشد.");
+      return;
     }
 
     setBusy(true);
@@ -66,7 +67,7 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
           transactionType,
           propertyType,
           city: normalizedCity,
-          ...(numericBudget !== undefined ? { budget: numericBudget } : {}),
+          budget: numericBudget,
           ...(description.trim() ? { description: description.trim() } : {}),
         }),
       });
@@ -119,8 +120,8 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
             <label className="space-y-2 text-sm font-medium">شهر موردنظر *
               <input className={inputClassName} value={city} onChange={e => setCity(e.target.value)} placeholder="مثلاً شاهرود" required />
             </label>
-            <label className="space-y-2 text-sm font-medium">بودجه تقریبی (تومان)
-              <input className={inputClassName} type="number" min="0" step="any" value={budget} onChange={e => setBudget(e.target.value)} placeholder="اختیاری" />
+            <label className="space-y-2 text-sm font-medium">بودجه تقریبی (تومان) *
+              <input className={inputClassName} type="number" min="0" step="any" required value={budget} onChange={e => setBudget(e.target.value)} placeholder="مبلغ را به تومان وارد کنید" />
             </label>
           </div>
           <label className="block space-y-2 text-sm font-medium">توضیحات تکمیلی
