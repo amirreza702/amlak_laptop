@@ -235,7 +235,7 @@ export function CustomerSearchRequestPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <h2 className="text-lg font-bold">مشخصات ملک موردنظر</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              فقط اطلاعات موردنیاز برای شروع جست‌وجو را وارد کنید؛ بودجه و توضیحات تکمیلی اختیاری هستند.
+              شهر و بودجه را وارد کنید؛ توضیحات تکمیلی اختیاری است.
             </p>
 
             <form onSubmit={submitRequest} className="mt-6 space-y-5">
@@ -280,16 +280,17 @@ export function CustomerSearchRequestPage() {
                 </label>
 
                 <label className="block space-y-2 text-sm font-medium">
-                  بودجه تقریبی (تومان)
+                  بودجه تقریبی (تومان) <span className="text-red-600">*</span>
                   <input
                     className={inputClassName}
                     type="number"
                     inputMode="decimal"
                     min="0"
                     step="any"
+                    required
                     value={requestValues.budget}
                     onChange={(event) => setRequestField("budget", event.target.value)}
-                    placeholder="اختیاری"
+                    placeholder="مبلغ را به تومان وارد کنید"
                   />
                 </label>
               </div>
