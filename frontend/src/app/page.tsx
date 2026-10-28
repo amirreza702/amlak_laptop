@@ -7,7 +7,6 @@ import { HomeHeader } from "@/shared/components/HomeHeader";
 import { HomeSearchButton } from "@/shared/components/HomeSearchButton";
 import { HomeRequestButton } from "@/shared/components/HomeRequestButton";
 import { HomeRoleCards } from "@/shared/components/HomeRoleCards";
-import { HomeTrustMessage } from "@/shared/components/HomeTrustMessage";
 
 import dynamic from "next/dynamic";
 
@@ -82,16 +81,10 @@ export default function Page() {
               className="h-full w-full object-contain"
             />
           </div>
-
-          
-
-          
         </div>
       )}
 
-      {/* ======================================================
-          نقشه پس‌زمینه Home
-          ====================================================== */}
+      {/* نقشه پس‌زمینه Home */}
       <div
         className="
           pointer-events-none
@@ -176,20 +169,6 @@ export default function Page() {
               >
                 پیوند گسترده، بخت بیشتر
               </p>
-
-              <h2
-                className="
-                  mt-2
-                  text-2xl
-                  font-black
-                  tracking-tight
-                  text-slate-900
-                  sm:text-3xl
-                  lg:text-4xl
-                "
-              >
-                ملک مناسب خود را پیدا کنید
-              </h2>
             </div>
 
             <div
@@ -214,10 +193,6 @@ export default function Page() {
                   onOwnerClick={() => router.push("/owner")}
                 />
               </div>
-            </div>
-
-            <div className="mt-4 pb-12">
-              <HomeTrustMessage />
             </div>
           </div>
         </main>
