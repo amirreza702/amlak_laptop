@@ -11,6 +11,7 @@
 
 import { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import { getCurrentCustomerProfile } from "../service/currentCustomerProfileService";
 
 import {
   createCustomerSearchRequest,
@@ -37,8 +38,10 @@ export async function createCustomerSearchRequestController(
       return res.status(401).json({ message: "Authentication required" });
     }
 
+    // پروفایل مشتری از حساب موجود در Session استخراج می‌شود؛ customerId مسیر مبنای هویت نیست.
+    const profile = await getCurrentCustomerProfile(user.id);
     const result = await createCustomerSearchRequest(
-      req.params.customerId,
+      profile.id,
       req.body,
       { id: user.id, role: "CUSTOMER", mobile: user.mobile }
     );
