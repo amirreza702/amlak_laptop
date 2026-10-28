@@ -315,7 +315,7 @@ model PropertySearchRequest {
   city            String
 
   // بودجه تقریبی مشتری
-  budget Decimal?
+  budget Decimal
 
   // خواسته‌ها و جزئیات قابل مذاکره
   description String?
