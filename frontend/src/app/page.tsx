@@ -161,10 +161,12 @@ export default function Page() {
             >
               <p
                 className="
-                  text-sm
-                  font-medium
-                  text-slate-500
-                  sm:text-base
+                  text-lg
+                  font-extrabold
+                  tracking-tight
+                  text-slate-700
+                  sm:text-xl
+                  lg:text-2xl
                 "
               >
                 پیوند گسترده، بخت بیشتر
