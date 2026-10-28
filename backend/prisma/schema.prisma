@@ -482,6 +482,12 @@ model Property {
   propertyType       PropertyType
   registrationSource RegistrationSource
 
+  // ثبت‌کننده از سشن احراز هویت‌شده؛ داده‌های هویتی قدیمی ممکن است خالی باشند.
+  createdByUserId String?
+  createdByRole   UserRole?
+  creatorMobile   String?
+  createdByUser   User? @relation("PropertyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
   city     String
   district String
   address  String
@@ -598,6 +604,8 @@ model Property {
   @@index([city, district])
   @@index([propertyType])
   @@index([registrationSource])
+  @@index([createdByUserId])
+  @@index([createdByRole])
   @@index([occupancyStatus])
   @@index([confirmUntil])
   @@map("properties")
