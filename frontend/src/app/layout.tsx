@@ -14,7 +14,11 @@ export const viewport: Viewport = {
  */
 export const metadata: Metadata = {
   title: "هشتی",
-  description: "پلتفرم هشتی",
+  description: "درگاه یکپارچه دادوستد ملک",
+  icons: {
+    icon: "/icons/hashti-browser-icon.png",
+    apple: "/icons/hashti-browser-icon.png",
+  },
 
   /**
    * مشخصات مربوط به ظاهر مرورگر/PWA
