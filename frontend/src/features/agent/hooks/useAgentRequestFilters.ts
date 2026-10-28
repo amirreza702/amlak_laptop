@@ -9,7 +9,6 @@ export interface FilterableAgentRequest {
   city: string;
   budget: string | number | null;
   description: string | null;
-  hashtiVerified: boolean;
   createdByRole: "CUSTOMER" | "AGENT" | null;
   createdAt: string;
 }
@@ -17,7 +16,6 @@ export interface FilterableAgentRequest {
 /** فیلترهای رابط درخواست‌های مشتری در پنل مشاور؛ بدون وابستگی به JSX. */
 export function useAgentRequestFilters(requests: FilterableAgentRequest[]) {
   const [requestSearch, setRequestSearch] = useState("");
-  const [requestFilter, setRequestFilter] = useState("all");
   const [requestTransaction, setRequestTransaction] = useState("all");
   const [requestPropertyType, setRequestPropertyType] = useState("all");
   const [requestCity, setRequestCity] = useState("");
@@ -31,19 +29,17 @@ export function useAgentRequestFilters(requests: FilterableAgentRequest[]) {
     const budget = request.budget === null ? null : Number(request.budget);
     const createdAt = new Date(request.createdAt).getTime();
     return text.includes(requestSearch.trim().toLocaleLowerCase()) &&
-      (requestFilter === "all" || (requestFilter === "verified" ? request.hashtiVerified : !request.hashtiVerified)) &&
       (requestTransaction === "all" || request.transactionType === requestTransaction) &&
       (requestPropertyType === "all" || request.propertyType === requestPropertyType) &&
       (!requestCity.trim() || request.city.toLocaleLowerCase().includes(requestCity.trim().toLocaleLowerCase())) &&
       (budgetMin === "" || (budget !== null && Number.isFinite(budget) && budget >= Number(budgetMin))) &&
       (budgetMax === "" || (budget !== null && Number.isFinite(budget) && budget <= Number(budgetMax))) &&
-      (!requestFrom || createdAt >= new Date(`${requestFrom}T00:00:00`).getTime()) &&
-      (!requestTo || createdAt <= new Date(`${requestTo}T23:59:59`).getTime());
-  }), [requests, requestSearch, requestFilter, requestTransaction, requestPropertyType, requestCity, budgetMin, budgetMax, requestFrom, requestTo]);
+      (!requestFrom || createdAt >= new Date(requestFrom).getTime()) &&
+      (!requestTo || createdAt <= new Date(requestTo).getTime());
+  }), [requests, requestSearch, requestTransaction, requestPropertyType, requestCity, budgetMin, budgetMax, requestFrom, requestTo]);
 
   const resetRequestFilters = () => {
     setRequestSearch("");
-    setRequestFilter("all");
     setRequestTransaction("all");
     setRequestPropertyType("all");
     setRequestCity("");
@@ -56,7 +52,6 @@ export function useAgentRequestFilters(requests: FilterableAgentRequest[]) {
   return {
     visibleRequests,
     requestSearch, setRequestSearch,
-    requestFilter, setRequestFilter,
     requestTransaction, setRequestTransaction,
     requestPropertyType, setRequestPropertyType,
     requestCity, setRequestCity,
