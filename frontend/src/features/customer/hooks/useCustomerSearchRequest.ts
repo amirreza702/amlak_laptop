@@ -319,20 +319,22 @@ export function useCustomerSearchRequest() {
         return;
       }
 
-      let budget: number | undefined;
-      if (requestValues.budget.trim()) {
-        budget = Number(requestValues.budget);
-        if (!Number.isFinite(budget) || budget < 0) {
-          setRequestError("بودجه باید عددی معتبر و صفر یا بیشتر باشد.");
-          return;
-        }
+      if (!requestValues.budget.trim()) {
+        setRequestError("وارد کردن بودجه الزامی است.");
+        return;
+      }
+
+      const budget = Number(requestValues.budget);
+      if (!Number.isFinite(budget) || budget < 0) {
+        setRequestError("بودجه باید عددی معتبر و صفر یا بیشتر باشد.");
+        return;
       }
 
       const payload: CreateCustomerSearchRequestInput = {
         transactionType: requestValues.transactionType as CustomerRequestTransactionType,
         propertyType: requestValues.propertyType as CustomerRequestPropertyType,
         city,
-        ...(budget !== undefined ? { budget } : {}),
+        budget,
         ...(requestValues.description.trim()
           ? { description: requestValues.description.trim() }
           : {}),
