@@ -59,7 +59,7 @@ export function HomeHeader() {
           </div>
 
           <span className="text-[11px] font-medium text-slate-500">
-            درگاه یکپارچه دادوستد ملک
+            سامانه یکپارچه دادوستد ملک
           </span>
         </div>
       </div>
