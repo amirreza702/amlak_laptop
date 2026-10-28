@@ -6,7 +6,7 @@
   - فایل‌های استاتیک، آیکون‌ها و تصاویر: Cache First
 */
 
-const CACHE_NAME = "hashti-static-v1";
+const CACHE_NAME = "hashti-static-v2";
 
 const APP_SHELL = [
   "/",
