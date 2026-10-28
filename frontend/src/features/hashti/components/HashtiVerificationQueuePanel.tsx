@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, Search, XCircle } from "lucide-react";
+import { formatPersianDateTime } from "@/shared/utils/date";
 
 import {
   getVerificationQueue,
