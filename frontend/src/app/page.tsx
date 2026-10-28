@@ -174,7 +174,7 @@ export default function Page() {
                   sm:text-base
                 "
               >
-                ساده‌تر پیدا کنید، مطمئن‌تر معامله کنید
+                پیوند گسترده، بخت بیشتر
               </p>
 
               <h2
