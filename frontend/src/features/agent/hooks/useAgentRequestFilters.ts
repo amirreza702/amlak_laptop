@@ -10,6 +10,7 @@ export interface FilterableAgentRequest {
   budget: string | number | null;
   description: string | null;
   hashtiVerified: boolean;
+  createdByRole: "CUSTOMER" | "AGENT" | null;
   createdAt: string;
 }
 
