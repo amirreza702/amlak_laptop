@@ -59,7 +59,7 @@ export function HomeHeader() {
           </div>
 
           <span className="text-[11px] font-medium text-slate-500">
-            سامانه شفاف معاملات ملک
+            درگاه یکپارچه دادوستد ملک
           </span>
         </div>
       </div>
