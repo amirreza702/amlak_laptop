@@ -26,7 +26,6 @@ export function useAgentDashboard(user: UserPublic) {
   const {
     visibleRequests,
     requestSearch, setRequestSearch,
-    requestFilter, setRequestFilter,
     requestTransaction, setRequestTransaction,
     requestPropertyType, setRequestPropertyType,
     requestCity, setRequestCity,
