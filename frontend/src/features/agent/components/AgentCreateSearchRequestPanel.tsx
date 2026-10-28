@@ -74,7 +74,12 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
       setCreated(result);
       onCreated?.();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "ثبت درخواست انجام نشد.");
+      const message = e instanceof Error ? e.message : "";
+      setError(
+        message === "Budget is required"
+          ? "وارد کردن بودجه الزامی است."
+          : message || "ثبت درخواست انجام نشد."
+      );
     } finally {
       setBusy(false);
     }
