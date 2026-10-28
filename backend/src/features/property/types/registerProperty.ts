@@ -18,6 +18,16 @@ export type PropertyType =
   | "OFFICE"
   | "GARDEN";
 
+/** نقش ثبت‌کننده که فقط از سشن احراز هویت‌شده می‌آید. */
+export type PropertyCreatorRole = "OWNER" | "AGENT";
+
+/** هویت ثبت‌کننده که از سشن استخراج می‌شود، نه از body ارسالی کاربر. */
+export interface PropertyCreator {
+  id: string;
+  mobile: string;
+  role: PropertyCreatorRole;
+}
+
 /**
  * اطلاعات مشترک موردنیاز برای ثبت ملک توسط مالک یا مشاور
  */
