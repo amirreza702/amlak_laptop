@@ -50,7 +50,7 @@ import type {
 
 import type { PropertyAgent } from "../types/propertyAgent";
 
-import type { RegisterPropertyInput } from "../types/registerProperty";
+import type { PropertyCreator, RegisterPropertyInput } from "../types/registerProperty";
 
 import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 
@@ -73,28 +73,36 @@ export interface RegisterPropertyResult {
 }
 
 export async function registerProperty(
-  data: RegisterPropertyInput
+  data: RegisterPropertyInput,
+  creator: PropertyCreator
 ): Promise<RegisterPropertyResult> {
-  // هویت ثبت‌کننده باید دقیقاً یک پروفایل معتبر داشته باشد.
-  const isAgentRegistration = Boolean(data.agentId);
-  const isOwnerRegistration = Boolean(data.ownerId);
+  // نقش از سشن می‌آید؛ شناسه پروفایل ارسالی به سرویس باید با همان حساب منطبق باشد.
+  if (creator.role !== "OWNER" && creator.role !== "AGENT") {
+    throw new Error("نقش ثبت‌کننده معتبر نیست.");
+  }
 
-  if (isAgentRegistration === isOwnerRegistration) {
-    throw new Error("اطلاعات ثبت‌کننده معتبر نیست.");
+  const isAgentRegistration = creator.role === "AGENT";
+  const isOwnerRegistration = creator.role === "OWNER";
+
+  if (
+    (isAgentRegistration && (!data.agentId || Boolean(data.ownerId))) ||
+    (isOwnerRegistration && (!data.ownerId || Boolean(data.agentId)))
+  ) {
+    throw new Error("اطلاعات ثبت‌کننده با نشست کاربر مطابقت ندارد.");
   }
 
   if (isAgentRegistration) {
     const agent = await findAgentById(data.agentId!);
-    if (!agent) {
-      throw new Error("مشاور مورد نظر پیدا نشد.");
+    if (!agent || agent.userId !== creator.id) {
+      throw new Error("مشاور مورد نظر با حساب واردشده مطابقت ندارد.");
     }
   } else {
-    const owner = await prisma.owner.findUnique({
-      where: { id: data.ownerId! },
+    const owner = await prisma.owner.findFirst({
+      where: { id: data.ownerId!, userId: creator.id },
       select: { id: true },
     });
     if (!owner) {
-      throw new Error("مالک مورد نظر پیدا نشد.");
+      throw new Error("مالک مورد نظر با حساب واردشده مطابقت ندارد.");
     }
   }
 
@@ -123,6 +131,9 @@ export async function registerProperty(
           registrationSource: isOwnerRegistration
             ? RegistrationSource.OWNER
             : RegistrationSource.AGENT,
+          createdByUserId: creator.id,
+          createdByRole: creator.role,
+          creatorMobile: creator.mobile,
           propertyType: data.propertyType,
           city: data.city,
           district: data.district,
