@@ -140,8 +140,8 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           <section hidden={selectedTool !== "requests"} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold">درخواست‌های فعال مشتریان</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">اطلاعات تماس تا زمان درخواست و تأیید دسترسی نمایش داده نمی‌شود.</p>
+                <h2 className="text-lg font-bold">درخواست‌های فعال جست‌وجوی ملک</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">اطلاعات تماس ثبت‌کنندهٔ هر درخواست (مشتری یا مشاور) تا زمان درخواست و تأیید دسترسی نمایش داده نمی‌شود.</p>
               </div>
               <button type="button" onClick={() => void loadRequests()} disabled={loadingRequests} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50">
                 {loadingRequests ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} به‌روزرسانی
@@ -172,12 +172,13 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
                     </div>
                     {contacts[request.id] ? (
                       <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
+                        <p className="mb-2 font-bold">{request.createdByRole === "AGENT" ? "اطلاعات تماس مشاور ثبت‌کننده" : "اطلاعات تماس مشتری"}</p>
                         <b>{contacts[request.id].firstName} {contacts[request.id].lastName}</b>
                         <p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p>
                       </div>
                     ) : (
                       <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
-                        {busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />} درخواست دسترسی به اطلاعات تماس
+                        {busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />} {request.createdByRole === "AGENT" ? "درخواست دسترسی به اطلاعات تماس مشاور ثبت‌کننده" : "درخواست دسترسی به اطلاعات تماس مشتری"}
                       </button>
                     )}
                   </article>
