@@ -28,6 +28,9 @@ async function getErrorMessage(response: Response): Promise<string> {
     if (message === "City is required") {
       return "شهر موردنظر را وارد کنید.";
     }
+    if (message === "Budget is required") {
+      return "وارد کردن بودجه الزامی است.";
+    }
     if (message === "Budget cannot be negative" || message === "Budget must be a non-negative number") {
       return "بودجه باید عددی معتبر و صفر یا بیشتر باشد.";
     }
