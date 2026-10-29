@@ -311,7 +311,9 @@ export async function getActivePropertySearchRequestsController(
         createdTo: typeof req.query.createdTo === "string" ? req.query.createdTo : undefined,
       });
 
-    return res.status(200).json(result);
+    const viewerUserId = (req as AuthenticatedRequest).user?.id;
+    const safeResult = result.map(({ createdByUserId, ...request }) => ({ ...request, isCreatedByMe: Boolean(viewerUserId && createdByUserId === viewerUserId) }));
+    return res.status(200).json(safeResult);
   } catch (error: any) {
     if (typeof error?.message === "string" && (error.message.startsWith("Invalid ") || error.message.includes("cannot exceed"))) {
       return res.status(400).json({ message: error.message });
