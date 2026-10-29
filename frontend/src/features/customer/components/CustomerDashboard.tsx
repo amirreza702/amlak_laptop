@@ -250,21 +250,7 @@ export function CustomerDashboard() {
             )}
 
             {tab === "notifications" && (
-              <div className="space-y-3">
-                {notifications.length === 0 ? <EmptyState text="در حال حاضر اعلانی برای نمایش وجود ندارد." /> :
-                  notifications.map((notification) => (
-                    <article key={notification.id} className={`rounded-xl border bg-white p-4 ${notification.isRead ? "border-slate-200" : "border-blue-200"}`}>
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-bold">{notification.title}</h3>
-                          <p className="mt-1 text-sm leading-7 text-slate-600">{notification.message}</p>
-                          <p className="mt-2 text-xs text-slate-400">{prettyDate(notification.createdAt)}</p>
-                        </div>
-                        {!notification.isRead && <button type="button" disabled={busyId === notification.id} onClick={() => void runAction(notification.id, async () => { await markUserNotificationAsRead(notification.id); setActionMessage("اعلان خوانده‌شده علامت خورد."); })} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"><Check className="h-4 w-4" /> خوانده شد</button>}
-                      </div>
-                    </article>
-                  ))}
-              </div>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">{notifications.length === 0 ? <div className="p-6"><EmptyState text="در حال حاضر اعلانی برای نمایش وجود ندارد." /></div> : <table className="w-full min-w-[850px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">عنوان</th><th className="p-3">پیام</th><th className="p-3">زمان</th><th className="p-3">وضعیت</th><th className="p-3">عملیات</th></tr></thead><tbody>{notifications.map((notification) => <tr key={notification.id} className={`border-t border-slate-200 align-top ${notification.isRead ? "" : "bg-blue-50/30"}`}><td className="p-3 font-semibold">{notification.title}</td><td className="max-w-lg whitespace-pre-wrap p-3 leading-6 text-slate-600">{notification.message}</td><td className="whitespace-nowrap p-3">{prettyDate(notification.createdAt)}</td><td className="p-3">{notification.isRead ? "خوانده‌شده" : "خوانده‌نشده"}</td><td className="p-3">{!notification.isRead && <button type="button" disabled={busyId === notification.id} onClick={() => void runAction(notification.id, async () => { await markUserNotificationAsRead(notification.id); setActionMessage("اعلان خوانده‌شده علامت خورد."); })} className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"><Check className="h-4 w-4" /> خوانده شد</button>}</td></tr>)}</tbody></table>}</div>
             )}
 
             {tab === "profile" && profile && (
