@@ -138,12 +138,14 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           <p className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت مشاوران...</p>
         ) : managedAgents.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">موردی برای این فیلتر وجود ندارد.</p>
+        ) : visibleManagedAgents.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-500">مشاوری با این جست‌وجو پیدا نشد.</p>
         ) : (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[1100px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد مشاور</th><th className="p-3">حساب</th><th className="p-3">وضعیت تأیید</th><th className="p-3">یادداشت و آخرین بررسی</th><th className="p-3">عملیات</th></tr></thead>
               <tbody>
-                {managedAgents.map((agent) => (
+                {visibleManagedAgents.map((agent) => (
                   <tr key={agent.id} className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{agent.firstName} {agent.lastName}</p><p className="mt-1">{agent.agencyName || "بدون نام دفتر"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(agent.id)}</p></td>
                     <td className="p-3"><p dir="ltr">{agent.user.mobile}</p><p className="mt-1">{agent.user.isActive ? "فعال" : "غیرفعال"}</p></td>
@@ -172,11 +174,11 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           <div className="flex items-end"><button type="submit" disabled={auditBusy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#043873] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{auditBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} دریافت گزارش</button></div>
         </form>
         {auditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{auditError}</p>}
-        {auditLogs.length > 0 && (
+        {visibleContactAuditLogs.length > 0 && (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[1000px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد دسترسی</th><th className="p-3">مشاور</th><th className="p-3">مشتری</th><th className="p-3">درخواست</th><th className="p-3">زمان</th></tr></thead>
-              <tbody>{auditLogs.map((log) => (
+              <tbody>{visibleContactAuditLogs.map((log) => (
                 <tr key={log.id} className="border-t border-slate-200 align-top">
                   <td className="p-3"><p className="break-all font-mono text-xs" dir="ltr">{idText(log.id)}</p></td>
                   <td className="p-3"><p className="font-semibold">{log.agent.firstName} {log.agent.lastName}</p><p className="mt-1" dir="ltr">{log.agent.user.mobile}</p></td>
@@ -200,12 +202,12 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </form>
         {matchingError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{matchingError}</p>}
         {matchingMessage && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{matchingMessage}</p>}
-        {candidateMatches.length > 0 && (
+        {visibleCandidateMatches.length > 0 && (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
             <h3 className="p-3 font-bold">کاندیداهای مشابه</h3>
             <table className="w-full min-w-[950px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک کاندید</th><th className="p-3">مشخصات</th><th className="p-3">فاصله</th><th className="p-3">شباهت</th><th className="p-3">عملیات</th></tr></thead>
-              <tbody>{candidateMatches.map((match) => (
+              <tbody>{visibleCandidateMatches.map((match) => (
                 <tr key={match.property.id} className="border-t border-slate-200 align-top">
                   <td className="p-3"><p className="font-bold">{match.property.city} · {match.property.district || "بدون محله"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(match.property.id)}</p></td>
                   <td className="p-3">{match.property.propertyType} · {match.property.area ?? "—"} متر · {match.property.rooms ?? "—"} اتاق</td>
@@ -223,11 +225,11 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
               <textarea className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" rows={2} value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} placeholder="اختیاری" />
             </label>
             <h3 className="mt-4 font-bold">پرونده‌های بررسی این ملک</h3>
-            {reviews.length === 0 ? <p className="mt-2 text-sm text-slate-500">پرونده‌ای برای این ملک در پاسخ فعلی وجود ندارد.</p> : (
+            {visibleDuplicateReviews.length === 0 ? <p className="mt-2 text-sm text-slate-500">پرونده‌ای برای این ملک در پاسخ فعلی وجود ندارد.</p> : (
               <div className="overflow-x-auto rounded-xl border border-slate-200">
                 <table className="w-full min-w-[1000px] text-right text-sm">
                   <thead className="bg-slate-100"><tr><th className="p-3">رکورد پرونده</th><th className="p-3">ملک‌ها</th><th className="p-3">امتیاز و تصمیم</th><th className="p-3">یادداشت</th><th className="p-3">عملیات</th></tr></thead>
-                  <tbody>{reviews.map((review) => (
+                  <tbody>{visibleDuplicateReviews.map((review) => (
                     <tr key={review.id} className="border-t border-slate-200 align-top">
                       <td className="p-3"><p className="font-bold">پرونده بررسی</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(review.id)}</p></td>
                       <td className="p-3"><p>ملک اصلی: <span className="font-mono text-xs" dir="ltr">{idText(review.primaryPropertyId)}</span></p><p className="mt-2">کاندید: <span className="font-mono text-xs" dir="ltr">{idText(review.candidatePropertyId)}</span></p></td>
@@ -280,8 +282,8 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             <button type="submit" disabled={logsBusy} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold disabled:opacity-60">{logsBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : "نمایش"}</button>
           </form>
           {logsError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{logsError}</p>}
-          {accessLogs.length > 0 && <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[750px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">کاربر</th><th className="p-3">نقش</th><th className="p-3">زمان دسترسی</th><th className="p-3">دلیل</th></tr></thead><tbody>{accessLogs.map((log) => <tr key={log.id} className="border-t border-slate-200"><td className="p-3"><span dir="ltr">{log.user?.mobile ?? log.userId}</span></td><td className="p-3">{log.user?.role ?? "نامشخص"}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td><td className="p-3">{log.reason || "ثبت نشده"}</td></tr>)}</tbody></table></div>}
-          {!logsBusy && accessLogs.length === 0 && !logsError && <p className="mt-3 text-sm text-slate-500">شناسهٔ ملک را وارد کنید تا سوابق آن نمایش داده شود.</p>}
+          {visibleLocationAuditLogs.length > 0 && <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[750px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">کاربر</th><th className="p-3">نقش</th><th className="p-3">زمان دسترسی</th><th className="p-3">دلیل</th></tr></thead><tbody>{visibleLocationAuditLogs.map((log) => <tr key={log.id} className="border-t border-slate-200"><td className="p-3"><span dir="ltr">{log.user?.mobile ?? log.userId}</span></td><td className="p-3">{log.user?.role ?? "نامشخص"}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td><td className="p-3">{log.reason || "ثبت نشده"}</td></tr>)}</tbody></table></div>}
+          {!logsBusy && visibleLocationAuditLogs.length === 0 && !logsError && <p className="mt-3 text-sm text-slate-500">شناسهٔ ملک را وارد کنید تا سوابق آن نمایش داده شود.</p>}
         </section>
 
         <section id="admin-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -303,11 +305,11 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             </div>
           </form>
           {adminAuditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{adminAuditError}</p>}
-          {adminAuditLogs.length > 0 ? (
+          {visibleAdminAuditLogs.length > 0 ? (
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full min-w-[1100px] text-right text-sm">
                 <thead className="bg-slate-100"><tr><th className="p-3">رویداد</th><th className="p-3">عامل</th><th className="p-3">هدف</th><th className="p-3">زمان</th><th className="p-3">جزئیات فنی</th></tr></thead>
-                <tbody>{adminAuditLogs.map((log) => (
+                <tbody>{visibleAdminAuditLogs.map((log) => (
                   <tr key={log.id} className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{log.action}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(log.id)}</p></td>
                     <td className="p-3">{log.actorMobile ?? "حساب حذف‌شده یا نامشخص"}<p className="mt-1 text-xs text-slate-500">{log.actorRole ?? "نقش نامشخص"}</p></td>
