@@ -27,32 +27,19 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت املاک...</p>
         : !error && visibleProperties.length === 0 ? <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{properties.length === 0 ? "هنوز ملکی به این پروفایل مالک متصل نشده است." : "موردی با این جست‌وجو و فیلتر پیدا نشد."}</p>
-        : <div className="space-y-3">{visibleProperties.map((item) => (
-          <article key={item.propertyId} className="space-y-3 rounded-xl border border-slate-200 p-4">
-            <div>
-              <h3 className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</h3>
-              <p className="mt-1 text-sm text-slate-600">{item.property.address}</p>
-              <p className="mt-1 text-xs text-slate-500">شناسه ملک: <span dir="ltr" className="font-mono">{item.propertyId}</span></p>
-              <p className="mt-1 text-xs text-slate-500">سهم: {item.share.toLocaleString("fa-IR")} دانگ · وضعیت مالکیت: {({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p>
-              {item.property.listing && <p className="mt-1 text-sm text-slate-700">آگهی: {item.property.listing.status} · {item.property.listing.transactionType}</p>}
-              {item.property.listing?.salePrice != null && <p className="mt-1 text-sm text-slate-700">قیمت فروش: {Number(item.property.listing.salePrice).toLocaleString("fa-IR")} ریال</p>}
-              {item.property.listing?.depositAmount != null && <p className="mt-1 text-sm text-slate-700">ودیعه: {Number(item.property.listing.depositAmount).toLocaleString("fa-IR")} ریال</p>}
-              {item.property.listing?.rentAmount != null && <p className="mt-1 text-sm text-slate-700">اجاره: {Number(item.property.listing.rentAmount).toLocaleString("fa-IR")} ریال</p>}
-              <p className="mt-1 text-xs text-slate-500">{item.property.isActive ? "ملک فعال است" : "ملک غیرفعال است"} · {item.isPrimary ? "مالک اصلی" : "مالک مشترک"}</p>
-            </div>
-            <div className="border-t border-slate-100 pt-3">
-              <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="h-4 w-4 text-[#043873]" /> مدیریت مشاوران مرتبط</p>
-              {item.property.agents.length ? item.property.agents.map((relation) => (
-                <div key={relation.agentId} className="mb-2 rounded-lg bg-slate-50 p-3 text-sm">
-                  <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p>
-                  <p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.approvedByOwner ? "اجازه فعالیت داده شده" : "در انتظار اجازه مالک"}</p>
-                  <p dir="ltr" className="mt-1 text-xs text-slate-500">{relation.agentId}</p>
-                  <div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={busyAgent !== null} onClick={() => void updateAgentAccess(item.propertyId, relation.agentId, "approval")} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyAgent === `${item.propertyId}:${relation.agentId}` ? "در حال ثبت..." : "تأیید دسترسی"}</button><button type="button" disabled={busyAgent !== null} onClick={() => void updateAgentAccess(item.propertyId, relation.agentId, "revoke")} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">لغو دسترسی</button></div>
-                </div>
-              )) : <p className="text-sm text-slate-500">مشاوری به این ملک متصل نشده است.</p>}
-            </div>
-          </article>
-        ))}</div>}
+        : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[980px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">مالکیت / آگهی</th><th className="p-3">مشاوران مرتبط</th></tr></thead><tbody>{visibleProperties.map((item) => (
+          <tr key={item.propertyId} className="border-t border-slate-200 align-top">
+            <td className="p-3"><p className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</p><p className="mt-1 text-sm text-slate-600">{item.property.address}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.propertyId}</p></td>
+            <td className="p-3"><p>{item.property.isActive ? "ملک فعال" : "ملک غیرفعال"} · {item.isPrimary ? "مالک اصلی" : "مالک مشترک"}</p>{item.property.listing && <p className="mt-1">آگهی: {item.property.listing.status} · {item.property.listing.transactionType}</p>}{item.property.listing?.salePrice != null && <p className="mt-1">فروش: {Number(item.property.listing.salePrice).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.depositAmount != null && <p className="mt-1">ودیعه: {Number(item.property.listing.depositAmount).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.rentAmount != null && <p className="mt-1">اجاره: {Number(item.property.listing.rentAmount).toLocaleString("fa-IR")} ریال</p>}</td>
+            <td className="p-3"><p>{({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p><p className="mt-1">{item.share.toLocaleString("fa-IR")} دانگ</p></td>
+            <td className="p-3"><div className="space-y-3">{item.property.agents.length ? item.property.agents.map((relation) => (
+              <div key={relation.agentId} className="rounded-lg bg-slate-50 p-3">
+                <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.approvedByOwner ? "اجازه فعالیت داده شده" : "در انتظار اجازه مالک"}</p><p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
+                <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={busyAgent !== null} onClick={() => void updateAgentAccess(item.propertyId, relation.agentId, "approval")} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyAgent === `${item.propertyId}:${relation.agentId}` ? "در حال ثبت..." : "تأیید دسترسی"}</button><button type="button" disabled={busyAgent !== null} onClick={() => void updateAgentAccess(item.propertyId, relation.agentId, "revoke")} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">لغو دسترسی</button></div>
+              </div>
+            )) : <span className="text-slate-500">مشاوری متصل نیست.</span>}</div></td>
+          </tr>
+        ))}</tbody></table></div>}
     </section>
   );
 }
