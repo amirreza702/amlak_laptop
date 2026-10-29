@@ -55,7 +55,7 @@ export function useAdminUsers() {
     }
   }, [currentRole, search, role, active, page]);
 
-  useEffect(() => { void loadUsers(); }, [loadUsers]);
+  useEffect(() => { void Promise.resolve().then(() => loadUsers()); }, [loadUsers]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
