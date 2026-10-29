@@ -35,9 +35,19 @@ function idText(value: string) {
   return <span dir="ltr" className="break-all font-mono text-xs">{value}</span>;
 }
 
+function matchesSearchFields(value: unknown, query: string) {
+  return !query.trim() || JSON.stringify(value).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
+}
+
 export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   // تا پیش از انتخاب ابزار، فضای اصلی پنل خالی می‌ماند.
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [agentSearch, setAgentSearch] = useState("");
+  const [contactAuditSearch, setContactAuditSearch] = useState("");
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [duplicateReviewSearch, setDuplicateReviewSearch] = useState("");
+  const [locationAuditSearch, setLocationAuditSearch] = useState("");
+  const [adminAuditSearch, setAdminAuditSearch] = useState("");
   const [pendingAction, setPendingAction] = useState<{ title: string; description: string; run: () => void } | null>(null);
   const {
     propertyId, setPropertyId, candidateMatches, reviews, matchingBusy, matchingError, matchingMessage,
@@ -59,7 +69,12 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
     adminAuditLogs, adminAuditBusy, adminAuditError, loadAdminAuditLogs, loadContactAuditLogs,
   } = useHashtiAuditLogs();
 
-
+  const visibleManagedAgents = managedAgents.filter((item) => matchesSearchFields(item, agentSearch));
+  const visibleContactAuditLogs = auditLogs.filter((item) => matchesSearchFields(item, contactAuditSearch));
+  const visibleCandidateMatches = candidateMatches.filter((item) => matchesSearchFields(item, candidateSearch));
+  const visibleDuplicateReviews = reviews.filter((item) => matchesSearchFields(item, duplicateReviewSearch));
+  const visibleLocationAuditLogs = accessLogs.filter((item) => matchesSearchFields(item, locationAuditSearch));
+  const visibleAdminAuditLogs = adminAuditLogs.filter((item) => matchesSearchFields(item, adminAuditSearch));
 
   return (
     <div className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 bg-slate-50 px-3 pt-20 pb-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6" dir="rtl">
