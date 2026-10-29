@@ -35,7 +35,7 @@ export async function findManagedUsers(query: ManagedUserQuery) {
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const staffMatches = search
     ? await prisma.hashtiStaff.findMany({
-        where: { OR: [{ firstName: contains(search) }, { lastName: contains(search) }] },
+        where: { OR: [{ id: contains(search) }, { firstName: contains(search) }, { lastName: contains(search) }] },
         select: { mobile: true },
       })
     : [];
@@ -66,8 +66,6 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         { agent: { is: { agencyName: contains(search) } } },
         { agent: { is: { address: contains(search) } } },
         { agent: { is: { verificationNotes: contains(search) } } },
-        { staffProfile: { is: { firstName: contains(search) } } },
-        { staffProfile: { is: { lastName: contains(search) } } },
         ...(staffMatches.length ? [{ mobile: { in: staffMatches.map((staff) => staff.mobile) } }] : []),
         ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
         ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { isVerified: boolSearch } } }] : []),
