@@ -43,6 +43,7 @@ export function HashtiUserManagementPanel() {
   const [statusUser, setStatusUser] = useState<ManagedUser | null>(null);
   const [statusReason, setStatusReason] = useState("");
   const [creatingStaff, setCreatingStaff] = useState(false);
+  const [createStaffModalOpen, setCreateStaffModalOpen] = useState(false);
   const [staffMobile, setStaffMobile] = useState("");
   const [staffFirstName, setStaffFirstName] = useState("");
   const [staffLastName, setStaffLastName] = useState("");
@@ -195,7 +196,7 @@ export function HashtiUserManagementPanel() {
         body: JSON.stringify({ mobile: staffMobile.trim(), firstName: staffFirstName.trim(), lastName: staffLastName.trim(), password: staffPassword }),
       });
       setStaffMobile(""); setStaffFirstName(""); setStaffLastName(""); setStaffPassword("");
-      setMessage("حساب همکار هشتی ایجاد شد؛ این حساب مدیر ارشد نیست."); setOffset(0); await loadUsers(0);
+      setMessage("حساب همکار هشتی ایجاد شد؛ این حساب مدیر ارشد نیست."); setCreateStaffModalOpen(false); setOffset(0); await loadUsers(0);
     } catch (err) { setError(err instanceof Error ? err.message : "ایجاد حساب همکار ناموفق بود."); }
     finally { setCreatingStaff(false); }
   };
@@ -206,14 +207,17 @@ export function HashtiUserManagementPanel() {
   return (
     <section className="space-y-5 rounded-2xl border border-blue-200 bg-slate-50 p-4 sm:p-6" dir="rtl">
       <div><h2 className="flex items-center gap-2 text-xl font-bold text-slate-900"><UserRoundCog className="h-6 w-6 text-[#043873]" /> مدیریت کاربران، مالکان، مشاوران و کارکنان هشتی</h2><p className="mt-2 text-sm leading-7 text-slate-600">کارکنان هشتی می‌توانند حساب‌های کاربران، مالکان و مشاوران را جست‌وجو، ویرایش و بررسی تاریخچه کنند. ساخت و مدیریت حساب‌های کارکنان هشتی و بازنشانی رمز فقط برای مدیر ارشد فعال است.</p></div>
-      <form onSubmit={createStaff} hidden={!isSuperAdmin} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <h3 className="font-bold sm:col-span-2 lg:col-span-5">ایجاد حساب جدید برای همکار هشتی</h3>
-        <label className="space-y-1 text-sm">شماره موبایل<input required inputMode="numeric" pattern="09[0-9]{9}" maxLength={11} value={staffMobile} onChange={(event) => setStaffMobile(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
-        <label className="space-y-1 text-sm">نام<input required maxLength={120} value={staffFirstName} onChange={(event) => setStaffFirstName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-        <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={staffLastName} onChange={(event) => setStaffLastName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-        <label className="space-y-1 text-sm">رمز اولیه (حداقل ۱۲ کاراکتر)<input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={staffPassword} onChange={(event) => setStaffPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
-        <div className="flex items-end"><button type="submit" disabled={creatingStaff} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#043873] px-3 py-2.5 text-sm font-bold text-white disabled:opacity-60">{creatingStaff ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ایجاد همکار</button></div>
-      </form>
+      {isSuperAdmin && <div className="flex justify-end"><button type="button" onClick={() => setCreateStaffModalOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white"><UserRoundCog className="h-4 w-4" /> ایجاد همکار هشتی</button></div>}
+      <Modal open={createStaffModalOpen} title="ایجاد حساب همکار هشتی" description="حساب همکار ایجاد می‌شود و به‌صورت خودکار مدیر ارشد نخواهد بود." onClose={() => setCreateStaffModalOpen(false)}>
+        <form onSubmit={createStaff} className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">شماره موبایل<input required inputMode="numeric" pattern="09[0-9]{9}" maxLength={11} value={staffMobile} onChange={(event) => setStaffMobile(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
+          <label className="space-y-1 text-sm">نام<input required maxLength={120} value={staffFirstName} onChange={(event) => setStaffFirstName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={staffLastName} onChange={(event) => setStaffLastName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">رمز اولیه (حداقل ۱۲ کاراکتر)<input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={staffPassword} onChange={(event) => setStaffPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
+          {error && <p role="alert" className="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <div className="flex items-end"><button type="submit" disabled={creatingStaff} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#043873] px-3 py-2.5 text-sm font-bold text-white disabled:opacity-60">{creatingStaff ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ایجاد همکار</button></div>
+        </form>
+      </Modal>
 
       <form onSubmit={submitSearch} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1 text-sm">جست‌وجو با شماره، نام یا نام خانوادگی<input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="مثلاً شماره موبایل یا نام" /></label>
