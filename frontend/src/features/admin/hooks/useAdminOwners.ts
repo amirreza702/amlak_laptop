@@ -33,7 +33,7 @@ export function useAdminOwners() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا در دریافت مالکان."); }
     finally { setLoading(false); }
   }, [search, active, page]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   async function changeStatus(owner: AdminOwner) {
     if (reason.trim().length < 3) { setError("برای تغییر وضعیت، دلیل حداقل ۳ حرفی وارد کنید."); return; }
