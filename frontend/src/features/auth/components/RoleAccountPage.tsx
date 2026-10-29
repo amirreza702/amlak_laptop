@@ -6,7 +6,6 @@ import { HashtiDashboard } from "@/features/hashti/components/HashtiDashboard";
 import {
   BriefcaseBusiness,
   Building2,
-  CheckCircle2,
   LoaderCircle,
   LogIn,
   ShieldCheck,
@@ -19,29 +18,21 @@ const roleCopy: Record<AccountPortalRole, {
   title: string;
   heading: string;
   description: string;
-  successTitle: string;
-  successDescription: string;
 }> = {
   OWNER: {
     title: "مالک",
     heading: "ورود یا ایجاد حساب مالک",
     description: "برای ثبت و مدیریت ملک، وارد حساب مالک شوید یا حساب جدید ایجاد کنید.",
-    successTitle: "حساب مالک آماده است",
-    successDescription: "ورود به حساب مالک با موفقیت انجام شد. برای ادامه، از گزینه‌های هشتی استفاده کنید.",
   },
   AGENT: {
     title: "مشاور املاک",
     heading: "ورود یا ایجاد حساب مشاور",
     description: "برای استفاده از امکانات مشاور املاک، وارد حساب خود شوید یا حساب جدید ایجاد کنید.",
-    successTitle: "ورود به حساب مشاور انجام شد",
-    successDescription: "هستی حساب و وضعیت تأیید آن در ادامه بررسی می‌شود؛ امکانات مشاور فقط پس از تأیید در رابط نمایش داده خواهند شد.",
   },
   HASHTI: {
     title: "کارکنان هشتی",
     heading: "ورود به پنل هشتی",
     description: "این بخش فقط برای حساب‌های کارکنان هشتی در دسترس است.",
-    successTitle: "به پنل هشتی خوش آمدید",
-    successDescription: "نشست شما با نقش کارکنان هشتی تأیید شد. ابزارهای مدیریتی بعدی از همین مسیر محافظت‌شده اضافه می‌شوند.",
   },
 };
 
@@ -56,14 +47,14 @@ export function RoleAccountPage({ role }: RoleAccountPageProps) {
   const {
     authMode, mobile, setMobile, password, setPassword, firstName, setFirstName,
     lastName, setLastName, currentUser, isCheckingSession, isSubmitting, authError,
-    successMessage, handleSubmit, changeMode,
+    handleSubmit, changeMode,
     isAuthenticatedForThisRole,
   } = useRoleAccountAuth(role);
 
   return (
     <main dir="rtl" className="min-h-screen bg-slate-50 text-slate-900">
       <section className={role === "HASHTI" || (currentUser && currentUser.role === role) ? "w-full max-w-none px-0 py-4" : "mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12"}>
-        {!hasSelectedTool && (
+        {!isCheckingSession && !isAuthenticatedForThisRole && !hasSelectedTool && (
   <div className="mb-6">
     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#043873]">
       {role === "OWNER" ? (
@@ -107,21 +98,6 @@ export function RoleAccountPage({ role }: RoleAccountPageProps) {
           </section>
         ) : isAuthenticatedForThisRole && currentUser ? (
           <div className="space-y-5">
-            {!hasSelectedTool && <p className="text-sm text-slate-600">
-              برای رفتن به صفحهٔ اصلی یا خروج از حساب، از دکمه‌های سراسری بالای صفحه استفاده کنید.
-            </p>}
-            {!hasSelectedTool && <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">{copy.successTitle}</h2>
-                  <p className="mt-1 text-sm leading-7 text-slate-600">{successMessage || copy.successDescription}</p>
-                  <p className="mt-1 text-xs text-slate-500">حساب فعال: <span dir="ltr">{currentUser.mobile}</span></p>
-                </div>
-              </div>
-            </section>}
             {role === "OWNER" && <OwnerDashboard user={currentUser} onToolSelected={() => setHasSelectedTool(true)} />}
             {role === "AGENT" && <AgentDashboard user={currentUser} onToolSelected={() => setHasSelectedTool(true)} />}
             {role === "HASHTI" && <HashtiDashboard user={currentUser} onToolSelected={() => setHasSelectedTool(true)} />}
