@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { BadgeCheck, Contact, FileText, LoaderCircle, LockKeyhole, RefreshCw, Save, ShieldAlert, UserRound } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
@@ -13,6 +13,7 @@ import { AgentPropertyManagementPanel } from "./AgentPropertyManagementPanel";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
 import { agentApiRequest } from "../api/agentApi";
+import { Modal } from "@/shared/components/Modal";
 
 
 function displayMoney(value: string | number | null) {
@@ -29,6 +30,8 @@ function propertyName(value: string) {
 }
 
 export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
+  const [propertyModalOpen, setPropertyModalOpen] = useState(false);
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const {
     selectedTool, setSelectedTool,
     profileId, profileState, profileError, profileReviewNotes,
@@ -52,7 +55,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes(profileState === "verified");
 
   return (
-    <div dir="rtl" className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div dir="rtl" className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
       <aside aria-label="ابزارهای پنل مشاور" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشاور</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشاور">
@@ -61,7 +64,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 space-y-5">
+      <main className="min-w-0 w-full space-y-5">
       {profileState === "checking" && selectedTool === "profile" && (
         <section className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><LoaderCircle className="h-5 w-5 animate-spin" />در حال بررسی تأیید حساب مشاور...</section>
       )}
@@ -93,7 +96,16 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </section>
       )}
 
-      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} /><AgentPropertyManagementPanel /></>}
+      {profileState === "verified" && selectedTool === "property-management" && <>
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div><h2 className="text-lg font-bold">مدیریت املاک</h2><p className="mt-1 text-sm text-slate-600">رکوردهای ملک مرتبط با حساب مشاور را مدیریت کنید.</p></div>
+          <button type="button" onClick={() => setPropertyModalOpen(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
+        </section>
+        <AgentPropertyManagementPanel />
+        <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
+          <PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} />
+        </Modal>
+      </>}
       {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
@@ -146,9 +158,10 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           <section hidden={selectedTool !== "requests"} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold">درخواست‌های جست‌وجوی ملک</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">اطلاعات تماس ثبت‌کنندهٔ هر درخواست (مشتری یا مشاور) پس از درخواست دسترسی برای مشاور نمایش داده می‌شود.</p>
+                <h2 className="text-lg font-bold">مدیریت مشتریان و درخواست‌ها</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">اطلاعات تماس ثبت‌کنندهٔ هر درخواست پس از دریافت دسترسی مجاز نمایش داده می‌شود.</p>
               </div>
+              <button type="button" onClick={() => setCustomerModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-sm font-bold text-white">ایجاد مشتری جدید</button>
               <button type="button" onClick={() => void loadRequests()} disabled={loadingRequests} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50">
                 {loadingRequests ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} به‌روزرسانی
               </button>
@@ -203,6 +216,9 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </>
       )}
       <div hidden={selectedTool !== "notifications"}><UserNotificationsPanel userId={user.id} /></div>
+      <Modal open={customerModalOpen} title="ایجاد مشتری جدید" description="نیاز ملکی مشتری را به‌عنوان درخواست جدید ثبت کنید." onClose={() => setCustomerModalOpen(false)}>
+        <AgentCreateSearchRequestPanel onCreated={() => { void loadRequests(); }} />
+      </Modal>
       </main>
     </div>
   );
