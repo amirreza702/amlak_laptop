@@ -104,7 +104,7 @@ export function GlobalSessionControl() {
     <>
       {(showHomeButton || user) && (
         <div
-          className="fixed left-2 right-2 top-2 z-[2000] flex max-w-[calc(100vw-1rem)] flex-wrap items-center gap-1.5 sm:left-4 sm:right-auto sm:top-4 sm:gap-2"
+          className="fixed left-2 right-auto top-2 z-[2000] flex w-fit max-w-[calc(100vw-1rem)] flex-wrap items-center gap-1.5 sm:left-4 sm:top-4 sm:gap-2"
           dir="ltr"
         >
           {showHomeButton && (
