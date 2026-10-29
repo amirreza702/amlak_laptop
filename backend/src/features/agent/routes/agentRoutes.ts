@@ -9,12 +9,17 @@ import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireOwnProfile } from "../../auth/middleware/authorizationMiddleware";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
+import { getMyPrivateNotesController, upsertMyPrivateNoteController } from "../controller/agentPrivateNotesController";
 import {
   accessOwnerRequestContactController,
   getActiveOwnerAgentRequestsController,
 } from "../../owner/controller/ownerAgentRequestController";
 
 const router = Router();
+
+// یادداشت‌های شخصی فقط برای مشاور صاحب نشست قابل دسترسی هستند.
+router.get("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), getMyPrivateNotesController);
+router.put("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, upsertMyPrivateNoteController);
 
 // شناسه پروفایل از User نشست استخراج می‌شود؛ به شناسه ذخیره‌شده در مرورگر وابسته نیست.
 router.get(
