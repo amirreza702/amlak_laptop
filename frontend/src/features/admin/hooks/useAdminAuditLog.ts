@@ -30,6 +30,6 @@ export function useAdminAuditLog() {
     } finally { setLoading(false); }
   }, [targetType, targetId, actorUserId, page]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
   return { items, targetType, setTargetType, targetId, setTargetId, actorUserId, setActorUserId, page, setPage, total, totalPages, loading, error, load };
 }
