@@ -35,6 +35,13 @@ export const findOwnerAgentRequests = (ownerId: string) =>
     select: {
       id: true, propertyId: true, description: true, status: true, createdAt: true, updatedAt: true,
       property: { select: { propertyType: true, city: true, district: true, area: true } },
+      responses: {
+        select: {
+          status: true,
+          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -60,6 +67,14 @@ export const findActiveOwnerAgentRequests = () =>
           listing: { select: { transactionType: true } },
         },
       },
+      responses: {
+        where: { agentId: { not: "" } },
+        select: {
+          status: true,
+          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -72,6 +87,23 @@ export const findOwnerRequestForAccess = (requestId: string) =>
       property: { select: { address: true, postalCode: true, city: true, district: true } },
     },
   });
+
+export const findOwnerAgentRequestForResponse = (requestId: string) =>
+  prisma.ownerAgentRequest.findFirst({
+    where: { id: requestId, status: "ACTIVE", property: { isActive: true } },
+    select: { id: true, propertyId: true },
+  });
+
+export const upsertOwnerAgentRequestResponse = (
+  ownerAgentRequestId: string,
+  agentId: string,
+  status: string,
+  db: Db = prisma,
+) => db.ownerAgentRequestResponse.upsert({
+  where: { ownerAgentRequestId_agentId: { ownerAgentRequestId, agentId } },
+  create: { ownerAgentRequestId, agentId, status },
+  update: { status },
+});
 
 export const findOwnerRequestAccessLog = (agentId: string, requestId: string, db: Db = prisma) =>
   db.ownerAgentRequestAccessLog.findUnique({
