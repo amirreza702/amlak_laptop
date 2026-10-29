@@ -32,7 +32,7 @@ export function useAgentPrivateNotes(enabled = true) {
     }
   }, []);
 
-  useEffect(() => { if (enabled) void refreshNotes(); }, [enabled, refreshNotes]);
+  useEffect(() => { if (enabled) void Promise.resolve().then(() => refreshNotes()); }, [enabled, refreshNotes]);
 
   const saveNote = useCallback(async (entityType: AgentPrivateNote["entityType"], entityId: string, note: string) => {
     const key = `${entityType}:${entityId}`;
