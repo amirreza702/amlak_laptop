@@ -53,7 +53,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       <aside aria-label="ابزارهای پنل مشاور" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشاور</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشاور">
-          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["create-request", "ثبت درخواست مشتری"], ["requests", "درخواست‌ها"], ["private-notes", "یادداشت‌ها"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
+          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["owner-management", "مدیریت مالکان"], ["create-request", "ثبت درخواست مشتری"], ["requests", "مدیریت مشتریان"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
             <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}</button>
           ))}
         </nav>
@@ -90,7 +90,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </section>
       )}
 
-      {profileState === "verified" && selectedTool === "property-management" && <PropertyRegistrationPanel mode="agent" />}
+      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" /><AgentPrivateNotesPanel defaultEntityType="property" /></>}
       {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
@@ -102,8 +102,6 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
 
       {profileState === "verified" && (
         <>
-          <section hidden={selectedTool !== "private-notes"}><AgentPrivateNotesPanel /></section>
-
           <div hidden={selectedTool !== "requests"} className="grid gap-3 sm:grid-cols-3">
             <SummaryCard icon={<BadgeCheck className="h-5 w-5" />} label="وضعیت حساب" value="تأیید شده" />
             <SummaryCard icon={<FileText className="h-5 w-5" />} label="درخواست‌های فعال" value={String(requests.length)} />
@@ -215,7 +213,8 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             )}
           </section>
 
-          <section hidden={selectedTool !== "requests"}>{profileId && <OwnerAgentRequestsPanel agentId={profileId} />}</section>
+          <section hidden={selectedTool !== "owner-management"} className="space-y-5">{profileId && <OwnerAgentRequestsPanel agentId={profileId} />}<AgentPrivateNotesPanel defaultEntityType="owner" /></section>
+          <section hidden={selectedTool !== "requests"}><AgentPrivateNotesPanel defaultEntityType="customer" /></section>
 
           <div className="grid gap-3 lg:grid-cols-2">
           </div>
