@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import dynamic from "next/dynamic";
 import { Building2, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import type { Coordinates } from "@/features/property/types/propertyRegistration";
 import { useOwnerProperties } from "../hooks/useOwnerProperties";
 import type { OwnerProperty } from "../types/owner";
 import { Modal } from "@/shared/components/Modal";
+
+// همان انتخاب‌گر نقشهٔ فرم ایجاد ملک، بدون بارگذاری Leaflet در سمت سرور.
+const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
+  ssr: false,
+  loading: () => <div className="flex h-72 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500">در حال بارگذاری نقشه...</div>,
+});
 
 export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mobile: string }; mode?: "properties" | "agents" }) {
   const [editingProperty, setEditingProperty] = useState<OwnerProperty | null>(null);
@@ -64,11 +72,25 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1 text-sm">نوع ملک<select required value={editForm.propertyType} onChange={(e) => setEditForm(v => ({...v, propertyType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label className="space-y-1 text-sm">نوع معامله<select required value={editForm.transactionType} onChange={(e) => setEditForm(v => ({...v, transactionType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["SALE","فروش"],["FULL_DEPOSIT","رهن کامل"],["RENT","اجاره"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-            {([["city","شهر"],["district","محله / منطقه"],["address","نشانی"],["postalCode","کد پستی"],["area","متراژ"],["rooms","تعداد اتاق"],["floor","طبقه"],["latitudeExact","عرض جغرافیایی"],["longitudeExact","طول جغرافیایی"]] as const).map(([key,label]) => <label key={key} className="space-y-1 text-sm">{label}<input required={["city","district","address","latitudeExact","longitudeExact"].includes(key)} type={["area","rooms","floor","latitudeExact","longitudeExact"].includes(key) ? "number" : "text"} step={["area","latitudeExact","longitudeExact"].includes(key) ? "any" : "1"} value={editForm[key]} onChange={(e) => setEditForm(v => ({...v,[key]:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>)}
+            {([["city","شهر"],["district","محله / منطقه"],["address","نشانی"],["postalCode","کد پستی"],["area","متراژ"],["rooms","تعداد اتاق"],["floor","طبقه"]] as const).map(([key,label]) => <label key={key} className="space-y-1 text-sm">{label}<input required={["city","district","address"].includes(key)} type={["area","rooms","floor"].includes(key) ? "number" : "text"} step={key === "area" ? "any" : "1"} value={editForm[key]} onChange={(e) => setEditForm(v => ({...v,[key]:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>)}
             {editForm.transactionType === "SALE" && <label className="space-y-1 text-sm">قیمت فروش (تومان)<input required min="1" type="number" value={editForm.salePrice} onChange={(e) => setEditForm(v => ({...v,salePrice:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>}
             {editForm.transactionType === "FULL_DEPOSIT" && <label className="space-y-1 text-sm">مبلغ رهن (تومان)<input required min="1" type="number" value={editForm.depositAmount} onChange={(e) => setEditForm(v => ({...v,depositAmount:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>}
             {editForm.transactionType === "RENT" && <label className="space-y-1 text-sm">اجاره ماهانه (تومان)<input required min="1" type="number" value={editForm.rentAmount} onChange={(e) => setEditForm(v => ({...v,rentAmount:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>}
           </div>
+          <fieldset className="space-y-2 rounded-xl border p-3">
+            <legend className="px-2 text-sm font-bold">موقعیت جغرافیایی (اجباری)</legend>
+            <PropertyLocationPicker
+              value={editForm.latitudeExact.trim() !== "" && editForm.longitudeExact.trim() !== "" && Number.isFinite(Number(editForm.latitudeExact)) && Number.isFinite(Number(editForm.longitudeExact))
+                ? { latitude: Number(editForm.latitudeExact), longitude: Number(editForm.longitudeExact) } satisfies Coordinates
+                : null}
+              onChange={(coordinates) => setEditForm(v => ({
+                ...v,
+                latitudeExact: String(coordinates.latitude),
+                longitudeExact: String(coordinates.longitude),
+              }))}
+              city={editForm.city}
+            />
+          </fieldset>
           <p className="text-xs leading-6 text-slate-500">وضعیت تأیید مالکیت، انتشار و سوابق سیستمی فقط از مسیرهای مجاز تغییر می‌کنند.</p>
           <div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setEditingProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="submit" disabled={savingProperty} className="rounded-lg bg-[#043873] px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
         </form>
