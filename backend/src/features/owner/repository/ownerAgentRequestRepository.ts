@@ -51,7 +51,7 @@ export const closeOwnerAgentRequest = (ownerId: string, requestId: string) =>
     data: { status: "CLOSED" },
   });
 
-export const findActiveOwnerAgentRequests = () =>
+export const findActiveOwnerAgentRequests = (agentId: string) =>
   prisma.ownerAgentRequest.findMany({
     where: {
       status: "ACTIVE",
@@ -68,7 +68,7 @@ export const findActiveOwnerAgentRequests = () =>
         },
       },
       responses: {
-        where: { agentId: { not: "" } },
+        where: { agentId },
         select: {
           status: true,
           agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
