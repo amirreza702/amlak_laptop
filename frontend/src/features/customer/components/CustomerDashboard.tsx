@@ -240,7 +240,7 @@ export function CustomerDashboard() {
                         <td className="p-3">{request.status === "ACTIVE" && <div className="flex flex-col items-start gap-2"><button type="button" onClick={() => startEdit(request)} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"><Edit3 className="h-4 w-4" /> ویرایش</button><button type="button" disabled={busyId === request.id} onClick={() => void runAction(request.id, async () => { await closeCustomerSearchRequest(profile!.id, request.id); setActionMessage("درخواست بسته شد."); })} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"><X className="h-4 w-4" /> بستن درخواست</button></div>}</td>
                       </>}
                     </tr>
-                  ))}</tbody></table></div></>
+                  ))}</tbody></table></>}</div>
               </div>
             )}
 
