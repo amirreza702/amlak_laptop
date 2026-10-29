@@ -87,6 +87,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             city: true,
             district: true,
             address: true,
+            latitudeExact: true,
+            longitudeExact: true,
             postalCode: true,
             area: true,
             rooms: true,
@@ -95,7 +97,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             createdAt: true,
             confirmUntil: true,
             listing: {
-              select: { status: true, transactionType: true, publishedAt: true },
+              select: { status: true, transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, publishedAt: true },
             },
             owners: {
               select: {
