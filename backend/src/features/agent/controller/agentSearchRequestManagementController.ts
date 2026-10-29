@@ -28,3 +28,14 @@ export async function deleteOwnAgentSearchRequestController(req: Request, res: R
   return res.status(204).send();
  } catch (error) { console.error("Could not delete agent search request:", error); return res.status(500).json({ message: "Internal server error" }); }
 }
+/** همه درخواست‌های جست‌وجو برای مشاور؛ بدون افشای شناسه داخلی ثبت‌کننده. */
+export async function getAllAgentSearchRequestsController(req: Request, res: Response) {
+ try {
+  const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
+  const rows = await prisma.propertySearchRequest.findMany({
+   select: { id: true, transactionType: true, propertyType: true, city: true, budget: true, description: true, hashtiVerified: true, status: true, createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true },
+   orderBy: { createdAt: "desc" },
+  });
+  return res.status(200).json(rows.map(({ createdByUserId, ...request }) => ({ ...request, isCreatedByMe: createdByUserId === id })));
+ } catch (error) { console.error("Could not list search requests for agent:", error); return res.status(500).json({ message: "Internal server error" }); }
+}
