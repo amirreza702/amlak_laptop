@@ -1,0 +1,10 @@
+"use client";
+import { useEffect, useState } from "react";
+type AdminNote = { id: string; entityType: string; entityId: string; note: string; updatedAt: string; agent: { id: string; firstName: string; lastName: string; user: { mobile: string } } };
+const API = process.env.NEXT_PUBLIC_API_URL || "/api";
+export default function AdminAgentPrivateNotesPage() {
+ const [notes,setNotes] = useState<AdminNote[]>([]); const [error,setError] = useState(""); const [loading,setLoading] = useState(true);
+ useEffect(() => { fetch(`${API}/admin/agent-private-notes`, { credentials:"include", cache:"no-store" }).then(async r => { const b=await r.json(); if(!r.ok) throw new Error(b.message || "دریافت یادداشت‌ها ناموفق بود."); setNotes(Array.isArray(b.notes)?b.notes:[]); }).catch(e=>setError(e instanceof Error?e.message:"خطا")).finally(()=>setLoading(false)); }, []);
+ return <section dir="rtl" className="space-y-4 text-slate-900"><header className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="text-xl font-bold">یادداشت‌های مشاوران</h2><p className="mt-2 text-sm text-slate-600">این فهرست فقط برای مدیر ارشد هشتی قابل دسترسی است.</p></header>
+ {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}{loading ? <p>در حال دریافت...</p> : notes.length===0 ? <p className="rounded-xl border bg-white p-5">یادداشتی ثبت نشده است.</p> : <div className="space-y-3">{notes.map(n=><article key={n.id} className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex flex-wrap justify-between gap-2"><strong>{n.agent.firstName} {n.agent.lastName}</strong><span className="text-sm text-slate-500">{n.agent.user.mobile}</span></div><p className="mt-2 text-sm font-semibold">{n.entityType==="property"?"ملک":n.entityType==="owner"?"مالک":"مشتری"} · <span dir="ltr" className="font-mono">{n.entityId}</span></p><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{n.note}</p><p className="mt-2 text-xs text-slate-500">آخرین تغییر: {new Date(n.updatedAt).toLocaleString("fa-IR")}</p></article>)}</div>}</section>;
+}
