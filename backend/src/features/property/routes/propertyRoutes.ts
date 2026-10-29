@@ -29,6 +29,7 @@ import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddlew
 import {
   bindOwnProfileIdToBody,
   requirePropertyAccess,
+  requireAgentOwnRegisteredProperty,
   requireVerificationCaseAccess,
 } from "../../auth/middleware/authorizationMiddleware";
 
@@ -112,7 +113,7 @@ router.delete(
 
 router.patch(
   "/properties/:id",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false), requireAgentOwnRegisteredProperty(),
   updatePropertyController
 );
 
