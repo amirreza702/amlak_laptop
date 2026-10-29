@@ -163,6 +163,7 @@ export async function approvePropertyAgentByOwnerService(
           },
         },
         data: {
+          status: "ACTIVE",
           approvedByOwner: true,
           approvedAt: new Date(),
         },
