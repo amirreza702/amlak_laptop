@@ -16,7 +16,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
     cityFilter, setCityFilter, districtFilter, setDistrictFilter, transactionFilter, setTransactionFilter,
     propertyTypeFilter, setPropertyTypeFilter, minPrice, setMinPrice, maxPrice, setMaxPrice,
     minArea, setMinArea, maxArea, setMaxArea, minRooms, setMinRooms, occupancyFilter, setOccupancyFilter,
-    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty,
+    listingFilter, setListingFilter, actionMessage, actionError, visibleProperties, saveProperty, deleteProperty,
   } = useOwnerProperties(user.mobile, mode);
 
   function startEditing(item: OwnerProperty) {
