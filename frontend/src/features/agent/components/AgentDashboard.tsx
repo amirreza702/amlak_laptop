@@ -10,6 +10,7 @@ import { AgentCreateSearchRequestPanel } from "./AgentCreateSearchRequestPanel";
 import { useAgentDashboard } from "../hooks/useAgentDashboard";
 import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
 import { AgentPrivateNotesPanel } from "./AgentPrivateNotesPanel";
+import { agentApiRequest } from "../api/agentApi";
 
 
 function displayMoney(value: string | number | null) {
@@ -173,6 +174,29 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
                       </div>
                       
                     </div>
+                    {request.isCreatedByMe && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={async () => {
+                          const city = window.prompt("شهر درخواست", request.city);
+                          if (city === null) return;
+                          const description = window.prompt("توضیحات درخواست", request.description ?? "");
+                          if (description === null) return;
+                          const budget = window.prompt("بودجه (تومان)", String(request.budget ?? ""));
+                          if (budget === null) return;
+                          try {
+                            await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ city, description, budget: Number(budget) }) });
+                            await loadRequests();
+                          } catch (error) { window.alert(error instanceof Error ? error.message : "ویرایش درخواست ناموفق بود."); }
+                        }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">ویرایش درخواست من</button>
+                        <button type="button" onClick={async () => {
+                          if (!window.confirm("درخواست خودتان حذف شود؟ این کار قابل بازگشت نیست.")) return;
+                          try {
+                            await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "DELETE" });
+                            await loadRequests();
+                          } catch (error) { window.alert(error instanceof Error ? error.message : "حذف درخواست ناموفق بود."); }
+                        }} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">حذف درخواست من</button>
+                      </div>
+                    )}
                     {contacts[request.id] ? (
                       <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
                         <p className="mb-2 font-bold">{request.createdByRole === "AGENT" ? "اطلاعات تماس مشاور ثبت‌کننده" : "اطلاعات تماس مشتری"}</p>
