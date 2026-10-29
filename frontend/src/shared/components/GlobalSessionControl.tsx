@@ -47,7 +47,7 @@ export function GlobalSessionControl() {
       void syncSession();
     };
 
-    void syncSession();
+    void Promise.resolve().then(() => syncSession());
 
     window.addEventListener(
       AUTH_STATE_CHANGE_EVENT,
