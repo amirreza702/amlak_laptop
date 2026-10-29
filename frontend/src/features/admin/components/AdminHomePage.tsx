@@ -7,8 +7,9 @@ import AdminAuditPage from "@/features/admin/components/AdminAuditPage";
 import AdminOwnersPage from "@/features/admin/components/AdminOwnersPage";
 import AdminStaffPage from "@/features/admin/components/AdminStaffPage";
 import AdminUsersPage from "@/features/admin/components/AdminUsersPage";
+import AdminAgentPrivateNotesPage from "@/features/admin/components/AdminAgentPrivateNotesPage";
 
-type AdminTool = "overview" | "users" | "owners" | "agents" | "staff" | "audit";
+type AdminTool = "overview" | "users" | "owners" | "agents" | "staff" | "audit" | "agent-notes";
 
 const tools: { id: AdminTool; title: string; description: string }[] = [
   { id: "overview", title: "نمای کلی", description: "نمایش ابزارهای پنل مدیریت" },
@@ -17,6 +18,7 @@ const tools: { id: AdminTool; title: string; description: string }[] = [
   { id: "agents", title: "مدیریت مشاوران", description: "تأیید مشاور، وضعیت حساب و سوابق" },
   { id: "staff", title: "کارکنان و دسترسی‌ها", description: "ساخت حساب کارکنان و تنظیم مجوزها" },
   { id: "audit", title: "سوابق مدیریتی", description: "مشاهده تغییرات و جزئیات عملیات مدیریتی" },
+  { id: "agent-notes", title: "یادداشت‌های مشاوران", description: "مشاهده یادداشت‌های شخصی همه مشاوران" },
 ];
 
 export default function AdminHomePage() {
@@ -72,6 +74,7 @@ export default function AdminHomePage() {
             : selectedTool === "owners" ? <AdminOwnersPage />
             : selectedTool === "agents" ? <AdminAgentsPage />
             : selectedTool === "staff" ? <AdminStaffPage />
+            : selectedTool === "agent-notes" ? <AdminAgentPrivateNotesPage />
             : <AdminAuditPage />}
         </section>
       </div>
