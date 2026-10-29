@@ -40,17 +40,37 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
 }
 
 
-/** Soft-delete an owner-registered property only for its approved, active agent. */
+/** مشاور فقط می‌تواند ملک ثبت‌شده توسط خودش را غیرفعال کند؛ تاریخچه حفظ می‌شود. */
 export async function deleteAgentManagedOwnerPropertyService(propertyId: string, userId: string) {
-  const relation = await prisma.propertyAgent.findFirst({ where: { propertyId, status: "ACTIVE", approvedByOwner: true, agent: { is: { userId } } }, select: { propertyId: true } });
-  if (!relation) throw new Error("PROPERTY_NOT_APPROVED_FOR_AGENT");
-  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { id: true, isActive: true, registrationSource: true } });
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { id: true, isActive: true, registrationSource: true, createdByUserId: true },
+  });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
-  if (property.registrationSource !== "OWNER") throw new Error("PROPERTY_NOT_REGISTERED_BY_OWNER");
+  if (property.registrationSource !== "AGENT" || property.createdByUserId !== userId) {
+    throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
+  }
+
+  const relation = await prisma.propertyAgent.findFirst({
+    where: { propertyId, status: "ACTIVE", agent: { is: { userId } } },
+    select: { propertyId: true },
+  });
+  if (!relation) throw new Error("PROPERTY_AGENT_RELATION_NOT_FOUND");
   if (!property.isActive) throw new Error("PROPERTY_ALREADY_DELETED");
+
   return prisma.$transaction(async (tx) => {
     const updated = await tx.property.update({ where: { id: propertyId }, data: { isActive: false } });
-    await tx.propertyHistory.create({ data: { propertyId, action: PropertyHistoryAction.OTHER, field: "isActive", oldValue: "true", newValue: "false", performedBy: userId, reason: "مشاور تأییدشدهٔ مرتبط، ملک ثبت‌شده توسط مالک را از فهرست فعال خارج کرد؛ سوابق حفظ شدند." } });
+    await tx.propertyHistory.create({
+      data: {
+        propertyId,
+        action: PropertyHistoryAction.OTHER,
+        field: "isActive",
+        oldValue: "true",
+        newValue: "false",
+        performedBy: userId,
+        reason: "مشاور ثبت‌کننده، ملک خود را از فهرست فعال خارج کرد؛ سوابق حفظ شدند.",
+      },
+    });
     return updated;
   });
 }
