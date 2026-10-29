@@ -27,7 +27,7 @@ export function useAgentRequestFilters(requests: FilterableAgentRequest[]) {
   const [requestTo, setRequestTo] = useState("");
 
   const visibleRequests = useMemo(() => requests.filter((request) => {
-    const text = `${request.city} ${request.transactionType} ${request.propertyType} ${request.description ?? ""} ${request.id}`.toLocaleLowerCase();
+    const text = `${request.city} ${request.transactionType} ${request.propertyType} ${request.description ?? ""} ${request.id} ${request.budget ?? ""} ${request.createdByRole ?? ""} ${request.createdAt} ${request.isCreatedByMe ? "ثبت‌شده توسط من" : ""}`.toLocaleLowerCase();
     const budget = request.budget === null ? null : Number(request.budget);
     const createdAt = new Date(request.createdAt).getTime();
     return text.includes(requestSearch.trim().toLocaleLowerCase()) &&
