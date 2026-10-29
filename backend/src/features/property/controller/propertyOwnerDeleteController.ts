@@ -27,8 +27,8 @@ export async function deleteAgentManagedOwnerPropertyController(req: Request, re
     return res.status(200).json({ property, message: "ملک از فهرست فعال خارج شد؛ سوابق آن حفظ شده‌اند." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
-    if (code === "PROPERTY_NOT_APPROVED_FOR_AGENT") return res.status(403).json({ message: "ارتباط فعال و تأییدشده‌ای با این ملک ندارید." });
-    if (code === "PROPERTY_NOT_REGISTERED_BY_OWNER") return res.status(403).json({ message: "این عملیات فقط برای ملکی که مالک ثبت کرده مجاز است." });
+    if (code === "PROPERTY_NOT_REGISTERED_BY_AGENT") return res.status(403).json({ message: "فقط ملکی را می‌توانید حذف کنید که خودتان ثبت کرده‌اید." });
+    if (code === "PROPERTY_AGENT_RELATION_NOT_FOUND") return res.status(403).json({ message: "ارتباط فعالی با این ملک ندارید." });
     if (code === "PROPERTY_NOT_FOUND") return res.status(404).json({ message: "ملک پیدا نشد." });
     if (code === "PROPERTY_ALREADY_DELETED") return res.status(409).json({ message: "این ملک قبلاً از فهرست فعال خارج شده است." });
     console.error("Error deleting agent-managed owner property:", error);
