@@ -1,4 +1,4 @@
-import { findAgentProfileByUserId } from "./../repository/agentRepository";
+import { findAgentProfileByUserId } from "../repository/agentRepository";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
 
 /** مشاور فقط رکوردهایی را می‌بیند که از طریق رابطه PropertyAgent به او متصل‌اند. */
