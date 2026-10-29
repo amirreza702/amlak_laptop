@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   House,
@@ -19,6 +19,7 @@ import {
 
 export function GlobalSessionControl() {
   const pathname = usePathname();
+  const router = useRouter();
   const latestCheckId = useRef(0);
 
   const [user, setUser] = useState<UserPublic | null>(null);
@@ -71,6 +72,7 @@ export function GlobalSessionControl() {
     try {
       await logoutUser();
       setUser(null);
+      router.push("/");
     } catch {
       setLogoutError(
         "خروج انجام نشد؛ اتصال به سرور را بررسی کنید."
@@ -102,7 +104,7 @@ export function GlobalSessionControl() {
     <>
       {(showHomeButton || user) && (
         <div
-          className="fixed left-4 top-4 z-[2000] flex items-center gap-2"
+          className="fixed left-2 right-2 top-2 z-[2000] flex max-w-[calc(100vw-1rem)] flex-wrap items-center gap-1.5 sm:left-4 sm:right-auto sm:top-4 sm:gap-2"
           dir="ltr"
         >
           {showHomeButton && (
@@ -110,11 +112,11 @@ export function GlobalSessionControl() {
               href="/"
               aria-label="خانه"
               title="خانه"
-              className={buttonClass}
+              className={`${buttonClass} max-w-full px-2 sm:px-3`}
               dir="rtl"
             >
-              <House className="h-4 w-4" />
-              خانه
+              <House className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">خانه</span>
             </Link>
           )}
 
@@ -124,11 +126,11 @@ export function GlobalSessionControl() {
                 href={dashboardHref}
                 aria-label="پنل من"
                 title="پنل من"
-                className={buttonClass}
+                className={`${buttonClass} max-w-full px-2 sm:px-3`}
                 dir="rtl"
               >
-                <LayoutDashboard className="h-4 w-4" />
-                پنل
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">پنل</span>
               </Link>
 
               <button
@@ -137,7 +139,7 @@ export function GlobalSessionControl() {
                 disabled={isSigningOut}
                 aria-label="خروج از حساب کاربری"
                 title="خروج"
-                className={buttonClass}
+                className={`${buttonClass} max-w-full px-2 sm:px-3`}
                 dir="rtl"
               >
                 {isSigningOut ? (
@@ -145,7 +147,7 @@ export function GlobalSessionControl() {
                 ) : (
                   <LogOut className="h-4 w-4" />
                 )}
-                {isSigningOut ? "در حال خروج..." : "خروج"}
+                <span className="hidden sm:inline">{isSigningOut ? "در حال خروج..." : "خروج"}</span>
               </button>
             </>
           )}
