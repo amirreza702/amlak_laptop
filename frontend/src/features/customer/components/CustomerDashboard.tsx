@@ -187,11 +187,11 @@ export function CustomerDashboard() {
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
             <LoaderCircle className="h-5 w-5 animate-spin" /> در حال دریافت اطلاعات پنل...
           </div>
         ) : pageError ? (
-          <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm leading-7 text-red-800">
+          <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm leading-7 text-red-800">
             {pageError} <div className="mt-3"><Link href="/" className="font-bold underline">بازگشت به صفحه اصلی</Link></div>
           </div>
         ) : (
@@ -225,9 +225,9 @@ export function CustomerDashboard() {
 
             {tab === "requests" && (
               <div className="space-y-3">
-                {requests.length === 0 ? <EmptyState text="هنوز درخواستی ثبت نکرده‌اید." action={<Link href="/request" className="font-bold text-[#043873] underline">ثبت درخواست جدید</Link>} /> : <><div className="mb-4 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-3"><input aria-label="جست‌وجوی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد، شهر یا توضیحات..." className={inputClass} /><input aria-label="شهر درخواست" value={requestCityFilter} onChange={(event) => setRequestCityFilter(event.target.value)} placeholder="شهر" className={inputClass} /><select aria-label="نوع معامله درخواست" value={requestTransactionFilter} onChange={(event) => setRequestTransactionFilter(event.target.value)} className={inputClass}><option value="all">همه معاملات</option>{transactionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><select aria-label="نوع ملک درخواست" value={requestTypeFilter} onChange={(event) => setRequestTypeFilter(event.target.value)} className={inputClass}><option value="all">همه انواع ملک</option>{propertyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><input aria-label="حداقل بودجه درخواست" type="number" min="0" value={requestBudgetMin} onChange={(event) => setRequestBudgetMin(event.target.value)} placeholder="حداقل بودجه" className={inputClass} /><input aria-label="حداکثر بودجه درخواست" type="number" min="0" value={requestBudgetMax} onChange={(event) => setRequestBudgetMax(event.target.value)} placeholder="حداکثر بودجه" className={inputClass} /><select aria-label="وضعیت درخواست" value={requestStatusFilter} onChange={(event) => setRequestStatusFilter(event.target.value)} className={inputClass}><option value="all">همه وضعیت‌ها</option><option value="ACTIVE">فعال</option><option value="CLOSED">بسته</option></select><div className="flex items-center justify-between gap-2 text-sm text-slate-500"><span>{filteredRequests.length} مورد</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold">پاک‌کردن فیلترها</button></div></div>
+                {requests.length === 0 ? <EmptyState text="هنوز درخواستی ثبت نکرده‌اید." action={<Link href="/request" className="font-bold text-[#043873] underline">ثبت درخواست جدید</Link>} /> : <><div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-3"><input aria-label="جست‌وجوی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد، شهر یا توضیحات..." className={inputClass} /><input aria-label="شهر درخواست" value={requestCityFilter} onChange={(event) => setRequestCityFilter(event.target.value)} placeholder="شهر" className={inputClass} /><select aria-label="نوع معامله درخواست" value={requestTransactionFilter} onChange={(event) => setRequestTransactionFilter(event.target.value)} className={inputClass}><option value="all">همه معاملات</option>{transactionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><select aria-label="نوع ملک درخواست" value={requestTypeFilter} onChange={(event) => setRequestTypeFilter(event.target.value)} className={inputClass}><option value="all">همه انواع ملک</option>{propertyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><input aria-label="حداقل بودجه درخواست" type="number" min="0" value={requestBudgetMin} onChange={(event) => setRequestBudgetMin(event.target.value)} placeholder="حداقل بودجه" className={inputClass} /><input aria-label="حداکثر بودجه درخواست" type="number" min="0" value={requestBudgetMax} onChange={(event) => setRequestBudgetMax(event.target.value)} placeholder="حداکثر بودجه" className={inputClass} /><select aria-label="وضعیت درخواست" value={requestStatusFilter} onChange={(event) => setRequestStatusFilter(event.target.value)} className={inputClass}><option value="all">همه وضعیت‌ها</option><option value="ACTIVE">فعال</option><option value="CLOSED">بسته</option></select><div className="flex items-center justify-between gap-2 text-sm text-slate-500"><span>{filteredRequests.length} مورد</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold">پاک‌کردن فیلترها</button></div></div>
                   {filteredRequests.map((request) => (
-                    <article key={request.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <article key={request.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                       {editingId === request.id ? (
                         <div className="space-y-4">
                           <h3 className="font-bold">ویرایش درخواست</h3>
@@ -288,7 +288,7 @@ export function CustomerDashboard() {
               <div className="grid gap-3 sm:grid-cols-2">
                 {favorites.length === 0 ? <div className="sm:col-span-2"><EmptyState text="هنوز ملکی به علاقه‌مندی‌ها اضافه نکرده‌اید." action={<Link href="/search" className="font-bold text-[#043873] underline">جست‌وجوی ملک</Link>} /></div> :
                   favorites.map((favorite) => (
-                    <article key={favorite.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <article key={favorite.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                       {favorite.property?.media?.[0]?.url && <img src={favorite.property.media[0].url} alt="" className="h-40 w-full object-cover" />}
                       <div className="p-4">
                         {favorite.property ? (
@@ -312,7 +312,7 @@ export function CustomerDashboard() {
               <div className="space-y-3">
                 {notifications.length === 0 ? <EmptyState text="در حال حاضر اعلانی برای نمایش وجود ندارد." /> :
                   notifications.map((notification) => (
-                    <article key={notification.id} className={`rounded-2xl border bg-white p-4 ${notification.isRead ? "border-slate-200" : "border-blue-200"}`}>
+                    <article key={notification.id} className={`rounded-xl border bg-white p-4 ${notification.isRead ? "border-slate-200" : "border-blue-200"}`}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="font-bold">{notification.title}</h3>
@@ -327,7 +327,7 @@ export function CustomerDashboard() {
             )}
 
             {tab === "profile" && profile && (
-              <section className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+              <section className="max-w-2xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                 <h2 className="text-lg font-bold">اطلاعات حساب</h2>
                 <p className="mt-2 text-sm text-slate-600">شماره موبایل حساب: <span dir="ltr" className="font-semibold">{profile.user.mobile}</span></p>
                 <form className="mt-5 space-y-4" onSubmit={(event) => { event.preventDefault(); void runAction("profile", async () => { const updated = await updateCustomerProfile(profile.id, { firstName: firstName.trim(), lastName: lastName.trim() }); setProfile((current) => current ? { ...current, firstName: updated.firstName, lastName: updated.lastName } : current); setActionMessage("اطلاعات پروفایل ذخیره شد."); }); }}>
@@ -351,10 +351,10 @@ export function CustomerDashboard() {
 }
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#043873]">{icon}</div><div><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-black tabular-nums">{value}</p></div></div>;
+  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#043873]">{icon}</div><div><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-black tabular-nums">{value}</p></div></div>;
 }
 function EmptyState({ text, action }: { text: string; action?: ReactNode }) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center"><p className="text-sm leading-7 text-slate-600">{text}</p>{action && <div className="mt-3">{action}</div>}</div>;
+  return <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center"><p className="text-sm leading-7 text-slate-600">{text}</p>{action && <div className="mt-3">{action}</div>}</div>;
 }
 function StatusChip({ status }: { status: string }) {
   const label = status === "ACTIVE" ? "فعال" : status === "CLOSED" ? "بسته‌شده" : status;
