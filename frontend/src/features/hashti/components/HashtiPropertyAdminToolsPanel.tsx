@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, Search, TimerReset, UserPlus } from "lucide-react";
+import { Modal } from "@/shared/components/Modal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -68,6 +69,7 @@ export function HashtiPropertyAdminToolsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [ownerFormFor, setOwnerFormFor] = useState<string | null>(null);
+  const [expireConfirmFor, setExpireConfirmFor] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState("");
   const [share, setShare] = useState("6");
   const [isPrimary, setIsPrimary] = useState(false);
@@ -144,6 +146,7 @@ export function HashtiPropertyAdminToolsPanel() {
       if (result.statusChanged) setMessage("وضعیت آگهی به منقضی تغییر کرد؛ تاریخچه موجود حفظ شد.");
       else if (result.expired) setMessage("مهلت تأیید گذشته است، اما وضعیت فعلی آگهی نیاز به تغییر نداشت.");
       else setMessage("مهلت تأیید تمام نشده یا تعیین نشده است؛ تغییری اعمال نشد.");
+      setExpireConfirmFor(null);
       await load(pagination.offset);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "بررسی انقضای آگهی ناموفق بود.");
@@ -208,13 +211,13 @@ export function HashtiPropertyAdminToolsPanel() {
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">
                       <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> افزودن مالک به این ملک <ChevronDown className="h-3 w-3" /></button>
-                      {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => void expireListing(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
-                      {ownerFormFor === property.id && <form onSubmit={(event) => void addOwner(event, property.id)} className="mt-2 w-full min-w-[210px] space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => setExpireConfirmFor(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
+                      {ownerFormFor === property.id && <Modal open={ownerFormFor === property.id} title="افزودن مالک به ملک" description={"شناسه ملک: " + property.id} onClose={() => setOwnerFormFor(null)}><form onSubmit={(event) => void addOwner(event, property.id)} className="space-y-4">
                         <label className="block space-y-1 text-xs"><span>شناسه پروفایل مالک</span><input required maxLength={200} value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
                         <label className="block space-y-1 text-xs"><span>سهم مالکیت (دانگ)</span><input required type="number" min="0.01" max="6" step="0.01" value={share} onChange={(event) => setShare(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
                         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={isPrimary} onChange={(event) => setIsPrimary(event.target.checked)} className="h-4 w-4" /> مالک اصلی</label>
                         <button type="submit" disabled={busyOwnerPropertyId === property.id} className="inline-flex w-full items-center justify-center gap-2 rounded bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyOwnerPropertyId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت مالکیت</button>
-                      </form>}
+                      </form></Modal>}
                     </div>
                   </td>
                 </tr>
@@ -224,6 +227,10 @@ export function HashtiPropertyAdminToolsPanel() {
         </div>
       )}
 
+      <Modal open={Boolean(expireConfirmFor)} title="بررسی انقضای آگهی" description="این عملیات وضعیت آگهی را بر اساس مهلت تأیید بررسی می‌کند. در صورت لزوم وضعیت به منقضی تغییر می‌کند." onClose={() => setExpireConfirmFor(null)}>
+        {error && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        <div className="flex justify-end gap-2"><button type="button" onClick={() => setExpireConfirmFor(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" disabled={!expireConfirmFor || busyExpireId === expireConfirmFor} onClick={() => { if (expireConfirmFor) void expireListing(expireConfirmFor); }} className="rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busyExpireId ? "در حال بررسی..." : "تأیید و بررسی"}</button></div>
+      </Modal>
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <span className="text-slate-500">تعداد رکوردها: {pagination.total.toLocaleString("fa-IR")}</span>
         <div className="flex gap-2">
