@@ -20,6 +20,7 @@ import { createDuplicateReviewController, getDuplicateReviewsController, reviewD
 import { archivePropertyController, getPropertyArchiveController, restorePropertyController } from "../controller/propertyArchiveController";
 import { createExactLocationAccessLogController, getExactLocationAccessLogsController } from "../controller/exactLocationAccessLogController";
 import { updatePropertyController } from "../controller/propertyUpdateController";
+import { deleteOwnPropertyController } from "../controller/propertyOwnerDeleteController";
 import { findDuplicateMatchesController } from "../controller/duplicateMatchingController";
 
 import { authMiddleware, type AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
@@ -100,6 +101,14 @@ router.put(
   "/properties/:id/expire",
   authMiddleware, requireRole(UserRole.HASHTI), expirePropertyListingController
 );
+// مالک فقط می‌تواند ملک متعلق به حساب خودش را به‌صورت امن از فهرست فعال حذف کند.
+router.delete(
+  "/properties/:id",
+  authMiddleware,
+  requireRole(UserRole.OWNER),
+  deleteOwnPropertyController
+);
+
 router.patch(
   "/properties/:id",
   authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(),
