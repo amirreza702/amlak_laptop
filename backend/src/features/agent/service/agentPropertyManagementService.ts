@@ -6,10 +6,5 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
-  return findAgentPropertyRecords({
-    agentId: agent.id,
-    query: query.query,
-    limit: query.limit,
-    offset: query.offset,
-  });
+  return findAgentPropertyRecords({ agentId: agent.id, ...query });
 }

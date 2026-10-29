@@ -2,10 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
-  agentId: string;
-  query?: string;
-  limit: number;
-  offset: number;
+  agentId: string; query?: string; city?: string; district?: string; postalCode?: string; ownerName?: string;
+  propertyType?: string; transactionType?: string; listingStatus?: string; isActive?: boolean;
+  areaMin?: number; areaMax?: number; roomsMin?: number; roomsMax?: number; limit: number; offset: number;
 }
 
 /** فهرست رکوردهای املاک متصل به مشاور؛ فقط اطلاعات لازم پنل برگردانده می‌شود. */
@@ -17,8 +16,20 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const parsedDate = search ? new Date(search) : null;
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined;
   const exact = search?.trim().toUpperCase();
+  const fieldConditions: Prisma.PropertyWhereInput[] = [];
+  if (input.city?.trim()) fieldConditions.push({ city: contains(input.city.trim()) });
+  if (input.district?.trim()) fieldConditions.push({ district: contains(input.district.trim()) });
+  if (input.postalCode?.trim()) fieldConditions.push({ postalCode: contains(input.postalCode.trim()) });
+  if (input.propertyType) fieldConditions.push({ propertyType: input.propertyType as any });
+  if (input.isActive !== undefined) fieldConditions.push({ isActive: input.isActive });
+  if (input.areaMin !== undefined || input.areaMax !== undefined) fieldConditions.push({ area: { ...(input.areaMin !== undefined ? { gte: input.areaMin } : {}), ...(input.areaMax !== undefined ? { lte: input.areaMax } : {}) } });
+  if (input.roomsMin !== undefined || input.roomsMax !== undefined) fieldConditions.push({ rooms: { ...(input.roomsMin !== undefined ? { gte: input.roomsMin } : {}), ...(input.roomsMax !== undefined ? { lte: input.roomsMax } : {}) } });
+  if (input.transactionType) fieldConditions.push({ listing: { is: { transactionType: input.transactionType as any } } });
+  if (input.listingStatus) fieldConditions.push({ listing: { is: { status: input.listingStatus as any } } });
+  if (input.ownerName?.trim()) fieldConditions.push({ owners: { some: { owner: { is: { OR: [{ firstName: contains(input.ownerName.trim()) }, { lastName: contains(input.ownerName.trim()) }] } } } } });
   const where: Prisma.PropertyAgentWhereInput = {
     agentId: input.agentId,
+    ...(fieldConditions.length ? { property: { is: { AND: fieldConditions } } } : {}),
     ...(search ? {
       OR: [
         { property: { is: { OR: [
@@ -70,11 +81,15 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         property: {
           select: {
             id: true,
+            registrationSource: true,
             propertyType: true,
             city: true,
             district: true,
+            address: true,
+            postalCode: true,
             area: true,
             rooms: true,
+            floor: true,
             isActive: true,
             createdAt: true,
             confirmUntil: true,
