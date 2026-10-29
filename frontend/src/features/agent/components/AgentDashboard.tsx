@@ -111,7 +111,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       <aside aria-label="ابزارهای پنل مشاور" className="h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشاور</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشاور">
-          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["owner-management", "مدیریت مالکان"], ["create-request", "ثبت درخواست مشتری"], ["requests", "مدیریت مشتریان"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
+          {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["owner-management", "مدیریت مالکان"], ["requests", "مدیریت مشتریان"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
             <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}</button>
           ))}
         </nav>
@@ -158,9 +158,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           <PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} />
         </Modal>
       </>}
-      {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
-
-      {profileState === "verified" && (
+            {profileState === "verified" && (
         <section hidden={selectedTool !== "profile"} className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
           <h2 className="font-bold">حساب مشاور تأیید شده است</h2>
           <p className="mt-2">امکانات پنل بر اساس وضعیت حساب و سطح دسترسی شما نمایش داده می‌شود.</p>
