@@ -18,7 +18,7 @@ export function AgentPrivateNotesPanel({ defaultEntityType = "property" }: { def
     if (!r.ok) throw new Error(b.message || "دریافت یادداشت‌ها ناموفق بود.");
     setNotes(Array.isArray(b.notes) ? b.notes : []);
   }
-  useEffect(() => { void load().catch(e => setMessage(String(e.message || e))); }, []);
+  useEffect(() => { void Promise.resolve().then(() => load()).catch(e => setMessage(String(e.message || e))); }, []);
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMessage("");
     try {
