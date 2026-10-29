@@ -188,7 +188,7 @@ export function usePropertySearch() {
    * ----------------------------------------------------------
    */
   useEffect(() => {
-    void search();
+    void Promise.resolve().then(() => search());
 
     // عمداً فقط یک بار در زمان Mount اجرا می‌شود.
     // eslint-disable-next-line react-hooks/exhaustive-deps
