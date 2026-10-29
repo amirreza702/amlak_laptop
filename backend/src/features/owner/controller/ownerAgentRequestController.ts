@@ -39,9 +39,25 @@ export async function closeOwnerAgentRequestController(req: Request, res: Respon
   }
 }
 
-export async function getActiveOwnerAgentRequestsController(_req: Request, res: Response) {
-  try { return res.status(200).json({ requests: await getActiveOwnerAgentRequestsService() }); }
+export async function getActiveOwnerAgentRequestsController(req: Request, res: Response) {
+  try { return res.status(200).json({ requests: await getActiveOwnerAgentRequestsService(routeParam(req, "agentId")) }); }
   catch (e) { console.error("Error listing active owner requests:", e); return res.status(500).json({ message: "Internal server error" }); }
+}
+
+export async function respondToOwnerAgentRequestController(req: Request, res: Response) {
+  const response = req.body?.response;
+  if (response !== "ACCEPTED" && response !== "REJECTED") {
+    return res.status(400).json({ message: "پاسخ باید پذیرش یا رد درخواست باشد." });
+  }
+  try {
+    const result = await respondToOwnerAgentRequestService(routeParam(req, "agentId"), routeParam(req, "requestId"), response);
+    return res.status(200).json({ response: result });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "ACTIVE_OWNER_REQUEST_NOT_FOUND") return res.status(404).json({ message: "درخواست فعال پیدا نشد." });
+    console.error("Error responding to owner request:", error);
+    return res.status(500).json({ message: "ثبت پاسخ درخواست ناموفق بود." });
+  }
 }
 
 export async function accessOwnerRequestContactController(req: Request, res: Response) {
