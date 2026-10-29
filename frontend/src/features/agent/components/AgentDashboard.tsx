@@ -10,6 +10,8 @@ import { AgentCreateSearchRequestPanel } from "./AgentCreateSearchRequestPanel";
 import { useAgentDashboard } from "../hooks/useAgentDashboard";
 import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
 import { AgentPrivateNotesPanel } from "./AgentPrivateNotesPanel";
+import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
+import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
 import { agentApiRequest } from "../api/agentApi";
 
 
@@ -47,6 +49,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     contacts, busyId, actionMessage,
     loadRequests, openContact, saveProfile,
   } = useAgentDashboard(user);
+  const { notes: privateNotes, savingNoteKey, saveNote } = useAgentPrivateNotes();
 
   return (
     <div dir="rtl" className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
@@ -160,12 +163,13 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             ) : visibleRequests.length === 0 ? (
               <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو و فیلتر پیدا نشد.</p>
             ) : (
-              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده و شناسه</th><th className="p-3">اطلاعات تماس</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
+              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده و شناسه</th><th className="p-3">اطلاعات تماس</th><th className="p-3">یادداشت خصوصی مشتری</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
                   <tr key={request.id} className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</p></td>
                     <td className="p-3"><p>{displayMoney(request.budget)}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap leading-6 text-slate-600">{request.description}</p>}</td>
                     <td className="p-3"><p>{request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
                     <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
+                    <td className="p-3">{request.createdByRole === "CUSTOMER" && contacts[request.id] ? <AgentPrivateNoteEditor entityType="customer" entityId={contacts[request.id].id} notes={privateNotes} saving={savingNoteKey === `customer:${contacts[request.id].id}`} onSave={saveNote} /> : <p className="max-w-[220px] text-xs leading-6 text-slate-500">{request.createdByRole === "CUSTOMER" ? "برای ثبت یادداشت، ابتدا دسترسی مجاز به اطلاعات مشتری را دریافت کنید." : "یادداشت مشتری برای این درخواست کاربرد ندارد."}</p>}</td>
                     <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={async () => {
                       const city = window.prompt("شهر درخواست", request.city);
                       if (city === null) return;
