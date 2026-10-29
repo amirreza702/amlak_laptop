@@ -10,7 +10,7 @@ import { requireRole } from "../../auth/middleware/requireRole";
 import { requireOwnProfile } from "../../auth/middleware/authorizationMiddleware";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
 import { getMyPrivateNotesController, upsertMyPrivateNoteController } from "../controller/agentPrivateNotesController";
-import { updateOwnAgentSearchRequestController, deleteOwnAgentSearchRequestController } from "../controller/agentSearchRequestManagementController";
+import { getAllAgentSearchRequestsController, updateOwnAgentSearchRequestController, deleteOwnAgentSearchRequestController } from "../controller/agentSearchRequestManagementController";
 import {
   accessOwnerRequestContactController,
   getActiveOwnerAgentRequestsController,
@@ -21,6 +21,7 @@ const router = Router();
 // یادداشت‌های شخصی فقط برای مشاور صاحب نشست قابل دسترسی هستند.
 router.get("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), getMyPrivateNotesController);
 router.put("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, upsertMyPrivateNoteController);
+router.get("/agents/me/search-requests", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, getAllAgentSearchRequestsController);
 router.put("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, updateOwnAgentSearchRequestController);
 router.delete("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, deleteOwnAgentSearchRequestController);
 
