@@ -24,6 +24,7 @@ import { HashtiVerificationQueuePanel } from "./HashtiVerificationQueuePanel";
 import { HashtiPropertyAdminToolsPanel } from "./HashtiPropertyAdminToolsPanel";
 import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
 import { formatPersianDateTime } from "@/shared/utils/date";
+import { Modal } from "@/shared/components/Modal";
 
 
 
@@ -37,6 +38,7 @@ function idText(value: string) {
 export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   // تا پیش از انتخاب ابزار، فضای اصلی پنل خالی می‌ماند.
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ title: string; description: string; run: () => void } | null>(null);
   const {
     propertyId, setPropertyId, candidateMatches, reviews, matchingBusy, matchingError, matchingMessage,
     reviewNotes, setReviewNotes, busyReviewId, loadDuplicateWork, createReview, decideReview,
@@ -133,9 +135,9 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                     <td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${agent.verificationStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-800" : agent.verificationStatus === "REJECTED" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{agent.verificationStatus === "VERIFIED" ? "تأییدشده" : agent.verificationStatus === "REJECTED" ? "ردشده" : "در انتظار بررسی"}</span></td>
                     <td className="max-w-xs p-3">{agent.verificationNotes || "یادداشتی ثبت نشده"}{agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-500">آخرین بررسی: {formatPersianDateTime(agent.verificationReviewedAt)}</p>}</td>
                     <td className="p-3"><div className="flex min-w-[190px] flex-wrap gap-2">
-                      {agent.verificationStatus !== "VERIFIED" && <button type="button" onClick={() => void reviewAgent(agent.id, "VERIFIED")} disabled={busyAgentId === agent.id} className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{agent.verificationStatus === "REJECTED" ? "تأیید مجدد" : "تأیید"}</button>}
-                      {agent.verificationStatus === "PENDING" && <button type="button" onClick={() => void reviewAgent(agent.id, "REJECTED")} disabled={busyAgentId === agent.id || !agentVerificationNotes.trim()} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}رد مشاور</button>}
-                      {agent.verificationStatus !== "PENDING" && <button type="button" onClick={() => void reviewAgent(agent.id, "PENDING")} disabled={busyAgentId === agent.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-60">بازگشت به انتظار</button>}
+                      {agent.verificationStatus !== "VERIFIED" && <button type="button" onClick={() => setPendingAction({ title: "تأیید مشاور", description: "تأیید این حساب در سوابق مدیریتی ثبت می‌شود. آیا ادامه می‌دهید؟", run: () => { void reviewAgent(agent.id, "VERIFIED"); } }) disabled={busyAgentId === agent.id} className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{agent.verificationStatus === "REJECTED" ? "تأیید مجدد" : "تأیید"}</button>}
+                      {agent.verificationStatus === "PENDING" && <button type="button" onClick={() => setPendingAction({ title: "رد مشاور", description: "یادداشت تصمیم واردشده به‌عنوان دلیل رد ثبت خواهد شد. آیا ادامه می‌دهید؟", run: () => { void reviewAgent(agent.id, "REJECTED"); } }) disabled={busyAgentId === agent.id || !agentVerificationNotes.trim()} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}رد مشاور</button>}
+                      {agent.verificationStatus !== "PENDING" && <button type="button" onClick={() => setPendingAction({ title: "بازگرداندن مشاور به انتظار", description: "وضعیت تأیید این حساب دوباره در انتظار بررسی قرار می‌گیرد. ادامه می‌دهید؟", run: () => { void reviewAgent(agent.id, "PENDING"); } }) disabled={busyAgentId === agent.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-60">بازگشت به انتظار</button>}
                     </div></td>
                   </tr>
                 ))}
@@ -194,7 +196,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                   <td className="p-3">{match.property.propertyType} · {match.property.area ?? "—"} متر · {match.property.rooms ?? "—"} اتاق</td>
                   <td className="p-3">{Math.round(match.distanceMeters).toLocaleString("fa-IR")} متر</td>
                   <td className="p-3"><span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800">{scoreLabel(match.similarityScore)}</span></td>
-                  <td className="p-3"><button type="button" disabled={busyReviewId === match.property.id} onClick={() => void createReview(match.property.id)} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">{busyReviewId === match.property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />} ایجاد پرونده</button></td>
+                  <td className="p-3"><button type="button" disabled={busyReviewId === match.property.id} onClick={() => setPendingAction({ title: "ایجاد پرونده مغایرت", description: "برای این ملک کاندید، پرونده بررسی مشابهت ایجاد شود؟", run: () => { void createReview(match.property.id); } }) className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">{busyReviewId === match.property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />} ایجاد پرونده</button></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -216,7 +218,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                       <td className="p-3"><p>ملک اصلی: <span className="font-mono text-xs" dir="ltr">{idText(review.primaryPropertyId)}</span></p><p className="mt-2">کاندید: <span className="font-mono text-xs" dir="ltr">{idText(review.candidatePropertyId)}</span></p></td>
                       <td className="p-3"><p>امتیاز: <b>{scoreLabel(review.similarityScore)}</b></p><div className="mt-2"><DecisionChip decision={review.decision} /></div></td>
                       <td className="max-w-xs whitespace-pre-wrap p-3 leading-6 text-slate-600">{review.notes || "یادداشتی ثبت نشده"}</td>
-                      <td className="p-3">{review.decision === null ? <div className="flex min-w-[150px] flex-col items-start gap-2"><button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "SAME_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyReviewId === review.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} یک ملک</button><button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "DIFFERENT_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-50"><XCircle className="h-4 w-4" /> دو ملک متفاوت</button></div> : <span className="text-xs text-slate-500">تصمیم ثبت شده</span>}</td>
+                      <td className="p-3">{review.decision === null ? <div className="flex min-w-[150px] flex-col items-start gap-2"><button type="button" disabled={busyReviewId === review.id} onClick={() => setPendingAction({ title: "ثبت تصمیم: یک ملک", description: "این دو رکورد به‌عنوان یک ملک در نظر گرفته شوند؟ تصمیم در پرونده ثبت می‌شود.", run: () => { void decideReview(review.id, "SAME_PROPERTY"); } }) className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyReviewId === review.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} یک ملک</button><button type="button" disabled={busyReviewId === review.id} onClick={() => setPendingAction({ title: "ثبت تصمیم: دو ملک متفاوت", description: "این دو رکورد به‌عنوان دو ملک جدا ثبت شوند؟ تصمیم در پرونده ثبت می‌شود.", run: () => { void decideReview(review.id, "DIFFERENT_PROPERTY"); } }) className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-50"><XCircle className="h-4 w-4" /> دو ملک متفاوت</button></div> : <span className="text-xs text-slate-500">تصمیم ثبت شده</span>}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -248,8 +250,8 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             {verificationError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{verificationError}</p>}
             {verificationMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{verificationMessage}</p>}
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => void reviewVerificationCase("VERIFIED")} disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"><CheckCircle2 className="h-4 w-4" /> تأیید پرونده</button>
-              <button type="button" onClick={() => void reviewVerificationCase("REJECTED")} disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-60"><XCircle className="h-4 w-4" /> رد پرونده</button>
+              <button type="button" onClick={() => setPendingAction({ title: "تأیید پرونده ملک", description: "یادداشت تصمیم واردشده همراه با تأیید پرونده ثبت خواهد شد. ادامه می‌دهید؟", run: () => { void reviewVerificationCase("VERIFIED"); } }) disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"><CheckCircle2 className="h-4 w-4" /> تأیید پرونده</button>
+              <button type="button" onClick={() => setPendingAction({ title: "رد پرونده ملک", description: "یادداشت واردشده به‌عنوان دلیل رد ثبت خواهد شد. ادامه می‌دهید؟", run: () => { void reviewVerificationCase("REJECTED"); } }) disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-60"><XCircle className="h-4 w-4" /> رد پرونده</button>
             </div>
           </div>
         </section>
@@ -324,6 +326,9 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </dl>
       </section>
       <div id="notifications" hidden={selectedTool !== "notifications"} className="scroll-mt-5"><UserNotificationsPanel userId={user.id} /></div>
+      <Modal open={Boolean(pendingAction)} title={pendingAction?.title ?? "تأیید عملیات"} description={pendingAction?.description} onClose={() => setPendingAction(null)}>
+        <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingAction(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => { const action = pendingAction; setPendingAction(null); action?.run(); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white">تأیید و ادامه</button></div>
+      </Modal>
       </main>
     </div>
   );
