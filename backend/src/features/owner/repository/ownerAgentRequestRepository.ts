@@ -65,6 +65,7 @@ export const findActiveOwnerAgentRequests = (agentId: string) =>
         select: {
           propertyType: true, city: true, district: true, area: true, rooms: true,
           listing: { select: { transactionType: true } },
+          agents: { where: { agentId }, select: { status: true, approvedByOwner: true } },
         },
       },
       responses: {
