@@ -92,7 +92,7 @@ export function HashtiPropertyAdminToolsPanel() {
     }
   }, [appliedQuery, listingStatus, pagination.limit]);
 
-  useEffect(() => { void load(0); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load(0)); }, [load]);
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
