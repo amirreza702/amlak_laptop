@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Building2, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
+import { Building2, ShieldCheck, UserRoundCheck } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
 import { OwnerPropertiesPanel } from "./OwnerPropertiesPanel";
