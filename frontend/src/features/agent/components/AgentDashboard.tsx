@@ -193,8 +193,8 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             )}
           </section>
 
-          <section hidden={selectedTool !== "owner-management"} className="space-y-5">{profileId && <OwnerAgentRequestsPanel agentId={profileId} />}<AgentPrivateNotesPanel defaultEntityType="owner" /></section>
-          <section hidden={selectedTool !== "requests"}><AgentPrivateNotesPanel defaultEntityType="customer" /></section>
+          <section hidden={selectedTool !== "owner-management"}>{profileId && <OwnerAgentRequestsPanel agentId={profileId} />}</section>
+          
 
           <div className="grid gap-3 lg:grid-cols-2">
           </div>
