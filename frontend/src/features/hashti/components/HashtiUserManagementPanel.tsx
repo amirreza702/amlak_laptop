@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
+import { Modal } from "@/shared/components/Modal";
 import { CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRoundCog } from "lucide-react";
 
 import { hashtiManagementRequest as requestJson } from "../api/hashtiUserManagementApi";
@@ -39,6 +40,8 @@ export function HashtiUserManagementPanel() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [statusUser, setStatusUser] = useState<ManagedUser | null>(null);
+  const [statusReason, setStatusReason] = useState("");
   const [creatingStaff, setCreatingStaff] = useState(false);
   const [staffMobile, setStaffMobile] = useState("");
   const [staffFirstName, setStaffFirstName] = useState("");
@@ -83,16 +86,23 @@ export function HashtiUserManagementPanel() {
   useEffect(() => { if (!accessLoading && isSuperAdmin) void loadUsers(0); }, [accessLoading, isSuperAdmin, loadUsers]);
 
   const submitSearch = (event: FormEvent) => { event.preventDefault(); setOffset(0); setAppliedQuery(query); };
-  const changeStatus = async (user: ManagedUser) => {
-    const reason = window.prompt("دلیل تغییر وضعیت این حساب را وارد کنید:");
-    if (reason === null) return;
-    if (reason.trim().length < 3) { setError("برای تغییر وضعیت، دلیل حداقل ۳ کاراکتری لازم است."); return; }
-    setSavingUserId(user.id); setError(null); setMessage(null);
+  const changeStatus = (user: ManagedUser) => {
+    setStatusUser(user);
+    setStatusReason("");
+    setError(null);
+    setMessage(null);
+  };
+  const submitStatusChange = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!statusUser) return;
+    if (statusReason.trim().length < 3) { setError("برای تغییر وضعیت، دلیل حداقل ۳ کاراکتری لازم است."); return; }
+    setSavingUserId(statusUser.id); setError(null); setMessage(null);
     try {
-      await requestJson(`/hashti/management/users/${encodeURIComponent(user.id)}/status`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !user.isActive, reason }),
+      await requestJson(`/hashti/management/users/${encodeURIComponent(statusUser.id)}/status`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !statusUser.isActive, reason: statusReason.trim() }),
       });
-      setMessage(`وضعیت حساب ${user.mobile} تغییر کرد و در تاریخچه ثبت شد.`);
+      setMessage(`وضعیت حساب ${statusUser.mobile} تغییر کرد و در تاریخچه ثبت شد.`);
+      setStatusUser(null);
       await loadUsers(offset);
     } catch (err) { setError(err instanceof Error ? err.message : "تغییر وضعیت ناموفق بود."); }
     finally { setSavingUserId(null); }
@@ -260,22 +270,22 @@ export function HashtiUserManagementPanel() {
                         <td colSpan={5} className="p-4">
                           <div className="space-y-4">
                             {resetUser?.id === item.id && (
-                              <form onSubmit={resetManagedPassword} className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:grid-cols-2">
+                              <Modal open={resetUser?.id === item.id} title={"بازنشانی رمز حساب " + displayName(item)} description="رمز جدید و دلیل بازنشانی را وارد کنید." onClose={() => setResetUser(null)}><form onSubmit={resetManagedPassword} className="grid gap-3 sm:grid-cols-2">
                                 <h4 className="font-bold sm:col-span-2">بازنشانی امن رمز حساب: {displayName(item)}</h4>
                                 <label className="space-y-1 text-sm">رمز جدید (حداقل ۱۲ کاراکتر)<input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" dir="ltr" /></label>
                                 <label className="space-y-1 text-sm">دلیل بازنشانی (اجباری)<textarea required minLength={3} maxLength={1000} rows={2} value={resetReason} onChange={(event) => setResetReason(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" /></label>
                                 <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={savingUserId === item.id} className="rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === item.id ? "در حال ثبت..." : "بازنشانی و ثبت تاریخچه"}</button><button type="button" onClick={() => setResetUser(null)} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm">انصراف</button></div>
-                              </form>
+                              </form></Modal>
                             )}
                             {editUser?.id === item.id && profile && (
-                              <form onSubmit={saveProfile} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2">
+                              <Modal open={editUser?.id === item.id && Boolean(profile)} title={"ویرایش پروفایل " + displayName(item)} description="تغییرات پروفایل و دلیل آن را وارد کنید." onClose={() => setEditUser(null)}><form onSubmit={saveProfile} className="grid gap-3 sm:grid-cols-2">
                                 <h4 className="font-bold sm:col-span-2">ویرایش پروفایل {profile.type === "agent" ? "مشاور" : profile.type === "owner" ? "مالک" : profile.type === "hashti" ? "کارمند هشتی" : "مشتری"}</h4>
                                 <label className="space-y-1 text-sm">نام<input required maxLength={120} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                                 <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                                 {profile.type === "agent" && <><label className="space-y-1 text-sm">نام آژانس<input maxLength={200} value={editAgencyName} onChange={(e) => setEditAgencyName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label className="space-y-1 text-sm">نشانی<input maxLength={500} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label></>}
                                 <label className="space-y-1 text-sm sm:col-span-2">دلیل تغییر (اجباری)<textarea required minLength={3} maxLength={1000} rows={2} value={editReason} onChange={(e) => setEditReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                                 <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={savingUserId === item.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === item.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت تغییر با تاریخچه</button><button type="button" onClick={() => setEditUser(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button></div>
-                              </form>
+                              </form></Modal>
                             )}
                             {historyUser === item.id && (
                               <section className="rounded-lg border border-slate-200 bg-white p-3">
@@ -298,6 +308,13 @@ export function HashtiUserManagementPanel() {
         </div>
       )}
       <div className="flex items-center justify-between gap-3"><button type="button" disabled={loading || offset <= 0} onClick={() => void loadUsers(Math.max(0, offset - 25))} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">قبلی</button><span className="text-xs text-slate-500">{Math.min(total, offset + 25).toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")}</span><button type="button" disabled={loading || offset + 25 >= total} onClick={() => void loadUsers(offset + 25)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">بعدی</button></div>
+      <Modal open={Boolean(statusUser)} title={statusUser?.isActive ? "غیرفعال‌کردن حساب" : "فعال‌کردن حساب"} description={statusUser ? "تغییر وضعیت حساب " + statusUser.mobile + " در تاریخچه مدیریتی ثبت می‌شود." : undefined} onClose={() => setStatusUser(null)}>
+        <form onSubmit={submitStatusChange} className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-semibold">دلیل تغییر وضعیت<textarea required minLength={3} maxLength={1000} rows={4} value={statusReason} onChange={(event) => setStatusReason(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setStatusUser(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="submit" disabled={savingUserId === statusUser?.id} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === statusUser?.id ? "در حال ثبت..." : "ثبت تغییر وضعیت"}</button></div>
+        </form>
+      </Modal>
     </section>
   );
 }
