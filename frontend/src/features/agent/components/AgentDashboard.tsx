@@ -28,6 +28,8 @@ function propertyName(value: string) {
   const labels: Record<string, string> = { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" };
   return labels[value] ?? value;
 }
+const requestTransactionOptions = [{value:"SALE",label:"خرید"},{value:"FULL_DEPOSIT",label:"رهن کامل"},{value:"RENT",label:"اجاره"}] as const;
+const requestPropertyOptions = [{value:"APARTMENT",label:"آپارتمان"},{value:"HOUSE",label:"خانه"},{value:"VILLA",label:"ویلا"},{value:"LAND",label:"زمین"},{value:"SHOP",label:"مغازه"},{value:"OFFICE",label:"اداری"},{value:"GARDEN",label:"باغ"}] as const;
 
 export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
@@ -56,15 +58,19 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes(profileState === "verified");
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [editingRequestCity, setEditingRequestCity] = useState("");
+  const [editingRequestTransaction, setEditingRequestTransaction] = useState<"SALE" | "FULL_DEPOSIT" | "RENT">("SALE");
+  const [editingRequestPropertyType, setEditingRequestPropertyType] = useState<"APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN">("APARTMENT");
   const [editingRequestDescription, setEditingRequestDescription] = useState("");
   const [editingRequestBudget, setEditingRequestBudget] = useState("");
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
   const [recordActionError, setRecordActionError] = useState<string | null>(null);
   const [recordActionMessage, setRecordActionMessage] = useState<string | null>(null);
 
-  const openRequestEditor = (request: { id: string; city: string; description: string | null; budget: string | number | null }) => {
+  const openRequestEditor = (request: { id: string; city: string; transactionType: string; propertyType: string; description: string | null; budget: string | number | null }) => {
     setEditingRequestId(request.id);
     setEditingRequestCity(request.city);
+    setEditingRequestTransaction(request.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT");
+    setEditingRequestPropertyType(request.propertyType as "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN");
     setEditingRequestDescription(request.description ?? "");
     setEditingRequestBudget(request.budget == null ? "" : String(request.budget));
     setRecordActionError(null);
@@ -83,7 +89,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(editingRequestId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city, description: editingRequestDescription.trim(), budget }),
+        body: JSON.stringify({ transactionType: editingRequestTransaction, propertyType: editingRequestPropertyType, city, description: editingRequestDescription.trim(), budget }),
       });
       setEditingRequestId(null);
       setRecordActionMessage("درخواست با موفقیت ویرایش شد.");
@@ -267,6 +273,8 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       </Modal>
       <Modal open={Boolean(editingRequestId)} title="ویرایش درخواست مشتری" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingRequestId(null)}>
         <form onSubmit={saveRequestEdit} className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-semibold">نوع معامله<select value={editingRequestTransaction} onChange={event=>setEditingRequestTransaction(event.target.value as typeof editingRequestTransaction)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5">{requestTransactionOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="block space-y-1.5 text-sm font-semibold">نوع ملک<select value={editingRequestPropertyType} onChange={event=>setEditingRequestPropertyType(event.target.value as typeof editingRequestPropertyType)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5">{requestPropertyOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
           <label className="block space-y-1.5 text-sm font-semibold">شهر درخواست<input required value={editingRequestCity} onChange={(event) => setEditingRequestCity(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
           <label className="block space-y-1.5 text-sm font-semibold">بودجه (تومان)<input required type="number" min="0" value={editingRequestBudget} onChange={(event) => setEditingRequestBudget(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
           <label className="block space-y-1.5 text-sm font-semibold">توضیحات<textarea rows={4} value={editingRequestDescription} onChange={(event) => setEditingRequestDescription(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>

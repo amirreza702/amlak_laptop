@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { LoaderCircle, RefreshCw, Search, Pencil, Trash2 } from "lucide-react";
+import { Modal } from "@/shared/components/Modal";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
@@ -15,11 +16,15 @@ type PropertyRecord = {
   isFirstRegistrant: boolean;
   property: {
     id: string;
+    registrationSource: "OWNER" | "AGENT";
     propertyType: string;
     city: string;
     district: string;
+    address: string;
+    postalCode: string | null;
     area: number | null;
     rooms: number | null;
+    floor: number | null;
     isActive: boolean;
     createdAt: string;
     confirmUntil: string | null;
@@ -49,16 +54,25 @@ export function AgentPropertyManagementPanel() {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, limit: 25, offset: 0 });
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
+  const [filters, setFilters] = useState({ city: "", district: "", postalCode: "", ownerName: "", propertyType: "", transactionType: "", listingStatus: "", isActive: "", areaMin: "", areaMax: "", roomsMin: "", roomsMax: "" });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [editingProperty, setEditingProperty] = useState<PropertyRecord["property"] | null>(null);
+  const [editValues, setEditValues] = useState({ propertyType: "APARTMENT", city: "", district: "", address: "", postalCode: "", area: "", rooms: "", floor: "" });
+  const [savingProperty, setSavingProperty] = useState(false);
+  const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { notes, savingNoteKey, saveNote, noteError, noteMessage, refreshNotes } = useAgentPrivateNotes();
 
-  const load = useCallback(async (offset = 0, search = appliedQuery) => {
+  const load = useCallback(async (offset = 0, search = appliedQuery, currentFilters = appliedFilters) => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({ limit: String(pagination.limit), offset: String(offset) });
       if (search.trim()) params.set("query", search.trim());
+      for (const [key, value] of Object.entries(currentFilters)) if (value.trim()) params.set(key, value.trim());
       const body = await agentApiRequest<{ properties?: PropertyRecord[]; pagination?: Pagination }>(
         "/agents/me/properties?" + params.toString()
       );
@@ -69,14 +83,32 @@ export function AgentPropertyManagementPanel() {
     } finally {
       setLoading(false);
     }
-  }, [appliedQuery, pagination.limit]);
+  }, [appliedQuery, appliedFilters, pagination.limit]);
 
   useEffect(() => { void Promise.resolve().then(() => load(0)); }, [load]);
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAppliedQuery(query.trim());
+    setAppliedFilters(filters);
   };
+
+  async function savePropertyEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!editingProperty) return;
+    setSavingProperty(true); setActionError(null); setActionMessage(null);
+    try {
+      await agentApiRequest(`/properties/${encodeURIComponent(editingProperty.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyType: editValues.propertyType, city: editValues.city.trim(), district: editValues.district.trim(), address: editValues.address.trim(), postalCode: editValues.postalCode.trim() || null, area: editValues.area.trim() ? Number(editValues.area) : null, rooms: editValues.rooms.trim() ? Number(editValues.rooms) : null, floor: editValues.floor.trim() ? Number(editValues.floor) : null }) });
+      setEditingProperty(null); setActionMessage("مشخصات ملک ذخیره شد."); await load(pagination.offset);
+    } catch (cause) { setActionError(cause instanceof Error ? cause.message : "ویرایش ملک ناموفق بود."); }
+    finally { setSavingProperty(false); }
+  }
+
+  async function deleteOwnerProperty() {
+    if (!deletingPropertyId) return;
+    setActionError(null); setActionMessage(null);
+    try { await agentApiRequest(`/agents/me/properties/${encodeURIComponent(deletingPropertyId)}`, { method: "DELETE" }); setDeletingPropertyId(null); setActionMessage("ملک از فهرست فعال خارج شد؛ سوابق آن حفظ شده‌اند."); await load(pagination.offset); }
+    catch (cause) { setActionError(cause instanceof Error ? cause.message : "حذف ملک ناموفق بود."); }
+  }
 
   return (
     <section dir="rtl" className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -89,17 +121,33 @@ export function AgentPropertyManagementPanel() {
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
         </button>
       </div>
-      <form onSubmit={submitSearch} className="flex flex-wrap gap-2">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={200} placeholder="جست‌وجو با شناسه، شهر، محله یا نشانی" className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" /> جست‌وجو</button>
+      <form onSubmit={submitSearch} className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={200} placeholder="جست‌وجوی کلی: شناسه، نشانی، مالک..." className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <input value={filters.city} onChange={e => setFilters(v => ({...v,city:e.target.value}))} placeholder="شهر" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input value={filters.district} onChange={e => setFilters(v => ({...v,district:e.target.value}))} placeholder="محله / منطقه" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input value={filters.postalCode} onChange={e => setFilters(v => ({...v,postalCode:e.target.value}))} placeholder="کد پستی" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input value={filters.ownerName} onChange={e => setFilters(v => ({...v,ownerName:e.target.value}))} placeholder="نام مالک" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <select value={filters.propertyType} onChange={e => setFilters(v => ({...v,propertyType:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه انواع ملک</option>{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
+          <select value={filters.transactionType} onChange={e => setFilters(v => ({...v,transactionType:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه معاملات</option><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select>
+          <select value={filters.listingStatus} onChange={e => setFilters(v => ({...v,listingStatus:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه وضعیت‌های آگهی</option>{Object.entries(listingLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
+          <select value={filters.isActive} onChange={e => setFilters(v => ({...v,isActive:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">فعال و غیرفعال</option><option value="true">فعال</option><option value="false">غیرفعال</option></select>
+          <input type="number" min="0" value={filters.areaMin} onChange={e => setFilters(v => ({...v,areaMin:e.target.value}))} placeholder="حداقل متراژ" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input type="number" min="0" value={filters.areaMax} onChange={e => setFilters(v => ({...v,areaMax:e.target.value}))} placeholder="حداکثر متراژ" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input type="number" min="0" value={filters.roomsMin} onChange={e => setFilters(v => ({...v,roomsMin:e.target.value}))} placeholder="حداقل اتاق" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+          <input type="number" min="0" value={filters.roomsMax} onChange={e => setFilters(v => ({...v,roomsMax:e.target.value}))} placeholder="حداکثر اتاق" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+        </div>
+        <div className="flex flex-wrap gap-2"><button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" /> اعمال فیلترها</button><button type="button" onClick={() => { const empty={city:"",district:"",postalCode:"",ownerName:"",propertyType:"",transactionType:"",listingStatus:"",isActive:"",areaMin:"",areaMax:"",roomsMin:"",roomsMax:""}; setFilters(empty); setAppliedFilters(empty); setQuery(""); setAppliedQuery(""); }} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm">پاک‌کردن فیلترها</button></div>
       </form>
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
+      {actionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{actionMessage}</p>}
       {noteError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{noteError}</p>}
       {noteMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{noteMessage}</p>}
       {loading && properties.length === 0 ? <p className="flex items-center gap-2 py-4 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردها...</p> : properties.length === 0 ? <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">رکورد ملکی مرتبطی برای این مشاور پیدا نشد.</p> : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full min-w-[1250px] text-right text-sm">
-            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">وضعیت آگهی</th><th className="p-3">مالکیت</th><th className="p-3">تأییدها</th><th className="p-3">ارتباط مشاور</th><th className="p-3">یادداشت خصوصی ملک</th></tr></thead>
+            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">وضعیت آگهی</th><th className="p-3">مالکیت</th><th className="p-3">تأییدها</th><th className="p-3">ارتباط مشاور</th><th className="p-3">یادداشت خصوصی ملک</th><th className="p-3">عملیات</th></tr></thead>
             <tbody>{properties.map((record) => {
               const property = record.property;
               const latestCase = property.verificationCases[0];
@@ -131,6 +179,7 @@ export function AgentPropertyManagementPanel() {
                     {record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
+                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{property.registrationSource === "OWNER" && record.status === "ACTIVE" && record.approvedByOwner && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor)}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک ثبت‌شده توسط مالک با ارتباط تأییدشده در دسترس است.</span>}</div></td>
                 </tr>
               );
             })}</tbody>
@@ -144,6 +193,22 @@ export function AgentPropertyManagementPanel() {
           <button type="button" disabled={loading || pagination.offset + pagination.limit >= pagination.total} onClick={() => void load(pagination.offset + pagination.limit)} className="rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40">بعدی</button>
         </div>
       </div>
+      <Modal open={Boolean(editingProperty)} title="ویرایش مشخصات ملک" description="تغییرات در سابقهٔ ملک ثبت می‌شوند." onClose={() => setEditingProperty(null)} size="full">
+        <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+          <label className="space-y-1 text-sm">شهر<input required maxLength={100} value={editValues.city} onChange={e=>setEditValues(v=>({...v,city:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">محله / منطقه<input required maxLength={120} value={editValues.district} onChange={e=>setEditValues(v=>({...v,district:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">نشانی<input required maxLength={500} value={editValues.address} onChange={e=>setEditValues(v=>({...v,address:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">کد پستی<input maxLength={10} value={editValues.postalCode} onChange={e=>setEditValues(v=>({...v,postalCode:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">متراژ<input type="number" min="0" step="any" value={editValues.area} onChange={e=>setEditValues(v=>({...v,area:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">تعداد اتاق<input type="number" min="0" step="1" value={editValues.rooms} onChange={e=>setEditValues(v=>({...v,rooms:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">طبقه<input type="number" min="0" step="1" value={editValues.floor} onChange={e=>setEditValues(v=>({...v,floor:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={()=>setEditingProperty(null)} className="rounded-lg border px-4 py-2">انصراف</button><button disabled={savingProperty} type="submit" className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
+        </form>
+      </Modal>
+      <Modal open={Boolean(deletingPropertyId)} title="حذف ملک از فهرست فعال" description="اطلاعات و سوابق ملک پاک نمی‌شوند؛ فقط از فهرست فعال خارج می‌شود." onClose={() => setDeletingPropertyId(null)}>
+        <div className="flex justify-end gap-2"><button type="button" onClick={()=>setDeletingPropertyId(null)} className="rounded-lg border px-4 py-2">انصراف</button><button type="button" onClick={()=>void deleteOwnerProperty()} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white">تأیید حذف</button></div>
+      </Modal>
     </section>
   );
 }

@@ -30,6 +30,7 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ text: "", city: "", district: "", propertyType: "", transactionType: "", status: "", areaMin: "", areaMax: "", roomsMin: "", roomsMax: "" });
   const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes();
 
   const load = useCallback(async () => {
@@ -42,6 +43,14 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
     finally { setLoading(false); }
   }, [agentId]);
   useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
+
+  const filteredRequests = requests.filter((request) => {
+    const text = filters.text.trim().toLocaleLowerCase();
+    const areaMin = filters.areaMin === "" ? undefined : Number(filters.areaMin); const areaMax = filters.areaMax === "" ? undefined : Number(filters.areaMax);
+    const roomsMin = filters.roomsMin === "" ? undefined : Number(filters.roomsMin); const roomsMax = filters.roomsMax === "" ? undefined : Number(filters.roomsMax);
+    const searchable = [request.id, request.propertyId, request.description ?? "", request.property.city, request.property.district, request.property.propertyType, request.property.listing?.transactionType ?? ""].join(" ").toLocaleLowerCase();
+    return (!text || searchable.includes(text)) && (!filters.city || request.property.city.toLocaleLowerCase().includes(filters.city.toLocaleLowerCase())) && (!filters.district || request.property.district.toLocaleLowerCase().includes(filters.district.toLocaleLowerCase())) && (!filters.propertyType || request.property.propertyType === filters.propertyType) && (!filters.transactionType || request.property.listing?.transactionType === filters.transactionType) && (!filters.status || request.status === filters.status) && (areaMin === undefined || (request.property.area !== null && request.property.area >= areaMin)) && (areaMax === undefined || (request.property.area !== null && request.property.area <= areaMax)) && (roomsMin === undefined || (request.property.rooms !== null && request.property.rooms >= roomsMin)) && (roomsMax === undefined || (request.property.rooms !== null && request.property.rooms <= roomsMax));
+  });
 
   async function respond(id: string, response: "ACCEPTED" | "REJECTED") {
     setBusyId(id); setError(null); setMessage(null);
@@ -74,7 +83,20 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
     {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
     {noteError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{noteError}</p>}
     {noteMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{noteMessage}</p>}
-    {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت درخواست‌ها...</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">در حال حاضر درخواست فعالی وجود ندارد.</p> : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[950px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات درخواست</th><th className="p-3">اطلاعات تماس و نشانی</th><th className="p-3">یادداشت خصوصی مرتبط</th><th className="p-3">عملیات</th></tr></thead><tbody>{requests.map((request) => (
+    {!loading && requests.length > 0 && <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-4">
+      <input value={filters.text} onChange={e=>setFilters(v=>({...v,text:e.target.value}))} placeholder="شناسه درخواست/ملک یا توضیحات" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <input value={filters.city} onChange={e=>setFilters(v=>({...v,city:e.target.value}))} placeholder="شهر" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <input value={filters.district} onChange={e=>setFilters(v=>({...v,district:e.target.value}))} placeholder="محله / منطقه" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <select value={filters.propertyType} onChange={e=>setFilters(v=>({...v,propertyType:e.target.value}))} className="rounded-lg border bg-white px-3 py-2 text-sm"><option value="">همه انواع ملک</option>{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
+      <select value={filters.transactionType} onChange={e=>setFilters(v=>({...v,transactionType:e.target.value}))} className="rounded-lg border bg-white px-3 py-2 text-sm"><option value="">همه معاملات</option>{Object.entries(transactionLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
+      <select value={filters.status} onChange={e=>setFilters(v=>({...v,status:e.target.value}))} className="rounded-lg border bg-white px-3 py-2 text-sm"><option value="">همه وضعیت‌ها</option>{Array.from(new Set(requests.map(r=>r.status))).map(value=><option key={value} value={value}>{value}</option>)}</select>
+      <input type="number" min="0" value={filters.areaMin} onChange={e=>setFilters(v=>({...v,areaMin:e.target.value}))} placeholder="حداقل متراژ" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <input type="number" min="0" value={filters.areaMax} onChange={e=>setFilters(v=>({...v,areaMax:e.target.value}))} placeholder="حداکثر متراژ" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <input type="number" min="0" value={filters.roomsMin} onChange={e=>setFilters(v=>({...v,roomsMin:e.target.value}))} placeholder="حداقل اتاق" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <input type="number" min="0" value={filters.roomsMax} onChange={e=>setFilters(v=>({...v,roomsMax:e.target.value}))} placeholder="حداکثر اتاق" className="rounded-lg border bg-white px-3 py-2 text-sm" />
+      <button type="button" onClick={()=>setFilters({text:"",city:"",district:"",propertyType:"",transactionType:"",status:"",areaMin:"",areaMax:"",roomsMin:"",roomsMax:""})} className="rounded-lg border bg-white px-3 py-2 text-sm">پاک‌کردن فیلترها</button><p className="self-center text-xs text-slate-600">{filteredRequests.length.toLocaleString("fa-IR")} درخواست مطابق فیلتر</p>
+    </div>}
+    {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت درخواست‌ها...</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">در حال حاضر درخواست فعالی وجود ندارد.</p> : filteredRequests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این فیلترها پیدا نشد.</p> : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[950px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات درخواست</th><th className="p-3">اطلاعات تماس و نشانی</th><th className="p-3">یادداشت خصوصی مرتبط</th><th className="p-3">عملیات</th></tr></thead><tbody>{filteredRequests.map((request) => (
         <tr key={request.id} className="border-t border-slate-200 align-top">
           <td className="p-3"><p className="font-bold">{propertyLabels[request.property.propertyType] ?? request.property.propertyType} در {request.property.city}، {request.property.district}</p><p className="mt-1 text-xs text-slate-500">{request.property.area ? `${request.property.area} مترمربع` : ""}{request.property.rooms ? ` · ${request.property.rooms} اتاق` : ""}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{request.id}</p></td>
           <td className="p-3"><p>{request.property.listing ? transactionLabels[request.property.listing.transactionType] ?? request.property.listing.transactionType : "نوع معامله تعیین نشده"}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap text-slate-600">{request.description}</p>}<p className="mt-2 text-xs text-slate-500">{request.status}</p><p className="mt-1 text-xs font-semibold text-blue-800">{request.responses?.[0]?.status === "ACCEPTED" ? "پذیرفته‌شده؛ در انتظار تأیید مالک" : request.responses?.[0]?.status === "REJECTED" ? "ردشده توسط شما" : "هنوز پاسخ نداده‌اید"}</p></td>
