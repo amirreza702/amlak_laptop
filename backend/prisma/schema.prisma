@@ -396,6 +396,33 @@ model Agent {
 
   @@index([verificationStatus])
   @@map("agents")
+
+
+  // یادداشت‌های خصوصی هر مشاور درباره ملک، مالک یا مشتری
+  privateNotes AgentPrivateNote[]
+}
+
+
+// ============================================================
+// AGENT PRIVATE NOTES
+// یادداشت‌های اختصاصی هر مشاور؛ دسترسی عمومی ندارند.
+// ============================================================
+
+model AgentPrivateNote {
+  id         String   @id @default(uuid())
+  agentId    String
+  entityType String
+  entityId   String
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, entityType, entityId])
+  @@index([entityType, entityId])
+  @@index([agentId, updatedAt])
+  @@map("agent_private_notes")
 }
 
 // ============================================================
