@@ -110,3 +110,53 @@ export async function getAllAgentPrivateNotesController(req: Request, res: Respo
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
+
+/** مدیر ارشد می‌تواند یادداشت هر مشاور را ایجاد یا ویرایش کند؛ یادداشت همچنان در محدوده همان مشاور باقی می‌ماند. */
+export async function upsertAgentPrivateNoteAsAdminController(req: Request, res: Response) {
+  try {
+    const userId = currentUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+
+    const admin = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, isActive: true, isSuperAdmin: true },
+    });
+    if (!admin || admin.role !== UserRole.HASHTI || !admin.isActive || !admin.isSuperAdmin) {
+      return res.status(403).json({ message: "Super admin access required" });
+    }
+
+    const { agentId, entityType, entityId, note } = req.body ?? {};
+    if (
+      typeof agentId !== "string" || !agentId.trim() ||
+      typeof entityType !== "string" || !allowedEntityTypes.has(entityType) ||
+      typeof entityId !== "string" || !entityId.trim() ||
+      typeof note !== "string" || note.length > 10000
+    ) {
+      return res.status(400).json({ message: "Invalid private note data" });
+    }
+
+    const agent = await prisma.agent.findUnique({ where: { id: agentId.trim() }, select: { id: true } });
+    if (!agent) return res.status(404).json({ message: "Agent profile not found" });
+
+    const key = {
+      agentId_entityType_entityId: {
+        agentId: agent.id,
+        entityType,
+        entityId: entityId.trim(),
+      },
+    };
+    const saved = note.trim()
+      ? await prisma.agentPrivateNote.upsert({
+          where: key,
+          create: { ...key.agentId_entityType_entityId, note: note.trim() },
+          update: { note: note.trim() },
+        })
+      : await prisma.agentPrivateNote.deleteMany({ where: key.agentId_entityType_entityId }).then(() => null);
+
+    return res.status(200).json({ note: saved });
+  } catch (error) {
+    console.error("Could not save agent private note as admin:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
