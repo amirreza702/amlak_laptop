@@ -33,9 +33,10 @@ const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2
 
 interface PropertyRegistrationPanelProps {
   mode: "owner" | "agent";
+  onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>;
 }
 
-export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelProps) {
+export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyRegistrationPanelProps) {
   const {
     propertyType, setPropertyType,
     transactionType, setTransactionType,
@@ -46,7 +47,8 @@ export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelPro
     rentAmount, setRentAmount,
     busy, error, message, createdPropertyId, listingCreated,
     submit,
-  } = usePropertyRegistration();
+    internalNote, setInternalNote,
+  } = usePropertyRegistration(mode === "agent" ? onSavePrivateNote : undefined);
   return (
     <section dir="rtl" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-5">
@@ -94,6 +96,23 @@ export function PropertyRegistrationPanel({ mode }: PropertyRegistrationPanelPro
             <legend className="px-2 text-sm font-bold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>موقعیت جغرافیایی (اجباری)</legend>
             <PropertyLocationPicker value={coordinates} onChange={setCoordinates} city={city} />
           </fieldset>
+
+          {mode === "agent" && (
+            <label className="block space-y-1.5 text-sm font-semibold">
+              توضیحات خصوصی مشاور (اختیاری)
+              <textarea
+                rows={3}
+                maxLength={10000}
+                value={internalNote}
+                onChange={(event) => setInternalNote(event.target.value)}
+                className={inputClass}
+                placeholder="یادداشت داخلی درباره این ملک؛ فقط برای شما و مدیر ارشد هشتی"
+              />
+              <span className="block text-xs font-normal leading-6 text-slate-500">
+                این متن در توضیحات عمومی آگهی قرار نمی‌گیرد و پس از ثبت ملک به‌صورت خصوصی ذخیره می‌شود.
+              </span>
+            </label>
+          )}
         </fieldset>
 
         <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
