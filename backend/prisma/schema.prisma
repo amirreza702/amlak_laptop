@@ -392,14 +392,11 @@ model Agent {
 
   ownerAgentRequestAccessLogs OwnerAgentRequestAccessLog[]
 
-
+  // یادداشت‌های خصوصی هر مشاور درباره ملک، مالک یا مشتری
+  privateNotes AgentPrivateNote[]
 
   @@index([verificationStatus])
   @@map("agents")
-
-
-  // یادداشت‌های خصوصی هر مشاور درباره ملک، مالک یا مشتری
-  privateNotes AgentPrivateNote[]
 }
 
 
