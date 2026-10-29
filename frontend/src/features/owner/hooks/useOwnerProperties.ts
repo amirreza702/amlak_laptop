@@ -61,7 +61,7 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
       depositAmount: input.transactionType === "FULL_DEPOSIT" ? input.depositAmount : null,
       rentAmount: input.transactionType === "RENT" ? input.rentAmount : null,
     };
-    const listingPath = `/properties/${encodeURIComponent(propertyId)}/${"listing"}`;
+    const listingPath = `/properties/${encodeURIComponent(propertyId)}/listing`;
     const listingMethod = properties.find((item) => item.propertyId === propertyId)?.property.listing ? "PUT" : "POST";
     try {
       await ownerApiRequest(
