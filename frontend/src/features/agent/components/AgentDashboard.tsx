@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { BadgeCheck, Contact, FileText, LoaderCircle, LockKeyhole, RefreshCw, Save, ShieldAlert, UserRound } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
 import { UserNotificationsPanel } from "@/shared/components/UserNotificationsPanel";
@@ -53,6 +53,57 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     loadRequests, openContact, saveProfile,
   } = useAgentDashboard(user);
   const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes(profileState === "verified");
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
+  const [editingRequestCity, setEditingRequestCity] = useState("");
+  const [editingRequestDescription, setEditingRequestDescription] = useState("");
+  const [editingRequestBudget, setEditingRequestBudget] = useState("");
+  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
+  const [recordActionError, setRecordActionError] = useState<string | null>(null);
+  const [recordActionMessage, setRecordActionMessage] = useState<string | null>(null);
+
+  const openRequestEditor = (request: { id: string; city: string; description: string | null; budget: string | number | null }) => {
+    setEditingRequestId(request.id);
+    setEditingRequestCity(request.city);
+    setEditingRequestDescription(request.description ?? "");
+    setEditingRequestBudget(request.budget == null ? "" : String(request.budget));
+    setRecordActionError(null);
+    setRecordActionMessage(null);
+  };
+
+  const saveRequestEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingRequestId) return;
+    const city = editingRequestCity.trim();
+    const budget = Number(editingRequestBudget);
+    if (!city) { setRecordActionError("شهر درخواست الزامی است."); return; }
+    if (!editingRequestBudget.trim() || !Number.isFinite(budget) || budget < 0) { setRecordActionError("بودجه باید عددی معتبر و صفر یا بیشتر باشد."); return; }
+    setRecordActionError(null);
+    try {
+      await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(editingRequestId)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city, description: editingRequestDescription.trim(), budget }),
+      });
+      setEditingRequestId(null);
+      setRecordActionMessage("درخواست با موفقیت ویرایش شد.");
+      await loadRequests();
+    } catch (error) {
+      setRecordActionError(error instanceof Error ? error.message : "ویرایش درخواست ناموفق بود.");
+    }
+  };
+
+  const deleteRequest = async () => {
+    if (!deletingRequestId) return;
+    setRecordActionError(null);
+    try {
+      await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(deletingRequestId)}`, { method: "DELETE" });
+      setDeletingRequestId(null);
+      setRecordActionMessage("درخواست با موفقیت حذف شد.");
+      await loadRequests();
+    } catch (error) {
+      setRecordActionError(error instanceof Error ? error.message : "حذف درخواست ناموفق بود.");
+    }
+  };
 
   return (
     <div dir="rtl" className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
@@ -185,24 +236,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
                     <td className="p-3"><p>{request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
                     <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
                     <td className="p-3">{request.createdByRole === "CUSTOMER" && contacts[request.id] ? <AgentPrivateNoteEditor entityType="customer" entityId={contacts[request.id].id} notes={privateNotes} saving={savingNoteKey === `customer:${contacts[request.id].id}`} onSave={saveNote} /> : <p className="max-w-[220px] text-xs leading-6 text-slate-500">{request.createdByRole === "CUSTOMER" ? "برای ثبت یادداشت، ابتدا دسترسی مجاز به اطلاعات مشتری را دریافت کنید." : "یادداشت مشتری برای این درخواست کاربرد ندارد."}</p>}</td>
-                    <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={async () => {
-                      const city = window.prompt("شهر درخواست", request.city);
-                      if (city === null) return;
-                      const description = window.prompt("توضیحات درخواست", request.description ?? "");
-                      if (description === null) return;
-                      const budget = window.prompt("بودجه (تومان)", String(request.budget ?? ""));
-                      if (budget === null) return;
-                      try {
-                        await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ city, description, budget: Number(budget) }) });
-                        await loadRequests();
-                      } catch (error) { window.alert(error instanceof Error ? error.message : "ویرایش درخواست ناموفق بود."); }
-                    }} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={async () => {
-                      if (!window.confirm("درخواست خودتان حذف شود؟ این کار قابل بازگشت نیست.")) return;
-                      try {
-                        await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "DELETE" });
-                        await loadRequests();
-                      } catch (error) { window.alert(error instanceof Error ? error.message : "حذف درخواست ناموفق بود."); }
-                    }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
+                    <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={() => openRequestEditor(request)} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={() => { setDeletingRequestId(request.id); setRecordActionError(null); }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
                   </tr>
                 ))}</tbody></table></div>
             )}
@@ -218,6 +252,20 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       <div hidden={selectedTool !== "notifications"}><UserNotificationsPanel userId={user.id} /></div>
       <Modal open={customerModalOpen} title="ایجاد مشتری جدید" description="نیاز ملکی مشتری را به‌عنوان درخواست جدید ثبت کنید." onClose={() => setCustomerModalOpen(false)}>
         <AgentCreateSearchRequestPanel onCreated={() => { void loadRequests(); }} />
+      </Modal>
+      {recordActionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{recordActionMessage}</p>}
+      <Modal open={Boolean(editingRequestId)} title="ویرایش درخواست مشتری" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingRequestId(null)}>
+        <form onSubmit={saveRequestEdit} className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-semibold">شهر درخواست<input required value={editingRequestCity} onChange={(event) => setEditingRequestCity(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          <label className="block space-y-1.5 text-sm font-semibold">بودجه (تومان)<input required type="number" min="0" value={editingRequestBudget} onChange={(event) => setEditingRequestBudget(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          <label className="block space-y-1.5 text-sm font-semibold">توضیحات<textarea rows={4} value={editingRequestDescription} onChange={(event) => setEditingRequestDescription(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          {recordActionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{recordActionError}</p>}
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setEditingRequestId(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="submit" className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white">ذخیره تغییرات</button></div>
+        </form>
+      </Modal>
+      <Modal open={Boolean(deletingRequestId)} title="تأیید حذف درخواست" description="این عملیات قابل بازگشت نیست. آیا از حذف این درخواست مطمئن هستید؟" onClose={() => setDeletingRequestId(null)}>
+        {recordActionError && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{recordActionError}</p>}
+        <div className="flex justify-end gap-2"><button type="button" onClick={() => setDeletingRequestId(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => void deleteRequest()} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">حذف درخواست</button></div>
       </Modal>
       </main>
     </div>
