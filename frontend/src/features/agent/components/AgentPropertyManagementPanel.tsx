@@ -9,6 +9,7 @@ import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
 
 type PropertyRecord = {
   propertyId: string;
+  canManage: boolean;
   status: "ACTIVE" | "REVOKED";
   approvedByOwner: boolean;
   approvedAt: string | null;
@@ -17,6 +18,7 @@ type PropertyRecord = {
   property: {
     id: string;
     registrationSource: "OWNER" | "AGENT";
+    createdByUserId: string;
     propertyType: string;
     city: string;
     district: string;
@@ -179,7 +181,7 @@ export function AgentPropertyManagementPanel() {
                     {record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
-                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{property.registrationSource === "OWNER" && record.status === "ACTIVE" && record.approvedByOwner && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor)}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک ثبت‌شده توسط مالک با ارتباط تأییدشده در دسترس است.</span>}</div></td>
+                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor)}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
                 </tr>
               );
             })}</tbody>
