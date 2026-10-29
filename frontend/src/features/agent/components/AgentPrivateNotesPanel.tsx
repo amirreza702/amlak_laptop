@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 type Note = { id: string; entityType: "property" | "owner" | "customer"; entityId: string; note: string; updatedAt: string };
 const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-export function AgentPrivateNotesPanel() {
+export function AgentPrivateNotesPanel({ defaultEntityType = "property" }: { defaultEntityType?: Note["entityType"] }) {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [entityType, setEntityType] = useState<Note["entityType"]>("property");
+  const [entityType, setEntityType] = useState<Note["entityType"]>(defaultEntityType);
   const [entityId, setEntityId] = useState("");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
