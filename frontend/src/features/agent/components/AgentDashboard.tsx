@@ -9,7 +9,7 @@ import { OwnerAgentRequestsPanel } from "./OwnerAgentRequestsPanel";
 import { AgentCreateSearchRequestPanel } from "./AgentCreateSearchRequestPanel";
 import { useAgentDashboard } from "../hooks/useAgentDashboard";
 import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
-import { AgentPrivateNotesPanel } from "./AgentPrivateNotesPanel";
+import { AgentPropertyManagementPanel } from "./AgentPropertyManagementPanel";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
 import { agentApiRequest } from "../api/agentApi";
@@ -93,7 +93,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </section>
       )}
 
-      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} /><AgentPrivateNotesPanel defaultEntityType="property" /></>}
+      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} /><AgentPropertyManagementPanel /></>}
       {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
