@@ -85,7 +85,7 @@ export function usePropertyDetail() {
     }
 
     if (!id || id === "__csr__") {
-      setLoadState("not-found");
+      void Promise.resolve().then(() => setLoadState("not-found"));
       return;
     }
 
