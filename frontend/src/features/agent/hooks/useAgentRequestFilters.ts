@@ -10,6 +10,8 @@ export interface FilterableAgentRequest {
   budget: string | number | null;
   description: string | null;
   createdByRole: "CUSTOMER" | "AGENT" | null;
+  /** فقط درخواست‌هایی که توسط همین مشاور ثبت شده‌اند قابل ویرایش/حذف هستند. */
+  isCreatedByMe?: boolean;
   createdAt: string;
 }
 
