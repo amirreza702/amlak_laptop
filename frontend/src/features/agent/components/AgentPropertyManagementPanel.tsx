@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import dynamic from "next/dynamic";
+import type { Coordinates, PropertyType, TransactionType } from "@/features/property/types/propertyRegistration";
 import { LoaderCircle, RefreshCw, Search, Pencil, Trash2 } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
+
+const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
+  ssr: false,
+  loading: () => <div className="flex h-72 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-500">در حال بارگذاری نقشه...</div>,
+});
 
 type PropertyRecord = {
   propertyId: string;
@@ -23,6 +30,8 @@ type PropertyRecord = {
     city: string;
     district: string;
     address: string;
+    latitudeExact: number;
+    longitudeExact: number;
     postalCode: string | null;
     area: number | null;
     rooms: number | null;
@@ -30,7 +39,7 @@ type PropertyRecord = {
     isActive: boolean;
     createdAt: string;
     confirmUntil: string | null;
-    listing: { status: string; transactionType: string; publishedAt: string | null } | null;
+    listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null } | null;
     owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string } }[];
     verificationCases: { status: string; createdAt: string; reviewedAt: string | null }[];
   };
@@ -59,7 +68,7 @@ export function AgentPropertyManagementPanel() {
   const [filters, setFilters] = useState({ city: "", district: "", postalCode: "", ownerName: "", propertyType: "", transactionType: "", listingStatus: "", isActive: "", areaMin: "", areaMax: "", roomsMin: "", roomsMax: "" });
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const [editingProperty, setEditingProperty] = useState<PropertyRecord["property"] | null>(null);
-  const [editValues, setEditValues] = useState({ propertyType: "APARTMENT", city: "", district: "", address: "", postalCode: "", area: "", rooms: "", floor: "" });
+  const [editValues, setEditValues] = useState({ propertyType: "APARTMENT" as PropertyType, city: "", district: "", address: "", postalCode: "", area: "", rooms: "", floor: "", coordinates: null as Coordinates | null, transactionType: "SALE" as TransactionType, salePrice: "", depositAmount: "", rentAmount: "", internalNote: "" });
   const [savingProperty, setSavingProperty] = useState(false);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -99,8 +108,15 @@ export function AgentPropertyManagementPanel() {
     event.preventDefault(); if (!editingProperty) return;
     setSavingProperty(true); setActionError(null); setActionMessage(null);
     try {
-      await agentApiRequest(`/properties/${encodeURIComponent(editingProperty.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyType: editValues.propertyType, city: editValues.city.trim(), district: editValues.district.trim(), address: editValues.address.trim(), postalCode: editValues.postalCode.trim() || null, area: editValues.area.trim() ? Number(editValues.area) : null, rooms: editValues.rooms.trim() ? Number(editValues.rooms) : null, floor: editValues.floor.trim() ? Number(editValues.floor) : null }) });
-      setEditingProperty(null); setActionMessage("مشخصات ملک ذخیره شد."); await load(pagination.offset);
+      if (!editValues.coordinates) throw new Error("لطفاً موقعیت ملک را روی نقشه انتخاب کنید.");
+      const propertyId = encodeURIComponent(editingProperty.id);
+      await agentApiRequest(`/properties/${propertyId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ propertyType: editValues.propertyType, city: editValues.city.trim(), district: editValues.district.trim(), address: editValues.address.trim(), postalCode: editValues.postalCode.trim() || null, latitudeExact: editValues.coordinates.latitude, longitudeExact: editValues.coordinates.longitude, area: editValues.area.trim() ? Number(editValues.area) : null, rooms: editValues.rooms.trim() ? Number(editValues.rooms) : null, floor: editValues.floor.trim() ? Number(editValues.floor) : null }) });
+      const pricePayload = { transactionType: editValues.transactionType, salePrice: editValues.transactionType === "SALE" ? editValues.salePrice.trim() : null, depositAmount: editValues.transactionType === "FULL_DEPOSIT" ? editValues.depositAmount.trim() : null, rentAmount: editValues.transactionType === "RENT" ? editValues.rentAmount.trim() : null };
+      if (editValues.transactionType === "SALE" && !pricePayload.salePrice || editValues.transactionType === "FULL_DEPOSIT" && !pricePayload.depositAmount || editValues.transactionType === "RENT" && !pricePayload.rentAmount) throw new Error("قیمت یا مبلغ مربوط به نوع معامله را وارد کنید.");
+      await agentApiRequest(`/properties/${propertyId}/${editingProperty.listing ? "price" : "listing"}`, { method: editingProperty.listing ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pricePayload) });
+      const noteSaved = await saveNote("property", editingProperty.id, editValues.internalNote);
+      if (!noteSaved) throw new Error("مشخصات ملک ذخیره شد، اما ذخیره یادداشت خصوصی ناموفق بود.");
+      setEditingProperty(null); setActionMessage("همه مشخصات ملک، موقعیت، اطلاعات معامله و یادداشت خصوصی ذخیره شد."); await load(pagination.offset);
     } catch (cause) { setActionError(cause instanceof Error ? cause.message : "ویرایش ملک ناموفق بود."); }
     finally { setSavingProperty(false); }
   }
@@ -181,7 +197,7 @@ export function AgentPropertyManagementPanel() {
                     {record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
-                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor)}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
+                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:{latitude:property.latitudeExact,longitude:property.longitudeExact},transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
                 </tr>
               );
             })}</tbody>
@@ -204,7 +220,10 @@ export function AgentPropertyManagementPanel() {
           <label className="space-y-1 text-sm">کد پستی<input maxLength={10} value={editValues.postalCode} onChange={e=>setEditValues(v=>({...v,postalCode:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
           <label className="space-y-1 text-sm">متراژ<input type="number" min="0" step="any" value={editValues.area} onChange={e=>setEditValues(v=>({...v,area:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
           <label className="space-y-1 text-sm">تعداد اتاق<input type="number" min="0" step="1" value={editValues.rooms} onChange={e=>setEditValues(v=>({...v,rooms:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
-          <label className="space-y-1 text-sm">طبقه<input type="number" min="0" step="1" value={editValues.floor} onChange={e=>setEditValues(v=>({...v,floor:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <label className="space-y-1 text-sm">طبقه<input type="number" min="0" max="200" step="1" value={editValues.floor} onChange={e=>setEditValues(v=>({...v,floor:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
+          <fieldset className="space-y-2 rounded-xl border p-3 sm:col-span-2"><legend className="px-2 text-sm font-bold">موقعیت جغرافیایی (اجباری)</legend><PropertyLocationPicker value={editValues.coordinates} onChange={(coordinates) => setEditValues(v => ({ ...v, coordinates }))} city={editValues.city} /></fieldset>
+          <div className="space-y-3 rounded-xl border p-3 sm:col-span-2"><h3 className="font-bold">نوع معامله و قیمت</h3><label className="block space-y-1 text-sm">نوع معامله<select required value={editValues.transactionType} onChange={e=>setEditValues(v=>({...v,transactionType:e.target.value as TransactionType}))} className="w-full rounded-lg border px-3 py-2"><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select></label>{editValues.transactionType === "SALE" && <label className="block space-y-1 text-sm">قیمت فروش (تومان)<input required type="number" min="1" step="1" value={editValues.salePrice} onChange={e=>setEditValues(v=>({...v,salePrice:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}{editValues.transactionType === "FULL_DEPOSIT" && <label className="block space-y-1 text-sm">مبلغ رهن کامل (تومان)<input required type="number" min="1" step="1" value={editValues.depositAmount} onChange={e=>setEditValues(v=>({...v,depositAmount:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}{editValues.transactionType === "RENT" && <label className="block space-y-1 text-sm">مبلغ اجاره ماهانه (تومان)<input required type="number" min="1" step="1" value={editValues.rentAmount} onChange={e=>setEditValues(v=>({...v,rentAmount:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}</div>
+          <label className="space-y-1 text-sm sm:col-span-2">توضیحات خصوصی مشاور (اختیاری)<textarea rows={4} maxLength={10000} value={editValues.internalNote} onChange={e=>setEditValues(v=>({...v,internalNote:e.target.value}))} className="w-full rounded-lg border px-3 py-2" placeholder="فقط برای شما و مدیر ارشد هشتی" /></label>
           <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={()=>setEditingProperty(null)} className="rounded-lg border px-4 py-2">انصراف</button><button disabled={savingProperty} type="submit" className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
         </form>
       </Modal>
