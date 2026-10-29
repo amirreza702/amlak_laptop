@@ -45,7 +45,7 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
     } finally { setLoading(false); }
   }, [ownerId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   async function submit() {
     if (!ownerId || !propertyId) { setError("ابتدا یکی از املاک خود را انتخاب کنید."); return; }
