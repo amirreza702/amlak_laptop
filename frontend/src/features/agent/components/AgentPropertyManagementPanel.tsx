@@ -51,7 +51,7 @@ export function AgentPropertyManagementPanel() {
   const [appliedQuery, setAppliedQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { notes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes();
+  const { notes, savingNoteKey, saveNote, noteError, noteMessage, refreshNotes } = useAgentPrivateNotes();
 
   const load = useCallback(async (offset = 0, search = appliedQuery) => {
     setLoading(true);
@@ -71,7 +71,7 @@ export function AgentPropertyManagementPanel() {
     }
   }, [appliedQuery, pagination.limit]);
 
-  useEffect(() => { void load(0, ""); }, []); // دریافت اولیه؛ جست‌وجو با ثبت فرم انجام می‌شود.
+  useEffect(() => { void load(0); }, [load]);
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,7 +86,7 @@ export function AgentPropertyManagementPanel() {
           <h2 className="text-lg font-bold">مدیریت املاک و یادداشت‌های خصوصی</h2>
           <p className="mt-1 text-sm leading-7 text-slate-600">هر ردیف یک رکورد واقعی ملک مرتبط با این مشاور است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
         </div>
-        <button type="button" onClick={() => void load(pagination.offset)} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
+        <button type="button" onClick={() => { void load(pagination.offset); void refreshNotes(); }} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
         </button>
       </div>
