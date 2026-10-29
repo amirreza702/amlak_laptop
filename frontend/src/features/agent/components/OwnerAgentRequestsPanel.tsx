@@ -44,7 +44,8 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
     finally { setBusyId(null); }
   }
 
-  return <section dir="rtl" className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+  return (
+    <section dir="rtl" className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">درخواست‌های مالکان</h2><p className="mt-1 text-sm leading-7 text-slate-600">درخواست‌های فعال برای مشاوران تأییدشده قابل مشاهده‌اند. مشاهدهٔ شماره تماس مالک و آدرس دقیق ملک با یک سهمیه از اشتراک ماهانه انجام می‌شود.</p></div>
       <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50">{loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی</button>
     </div>
@@ -57,5 +58,7 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
           <td className="p-3">{access[request.id] ? <div className="min-w-[220px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{access[request.id].owner.firstName} {access[request.id].owner.lastName}</p><p className="mt-1" dir="ltr">{access[request.id].owner.mobile}</p><p className="mt-2 font-semibold">آدرس دقیق ملک</p><p className="mt-1 whitespace-pre-wrap leading-6">{access[request.id].property.address}، {access[request.id].property.district}، {access[request.id].property.city}</p>{access[request.id].property.postalCode && <p className="mt-1">کد پستی: <span dir="ltr">{access[request.id].property.postalCode}</span></p>}</div> : <span className="text-slate-500">هنوز دسترسی دریافت نشده است.</span>}</td>
           <td className="p-3">{!access[request.id] && <button type="button" onClick={() => void unlock(request.id)} disabled={busyId === request.id} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت تماس و آدرس</button>}</td>
         </tr>
-      ))}</tbody></table></div></section>;
+      ))}</tbody></table></div>
+    </section>
+  );
 }
