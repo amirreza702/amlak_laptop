@@ -157,6 +157,54 @@ const updateOptions = [
  * =========================================================
  */
 
+const Checkbox = ({
+    checked,
+    label,
+    onChange,
+  }: {
+    checked: boolean;
+    label: string;
+    onChange: (checked: boolean) => void;
+  }) => {
+    return (
+      <label
+        className="
+          flex
+          cursor-pointer
+          items-center
+          gap-3
+          rounded-lg
+          border
+          border-slate-200
+          bg-white
+          px-3
+          py-3
+          text-sm
+          transition
+          hover:border-slate-300
+          hover:bg-slate-50
+        "
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) =>
+            onChange(event.target.checked)
+          }
+          className="
+            h-4
+            w-4
+            accent-slate-900
+          "
+        />
+
+        <span className="text-slate-700">
+          {label}
+        </span>
+      </label>
+    );
+};
+
 export function PropertyFiltersPanel({
   isOpen,
   onClose,
@@ -220,62 +268,6 @@ export function PropertyFiltersPanel({
     focus:ring-2
     focus:ring-slate-200
   `;
-
-  /**
-   * =======================================================
-   * Checkbox
-   * =======================================================
-   *
-   * برای فیلترهای Boolean استفاده می‌شود.
-   */
-
-  const Checkbox = ({
-    checked,
-    label,
-    onChange,
-  }: {
-    checked: boolean;
-    label: string;
-    onChange: (checked: boolean) => void;
-  }) => {
-    return (
-      <label
-        className="
-          flex
-          cursor-pointer
-          items-center
-          gap-3
-          rounded-lg
-          border
-          border-slate-200
-          bg-white
-          px-3
-          py-3
-          text-sm
-          transition
-          hover:border-slate-300
-          hover:bg-slate-50
-        "
-      >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(event) =>
-            onChange(event.target.checked)
-          }
-          className="
-            h-4
-            w-4
-            accent-slate-900
-          "
-        />
-
-        <span className="text-slate-700">
-          {label}
-        </span>
-      </label>
-    );
-  };
 
   /**
    * =======================================================
