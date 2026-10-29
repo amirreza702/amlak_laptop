@@ -49,7 +49,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     contacts, busyId, actionMessage,
     loadRequests, openContact, saveProfile,
   } = useAgentDashboard(user);
-  const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes();
+  const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes(profileState === "verified");
 
   return (
     <div dir="rtl" className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
