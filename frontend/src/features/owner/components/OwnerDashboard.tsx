@@ -11,7 +11,7 @@ import { OwnerProfilePanel } from "./OwnerProfilePanel";
 import { useOwnerAgentAccess } from "../hooks/useOwnerAgentAccess";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { Modal } from "@/shared/components/Modal";
-import { Modal } from "@/shared/components/Modal";
+
 
 export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
