@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   House,
@@ -19,7 +19,6 @@ import {
 
 export function GlobalSessionControl() {
   const pathname = usePathname();
-  const router = useRouter();
   const latestCheckId = useRef(0);
 
   const [user, setUser] = useState<UserPublic | null>(null);
@@ -72,7 +71,8 @@ export function GlobalSessionControl() {
     try {
       await logoutUser();
       setUser(null);
-      router.push("/");
+      // Full navigation avoids a stale client route after a session cookie changes.
+      window.location.assign("/");
     } catch {
       setLogoutError(
         "خروج انجام نشد؛ اتصال به سرور را بررسی کنید."
