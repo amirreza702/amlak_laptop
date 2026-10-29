@@ -84,7 +84,7 @@ router.post(
 );
 router.put(
   "/properties/:id/price",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false),
   updatePropertyPriceController
 );
 router.put(
@@ -111,7 +111,7 @@ router.delete(
 
 router.patch(
   "/properties/:id",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false),
   updatePropertyController
 );
 
