@@ -33,7 +33,7 @@ export function useCurrentAgent() {
   }, []);
 
   useEffect(() => {
-    void fetchUser();
+    void Promise.resolve().then(() => fetchUser());
 
     const handleAuthStateChange = () => {
       void fetchUser();
