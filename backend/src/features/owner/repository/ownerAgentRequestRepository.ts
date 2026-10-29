@@ -53,7 +53,7 @@ export const findActiveOwnerAgentRequests = () =>
     },
     orderBy: { createdAt: "desc" },
     select: {
-      id: true, description: true, status: true, createdAt: true,
+      id: true, ownerId: true, propertyId: true, description: true, status: true, createdAt: true,
       property: {
         select: {
           propertyType: true, city: true, district: true, area: true, rooms: true,
