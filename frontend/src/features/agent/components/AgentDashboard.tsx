@@ -90,7 +90,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </section>
       )}
 
-      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" /><AgentPrivateNotesPanel defaultEntityType="property" /></>}
+      {profileState === "verified" && selectedTool === "property-management" && <><PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} /><AgentPrivateNotesPanel defaultEntityType="property" /></>}
       {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
