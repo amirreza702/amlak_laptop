@@ -21,7 +21,7 @@ export function useUserNotifications(userId: string) {
     }
   }, [userId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   const markRead = useCallback(async (id: string) => {
     setBusyId(id);
