@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireAdminPermission } from "../middleware/requireAdminPermission";
+import { getAllAgentPrivateNotesController } from "../../agent/controller/agentPrivateNotesController";
 import {
   bootstrapSuperAdminController, listUsersController, userDetailsController, setUserStatusController,
   listOwnersController, ownerDetailsController, listAgentsController, agentDetailsController,
@@ -34,5 +35,7 @@ router.get("/admin/staff", authMiddleware, requireRole(UserRole.HASHTI), require
 router.post("/admin/staff", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("STAFF_MANAGE"), createStaffAccountController);
 router.patch("/admin/staff/:userId/permissions", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("STAFF_MANAGE"), updateStaffPermissionsController);
 router.get("/admin/audit", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("AUDIT_READ"), auditController);
+// یادداشت‌های مشاوران فقط برای مدیر ارشد هشتی قابل مشاهده است.
+router.get("/admin/agent-private-notes", authMiddleware, requireRole(UserRole.HASHTI), getAllAgentPrivateNotesController);
 
 export default router;
