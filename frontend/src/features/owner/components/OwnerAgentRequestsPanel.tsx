@@ -7,7 +7,8 @@ import type { OwnerProperty } from "../types/owner";
 
 type OwnerRequest = {
   id: string; propertyId: string; description: string | null; status: string; createdAt: string;
-  property: { propertyType: string; city: string; district: string; area: number | null };
+  property: { propertyType: string; city: string; district: string; area: number | null; agents: Array<{ agentId: string; status: string; approvedByOwner: boolean }> };
+  responses: Array<{ status: string; agent: { id: string; firstName: string; lastName: string; agencyName: string | null; user: { mobile: string } } }>;
 };
 
 const propertyLabels: Record<string, string> = {
@@ -23,6 +24,7 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     if (!ownerId) return;
@@ -68,6 +70,24 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "بستن درخواست ناموفق بود."); }
     finally { setBusy(false); }
   }
+
+  async function setAgentApproval(propertyId: string, agentId: string, action: "approval" | "revoke") {
+    setBusy(true); setError(null); setMessage(null);
+    try {
+      await ownerApiRequest("/properties/" + encodeURIComponent(propertyId) + "/agents/" + encodeURIComponent(agentId) + "/" + action, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}),
+      });
+      setMessage(action === "approval" ? "مشاور منتخب این ملک تأیید شد؛ تأیید قبلی در صورت وجود لغو شد." : "انتخاب مشاور لغو شد؛ شماره تماس مالک جایگزین می‌شود.");
+      await load();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "تغییر مشاور منتخب ناموفق بود."); }
+    finally { setBusy(false); }
+  }
+
+  const visibleRequests = requests.filter((request) => {
+    const responseText = request.responses.map((response) => response.status + " " + response.agent.firstName + " " + response.agent.lastName + " " + (response.agent.agencyName ?? "") + " " + response.agent.user.mobile).join(" ");
+    const searchable = [request.id, request.propertyId, request.property.propertyType, request.property.city, request.property.district, request.property.area, request.description, request.status, request.createdAt, responseText].join(" ").toLocaleLowerCase();
+    return searchable.includes(search.trim().toLocaleLowerCase());
+  });
 
   return <section dir="rtl" className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
