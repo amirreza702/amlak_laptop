@@ -12,7 +12,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
   const [savingProperty, setSavingProperty] = useState(false);
   const [editForm, setEditForm] = useState({ propertyType: "APARTMENT", city: "", district: "", address: "", postalCode: "", latitudeExact: "", longitudeExact: "", area: "", rooms: "", floor: "", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "" });
   const {
-    properties, loading, error, reload, setReload, search, setSearch, statusFilter, setStatusFilter,
+    properties, loading, error, setReload, search, setSearch, statusFilter, setStatusFilter,
     cityFilter, setCityFilter, districtFilter, setDistrictFilter, transactionFilter, setTransactionFilter,
     propertyTypeFilter, setPropertyTypeFilter, minPrice, setMinPrice, maxPrice, setMaxPrice,
     minArea, setMinArea, maxArea, setMaxArea, minRooms, setMinRooms, occupancyFilter, setOccupancyFilter,
