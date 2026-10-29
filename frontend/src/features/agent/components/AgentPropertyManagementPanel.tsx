@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
@@ -73,7 +73,7 @@ export function AgentPropertyManagementPanel() {
 
   useEffect(() => { void load(0); }, [load]);
 
-  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAppliedQuery(query.trim());
     void load(0, query.trim());
