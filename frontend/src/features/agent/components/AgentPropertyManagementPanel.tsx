@@ -76,7 +76,6 @@ export function AgentPropertyManagementPanel() {
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAppliedQuery(query.trim());
-    void load(0, query.trim());
   };
 
   return (
