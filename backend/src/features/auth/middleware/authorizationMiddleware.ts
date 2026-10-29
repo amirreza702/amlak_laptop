@@ -150,6 +150,38 @@ export function requirePropertyAccess(paramName = "id", requireVerifiedOwner = t
   };
 }
 
+/** مشاور فقط می‌تواند اطلاعات پایهٔ ملکی را ویرایش کند که خودش ثبت کرده است. */
+export function requireAgentOwnRegisteredProperty(paramName = "id") {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = currentUser(req, res);
+    if (!user) return;
+    if (user.role !== "AGENT") return next();
+
+    const propertyId = req.params[paramName];
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      return res.status(400).json({ message: "Invalid property ID" });
+    }
+
+    try {
+      const property = await prisma.property.findFirst({
+        where: {
+          id: propertyId,
+          registrationSource: "AGENT",
+          createdByUserId: user.id,
+        },
+        select: { id: true },
+      });
+      if (!property) {
+        return res.status(403).json({ message: "Agents may edit only properties they registered" });
+      }
+      return next();
+    } catch (error) {
+      console.error("Agent property edit authorization failed:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+}
+
 /** کنترل مالکیت اعلان از روی User جاری، نه userId دریافتی از Client. */
 export function requireOwnNotification(paramName = "id") {
   return async (req: Request, res: Response, next: NextFunction) => {
