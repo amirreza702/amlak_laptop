@@ -11,6 +11,7 @@ import {
 import { getAdminAuditLogsController } from "../controller/adminAuditLogController";
 import userManagementRoutes from "./userManagementRoutes";
 import { getVerificationQueueController } from "../controller/verificationQueueController";
+import { getHashtiPropertyRecordsController } from "../controller/propertyManagementController";
 
 const router = Router();
 
@@ -46,6 +47,13 @@ router.get(
   getAdminAuditLogsController
 );
 
+
+router.get(
+  "/hashti/properties",
+  authMiddleware,
+  requireRole(UserRole.HASHTI),
+  getHashtiPropertyRecordsController
+);
 
 router.get(
   "/hashti/verification-cases",
