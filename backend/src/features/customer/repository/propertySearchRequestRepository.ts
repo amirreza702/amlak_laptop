@@ -151,6 +151,7 @@ export const findActivePropertySearchRequests =
         hashtiVerified: true,
         status: true,
         createdByRole: true,
+        createdByUserId: true,
         createdAt: true,
         updatedAt: true,
       },
