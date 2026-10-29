@@ -34,7 +34,7 @@ export const findOwnerAgentRequests = (ownerId: string) =>
     orderBy: { createdAt: "desc" },
     select: {
       id: true, propertyId: true, description: true, status: true, createdAt: true, updatedAt: true,
-      property: { select: { propertyType: true, city: true, district: true, area: true } },
+      property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
       responses: {
         select: {
           status: true,
