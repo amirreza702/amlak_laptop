@@ -7,8 +7,7 @@ import { cn } from "@/lib/utils";
  * برچسب عمومی برای فیلدهای فرم.
  */
 
-export interface LabelProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>;
 
 /**
  * کامپوننت Label
