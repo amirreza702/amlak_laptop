@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LoaderCircle, LockKeyhole, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
