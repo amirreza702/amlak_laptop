@@ -22,7 +22,7 @@ export default function AdminAccessGuard({ children }: AdminAccessGuardProps) {
   useEffect(() => {
     let active = true;
 
-    setAccessState("checking");
+    void Promise.resolve().then(() => { if (active) setAccessState("checking"); });
 
     getCurrentUser()
       .then((user) => {
