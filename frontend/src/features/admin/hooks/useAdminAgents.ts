@@ -36,7 +36,7 @@ export function useAdminAgents() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "خطا در دریافت مشاوران."); }
     finally { setLoading(false); }
   }, [search, active, verified, page]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   async function verify(agent: AdminAgent) {
     if (reason.trim().length < 3) { setError("برای تغییر وضعیت تأیید، دلیل وارد کنید."); return; }
