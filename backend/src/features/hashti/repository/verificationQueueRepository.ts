@@ -28,18 +28,18 @@ export async function findVerificationQueueCases(input: VerificationQueueQuery) 
         { property: { is: { district: contains(search) } } },
         { property: { is: { address: contains(search) } } },
         { property: { is: { postalCode: contains(search) } } },
-        { property: { is: { owners: { some: { ownerId: contains(search) } } } },
-        { property: { is: { owners: { some: { owner: { is: { firstName: contains(search) } } } } } },
-        { property: { is: { owners: { some: { owner: { is: { lastName: contains(search) } } } } } },
+        { property: { is: { owners: { some: { ownerId: contains(search) } } } } },
+        { property: { is: { owners: { some: { owner: { is: { firstName: contains(search) } } } } } } },
+        { property: { is: { owners: { some: { owner: { is: { lastName: contains(search) } } } } } } },
         ...(exact ? [
           { status: exact as any },
           { property: { is: { propertyType: exact as any } } },
-          { property: { is: { owners: { some: { verificationStatus: exact as any } } } },
+          { property: { is: { owners: { some: { verificationStatus: exact as any } } } } },
         ] : []),
         ...(numericSearch !== undefined ? [
           { property: { is: { area: numericSearch } } },
           { property: { is: { rooms: numericSearch } } },
-          { property: { is: { owners: { some: { share: numericSearch } } } },
+          { property: { is: { owners: { some: { share: numericSearch } } } } },
         ] : []),
         ...(dateRange ? [
           { createdAt: dateRange }, { updatedAt: dateRange }, { reviewedAt: dateRange },
