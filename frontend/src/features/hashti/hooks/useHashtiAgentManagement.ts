@@ -27,7 +27,7 @@ export function useHashtiAgentManagement() {
     }
   }, [verificationFilter]);
 
-  useEffect(() => { void loadManagedAgents(); }, [loadManagedAgents]);
+  useEffect(() => { void Promise.resolve().then(() => loadManagedAgents()); }, [loadManagedAgents]);
 
   const reviewAgent = async (agentId: string, verificationStatus: "PENDING" | "VERIFIED" | "REJECTED") => {
     if (verificationStatus === "REJECTED" && !agentVerificationNotes.trim()) {
