@@ -82,6 +82,20 @@ export async function accessOwnerRequestContactService(agentId: string, requestI
   const request = await findOwnerRequestForAccess(requestId);
   if (!request) throw new Error("Active owner request not found");
 
+  const [response, relation] = await Promise.all([
+    prisma.ownerAgentRequestResponse.findUnique({
+      where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId } },
+      select: { status: true },
+    }),
+    prisma.propertyAgent.findUnique({
+      where: { propertyId_agentId: { propertyId: request.propertyId, agentId } },
+      select: { status: true, approvedByOwner: true },
+    }),
+  ]);
+  if (response?.status !== "ACCEPTED" || relation?.status !== "ACTIVE" || !relation.approvedByOwner) {
+    throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+  }
+
   const toPayload = (access: unknown) => ({
     access,
     owner: { id: request.ownerId, firstName: request.owner.firstName, lastName: request.owner.lastName, mobile: request.owner.user.mobile },
