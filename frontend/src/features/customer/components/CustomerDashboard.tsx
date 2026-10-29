@@ -246,27 +246,7 @@ export function CustomerDashboard() {
             )}
 
             {tab === "favorites" && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {favorites.length === 0 ? <div className="sm:col-span-2"><EmptyState text="هنوز ملکی به علاقه‌مندی‌ها اضافه نکرده‌اید." action={<Link href="/search" className="font-bold text-[#043873] underline">جست‌وجوی ملک</Link>} /></div> :
-                  favorites.map((favorite) => (
-                    <article key={favorite.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                      {favorite.property?.media?.[0]?.url && <img src={favorite.property.media[0].url} alt="" className="h-40 w-full object-cover" />}
-                      <div className="p-4">
-                        {favorite.property ? (
-                          <>
-                            <h3 className="font-bold">{propertyLabel(favorite.property.propertyType)} در {favorite.property.city}</h3>
-                            <p className="mt-1 text-sm text-slate-600">{favorite.property.district} · {favorite.property.area ?? "—"} متر · {favorite.property.rooms ?? "—"} اتاق</p>
-                            <p className="mt-2 text-sm font-semibold text-[#043873]">{money(favorite.property.listing.salePrice ?? favorite.property.listing.depositAmount ?? favorite.property.listing.rentAmount)}</p>
-                            <Link href={`/property/${encodeURIComponent(favorite.propertyId)}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#043873] underline">مشاهده ملک <ChevronLeft className="h-4 w-4" /></Link>
-                          </>
-                        ) : (
-                          <p className="text-sm leading-6 text-slate-600">این آگهی دیگر در فهرست عمومی فعال نیست؛ امکان حذف از علاقه‌مندی‌ها محفوظ است.</p>
-                        )}
-                        <button type="button" disabled={busyId === favorite.propertyId} onClick={() => void runAction(favorite.propertyId, async () => { await removeCustomerFavorite(profile!.id, favorite.propertyId); setActionMessage("ملک از علاقه‌مندی‌ها حذف شد."); })} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"><Heart className="h-4 w-4" /> حذف از علاقه‌مندی‌ها</button>
-                      </div>
-                    </article>
-                  ))}
-              </div>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">{favorites.length === 0 ? <div className="p-6"><EmptyState text="هنوز ملکی به علاقه‌مندی‌ها اضافه نکرده‌اید." action={<Link href="/search" className="font-bold text-[#043873] underline">جست‌وجوی ملک</Link>} /></div> : <table className="w-full min-w-[850px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">قیمت</th><th className="p-3">عملیات</th></tr></thead><tbody>{favorites.map((favorite) => <tr key={favorite.id} className="border-t border-slate-200 align-top"><td className="p-3"><p className="font-bold">{favorite.property ? `${propertyLabel(favorite.property.propertyType)} در ${favorite.property.city}` : "آگهی غیرفعال"}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{favorite.propertyId}</p></td><td className="p-3">{favorite.property ? <p>{favorite.property.district} · {favorite.property.area ?? "—"} متر · {favorite.property.rooms ?? "—"} اتاق</p> : <p className="text-slate-500">این آگهی دیگر در فهرست عمومی فعال نیست.</p>}</td><td className="p-3 font-semibold text-[#043873]">{favorite.property ? money(favorite.property.listing.salePrice ?? favorite.property.listing.depositAmount ?? favorite.property.listing.rentAmount) : "—"}</td><td className="p-3"><div className="flex flex-wrap gap-2">{favorite.property && <Link href={`/property/${encodeURIComponent(favorite.propertyId)}`} className="whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold text-[#043873] underline">مشاهده ملک</Link>}<button type="button" disabled={busyId === favorite.propertyId} onClick={() => void runAction(favorite.propertyId, async () => { await removeCustomerFavorite(profile!.id, favorite.propertyId); setActionMessage("ملک از علاقه‌مندی‌ها حذف شد."); })} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"><Heart className="h-4 w-4" /> حذف</button></div></td></tr>)}</tbody></table>}</div>
             )}
 
             {tab === "notifications" && (
