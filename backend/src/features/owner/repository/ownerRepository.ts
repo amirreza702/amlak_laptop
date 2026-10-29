@@ -120,8 +120,9 @@ export const findOwnerPropertiesByOwnerId = async (ownerId: string) =>
       verifiedAt: true,
       property: {
         select: {
-          id: true, propertyType: true, city: true, district: true, address: true,
-          area: true, rooms: true, isActive: true, occupancyStatus: true,
+          id: true, propertyType: true, city: true, district: true, address: true, postalCode: true,
+          latitudeExact: true, longitudeExact: true, area: true, rooms: true, floor: true,
+          isActive: true, occupancyStatus: true,
           listing: {
             select: { transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, status: true, publishedAt: true },
           },
