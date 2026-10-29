@@ -60,7 +60,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
 
 
   return (
-    <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]" dir="rtl">
+    <div className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6" dir="rtl">
       <aside aria-label="منوی ابزارهای هشتی" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">ابزارهای هشتی</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="بخش‌های پنل هشتی">
@@ -76,7 +76,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 space-y-5">
+      <main className="min-w-0 w-full space-y-5">
       <section id="dashboard-home" hidden={selectedTool !== "dashboard-home"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#043873]"><ShieldCheck className="h-6 w-6" /></div>
