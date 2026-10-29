@@ -24,7 +24,7 @@ export async function updateOwnAgentSearchRequestController(req: Request, res: R
 export async function deleteOwnAgentSearchRequestController(req: Request, res: Response) {
  try {
   const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
-  const result = await prisma.propertySearchRequest.deleteMany({ where: { id: req.params.requestId, createdByUserId: id, createdByRole: UserRole.AGENT } });
+  const result = await prisma.propertySearchRequest.deleteMany({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!result.count) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
   return res.status(204).send();
  } catch (error) { console.error("Could not delete agent search request:", error); return res.status(500).json({ message: "Internal server error" }); }
