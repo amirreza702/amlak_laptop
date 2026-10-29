@@ -85,8 +85,8 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
                 : null}
               onChange={(coordinates) => setEditForm(v => ({
                 ...v,
-                latitudeExact: String(coordinates.latitude),
-                longitudeExact: String(coordinates.longitude),
+                latitudeExact: coordinates ? String(coordinates.latitude) : "",
+                longitudeExact: coordinates ? String(coordinates.longitude) : "",
               }))}
               city={editForm.city}
             />
