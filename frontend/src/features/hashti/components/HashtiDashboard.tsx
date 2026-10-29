@@ -142,6 +142,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           <p className="mt-4 text-sm text-slate-500">مشاوری با این جست‌وجو پیدا نشد.</p>
         ) : (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <input value={agentSearch} onChange={(event) => setAgentSearch(event.target.value)} aria-label="جست‌وجو در جدول مشاوران" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             <table className="w-full min-w-[1100px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد مشاور</th><th className="p-3">حساب</th><th className="p-3">وضعیت تأیید</th><th className="p-3">یادداشت و آخرین بررسی</th><th className="p-3">عملیات</th></tr></thead>
               <tbody>
@@ -176,6 +177,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         {auditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{auditError}</p>}
         {visibleContactAuditLogs.length > 0 && (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <input value={contactAuditSearch} onChange={(event) => setContactAuditSearch(event.target.value)} aria-label="جست‌وجو در سوابق تماس" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             <table className="w-full min-w-[1000px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد دسترسی</th><th className="p-3">مشاور</th><th className="p-3">مشتری</th><th className="p-3">درخواست</th><th className="p-3">زمان</th></tr></thead>
               <tbody>{visibleContactAuditLogs.map((log) => (
@@ -205,6 +207,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         {visibleCandidateMatches.length > 0 && (
           <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
             <h3 className="p-3 font-bold">کاندیداهای مشابه</h3>
+            <input value={candidateSearch} onChange={(event) => setCandidateSearch(event.target.value)} aria-label="جست‌وجو در کاندیداهای مشابه" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             <table className="w-full min-w-[950px] text-right text-sm">
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک کاندید</th><th className="p-3">مشخصات</th><th className="p-3">فاصله</th><th className="p-3">شباهت</th><th className="p-3">عملیات</th></tr></thead>
               <tbody>{visibleCandidateMatches.map((match) => (
@@ -227,6 +230,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             <h3 className="mt-4 font-bold">پرونده‌های بررسی این ملک</h3>
             {visibleDuplicateReviews.length === 0 ? <p className="mt-2 text-sm text-slate-500">پرونده‌ای برای این ملک در پاسخ فعلی وجود ندارد.</p> : (
               <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <input value={duplicateReviewSearch} onChange={(event) => setDuplicateReviewSearch(event.target.value)} aria-label="جست‌وجو در پرونده‌های تشابه" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                 <table className="w-full min-w-[1000px] text-right text-sm">
                   <thead className="bg-slate-100"><tr><th className="p-3">رکورد پرونده</th><th className="p-3">ملک‌ها</th><th className="p-3">امتیاز و تصمیم</th><th className="p-3">یادداشت</th><th className="p-3">عملیات</th></tr></thead>
                   <tbody>{visibleDuplicateReviews.map((review) => (
@@ -282,7 +286,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             <button type="submit" disabled={logsBusy} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold disabled:opacity-60">{logsBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : "نمایش"}</button>
           </form>
           {logsError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{logsError}</p>}
-          {visibleLocationAuditLogs.length > 0 && <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[750px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">کاربر</th><th className="p-3">نقش</th><th className="p-3">زمان دسترسی</th><th className="p-3">دلیل</th></tr></thead><tbody>{visibleLocationAuditLogs.map((log) => <tr key={log.id} className="border-t border-slate-200"><td className="p-3"><span dir="ltr">{log.user?.mobile ?? log.userId}</span></td><td className="p-3">{log.user?.role ?? "نامشخص"}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td><td className="p-3">{log.reason || "ثبت نشده"}</td></tr>)}</tbody></table></div>}
+          {visibleLocationAuditLogs.length > 0 && <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><input value={locationAuditSearch} onChange={(event) => setLocationAuditSearch(event.target.value)} aria-label="جست‌وجو در سوابق موقعیت" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /><table className="w-full min-w-[750px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">کاربر</th><th className="p-3">نقش</th><th className="p-3">زمان دسترسی</th><th className="p-3">دلیل</th></tr></thead><tbody>{visibleLocationAuditLogs.map((log) => <tr key={log.id} className="border-t border-slate-200"><td className="p-3"><span dir="ltr">{log.user?.mobile ?? log.userId}</span></td><td className="p-3">{log.user?.role ?? "نامشخص"}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td><td className="p-3">{log.reason || "ثبت نشده"}</td></tr>)}</tbody></table></div>}
           {!logsBusy && visibleLocationAuditLogs.length === 0 && !logsError && <p className="mt-3 text-sm text-slate-500">شناسهٔ ملک را وارد کنید تا سوابق آن نمایش داده شود.</p>}
         </section>
 
@@ -307,6 +311,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           {adminAuditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{adminAuditError}</p>}
           {visibleAdminAuditLogs.length > 0 ? (
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+              <input value={adminAuditSearch} onChange={(event) => setAdminAuditSearch(event.target.value)} aria-label="جست‌وجو در سوابق مدیریتی" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
               <table className="w-full min-w-[1100px] text-right text-sm">
                 <thead className="bg-slate-100"><tr><th className="p-3">رویداد</th><th className="p-3">عامل</th><th className="p-3">هدف</th><th className="p-3">زمان</th><th className="p-3">جزئیات فنی</th></tr></thead>
                 <tbody>{visibleAdminAuditLogs.map((log) => (
