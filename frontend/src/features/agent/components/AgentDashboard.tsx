@@ -143,7 +143,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           <section hidden={selectedTool !== "requests"} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold">درخواست‌های فعال جست‌وجوی ملک</h2>
+                <h2 className="text-lg font-bold">درخواست‌های جست‌وجوی ملک</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">اطلاعات تماس ثبت‌کنندهٔ هر درخواست (مشتری یا مشاور) پس از درخواست دسترسی برای مشاور نمایش داده می‌شود.</p>
               </div>
               <button type="button" onClick={() => void loadRequests()} disabled={loadingRequests} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50">
