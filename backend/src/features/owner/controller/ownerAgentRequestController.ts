@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import {
   accessOwnerRequestContactService, closeOwnerAgentRequestService, createOwnerAgentRequestService,
-  getActiveOwnerAgentRequestsService, getOwnerAgentRequestsService,
+  getActiveOwnerAgentRequestsService, getOwnerAgentRequestsService, respondToOwnerAgentRequestService,
 } from "../service/ownerAgentRequestService";
 
 const actorId = (req: Request) => (req as AuthenticatedRequest).user?.id;
