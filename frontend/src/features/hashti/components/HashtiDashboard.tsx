@@ -122,41 +122,25 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         ) : managedAgents.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">موردی برای این فیلتر وجود ندارد.</p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {managedAgents.map((agent) => (
-              <article key={agent.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="font-bold">{agent.firstName} {agent.lastName}{agent.agencyName ? " · " + agent.agencyName : ""}</p>
-                    <p className="mt-1 text-sm" dir="ltr">{agent.user.mobile}</p>
-                    <p className="mt-1 text-xs text-slate-500">شناسه مشاور: {idText(agent.id)}</p>
-                    <p className="mt-2 text-sm text-slate-600">وضعیت حساب: {agent.user.isActive ? "فعال" : "غیرفعال"}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-3 py-1 text-xs font-bold ${agent.verificationStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-800" : agent.verificationStatus === "REJECTED" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>
-                    {agent.verificationStatus === "VERIFIED" ? "تأییدشده" : agent.verificationStatus === "REJECTED" ? "ردشده" : "در انتظار بررسی"}
-                  </span>
-                  {agent.verificationStatus !== "VERIFIED" && (
-                    <button type="button" onClick={() => void reviewAgent(agent.id, "VERIFIED")} disabled={busyAgentId === agent.id} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
-                      {busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {agent.verificationStatus === "REJECTED" ? "تأیید مجدد" : "تأیید مشاور"}
-                    </button>
-                  )}
-                  {agent.verificationStatus === "PENDING" && (
-                    <button type="button" onClick={() => void reviewAgent(agent.id, "REJECTED")} disabled={busyAgentId === agent.id || !agentVerificationNotes.trim()} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-50">
-                      {busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />} رد مشاور
-                    </button>
-                  )}
-                  {agent.verificationStatus !== "PENDING" && (
-                    <button type="button" onClick={() => void reviewAgent(agent.id, "PENDING")} disabled={busyAgentId === agent.id} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold disabled:opacity-60">
-                      بازگشت به انتظار بررسی
-                    </button>
-                  )}
-                </div>
-                {agent.verificationNotes && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-600">یادداشت آخرین تصمیم: {agent.verificationNotes}</p>}
-                {agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-400">آخرین بررسی: {formatPersianDateTime(agent.verificationReviewedAt)}</p>}
-              </article>
-            ))}
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full min-w-[1100px] text-right text-sm">
+              <thead className="bg-slate-100"><tr><th className="p-3">رکورد مشاور</th><th className="p-3">حساب</th><th className="p-3">وضعیت تأیید</th><th className="p-3">یادداشت و آخرین بررسی</th><th className="p-3">عملیات</th></tr></thead>
+              <tbody>
+                {managedAgents.map((agent) => (
+                  <tr key={agent.id} className="border-t border-slate-200 align-top">
+                    <td className="p-3"><p className="font-bold">{agent.firstName} {agent.lastName}</p><p className="mt-1">{agent.agencyName || "بدون نام دفتر"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(agent.id)}</p></td>
+                    <td className="p-3"><p dir="ltr">{agent.user.mobile}</p><p className="mt-1">{agent.user.isActive ? "فعال" : "غیرفعال"}</p></td>
+                    <td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${agent.verificationStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-800" : agent.verificationStatus === "REJECTED" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{agent.verificationStatus === "VERIFIED" ? "تأییدشده" : agent.verificationStatus === "REJECTED" ? "ردشده" : "در انتظار بررسی"}</span></td>
+                    <td className="max-w-xs p-3">{agent.verificationNotes || "یادداشتی ثبت نشده"}{agent.verificationReviewedAt && <p className="mt-2 text-xs text-slate-500">آخرین بررسی: {formatPersianDateTime(agent.verificationReviewedAt)}</p>}</td>
+                    <td className="p-3"><div className="flex min-w-[190px] flex-wrap gap-2">
+                      {agent.verificationStatus !== "VERIFIED" && <button type="button" onClick={() => void reviewAgent(agent.id, "VERIFIED")} disabled={busyAgentId === agent.id} className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{agent.verificationStatus === "REJECTED" ? "تأیید مجدد" : "تأیید"}</button>}
+                      {agent.verificationStatus === "PENDING" && <button type="button" onClick={() => void reviewAgent(agent.id, "REJECTED")} disabled={busyAgentId === agent.id || !agentVerificationNotes.trim()} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busyAgentId === agent.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}رد مشاور</button>}
+                      {agent.verificationStatus !== "PENDING" && <button type="button" onClick={() => void reviewAgent(agent.id, "PENDING")} disabled={busyAgentId === agent.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-60">بازگشت به انتظار</button>}
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
@@ -172,16 +156,19 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </form>
         {auditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{auditError}</p>}
         {auditLogs.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {auditLogs.map((log) => (
-              <article key={log.id} className="rounded-xl border border-slate-200 p-4">
-                <p className="font-bold">{log.agent.firstName} {log.agent.lastName} · <span dir="ltr">{log.agent.user.mobile}</span></p>
-                <p className="mt-1 text-sm text-slate-600">مشتری: {log.customer.firstName} {log.customer.lastName} · <span dir="ltr">{log.customer.user.mobile}</span></p>
-                <p className="mt-1 text-sm text-slate-600">درخواست: {log.searchRequest.city} · {log.searchRequest.transactionType} · {log.searchRequest.propertyType}</p>
-                <p className="mt-1 text-xs text-slate-500">زمان: {formatPersianDateTime(log.accessedAt)}</p>
-                <p className="mt-1 text-xs text-slate-500">کد رویداد: {idText(log.id)}</p>
-              </article>
-            ))}
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full min-w-[1000px] text-right text-sm">
+              <thead className="bg-slate-100"><tr><th className="p-3">رکورد دسترسی</th><th className="p-3">مشاور</th><th className="p-3">مشتری</th><th className="p-3">درخواست</th><th className="p-3">زمان</th></tr></thead>
+              <tbody>{auditLogs.map((log) => (
+                <tr key={log.id} className="border-t border-slate-200 align-top">
+                  <td className="p-3"><p className="break-all font-mono text-xs" dir="ltr">{idText(log.id)}</p></td>
+                  <td className="p-3"><p className="font-semibold">{log.agent.firstName} {log.agent.lastName}</p><p className="mt-1" dir="ltr">{log.agent.user.mobile}</p></td>
+                  <td className="p-3"><p>{log.customer.firstName} {log.customer.lastName}</p><p className="mt-1" dir="ltr">{log.customer.user.mobile}</p></td>
+                  <td className="p-3">{log.searchRequest.city} · {log.searchRequest.transactionType} · {log.searchRequest.propertyType}</td>
+                  <td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
           </div>
         )}
         {!auditBusy && auditLogs.length === 0 && !auditError && <p className="mt-3 text-sm text-slate-500">برای مشاهده، فیلترها را تنظیم و «دریافت گزارش» را انتخاب کنید.</p>}
@@ -197,23 +184,20 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         {matchingError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{matchingError}</p>}
         {matchingMessage && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{matchingMessage}</p>}
         {candidateMatches.length > 0 && (
-          <div className="mt-4 space-y-3">
-            <h3 className="font-bold">کاندیداهای مشابه</h3>
-            {candidateMatches.map((match) => (
-              <article key={match.property.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-bold">{match.property.city} · {match.property.district || "بدون محله"}</p>
-                    <p className="mt-1 text-sm text-slate-600">{match.property.propertyType} · {match.property.area ?? "—"} متر · {match.property.rooms ?? "—"} اتاق</p>
-                    <p className="mt-2 text-xs text-slate-500">شناسه: {idText(match.property.id)} · فاصله: {Math.round(match.distanceMeters)} متر</p>
-                  </div>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-800">شباهت {scoreLabel(match.similarityScore)}</span>
-                </div>
-                <button type="button" disabled={busyReviewId === match.property.id} onClick={() => void createReview(match.property.id)} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold disabled:opacity-50">
-                  {busyReviewId === match.property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />} ایجاد پروندهٔ بررسی
-                </button>
-              </article>
-            ))}
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <h3 className="p-3 font-bold">کاندیداهای مشابه</h3>
+            <table className="w-full min-w-[950px] text-right text-sm">
+              <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک کاندید</th><th className="p-3">مشخصات</th><th className="p-3">فاصله</th><th className="p-3">شباهت</th><th className="p-3">عملیات</th></tr></thead>
+              <tbody>{candidateMatches.map((match) => (
+                <tr key={match.property.id} className="border-t border-slate-200 align-top">
+                  <td className="p-3"><p className="font-bold">{match.property.city} · {match.property.district || "بدون محله"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(match.property.id)}</p></td>
+                  <td className="p-3">{match.property.propertyType} · {match.property.area ?? "—"} متر · {match.property.rooms ?? "—"} اتاق</td>
+                  <td className="p-3">{Math.round(match.distanceMeters).toLocaleString("fa-IR")} متر</td>
+                  <td className="p-3"><span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800">{scoreLabel(match.similarityScore)}</span></td>
+                  <td className="p-3"><button type="button" disabled={busyReviewId === match.property.id} onClick={() => void createReview(match.property.id)} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">{busyReviewId === match.property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />} ایجاد پرونده</button></td>
+                </tr>
+              ))}</tbody>
+            </table>
           </div>
         )}
         {propertyId.trim() && (
@@ -223,28 +207,21 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             </label>
             <h3 className="mt-4 font-bold">پرونده‌های بررسی این ملک</h3>
             {reviews.length === 0 ? <p className="mt-2 text-sm text-slate-500">پرونده‌ای برای این ملک در پاسخ فعلی وجود ندارد.</p> : (
-              <div className="mt-3 space-y-3">
-                {reviews.map((review) => (
-                  <article key={review.id} className="rounded-xl border border-slate-200 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1 text-sm">
-                        <p>ملک اصلی: {idText(review.primaryPropertyId)}</p>
-                        <p>کاندید: {idText(review.candidatePropertyId)}</p>
-                        <p>امتیاز تشابه: <b>{scoreLabel(review.similarityScore)}</b></p>
-                        <p>کد پرونده: {idText(review.id)}</p>
-                      </div>
-                      <DecisionChip decision={review.decision} />
-                    </div>
-                    {review.notes && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-600">{review.notes}</p>}
-                    {review.decision === null && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "SAME_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-sm font-bold text-white disabled:opacity-50">
-                          {busyReviewId === review.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} یک ملک
-                        </button>
-                        <button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "DIFFERENT_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold disabled:opacity-50"><XCircle className="h-4 w-4" /> دو ملک متفاوت</button>
-                      </div>
-                    )}
-                  </article>
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="w-full min-w-[1000px] text-right text-sm">
+                  <thead className="bg-slate-100"><tr><th className="p-3">رکورد پرونده</th><th className="p-3">ملک‌ها</th><th className="p-3">امتیاز و تصمیم</th><th className="p-3">یادداشت</th><th className="p-3">عملیات</th></tr></thead>
+                  <tbody>{reviews.map((review) => (
+                    <tr key={review.id} className="border-t border-slate-200 align-top">
+                      <td className="p-3"><p className="font-bold">پرونده بررسی</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(review.id)}</p></td>
+                      <td className="p-3"><p>ملک اصلی: <span className="font-mono text-xs" dir="ltr">{idText(review.primaryPropertyId)}</span></p><p className="mt-2">کاندید: <span className="font-mono text-xs" dir="ltr">{idText(review.candidatePropertyId)}</span></p></td>
+                      <td className="p-3"><p>امتیاز: <b>{scoreLabel(review.similarityScore)}</b></p><div className="mt-2"><DecisionChip decision={review.decision} /></div></td>
+                      <td className="max-w-xs whitespace-pre-wrap p-3 leading-6 text-slate-600">{review.notes || "یادداشتی ثبت نشده"}</td>
+                      <td className="p-3">{review.decision === null ? <div className="flex min-w-[150px] flex-col items-start gap-2"><button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "SAME_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyReviewId === review.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} یک ملک</button><button type="button" disabled={busyReviewId === review.id} onClick={() => void decideReview(review.id, "DIFFERENT_PROPERTY")} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold disabled:opacity-50"><XCircle className="h-4 w-4" /> دو ملک متفاوت</button></div> : <span className="text-xs text-slate-500">تصمیم ثبت شده</span>}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            )}
                 ))}
               </div>
             )}
@@ -289,7 +266,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             <button type="submit" disabled={logsBusy} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold disabled:opacity-60">{logsBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : "نمایش"}</button>
           </form>
           {logsError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{logsError}</p>}
-          {accessLogs.length > 0 && <div className="mt-3 space-y-2">{accessLogs.map((log) => <article key={log.id} className="rounded-lg bg-slate-50 p-3 text-sm"><p>کاربر: {log.user?.mobile ?? log.userId}</p><p>نقش: {log.user?.role ?? "نامشخص"}</p><p>زمان: {formatPersianDateTime(log.accessedAt)}</p><p>دلیل: {log.reason || "ثبت نشده"}</p></article>)}</div>}
+          {accessLogs.length > 0 && <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[750px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">کاربر</th><th className="p-3">نقش</th><th className="p-3">زمان دسترسی</th><th className="p-3">دلیل</th></tr></thead><tbody>{accessLogs.map((log) => <tr key={log.id} className="border-t border-slate-200"><td className="p-3"><span dir="ltr">{log.user?.mobile ?? log.userId}</span></td><td className="p-3">{log.user?.role ?? "نامشخص"}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td><td className="p-3">{log.reason || "ثبت نشده"}</td></tr>)}</tbody></table></div>}
           {!logsBusy && accessLogs.length === 0 && !logsError && <p className="mt-3 text-sm text-slate-500">شناسهٔ ملک را وارد کنید تا سوابق آن نمایش داده شود.</p>}
         </section>
 
@@ -313,29 +290,19 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           </form>
           {adminAuditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{adminAuditError}</p>}
           {adminAuditLogs.length > 0 ? (
-            <div className="mt-4 space-y-3">
-              {adminAuditLogs.map((log) => (
-                <article key={log.id} className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-bold">{log.action}</p>
-                      <p className="mt-1 text-sm text-slate-600">عامل: {log.actorMobile ?? "حساب حذف‌شده یا نامشخص"} · نقش: {log.actorRole ?? "نامشخص"}</p>
-                      <p className="mt-1 text-sm text-slate-600">هدف: {log.targetType} · {log.targetId ? idText(log.targetId) : "بدون شناسه"}</p>
-                    </div>
-                    <p className="text-xs text-slate-500">{formatPersianDateTime(log.createdAt)}</p>
-                  </div>
-                  {log.details !== null && log.details !== undefined && (
-                    <pre dir="ltr" className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs leading-6 text-slate-700 whitespace-pre-wrap">{JSON.stringify(log.details, null, 2)}</pre>
-                  )}
-                  {(log.ipAddress || log.userAgent) && (
-                    <details className="mt-2 text-xs text-slate-500">
-                      <summary className="cursor-pointer">اطلاعات فنی رویداد</summary>
-                      {log.ipAddress && <p dir="ltr" className="mt-2">IP: {log.ipAddress}</p>}
-                      {log.userAgent && <p dir="ltr" className="mt-1 break-all">User-Agent: {log.userAgent}</p>}
-                    </details>
-                  )}
-                </article>
-              ))}
+            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full min-w-[1100px] text-right text-sm">
+                <thead className="bg-slate-100"><tr><th className="p-3">رویداد</th><th className="p-3">عامل</th><th className="p-3">هدف</th><th className="p-3">زمان</th><th className="p-3">جزئیات فنی</th></tr></thead>
+                <tbody>{adminAuditLogs.map((log) => (
+                  <tr key={log.id} className="border-t border-slate-200 align-top">
+                    <td className="p-3"><p className="font-bold">{log.action}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(log.id)}</p></td>
+                    <td className="p-3">{log.actorMobile ?? "حساب حذف‌شده یا نامشخص"}<p className="mt-1 text-xs text-slate-500">{log.actorRole ?? "نقش نامشخص"}</p></td>
+                    <td className="p-3">{log.targetType}<p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{log.targetId ? idText(log.targetId) : "بدون شناسه"}</p></td>
+                    <td className="whitespace-nowrap p-3">{formatPersianDateTime(log.createdAt)}</td>
+                    <td className="max-w-md p-3">{log.details !== null && log.details !== undefined && <pre dir="ltr" className="max-w-md overflow-x-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-2 text-xs leading-5">{JSON.stringify(log.details, null, 2)}</pre>}{(log.ipAddress || log.userAgent) && <details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer">اطلاعات فنی</summary>{log.ipAddress && <p dir="ltr" className="mt-2">IP: {log.ipAddress}</p>}{log.userAgent && <p dir="ltr" className="mt-1 break-all">User-Agent: {log.userAgent}</p>}</details>}{(log.details === null || log.details === undefined) && !log.ipAddress && !log.userAgent && "—"}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
             </div>
           ) : (
             !adminAuditBusy && !adminAuditError && <p className="mt-3 text-sm text-slate-500">برای نمایش سوابق، فیلترها را تنظیم و دریافت سوابق را انتخاب کنید.</p>
