@@ -84,7 +84,7 @@ export function HashtiUserManagementPanel() {
       .finally(() => { if (alive) setAccessLoading(false); });
     return () => { alive = false; };
   }, []);
-  useEffect(() => { if (!accessLoading && isSuperAdmin) void loadUsers(0); }, [accessLoading, isSuperAdmin, loadUsers]);
+  useEffect(() => { if (!accessLoading && isSuperAdmin) void Promise.resolve().then(() => loadUsers(0)); }, [accessLoading, isSuperAdmin, loadUsers]);
 
   const submitSearch = (event: FormEvent) => { event.preventDefault(); setOffset(0); setAppliedQuery(query); };
   const changeStatus = (user: ManagedUser) => {
