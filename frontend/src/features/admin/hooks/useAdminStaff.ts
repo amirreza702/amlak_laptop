@@ -25,7 +25,7 @@ export function useAdminStaff() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "دریافت فهرست کارکنان ناموفق بود."); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   function toggle(value: string, selected: string[], setter: (values: string[]) => void) {
     setter(selected.includes(value) ? selected.filter(item => item !== value) : [...selected, value]);
