@@ -213,7 +213,7 @@ export function AgentPropertyManagementPanel() {
       </div>
       <Modal open={Boolean(editingProperty)} title="ویرایش مشخصات ملک" description="تغییرات در سابقهٔ ملک ثبت می‌شوند." onClose={() => setEditingProperty(null)} size="full">
         <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
-          <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+          <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value as PropertyType}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label className="space-y-1 text-sm">شهر<input required maxLength={100} value={editValues.city} onChange={e=>setEditValues(v=>({...v,city:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
           <label className="space-y-1 text-sm">محله / منطقه<input required maxLength={120} value={editValues.district} onChange={e=>setEditValues(v=>({...v,district:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
           <label className="space-y-1 text-sm">نشانی<input required maxLength={500} value={editValues.address} onChange={e=>setEditValues(v=>({...v,address:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
