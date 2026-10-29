@@ -41,9 +41,12 @@ export function useAgentDashboard(user: UserPublic) {
 
   useEffect(() => {
     let active = true;
-    setProfileId(null);
-    setProfileState("checking");
-    setProfileError(null);
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setProfileId(null);
+      setProfileState("checking");
+      setProfileError(null);
+    });
 
     (async () => {
       try {
