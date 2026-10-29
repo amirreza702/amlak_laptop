@@ -28,7 +28,7 @@ export function useAuthForm({
   const roleLabel = isAgent ? "مشاور املاک" : "مالک";
 
   useEffect(() => {
-    setMounted(true);
+    void Promise.resolve().then(() => setMounted(true));
   }, []);
 
   useEffect(() => {
