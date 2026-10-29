@@ -35,7 +35,7 @@ export default function AdminAgentPrivateNotesPage() {
   }
 
   useEffect(() => {
-    void load()
+    void Promise.resolve().then(() => load())
       .catch((cause) => setError(cause instanceof Error ? cause.message : "خطا در دریافت یادداشت‌ها."))
       .finally(() => setLoading(false));
   }, []);
