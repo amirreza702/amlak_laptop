@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Building2, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { useOwnerProperties } from "../hooks/useOwnerProperties";
 import type { OwnerProperty } from "../types/owner";
@@ -23,7 +23,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
     setEditingProperty(item);
     setEditForm({ propertyType: item.property.propertyType, city: item.property.city, district: item.property.district, address: item.property.address, postalCode: item.property.postalCode ?? "", latitudeExact: String(item.property.latitudeExact ?? ""), longitudeExact: String(item.property.longitudeExact ?? ""), area: item.property.area == null ? "" : String(item.property.area), rooms: item.property.rooms == null ? "" : String(item.property.rooms), floor: item.property.floor == null ? "" : String(item.property.floor), transactionType: item.property.listing?.transactionType ?? "SALE", salePrice: item.property.listing?.salePrice == null ? "" : String(item.property.listing.salePrice), depositAmount: item.property.listing?.depositAmount == null ? "" : String(item.property.listing.depositAmount), rentAmount: item.property.listing?.rentAmount == null ? "" : String(item.property.listing.rentAmount) });
   }
-  async function submitPropertyEdit(event: React.FormEvent<HTMLFormElement>) {
+  async function submitPropertyEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!editingProperty) return; setSavingProperty(true);
     try { await saveProperty(editingProperty.propertyId, { ...editForm, postalCode: editForm.postalCode.trim() || null, latitudeExact: Number(editForm.latitudeExact), longitudeExact: Number(editForm.longitudeExact), area: editForm.area === "" ? null : Number(editForm.area), rooms: editForm.rooms === "" ? null : Number(editForm.rooms), floor: editForm.floor === "" ? null : Number(editForm.floor), salePrice: editForm.salePrice.trim() || null, depositAmount: editForm.depositAmount.trim() || null, rentAmount: editForm.rentAmount.trim() || null }); setEditingProperty(null); } catch { /* API hook displays the error in the panel. */ } finally { setSavingProperty(false); }
   }
