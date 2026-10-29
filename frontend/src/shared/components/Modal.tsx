@@ -33,7 +33,7 @@ export function Modal({ open, title, description, onClose, children, size = "md"
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
       role="presentation"
     >
