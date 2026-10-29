@@ -517,6 +517,14 @@ export default function PropertyDetailClient() {
               </div>
             </div>
 
+            {property.contact && (
+              <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-label="اطلاعات تماس">
+                <h2 className="font-bold text-slate-900">تماس با {property.contact.type === "AGENT" ? "مشاور منتخب مالک" : "مالک ملک"}</h2>
+                <p className="mt-1 text-sm text-slate-600">{property.contact.firstName} {property.contact.lastName}</p>
+                <a href={"tel:" + property.contact.mobile} dir="ltr" className="mt-2 inline-flex min-h-10 items-center rounded-lg bg-[#043873] px-4 py-2 font-bold text-white">{property.contact.mobile}</a>
+              </section>
+            )}
+
             {/* ==================================================
                 توضیحات ملک
                ================================================== */}

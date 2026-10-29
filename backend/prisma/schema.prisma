@@ -391,6 +391,7 @@ model Agent {
   contactAccessLogs ContactAccessLog[]
 
   ownerAgentRequestAccessLogs OwnerAgentRequestAccessLog[]
+  ownerAgentRequestResponses OwnerAgentRequestResponse[]
 
   // یادداشت‌های خصوصی هر مشاور درباره ملک، مالک یا مشتری
   privateNotes AgentPrivateNote[]
@@ -710,11 +711,29 @@ model OwnerAgentRequest {
   owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   accessLogs OwnerAgentRequestAccessLog[]
+  responses OwnerAgentRequestResponse[]
 
   @@index([ownerId, createdAt])
   @@index([propertyId, status])
   @@index([status, createdAt])
   @@map("owner_agent_requests")
+}
+
+model OwnerAgentRequestResponse {
+  id                  String   @id @default(uuid())
+  ownerAgentRequestId String
+  agentId             String
+  status              String   @default("PENDING")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  ownerRequest OwnerAgentRequest @relation(fields: [ownerAgentRequestId], references: [id], onDelete: Cascade)
+  agent        Agent              @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerAgentRequestId, agentId])
+  @@index([agentId, status])
+  @@index([ownerAgentRequestId, status])
+  @@map("owner_agent_request_responses")
 }
 
 model OwnerAgentRequestAccessLog {

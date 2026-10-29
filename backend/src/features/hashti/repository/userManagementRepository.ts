@@ -35,25 +35,42 @@ export async function findManagedUsers(query: ManagedUserQuery) {
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const staffMatches = search
     ? await prisma.hashtiStaff.findMany({
-        where: { OR: [{ firstName: contains(search) }, { lastName: contains(search) }] },
+        where: { OR: [{ id: contains(search) }, { firstName: contains(search) }, { lastName: contains(search) }] },
         select: { mobile: true },
       })
     : [];
 
+  const numericSearch = search !== undefined && search.trim() !== "" && Number.isFinite(Number(search)) ? Number(search) : undefined;
+  const lower = search?.toLocaleLowerCase();
+  const boolSearch = lower === undefined ? undefined : ["true", "yes", "بله", "فعال", "تأییدشده"].includes(lower) ? true : ["false", "no", "خیر", "غیرفعال", "ردشده"].includes(lower) ? false : undefined;
+  const exactRole = search?.trim().toUpperCase();
+  const parsedDate = search ? new Date(search) : null;
+  const dateRange = parsedDate && !Number.isNaN(parsedDate.getTime())
+    ? { gte: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()), lt: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1) }
+    : undefined;
   const where: Prisma.UserWhereInput = {
     ...(query.role ? { role: query.role } : {}),
     ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
     ...(search ? {
       OR: [
-        { mobile: contains(search) },
+        { id: contains(search) }, { mobile: contains(search) },
+        { customer: { is: { id: contains(search) } } },
         { customer: { is: { firstName: contains(search) } } },
         { customer: { is: { lastName: contains(search) } } },
+        { owner: { is: { id: contains(search) } } },
         { owner: { is: { firstName: contains(search) } } },
         { owner: { is: { lastName: contains(search) } } },
+        { agent: { is: { id: contains(search) } } },
         { agent: { is: { firstName: contains(search) } } },
         { agent: { is: { lastName: contains(search) } } },
         { agent: { is: { agencyName: contains(search) } } },
+        { agent: { is: { address: contains(search) } } },
+        { agent: { is: { verificationNotes: contains(search) } } },
         ...(staffMatches.length ? [{ mobile: { in: staffMatches.map((staff) => staff.mobile) } }] : []),
+        ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
+        ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { isVerified: boolSearch } } }] : []),
+        ...(dateRange ? [{ createdAt: dateRange }, { updatedAt: dateRange }, { agent: { is: { verificationReviewedAt: dateRange } } }] : []),
+        ...(exactRole && ["PENDING", "VERIFIED", "REJECTED"].includes(exactRole) ? [{ agent: { is: { verificationStatus: exactRole as any } } }] : []),
       ],
     } : {}),
   };

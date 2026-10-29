@@ -23,7 +23,7 @@ export const createOwnerAgentRequest = (data: { ownerId: string; propertyId: str
       data,
       select: {
         id: true, ownerId: true, propertyId: true, description: true, status: true, createdAt: true,
-        property: { select: { propertyType: true, city: true, district: true, area: true } },
+        property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
       },
     });
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
@@ -34,7 +34,14 @@ export const findOwnerAgentRequests = (ownerId: string) =>
     orderBy: { createdAt: "desc" },
     select: {
       id: true, propertyId: true, description: true, status: true, createdAt: true, updatedAt: true,
-      property: { select: { propertyType: true, city: true, district: true, area: true } },
+      property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
+      responses: {
+        select: {
+          status: true,
+          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -44,7 +51,7 @@ export const closeOwnerAgentRequest = (ownerId: string, requestId: string) =>
     data: { status: "CLOSED" },
   });
 
-export const findActiveOwnerAgentRequests = () =>
+export const findActiveOwnerAgentRequests = (agentId: string) =>
   prisma.ownerAgentRequest.findMany({
     where: {
       status: "ACTIVE",
@@ -58,7 +65,16 @@ export const findActiveOwnerAgentRequests = () =>
         select: {
           propertyType: true, city: true, district: true, area: true, rooms: true,
           listing: { select: { transactionType: true } },
+          agents: { where: { agentId }, select: { status: true, approvedByOwner: true } },
         },
+      },
+      responses: {
+        where: { agentId },
+        select: {
+          status: true,
+          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
+        },
+        orderBy: { createdAt: "asc" },
       },
     },
   });
@@ -72,6 +88,23 @@ export const findOwnerRequestForAccess = (requestId: string) =>
       property: { select: { address: true, postalCode: true, city: true, district: true } },
     },
   });
+
+export const findOwnerAgentRequestForResponse = (requestId: string) =>
+  prisma.ownerAgentRequest.findFirst({
+    where: { id: requestId, status: "ACTIVE", property: { isActive: true } },
+    select: { id: true, propertyId: true },
+  });
+
+export const upsertOwnerAgentRequestResponse = (
+  ownerAgentRequestId: string,
+  agentId: string,
+  status: string,
+  db: Db = prisma,
+) => db.ownerAgentRequestResponse.upsert({
+  where: { ownerAgentRequestId_agentId: { ownerAgentRequestId, agentId } },
+  create: { ownerAgentRequestId, agentId, status },
+  update: { status },
+});
 
 export const findOwnerRequestAccessLog = (agentId: string, requestId: string, db: Db = prisma) =>
   db.ownerAgentRequestAccessLog.findUnique({

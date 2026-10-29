@@ -334,6 +334,7 @@ export const updateCustomerSearchRequest = async (
     requestId,
     {
       ...data,
+      budget: data.budget ?? undefined,
 
       city:
         data.city !== undefined

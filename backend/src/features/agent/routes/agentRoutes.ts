@@ -15,6 +15,7 @@ import { getAllAgentSearchRequestsController, updateOwnAgentSearchRequestControl
 import {
   accessOwnerRequestContactController,
   getActiveOwnerAgentRequestsController,
+  respondToOwnerAgentRequestController,
 } from "../../owner/controller/ownerAgentRequestController";
 
 const router = Router();
@@ -60,6 +61,14 @@ router.get(
   requireOwnProfile("agent", "agentId"),
   requireVerifiedAgent,
   getActiveOwnerAgentRequestsController
+);
+router.post(
+  "/agents/:agentId/owner-requests/:requestId/response",
+  authMiddleware,
+  requireRole(UserRole.AGENT),
+  requireOwnProfile("agent", "agentId"),
+  requireVerifiedAgent,
+  respondToOwnerAgentRequestController
 );
 router.post(
   "/agents/:agentId/owner-requests/:requestId/contact",
