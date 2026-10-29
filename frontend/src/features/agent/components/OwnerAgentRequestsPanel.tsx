@@ -47,14 +47,14 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
     try {
       const body = await agentApiRequest<AccessResult & { access: unknown }>(`/agents/${encodeURIComponent(agentId)}/owner-requests/${encodeURIComponent(id)}/contact`, { method: "POST" });
       setAccess((current) => ({ ...current, [id]: body }));
-      setMessage("اطلاعات تماس و آدرس دقیق با یک سهمیه دسترسی شد.");
+      setMessage("اطلاعات تماس و نشانی دقیق دریافت شد و دسترسی ثبت شد.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "دریافت اطلاعات مالک ناموفق بود."); }
     finally { setBusyId(null); }
   }
 
   return (
     <section dir="rtl" className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">درخواست‌های مالکان</h2><p className="mt-1 text-sm leading-7 text-slate-600">درخواست‌های فعال برای مشاوران تأییدشده قابل مشاهده‌اند. مشاهدهٔ شماره تماس مالک و آدرس دقیق ملک با یک سهمیه از اشتراک ماهانه انجام می‌شود.</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">درخواست‌های مالکان</h2><p className="mt-1 text-sm leading-7 text-slate-600">درخواست‌های فعال برای مشاوران تأییدشده قابل مشاهده‌اند. دریافت شماره تماس مالک و نشانی دقیق ملک جداگانه انجام می‌شود و در سوابق دسترسی ثبت خواهد شد.</p></div>
       <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50">{loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی</button>
     </div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
