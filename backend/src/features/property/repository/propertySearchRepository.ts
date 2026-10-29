@@ -70,7 +70,7 @@ export async function searchProperties(
    * ----------------------------------------------------------
    */
 
-  const propertyWhere: any = {};
+  const propertyWhere: any = { isActive: true };
 
   if (filters.propertyType) {
     propertyWhere.propertyType = filters.propertyType;
