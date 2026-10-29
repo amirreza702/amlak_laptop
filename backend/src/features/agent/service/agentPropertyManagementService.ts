@@ -6,5 +6,12 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
-  return findAgentPropertyRecords({ agentId: agent.id, ...query });
+  const result = await findAgentPropertyRecords({ agentId: agent.id, ...query });
+  return {
+    ...result,
+    properties: result.properties.map((record) => ({
+      ...record,
+      canManage: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId,
+    })),
+  };
 }
