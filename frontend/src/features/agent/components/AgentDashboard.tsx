@@ -60,11 +60,11 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       </aside>
       <main className="min-w-0 space-y-5">
       {profileState === "checking" && selectedTool === "profile" && (
-        <section className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><LoaderCircle className="h-5 w-5 animate-spin" />در حال بررسی تأیید حساب مشاور...</section>
+        <section className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><LoaderCircle className="h-5 w-5 animate-spin" />در حال بررسی تأیید حساب مشاور...</section>
       )}
 
       {(profileState === "pending" || profileState === "rejected" || profileState === "unknown" || profileState === "error") && selectedTool === "profile" && (
-        <section className={`rounded-2xl border p-5 ${profileState === "rejected" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+        <section className={`rounded-xl border p-5 ${profileState === "rejected" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
           <div className="flex items-center gap-3">
             <ShieldAlert className={`h-6 w-6 ${profileState === "rejected" ? "text-red-700" : "text-amber-700"}`} />
             <div>
@@ -94,7 +94,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       {profileState === "verified" && selectedTool === "create-request" && <AgentCreateSearchRequestPanel onCreated={() => void loadRequests()} />}
 
       {profileState === "verified" && (
-        <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
+        <section hidden={selectedTool !== "profile"} className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900">
           <h2 className="font-bold">حساب مشاور تأیید شده است</h2>
           <p className="mt-2">امکانات پنل بر اساس وضعیت حساب و سطح دسترسی شما نمایش داده می‌شود.</p>
         </section>
@@ -110,7 +110,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             <SummaryCard icon={<Contact className="h-5 w-5" />} label="اطلاعات تماس دریافت‌شده" value={String(Object.keys(contacts).length)} />
           </div>
 
-          <section hidden={selectedTool !== "profile"} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <section hidden={selectedTool !== "profile"} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
               <UserRound className="h-5 w-5 text-[#043873]" />
               <h2 className="text-lg font-bold">پروفایل مشاور</h2>
@@ -142,7 +142,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             </form>
           </section>
 
-          <section hidden={selectedTool !== "requests"} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <section hidden={selectedTool !== "requests"} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold">درخواست‌های فعال جست‌وجوی ملک</h2>
@@ -154,7 +154,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             </div>
             {requestsError && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{requestsError}</p>}
             {actionMessage && <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{actionMessage}</p>}
-            {!loadingRequests && requests.length > 0 && <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><input aria-label="جست‌وجوی متنی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد یا توضیحات درخواست..." className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#043873]" /><input aria-label="شهر" value={requestCity} onChange={(event) => setRequestCity(event.target.value)} placeholder="شهر" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><select aria-label="نوع معامله" value={requestTransaction} onChange={(event) => setRequestTransaction(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="all">همهٔ معاملات</option><option value="SALE">خرید</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select><select aria-label="نوع ملک" value={requestPropertyType} onChange={(event) => setRequestPropertyType(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="all">همهٔ انواع ملک</option><option value="APARTMENT">آپارتمان</option><option value="HOUSE">خانه</option><option value="VILLA">ویلا</option><option value="LAND">زمین</option><option value="SHOP">مغازه</option><option value="OFFICE">اداری</option><option value="GARDEN">باغ</option></select><input aria-label="حداقل بودجه" type="number" min="0" value={budgetMin} onChange={(event) => setBudgetMin(event.target.value)} placeholder="حداقل بودجه (تومان)" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><input aria-label="حداکثر بودجه" type="number" min="0" value={budgetMax} onChange={(event) => setBudgetMax(event.target.value)} placeholder="حداکثر بودجه (تومان)" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><PersianDatePicker label="از تاریخ ایجاد" value={requestFrom} onChange={setRequestFrom} /><PersianDatePicker label="تا تاریخ ایجاد" value={requestTo} onChange={setRequestTo} endOfDay /></div></div><div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500"><span>{visibleRequests.length} درخواست مطابق فیلترها</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100">پاک‌کردن فیلترها</button></div></div>}
+            {!loadingRequests && requests.length > 0 && <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><input aria-label="جست‌وجوی متنی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد یا توضیحات درخواست..." className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#043873]" /><input aria-label="شهر" value={requestCity} onChange={(event) => setRequestCity(event.target.value)} placeholder="شهر" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><select aria-label="نوع معامله" value={requestTransaction} onChange={(event) => setRequestTransaction(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="all">همهٔ معاملات</option><option value="SALE">خرید</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select><select aria-label="نوع ملک" value={requestPropertyType} onChange={(event) => setRequestPropertyType(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="all">همهٔ انواع ملک</option><option value="APARTMENT">آپارتمان</option><option value="HOUSE">خانه</option><option value="VILLA">ویلا</option><option value="LAND">زمین</option><option value="SHOP">مغازه</option><option value="OFFICE">اداری</option><option value="GARDEN">باغ</option></select><input aria-label="حداقل بودجه" type="number" min="0" value={budgetMin} onChange={(event) => setBudgetMin(event.target.value)} placeholder="حداقل بودجه (تومان)" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><input aria-label="حداکثر بودجه" type="number" min="0" value={budgetMax} onChange={(event) => setBudgetMax(event.target.value)} placeholder="حداکثر بودجه (تومان)" className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm" /><div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><PersianDatePicker label="از تاریخ ایجاد" value={requestFrom} onChange={setRequestFrom} /><PersianDatePicker label="تا تاریخ ایجاد" value={requestTo} onChange={setRequestTo} endOfDay /></div></div><div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500"><span>{visibleRequests.length} درخواست مطابق فیلترها</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100">پاک‌کردن فیلترها</button></div></div>}
             {loadingRequests ? (
               <div className="mt-5 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت درخواست‌ها...</div>
             ) : requests.length === 0 ? (
@@ -228,5 +228,5 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
 }
 
 function SummaryCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#043873]">{icon}</div><div><p className="text-sm text-slate-500">{label}</p><p className="mt-1 font-black">{value}</p></div></div>;
+  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#043873]">{icon}</div><div><p className="text-sm text-slate-500">{label}</p><p className="mt-1 font-black">{value}</p></div></div>;
 }
