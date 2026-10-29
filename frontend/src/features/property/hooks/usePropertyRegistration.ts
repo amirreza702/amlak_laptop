@@ -9,7 +9,7 @@ import { validatePropertyRegistration } from "../utils/validatePropertyRegistrat
  * تمام state، اعتبارسنجی و ارسال فرم ثبت ملک در این Hook نگهداری می‌شود.
  * کامپوننت ثبت ملک فقط فرم را نمایش می‌دهد و رویداد submit را واگذار می‌کند.
  */
-export function usePropertyRegistration() {
+export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>) {
   const [propertyType, setPropertyType] = useState<PropertyType>("APARTMENT");
   const [transactionType, setTransactionType] = useState<TransactionType>("SALE");
   const [city, setCity] = useState("شاهرود");
@@ -23,6 +23,8 @@ export function usePropertyRegistration() {
   const [salePrice, setSalePrice] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [rentAmount, setRentAmount] = useState("");
+  // توضیح خصوصی مشاور اختیاری است و جدا از توضیحات عمومی آگهی ذخیره می‌شود.
+  const [internalNote, setInternalNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -30,6 +32,10 @@ export function usePropertyRegistration() {
   const [listingCreated, setListingCreated] = useState(false);
 
   async function submitListing(propertyId: string) {
+    // اگر ذخیره یادداشت شکست بخورد، ثبت معامله انجام نمی‌شود و کاربر می‌تواند دوباره تلاش کند.
+    if (onSavePrivateNote && internalNote.trim()) {
+      await onSavePrivateNote(propertyId, internalNote.trim());
+    }
     await createPropertyListing(propertyId, {
       transactionType,
       salePrice: transactionType === "SALE" ? salePrice.trim() : null,
@@ -105,7 +111,7 @@ export function usePropertyRegistration() {
     postalCode, setPostalCode, coordinates, setCoordinates,
     area, setArea, rooms, setRooms, floor, setFloor,
     salePrice, setSalePrice, depositAmount, setDepositAmount,
-    rentAmount, setRentAmount,
+    rentAmount, setRentAmount, internalNote, setInternalNote,
     busy, error, message, createdPropertyId, listingCreated,
     submit,
   };
