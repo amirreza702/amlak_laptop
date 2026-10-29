@@ -90,8 +90,10 @@ export function PersianDatePicker({
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return;
     const parts = partsOf(date);
-    setMonthYear({ year: parts.year, month: parts.month });
-    setTime(tehranTime(value));
+    void Promise.resolve().then(() => {
+      setMonthYear({ year: parts.year, month: parts.month });
+      setTime(tehranTime(value));
+    });
   }, [value]);
 
   const days = useMemo(() => {
