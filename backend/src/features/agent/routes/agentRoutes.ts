@@ -10,6 +10,7 @@ import { requireRole } from "../../auth/middleware/requireRole";
 import { requireOwnProfile } from "../../auth/middleware/authorizationMiddleware";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
 import { getMyPrivateNotesController, upsertMyPrivateNoteController } from "../controller/agentPrivateNotesController";
+import { getMyAgentPropertyRecordsController } from "../controller/agentPropertyManagementController";
 import { getAllAgentSearchRequestsController, updateOwnAgentSearchRequestController, deleteOwnAgentSearchRequestController } from "../controller/agentSearchRequestManagementController";
 import {
   accessOwnerRequestContactController,
