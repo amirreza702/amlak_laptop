@@ -11,7 +11,6 @@ import {
   findOwnerRequestAccessLog,
   findOwnerRequestForAccess,
   findOwnerAgentRequestForResponse,
-  upsertOwnerAgentRequestResponse,
 } from "../repository/ownerAgentRequestRepository";
 
 export async function createOwnerAgentRequestService(ownerId: string, input: { propertyId?: unknown; description?: unknown }) {
@@ -43,9 +42,6 @@ export async function respondToOwnerAgentRequestService(agentId: string, request
   if (!request) throw new Error("ACTIVE_OWNER_REQUEST_NOT_FOUND");
 
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.ownerAgentRequestResponse.findUnique({
-      where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId } },
-    });
     const relation = await tx.propertyAgent.findUnique({
       where: { propertyId_agentId: { propertyId: request.propertyId, agentId } },
     });
