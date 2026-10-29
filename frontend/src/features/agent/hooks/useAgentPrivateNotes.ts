@@ -12,7 +12,7 @@ export type AgentPrivateNote = {
 };
 
 /** یادداشت‌های خصوصی را از API موجود می‌خواند؛ کنترل دسترسی همچنان سمت سرور است. */
-export function useAgentPrivateNotes() {
+export function useAgentPrivateNotes(enabled = true) {
   const [notes, setNotes] = useState<AgentPrivateNote[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export function useAgentPrivateNotes() {
     }
   }, []);
 
-  useEffect(() => { void refreshNotes(); }, [refreshNotes]);
+  useEffect(() => { if (enabled) void refreshNotes(); }, [enabled, refreshNotes]);
 
   const saveNote = useCallback(async (entityType: AgentPrivateNote["entityType"], entityId: string, note: string) => {
     const key = `${entityType}:${entityId}`;
