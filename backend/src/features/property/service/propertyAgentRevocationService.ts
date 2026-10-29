@@ -158,6 +158,8 @@ export async function revokePropertyAgent(
         },
         data: {
           status: PropertyAgentStatus.REVOKED,
+          approvedByOwner: false,
+          approvedAt: null,
         },
       });
 
