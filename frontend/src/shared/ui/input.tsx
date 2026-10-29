@@ -11,8 +11,7 @@ import { cn } from "@/lib/utils";
  * بنابراین event در PropertyFields دیگر implicit any نخواهد بود.
  */
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 /**
  * کامپوننت Input
