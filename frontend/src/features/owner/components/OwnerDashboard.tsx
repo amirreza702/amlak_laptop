@@ -10,9 +10,11 @@ import { useOwnerProfile } from "../hooks/useOwnerProfile";
 import { OwnerProfilePanel } from "./OwnerProfilePanel";
 import { useOwnerAgentAccess } from "../hooks/useOwnerAgentAccess";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
+import { Modal } from "@/shared/components/Modal";
 
 export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [propertyModalOpen, setPropertyModalOpen] = useState(false);
   const {
     profile, firstName, setFirstName, lastName, setLastName,
     loadingProfile, savingProfile, profileError, message, saveProfile,
@@ -23,7 +25,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
   } = useOwnerAgentAccess();
 
   return (
-    <div dir="rtl" className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div dir="rtl" className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
       <aside aria-label="ابزارهای پنل مالک" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مالک</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مالک">
@@ -32,7 +34,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 space-y-5">
+      <main className="min-w-0 w-full space-y-5">
       <div hidden={selectedTool !== "profile"} className="grid gap-3 sm:grid-cols-3">
         <SummaryCard icon={<Building2 className="h-5 w-5" />} label="املاک ثبت‌شده" value="از طریق API فعلی قابل فهرست‌کردن نیست" />
         <SummaryCard icon={<UserRoundCheck className="h-5 w-5" />} label="مشاوران مجاز" value="فهرست کامل در دسترس نیست" />
@@ -70,8 +72,14 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
         </div>
       </section>
 
-      <div hidden={selectedTool !== "property-management"}><PropertyRegistrationPanel mode="owner" /></div>
+      <section hidden={selectedTool !== "property-management"} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div><h2 className="text-lg font-bold">مدیریت املاک</h2><p className="mt-1 text-sm text-slate-600">املاک متصل به حساب مالک را مشاهده و مدیریت کنید.</p></div>
+        <button type="button" onClick={() => setPropertyModalOpen(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
+      </section>
       <div hidden={selectedTool !== "property-management"}><OwnerPropertiesPanel user={user} mode="properties" /></div>
+      <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
+        <PropertyRegistrationPanel mode="owner" />
+      </Modal>
       <div hidden={selectedTool !== "agents"}><OwnerPropertiesPanel user={user} mode="agents" /></div>
       <div hidden={selectedTool !== "agents"}><OwnerAgentRequestsPanel ownerId={profile?.id} /></div>
       <div hidden={selectedTool !== "notifications"}><UserNotificationsPanel userId={user.id} /></div>
