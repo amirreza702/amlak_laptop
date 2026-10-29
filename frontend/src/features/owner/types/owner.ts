@@ -9,6 +9,10 @@ export interface OwnerProperty {
     city: string;
     district: string;
     address: string;
+    postalCode: string | null;
+    latitudeExact: number;
+    longitudeExact: number;
+    floor: number | null;
     area: number | null;
     rooms: number | null;
     isActive: boolean;
