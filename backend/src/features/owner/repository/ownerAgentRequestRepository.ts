@@ -23,7 +23,7 @@ export const createOwnerAgentRequest = (data: { ownerId: string; propertyId: str
       data,
       select: {
         id: true, ownerId: true, propertyId: true, description: true, status: true, createdAt: true,
-        property: { select: { propertyType: true, city: true, district: true, area: true } },
+        property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
       },
     });
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
