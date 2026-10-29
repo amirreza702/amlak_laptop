@@ -42,14 +42,19 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     transactionType: string; salePrice: string | null; depositAmount: string | null; rentAmount: string | null;
   }) {
     setActionMessage(null); setActionError(null);
-    await ownerApiRequest(`/properties/${encodeURIComponent(propertyId)}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        propertyType: input.propertyType, city: input.city, district: input.district, address: input.address,
-        postalCode: input.postalCode, latitudeExact: input.latitudeExact, longitudeExact: input.longitudeExact,
-        area: input.area, rooms: input.rooms, floor: input.floor,
-      }),
-    });
+    try {
+      await ownerApiRequest(`/properties/${encodeURIComponent(propertyId)}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyType: input.propertyType, city: input.city, district: input.district, address: input.address,
+          postalCode: input.postalCode, latitudeExact: input.latitudeExact, longitudeExact: input.longitudeExact,
+          area: input.area, rooms: input.rooms, floor: input.floor,
+        }),
+      });
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "ویرایش مشخصات ملک ناموفق بود.");
+      throw cause;
+    }
     const pricePayload = {
       transactionType: input.transactionType,
       salePrice: input.transactionType === "SALE" ? input.salePrice : null,
@@ -58,18 +63,28 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     };
     const listingPath = `/properties/${encodeURIComponent(propertyId)}/${"listing"}`;
     const listingMethod = properties.find((item) => item.propertyId === propertyId)?.property.listing ? "PUT" : "POST";
-    await ownerApiRequest(
-      listingMethod === "PUT" ? `/properties/${encodeURIComponent(propertyId)}/price` : listingPath,
-      { method: listingMethod, headers: { "Content-Type": "application/json" }, body: JSON.stringify(pricePayload) },
-    );
+    try {
+      await ownerApiRequest(
+        listingMethod === "PUT" ? `/properties/${encodeURIComponent(propertyId)}/price` : listingPath,
+        { method: listingMethod, headers: { "Content-Type": "application/json" }, body: JSON.stringify(pricePayload) },
+      );
+    } catch (cause) {
+      setActionError(cause instanceof Error ? "مشخصات پایه ذخیره شد، اما ذخیره نوع معامله یا قیمت ناموفق بود: " + cause.message : "ذخیره قیمت ناموفق بود.");
+      throw cause;
+    }
     setActionMessage("اطلاعات ملک و معامله ذخیره شد.");
     setReload((value) => value + 1);
   }
 
   async function deleteProperty(propertyId: string) {
     setActionMessage(null); setActionError(null);
-    await ownerApiRequest(`/properties/${encodeURIComponent(propertyId)}`, { method: "DELETE" });
-    setActionMessage("ملک از فهرست فعال حذف شد؛ سوابق آن حفظ شده‌اند.");
+    try {
+      await ownerApiRequest(`/properties/${encodeURIComponent(propertyId)}`, { method: "DELETE" });
+      setActionMessage("ملک از فهرست فعال حذف شد؛ سوابق آن حفظ شده‌اند.");
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "حذف ملک ناموفق بود.");
+      throw cause;
+    }
     setReload((value) => value + 1);
   }
 
