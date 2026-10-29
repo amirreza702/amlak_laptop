@@ -30,7 +30,7 @@ export function getAgentProfile(): Promise<AgentProfile> {
 
 /** دریافت درخواست‌های فعال مشتریان. */
 export function getActiveSearchRequests(): Promise<ActiveRequest[]> {
-  return agentApiRequest<ActiveRequest[]>("/search-requests/active");
+  return agentApiRequest<ActiveRequest[]>("/agents/me/search-requests");
 }
 
 /** دریافت اطلاعات تماس مشتری برای یک درخواست؛ مجوز نهایی را سرور بررسی می‌کند. */
