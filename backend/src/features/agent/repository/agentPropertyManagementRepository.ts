@@ -41,7 +41,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           ...(boolSearch !== undefined ? [{ owners: { some: { isPrimary: boolSearch } } }] : []),
           { owners: { some: { owner: { is: { firstName: contains(search) } } } } },
           { owners: { some: { owner: { is: { lastName: contains(search) } } } } },
-        ] } },
+        ] } } },
         { status: exact as any },
         ...(boolSearch !== undefined ? [{ approvedByOwner: boolSearch }, { isFirstRegistrant: boolSearch }] : []),
         ...(validDate ? [
