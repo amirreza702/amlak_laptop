@@ -34,9 +34,11 @@ export function useAuthForm({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      setErrorMessage(null);
-      setMobile("");
-      setPassword("");
+      void Promise.resolve().then(() => {
+        setErrorMessage(null);
+        setMobile("");
+        setPassword("");
+      });
     } else {
       document.body.style.overflow = "unset";
     }
