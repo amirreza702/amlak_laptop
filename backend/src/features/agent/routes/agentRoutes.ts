@@ -21,6 +21,7 @@ const router = Router();
 // یادداشت‌های شخصی فقط برای مشاور صاحب نشست قابل دسترسی هستند.
 router.get("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), getMyPrivateNotesController);
 router.put("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, upsertMyPrivateNoteController);
+router.get("/agents/me/properties", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, getMyAgentPropertyRecordsController);
 router.get("/agents/me/search-requests", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, getAllAgentSearchRequestsController);
 router.put("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, updateOwnAgentSearchRequestController);
 router.delete("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, deleteOwnAgentSearchRequestController);
