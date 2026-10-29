@@ -10,7 +10,6 @@ import {
   FileText,
   Heart,
   LoaderCircle,
-  MapPin,
   Plus,
   Save,
   Search,
