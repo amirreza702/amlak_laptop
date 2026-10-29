@@ -77,7 +77,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </nav>
       </aside>
       <main className="min-w-0 space-y-5">
-      <section id="dashboard-home" hidden={selectedTool !== "dashboard-home"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section id="dashboard-home" hidden={selectedTool !== "dashboard-home"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#043873]"><ShieldCheck className="h-6 w-6" /></div>
           <div>
@@ -93,7 +93,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </div>
       </section>
 
-      <section id="agent-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section id="agent-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">مدیریت و تأیید مشاوران</h2>
@@ -161,7 +161,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         )}
       </section>
 
-      <section id="contact-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section id="contact-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold">گزارش دسترسی مشاوران به اطلاعات تماس</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">این گزارش، دسترسی‌های ثبت‌شده برای مشاهده شمارهٔ مشتری را نشان می‌دهد؛ گزارش عمومی تمام رویدادهای مدیریتی در مدل فعلی دیتابیس وجود ندارد.</p>
         <form onSubmit={(event) => void loadContactAuditLogs(event)} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -187,7 +187,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         {!auditBusy && auditLogs.length === 0 && !auditError && <p className="mt-3 text-sm text-slate-500">برای مشاهده، فیلترها را تنظیم و «دریافت گزارش» را انتخاب کنید.</p>}
       </section>
 
-      <section id="duplicate-management" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section id="duplicate-management" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="flex items-center gap-2 text-lg font-bold"><FileSearch className="h-5 w-5 text-[#043873]" /> رفع مغایرت و بررسی املاک تکراری</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">شناسهٔ ملک اصلی را وارد کنید. سامانه کاندیداهای مشابه در محدودهٔ جست‌وجو را برمی‌گرداند و می‌توانید برای هر کاندید پرونده بسازید یا نتیجهٔ پروندهٔ موجود را ثبت کنید.</p>
         <form onSubmit={(event) => void loadDuplicateWork(event)} className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -253,7 +253,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section id="password-reset" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section id="password-reset" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold"><LockKeyhole className="h-5 w-5 text-[#043873]" /> بازنشانی رمز عبور کاربر</h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">برای امنیت، رمز فقط با شناسهٔ User تغییر می‌کند و پس از آن نشست‌های قبلی آن حساب باطل می‌شوند. API جست‌وجو/فهرست کاربران در بک‌اند فعلی وجود ندارد.</p>
           <form onSubmit={(event) => void resetPassword(event)} className="mt-4 space-y-3">
@@ -265,7 +265,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           </form>
         </section>
 
-        <section id="verification-case" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section id="verification-case" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-bold">بررسی پروندهٔ تأیید ملک</h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">شناسهٔ پروندهٔ تأیید را وارد کنید تا وضعیت آن ثبت شود. API فهرست پرونده‌های در انتظار بررسی در بک‌اند فعلی وجود ندارد.</p>
           <div className="mt-4 space-y-3">
@@ -282,7 +282,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section id="location-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section id="location-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-bold">سوابق دسترسی به موقعیت دقیق ملک</h2>
           <form onSubmit={(event) => void loadAccessLogs(event)} className="mt-4 flex gap-2">
             <input value={logPropertyId} onChange={(e) => setLogPropertyId(e.target.value)} placeholder="شناسه ملک" dir="ltr" className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm" />
@@ -293,7 +293,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           {!logsBusy && accessLogs.length === 0 && !logsError && <p className="mt-3 text-sm text-slate-500">شناسهٔ ملک را وارد کنید تا سوابق آن نمایش داده شود.</p>}
         </section>
 
-        <section id="admin-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section id="admin-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div>
             <h2 className="text-lg font-bold">سوابق عملیات مدیریتی هشتی</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">در این قسمت رویدادهایی مانند تغییر وضعیت تأیید مشاور و بازنشانی رمز ثبت‌شده نمایش داده می‌شود. گذرواژه یا هش آن در گزارش ذخیره نمی‌شود.</p>
@@ -342,7 +342,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           )}
         </section>
 
-        <section hidden={selectedTool !== "user-management"} className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+        <section hidden={selectedTool !== "user-management"} className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h2 className="font-bold text-amber-950">وضعیت ثبت و تاریخچه تأیید مشاور</h2>
           <p className="mt-3 text-sm leading-7 text-amber-900">برای سازگاری با کد قدیمی، isVerified حفظ شده و وضعیت دقیق بررسی با verificationStatus نگهداری می‌شود. تغییر وضعیت مشاور، دلیل تصمیم و رویدادهای مدیریتی در تاریخچه ثبت می‌شوند.</p>
         </section>
@@ -351,7 +351,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
       <div id="property-tools" hidden={selectedTool !== "property-management"} className="scroll-mt-5"><HashtiPropertyAdminToolsPanel /></div>
       <div id="user-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5"><HashtiUserManagementPanel /></div>
       <div id="verification-queue" hidden={selectedTool !== "property-management"} className="scroll-mt-5"><HashtiVerificationQueuePanel /></div>
-      <section hidden={selectedTool !== "profile"} className="scroll-mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section hidden={selectedTool !== "profile"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold">پروفایل</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">اطلاعات حساب فعال کارکنان هشتی</p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2">
