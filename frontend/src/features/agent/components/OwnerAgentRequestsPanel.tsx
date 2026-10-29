@@ -7,12 +7,17 @@ import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
 
 type OwnerRequest = {
-  id: string; description: string | null; status: string; createdAt: string;
-  property: { id?: string; propertyId?: string; propertyType: string; city: string; district: string; area: number | null; rooms: number | null; listing: { transactionType: string } | null };
+  id: string;
+  ownerId: string;
+  propertyId: string;
+  description: string | null;
+  status: string;
+  createdAt: string;
+  property: { propertyType: string; city: string; district: string; area: number | null; rooms: number | null; listing: { transactionType: string } | null };
 };
 type AccessResult = {
-  owner: { id?: string; firstName: string; lastName: string; mobile: string };
-  property: { city: string; district: string; address: string; postalCode: string | null };
+  owner: { id: string; firstName: string; lastName: string; mobile: string };
+  property: { id: string; city: string; district: string; address: string; postalCode: string | null };
 };
 const propertyLabels: Record<string, string> = { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" };
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
