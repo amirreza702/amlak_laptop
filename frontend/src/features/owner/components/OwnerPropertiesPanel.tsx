@@ -3,18 +3,35 @@
 import { useState } from "react";
 import { Building2, LoaderCircle, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { useOwnerProperties } from "../hooks/useOwnerProperties";
+import type { OwnerProperty } from "../types/owner";
 import { Modal } from "@/shared/components/Modal";
 
 export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mobile: string }; mode?: "properties" | "agents" }) {
   const [pendingAgentAction, setPendingAgentAction] = useState<{ propertyId: string; agentId: string; action: "approval" | "revoke" } | null>(null);
+  const [editingProperty, setEditingProperty] = useState<OwnerProperty | null>(null);
+  const [pendingDeleteProperty, setPendingDeleteProperty] = useState<OwnerProperty | null>(null);
+  const [savingProperty, setSavingProperty] = useState(false);
+  const [editForm, setEditForm] = useState({ propertyType: "APARTMENT", city: "", district: "", address: "", postalCode: "", latitudeExact: "", longitudeExact: "", area: "", rooms: "", floor: "", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "" });
   const {
     properties, loading, error, reload, setReload, search, setSearch, statusFilter, setStatusFilter,
     cityFilter, setCityFilter, districtFilter, setDistrictFilter, transactionFilter, setTransactionFilter,
     propertyTypeFilter, setPropertyTypeFilter, minPrice, setMinPrice, maxPrice, setMaxPrice,
     minArea, setMinArea, maxArea, setMaxArea, minRooms, setMinRooms, occupancyFilter, setOccupancyFilter,
-    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess,
+    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty,
   } = useOwnerProperties(user.mobile, mode);
 
+  function startEditing(item: OwnerProperty) {
+    setEditingProperty(item);
+    setEditForm({ propertyType: item.property.propertyType, city: item.property.city, district: item.property.district, address: item.property.address, postalCode: item.property.postalCode ?? "", latitudeExact: String(item.property.latitudeExact ?? ""), longitudeExact: String(item.property.longitudeExact ?? ""), area: item.property.area == null ? "" : String(item.property.area), rooms: item.property.rooms == null ? "" : String(item.property.rooms), floor: item.property.floor == null ? "" : String(item.property.floor), transactionType: item.property.listing?.transactionType ?? "SALE", salePrice: item.property.listing?.salePrice == null ? "" : String(item.property.listing.salePrice), depositAmount: item.property.listing?.depositAmount == null ? "" : String(item.property.listing.depositAmount), rentAmount: item.property.listing?.rentAmount == null ? "" : String(item.property.listing.rentAmount) });
+  }
+  async function submitPropertyEdit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!editingProperty) return; setSavingProperty(true);
+    try { await saveProperty(editingProperty.propertyId, { ...editForm, postalCode: editForm.postalCode.trim() || null, latitudeExact: Number(editForm.latitudeExact), longitudeExact: Number(editForm.longitudeExact), area: editForm.area === "" ? null : Number(editForm.area), rooms: editForm.rooms === "" ? null : Number(editForm.rooms), floor: editForm.floor === "" ? null : Number(editForm.floor), salePrice: editForm.salePrice.trim() || null, depositAmount: editForm.depositAmount.trim() || null, rentAmount: editForm.rentAmount.trim() || null }); setEditingProperty(null); } catch { /* API hook displays the error in the panel. */ } finally { setSavingProperty(false); }
+  }
+  async function confirmPropertyDelete() {
+    if (!pendingDeleteProperty) return; setSavingProperty(true);
+    try { await deleteProperty(pendingDeleteProperty.propertyId); setPendingDeleteProperty(null); } catch { /* API hook displays the error in the panel. */ } finally { setSavingProperty(false); }
+  }
   return (
     <section className="space-y-4 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -32,7 +49,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
         : !error && visibleProperties.length === 0 ? <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{properties.length === 0 ? "هنوز ملکی به این پروفایل مالک متصل نشده است." : "موردی با این جست‌وجو و فیلتر پیدا نشد."}</p>
         : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[980px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">مالکیت / آگهی</th><th className="p-3">مشاوران مرتبط</th></tr></thead><tbody>{visibleProperties.map((item) => (
           <tr key={item.propertyId} className="border-t border-slate-200 align-top">
-            <td className="p-3"><p className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</p><p className="mt-1 text-sm text-slate-600">{item.property.address}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.propertyId}</p></td>
+            <td className="p-3"><p className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</p><p className="mt-1 text-sm text-slate-600">{item.property.address}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.propertyId}</p>{mode === "properties" && <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => startEditing(item)} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">ویرایش همه اطلاعات</button><button type="button" onClick={() => setPendingDeleteProperty(item)} disabled={!item.property.isActive} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">حذف از فهرست فعال</button></div>}</td>
             <td className="p-3"><p>{item.property.isActive ? "ملک فعال" : "ملک غیرفعال"} · {item.isPrimary ? "مالک اصلی" : "مالک مشترک"}</p>{item.property.listing && <p className="mt-1">آگهی: {item.property.listing.status} · {item.property.listing.transactionType}</p>}{item.property.listing?.salePrice != null && <p className="mt-1">فروش: {Number(item.property.listing.salePrice).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.depositAmount != null && <p className="mt-1">ودیعه: {Number(item.property.listing.depositAmount).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.rentAmount != null && <p className="mt-1">اجاره: {Number(item.property.listing.rentAmount).toLocaleString("fa-IR")} ریال</p>}</td>
             <td className="p-3"><p>{({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p><p className="mt-1">{item.share.toLocaleString("fa-IR")} دانگ</p></td>
             <td className="p-3"><div className="space-y-3">{item.property.agents.length ? item.property.agents.map((relation) => (
