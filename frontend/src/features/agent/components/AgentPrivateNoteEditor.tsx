@@ -17,7 +17,7 @@ export function AgentPrivateNoteEditor({ entityType, entityId, notes, saving, on
   const [draft, setDraft] = useState(saved?.note ?? "");
   const [open, setOpen] = useState(false);
 
-  useEffect(() => { setDraft(saved?.note ?? ""); }, [saved?.note, entityId, entityType]);
+  useEffect(() => { void Promise.resolve().then(() => setDraft(saved?.note ?? "")); }, [saved?.note, entityId, entityType]);
 
   const saveDraft = async () => {
     const success = await onSave(entityType, entityId, draft);
