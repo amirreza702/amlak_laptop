@@ -65,7 +65,7 @@ export async function accessOwnerRequestContactController(req: Request, res: Res
   catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "Active owner request not found") return res.status(404).json({ message });
-    if (message === "Active subscription not found" || message === "Monthly contact access limit reached") return res.status(403).json({ message });
+    if (message === "Active subscription not found" || message === "Monthly contact access limit reached" || message === "AGENT_NOT_APPROVED_FOR_OWNER_REQUEST") return res.status(403).json({ message: message === "AGENT_NOT_APPROVED_FOR_OWNER_REQUEST" ? "مالک هنوز این مشاور را برای ملک انتخاب نکرده است." : message });
     console.error("Error accessing owner contact and address:", e);
     return res.status(500).json({ message: "Internal server error" });
   }
