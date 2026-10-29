@@ -88,7 +88,7 @@ export function useAgentDashboard(user: UserPublic) {
   }, []);
 
   useEffect(() => {
-    if (profileState === "verified") void loadRequests();
+    if (profileState === "verified") void Promise.resolve().then(() => loadRequests());
   }, [profileState, loadRequests]);
 
   const openContact = async (requestId: string) => {
