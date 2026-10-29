@@ -32,6 +32,7 @@ function propertyName(value: string) {
 export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [contactModalRequestId, setContactModalRequestId] = useState<string | null>(null);
   const {
     selectedTool, setSelectedTool,
     profileId, profileState, profileError, profileReviewNotes,
@@ -234,7 +235,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
                     <td className="p-3"><p className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</p></td>
                     <td className="p-3"><p>{displayMoney(request.budget)}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap leading-6 text-slate-600">{request.description}</p>}</td>
                     <td className="p-3"><p>{request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
-                    <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
+                    <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => { setContactModalRequestId(request.id); setRecordActionError(null); }} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
                     <td className="p-3">{request.createdByRole === "CUSTOMER" && contacts[request.id] ? <AgentPrivateNoteEditor entityType="customer" entityId={contacts[request.id].id} notes={privateNotes} saving={savingNoteKey === `customer:${contacts[request.id].id}`} onSave={saveNote} /> : <p className="max-w-[220px] text-xs leading-6 text-slate-500">{request.createdByRole === "CUSTOMER" ? "برای ثبت یادداشت، ابتدا دسترسی مجاز به اطلاعات مشتری را دریافت کنید." : "یادداشت مشتری برای این درخواست کاربرد ندارد."}</p>}</td>
                     <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={() => openRequestEditor(request)} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={() => { setDeletingRequestId(request.id); setRecordActionError(null); }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
                   </tr>
@@ -254,6 +255,18 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         <AgentCreateSearchRequestPanel onCreated={() => { void loadRequests(); }} />
       </Modal>
       {recordActionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{recordActionMessage}</p>}
+      <Modal open={Boolean(contactModalRequestId)} title="اطلاعات تماس مشتری" description="دسترسی به اطلاعات تماس از سرور و بر اساس مجوزهای حساب مشاور بررسی می‌شود." onClose={() => setContactModalRequestId(null)}>
+        <div className="space-y-4">
+          {requestsError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{requestsError}</p>}
+          {contactModalRequestId && contacts[contactModalRequestId] ? <>
+            <p className="font-bold">{contacts[contactModalRequestId].firstName} {contacts[contactModalRequestId].lastName}</p>
+            <p dir="ltr" className="text-lg">{contacts[contactModalRequestId].mobile}</p>
+          </> : <>
+            <p className="text-sm leading-7 text-slate-700">برای دریافت اطلاعات تماس مشتریِ این درخواست، عملیات را تأیید کنید.</p>
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setContactModalRequestId(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" disabled={!contactModalRequestId || busyId === contactModalRequestId} onClick={() => { if (contactModalRequestId) void openContact(contactModalRequestId); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busyId === contactModalRequestId ? "در حال دریافت..." : "دریافت دسترسی مجاز"}</button></div>
+          </>}
+        </div>
+      </Modal>
       <Modal open={Boolean(editingRequestId)} title="ویرایش درخواست مشتری" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingRequestId(null)}>
         <form onSubmit={saveRequestEdit} className="space-y-4">
           <label className="block space-y-1.5 text-sm font-semibold">شهر درخواست<input required value={editingRequestCity} onChange={(event) => setEditingRequestCity(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
