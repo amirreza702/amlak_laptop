@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
-import { deleteOwnPropertyService } from "../service/propertyOwnerDeleteService";
+import { deleteOwnPropertyService, deleteAgentManagedOwnerPropertyService } from "../service/propertyOwnerDeleteService";
 
 export async function deleteOwnPropertyController(req: Request, res: Response) {
   const userId = (req as AuthenticatedRequest).user?.id;
@@ -14,6 +14,24 @@ export async function deleteOwnPropertyController(req: Request, res: Response) {
     if (code === "PROPERTY_NOT_FOUND") return res.status(404).json({ message: "ملک پیدا نشد." });
     if (code === "PROPERTY_ALREADY_DELETED") return res.status(409).json({ message: "این ملک قبلاً حذف شده است." });
     console.error("Error deleting owner's property:", error);
+    return res.status(500).json({ message: "حذف ملک ناموفق بود." });
+  }
+}
+
+
+export async function deleteAgentManagedOwnerPropertyController(req: Request, res: Response) {
+  const userId = (req as AuthenticatedRequest).user?.id;
+  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  try {
+    const property = await deleteAgentManagedOwnerPropertyService(String(req.params.id), userId);
+    return res.status(200).json({ property, message: "ملک از فهرست فعال خارج شد؛ سوابق آن حفظ شده‌اند." });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "PROPERTY_NOT_APPROVED_FOR_AGENT") return res.status(403).json({ message: "ارتباط فعال و تأییدشده‌ای با این ملک ندارید." });
+    if (code === "PROPERTY_NOT_REGISTERED_BY_OWNER") return res.status(403).json({ message: "این عملیات فقط برای ملکی که مالک ثبت کرده مجاز است." });
+    if (code === "PROPERTY_NOT_FOUND") return res.status(404).json({ message: "ملک پیدا نشد." });
+    if (code === "PROPERTY_ALREADY_DELETED") return res.status(409).json({ message: "این ملک قبلاً از فهرست فعال خارج شده است." });
+    console.error("Error deleting agent-managed owner property:", error);
     return res.status(500).json({ message: "حذف ملک ناموفق بود." });
   }
 }
