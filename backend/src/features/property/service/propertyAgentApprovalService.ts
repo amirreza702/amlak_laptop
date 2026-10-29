@@ -124,9 +124,19 @@ export async function approvePropertyAgentByOwnerService(
   }
 
   if (propertyAgent.approvedByOwner) {
-    throw new Error(
-      "این مشاور قبلاً توسط مالک تأیید شده است."
-    );
+    throw new Error("این مشاور قبلاً توسط مالک تأیید شده است.");
+  }
+
+  const acceptedRequest = await prisma.ownerAgentRequestResponse.findFirst({
+    where: {
+      agentId: data.agentId,
+      status: "ACCEPTED",
+      ownerRequest: { is: { propertyId: data.propertyId, ownerId: data.ownerId, status: "ACTIVE" } },
+    },
+    select: { id: true },
+  });
+  if (!acceptedRequest) {
+    throw new Error("این مشاور درخواست همکاری فعال این ملک را نپذیرفته است.");
   }
 
   /**
@@ -139,6 +149,11 @@ export async function approvePropertyAgentByOwnerService(
    */
 
   return prisma.$transaction(async (tx) => {
+    // در هر ملک فقط یک مشاور تأییدشده باقی می‌ماند؛ تاریخچه و ارتباط‌ها حفظ می‌شوند.
+    await tx.propertyAgent.updateMany({
+      where: { propertyId: data.propertyId, agentId: { not: data.agentId }, approvedByOwner: true },
+      data: { approvedByOwner: false, approvedAt: null },
+    });
     const updatedPropertyAgent =
       await tx.propertyAgent.update({
         where: {
