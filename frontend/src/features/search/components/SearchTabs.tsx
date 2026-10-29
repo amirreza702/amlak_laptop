@@ -64,14 +64,6 @@ export function SearchTabs({
     );
   };
 
-  const handleSmartClick = () => {
-    setActivePanel(
-      activePanel === "smart"
-        ? null
-        : "smart"
-    );
-  };
-
   return (
     <div
       className="
@@ -231,23 +223,25 @@ export function SearchTabs({
          ===================================================== */}
       <button
         type="button"
-        onClick={handleSmartClick}
-        aria-expanded={activePanel === "smart"}
+        disabled
+        aria-disabled="true"
+        title="این قابلیت به‌زودی فعال می‌شود"
         className="
           flex
           h-10
-          
+          cursor-not-allowed
           items-center
           gap-2
           rounded-lg
           border
-          border-white/80
-          bg-white/95
+          border-slate-200
+          bg-slate-100/80
           px-4
           text-sm
           font-semibold
-          text-slate-700
-          shadow-lg
+          text-slate-400
+          opacity-60
+          shadow-sm
           backdrop-blur-xl
         "
       >
