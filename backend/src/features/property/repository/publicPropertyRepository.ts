@@ -12,6 +12,7 @@ export async function findPublishedPublicPropertyById(id: string) {
   return prisma.property.findFirst({
     where: {
       id,
+      isActive: true,
       confirmUntil: {
         gte: now,
       },
