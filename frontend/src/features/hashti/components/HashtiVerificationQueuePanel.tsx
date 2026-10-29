@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, Search, XCircle } from "lucide-react";
+import { Modal } from "@/shared/components/Modal";
 import { formatPersianDateTime } from "@/shared/utils/date";
 
 import {
@@ -24,6 +25,8 @@ export function HashtiVerificationQueuePanel() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [pendingReview, setPendingReview] = useState<{ kind: "case" | "owner"; caseItem?: VerificationCaseRow; propertyId?: string; ownerId?: string; nextStatus: "PENDING" | "VERIFIED" | "REJECTED"; title: string } | null>(null);
+  const [reviewNotesDraft, setReviewNotesDraft] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -44,48 +47,55 @@ export function HashtiVerificationQueuePanel() {
 
   const submitSearch = (event: FormEvent) => { event.preventDefault(); setOffset(0); setAppliedQuery(query); };
 
-  const reviewCase = async (item: VerificationCaseRow, nextStatus: "VERIFIED" | "REJECTED") => {
-    const notes = window.prompt(nextStatus === "VERIFIED" ? "یادداشت تأیید (اختیاری):" : "دلیل رد پرونده:");
-    if (notes === null) return;
-    if (nextStatus === "REJECTED" && notes.trim().length < 3) { setError("برای رد پرونده، دلیل حداقل ۳ کاراکتری لازم است."); return; }
-    setBusyId(item.id); setError(null); setMessage(null);
-    try {
-      await reviewVerificationCase(item.id, nextStatus, notes.trim() || null);
-      setMessage(nextStatus === "VERIFIED" ? "پرونده تأیید شد و در سوابق ثبت شد." : "پرونده رد شد و دلیل آن در سوابق ثبت شد.");
-      setOffset(0); setReload((value) => value + 1);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "رسیدگی به پرونده ناموفق بود."); }
-    finally { setBusyId(null); }
+  const reviewCase = (item: VerificationCaseRow, nextStatus: "VERIFIED" | "REJECTED") => {
+    setPendingReview({ kind: "case", caseItem: item, nextStatus, title: nextStatus === "VERIFIED" ? "تأیید پرونده ملک" : "رد پرونده ملک" });
+    setReviewNotesDraft("");
+    setError(null);
+    setMessage(null);
   };
 
-  const reviewOwner = async (
+  const reviewOwner = (
     propertyId: string,
     ownerId: string,
     nextStatus: "PENDING" | "VERIFIED" | "REJECTED"
   ) => {
-    const labels = {
-      PENDING: "بازگرداندن مالک به وضعیت در انتظار",
-      VERIFIED: "تأیید مالک",
-      REJECTED: "رد مالک",
-    } as const;
-    const reason = window.prompt(`دلیل یا توضیح برای «${labels[nextStatus]}» را وارد کنید:`);
-    if (reason === null) return;
-    if (reason.trim().length < 3) {
-      setError("برای ثبت تصمیم درباره مالک، دلیل حداقل ۳ کاراکتری لازم است.");
-      return;
-    }
-
-    const key = `${propertyId}:${ownerId}`;
-    setBusyOwnerId(key);
+    const labels = { PENDING: "بازگرداندن مالک به وضعیت در انتظار", VERIFIED: "تأیید مالک", REJECTED: "رد مالک" } as const;
+    setPendingReview({ kind: "owner", propertyId, ownerId, nextStatus, title: labels[nextStatus] });
+    setReviewNotesDraft("");
     setError(null);
     setMessage(null);
+  };
+
+  const submitReview = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!pendingReview) return;
+    const note = reviewNotesDraft.trim();
+    const required = pendingReview.kind === "owner" || pendingReview.nextStatus === "REJECTED";
+    if (required && note.length < 3) {
+      setError(pendingReview.kind === "owner" ? "برای ثبت تصمیم درباره مالک، دلیل حداقل ۳ کاراکتری لازم است." : "برای رد پرونده، دلیل حداقل ۳ کاراکتری لازم است.");
+      return;
+    }
+    setError(null); setMessage(null);
+    const labels = { PENDING: "بازگرداندن مالک به وضعیت در انتظار", VERIFIED: "تأیید مالک", REJECTED: "رد مالک" } as const;
     try {
-      await reviewVerificationOwner(propertyId, ownerId, nextStatus, reason.trim());
-      setMessage(`${labels[nextStatus]} انجام شد؛ عامل، زمان، دلیل و تغییر وضعیت در تاریخچه ثبت شد.`);
+      if (pendingReview.kind === "case" && pendingReview.caseItem) {
+        const item = pendingReview.caseItem;
+        setBusyId(item.id);
+        await reviewVerificationCase(item.id, pendingReview.nextStatus as "VERIFIED" | "REJECTED", note || null);
+        setMessage(pendingReview.nextStatus === "VERIFIED" ? "پرونده تأیید شد و در سوابق ثبت شد." : "پرونده رد شد و دلیل آن در سوابق ثبت شد.");
+      } else if (pendingReview.kind === "owner" && pendingReview.propertyId && pendingReview.ownerId) {
+        const key = `${pendingReview.propertyId}:${pendingReview.ownerId}`;
+        setBusyOwnerId(key);
+        await reviewVerificationOwner(pendingReview.propertyId, pendingReview.ownerId, pendingReview.nextStatus, note);
+        setMessage(`${labels[pendingReview.nextStatus]} انجام شد؛ عامل، زمان، دلیل و تغییر وضعیت در تاریخچه ثبت شد.`);
+      }
+      setPendingReview(null);
       setOffset(0);
       setReload((value) => value + 1);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "تغییر وضعیت مالک ناموفق بود.");
+      setError(cause instanceof Error ? cause.message : "ثبت تصمیم ناموفق بود.");
     } finally {
+      setBusyId(null);
       setBusyOwnerId(null);
     }
   };
@@ -182,6 +192,13 @@ export function HashtiVerificationQueuePanel() {
           </table>
         </div>}
       <div className="flex items-center justify-between gap-3"><button type="button" disabled={loading || offset === 0} onClick={() => setOffset(Math.max(0, offset - 25))} className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40">قبلی</button><span className="text-xs text-slate-500">{Math.min(total, offset + 25).toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")}</span><button type="button" disabled={loading || offset + 25 >= total} onClick={() => setOffset(offset + 25)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-40">بعدی</button></div>
+      <Modal open={Boolean(pendingReview)} title={pendingReview?.title ?? "ثبت تصمیم"} description="یادداشت یا دلیل تصمیم را ثبت کنید. این اطلاعات در سوابق مدیریتی ذخیره می‌شود." onClose={() => setPendingReview(null)}>
+        <form onSubmit={submitReview} className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-semibold">{pendingReview?.kind === "case" && pendingReview.nextStatus === "VERIFIED" ? "یادداشت تأیید (اختیاری)" : "دلیل یا توضیح تصمیم"}<textarea rows={4} maxLength={2000} minLength={pendingReview?.kind === "owner" || pendingReview?.nextStatus === "REJECTED" ? 3 : undefined} required={pendingReview?.kind === "owner" || pendingReview?.nextStatus === "REJECTED"} value={reviewNotesDraft} onChange={(event) => setReviewNotesDraft(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingReview(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="submit" disabled={Boolean(busyId || busyOwnerId)} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">ثبت تصمیم</button></div>
+        </form>
+      </Modal>
     </section>
   );
 }
