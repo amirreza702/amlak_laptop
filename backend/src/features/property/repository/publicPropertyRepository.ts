@@ -43,6 +43,17 @@ export async function findPublishedPublicPropertyById(id: string) {
           publishedAt: true,
         },
       },
+      owners: {
+        where: { verificationStatus: "VERIFIED" },
+        orderBy: { isPrimary: "desc" },
+        take: 1,
+        select: { owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } } },
+      },
+      agents: {
+        where: { status: "ACTIVE", approvedByOwner: true },
+        take: 1,
+        select: { agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } } },
+      },
       media: {
         where: {
           isActive: true,
