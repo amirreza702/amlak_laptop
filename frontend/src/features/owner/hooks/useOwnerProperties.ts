@@ -10,7 +10,7 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [cityFilter, setCityFilter] = useState("");
   const [districtFilter, setDistrictFilter] = useState("");
   const [transactionFilter, setTransactionFilter] = useState("all");
