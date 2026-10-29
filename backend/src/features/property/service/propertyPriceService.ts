@@ -163,7 +163,7 @@ export async function updatePropertyPrice(
    *
    * نیازی به Transaction یا ایجاد History نداریم.
    */
-  if (!priceChanged) {
+  if (!priceChanged && listing.transactionType === data.transactionType) {
     return {
       listing,
       priceChanged: false,
