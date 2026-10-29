@@ -222,9 +222,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
                 </table>
               </div>
             )}
-                ))}
-              </div>
-            )}
           </div>
         )}
       </section>
