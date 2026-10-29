@@ -93,15 +93,17 @@ export function CustomerDashboard() {
   const activeCount = useMemo(() => requests.filter((request) => request.status === "ACTIVE").length, [requests]);
   const unreadCount = useMemo(() => notifications.filter((notification) => !notification.isRead).length, [notifications]);
 
-  const runAction = async (id: string, action: () => Promise<void>) => {
+  const runAction = async (id: string, action: () => Promise<void>): Promise<boolean> => {
     setBusyId(id);
     setActionError(null);
     setActionMessage(null);
     try {
       await action();
       if (profile && user) await refreshData(profile, user);
+      return true;
     } catch (error: unknown) {
       setActionError(error instanceof Error ? error.message : "عملیات انجام نشد.");
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -281,11 +283,10 @@ export function CustomerDashboard() {
           <div className="flex justify-end gap-2"><button type="button" onClick={() => setConfirmAction(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => {
             const action = confirmAction;
             if (!action || !profile) return;
-            setConfirmAction(null);
             void runAction(action.id, async () => {
               if (action.kind === "close-request") { await closeCustomerSearchRequest(profile.id, action.id); setActionMessage("درخواست بسته شد."); }
               else { await removeCustomerFavorite(profile.id, action.id); setActionMessage("ملک از علاقه‌مندی‌ها حذف شد."); }
-            });
+            }).then((success) => { if (success) setConfirmAction(null); });
           }} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">تأیید عملیات</button></div>
         </div>
       </Modal>
