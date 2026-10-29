@@ -11,10 +11,12 @@ import { OwnerProfilePanel } from "./OwnerProfilePanel";
 import { useOwnerAgentAccess } from "../hooks/useOwnerAgentAccess";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { Modal } from "@/shared/components/Modal";
+import { Modal } from "@/shared/components/Modal";
 
 export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
+  const [pendingRelationshipAction, setPendingRelationshipAction] = useState<"approval" | "revoke" | null>(null);
   const {
     profile, firstName, setFirstName, lastName, setLastName,
     loadingProfile, savingProfile, profileError, message, saveProfile,
@@ -67,8 +69,8 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
         {relationshipError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{relationshipError}</p>}
         {relationshipMessage && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{relationshipMessage}</p>}
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => void setAgentRelationship("approval")} disabled={relationshipBusy} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">{relationshipBusy ? "در حال ارسال..." : "تأیید مشاور"}</button>
-          <button type="button" onClick={() => void setAgentRelationship("revoke")} disabled={relationshipBusy} className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-60">لغو دسترسی</button>
+          <button type="button" onClick={() => setPendingRelationshipAction("approval")} disabled={relationshipBusy} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">{relationshipBusy ? "در حال ارسال..." : "تأیید مشاور"}</button>
+          <button type="button" onClick={() => setPendingRelationshipAction("revoke")} disabled={relationshipBusy} className="rounded-lg border border-red-200 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-60">لغو دسترسی</button>
         </div>
       </section>
 
@@ -79,6 +81,11 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
       <div hidden={selectedTool !== "property-management"}><OwnerPropertiesPanel user={user} mode="properties" /></div>
       <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
         <PropertyRegistrationPanel mode="owner" />
+      </Modal>
+      <Modal open={Boolean(pendingRelationshipAction)} title={pendingRelationshipAction === "approval" ? "تأیید دسترسی مشاور" : "لغو دسترسی مشاور"} description={pendingRelationshipAction === "approval" ? "دسترسی مشاور به ملک مشخص‌شده ثبت خواهد شد." : "دسترسی مشاور به ملک مشخص‌شده لغو خواهد شد."} onClose={() => setPendingRelationshipAction(null)}>
+        <p className="mb-4 text-sm leading-7 text-slate-700">ملک و شناسه پروفایل مشاور را بررسی کنید و سپس عملیات را تأیید کنید.</p>
+        {relationshipError && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{relationshipError}</p>}
+        <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingRelationshipAction(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" disabled={relationshipBusy} onClick={() => { const action = pendingRelationshipAction; if (action) void setAgentRelationship(action); setPendingRelationshipAction(null); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{relationshipBusy ? "در حال ثبت..." : "تأیید عملیات"}</button></div>
       </Modal>
       <div hidden={selectedTool !== "agents"}><OwnerPropertiesPanel user={user} mode="agents" /></div>
       <div hidden={selectedTool !== "agents"}><OwnerAgentRequestsPanel ownerId={profile?.id} /></div>
