@@ -35,7 +35,10 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
   const areaMin = parseNumberFilter(req.query.areaMin); const areaMax = parseNumberFilter(req.query.areaMax);
   const roomsMin = parseIntegerFilter(req.query.roomsMin); const roomsMax = parseIntegerFilter(req.query.roomsMax);
   const textFilters = ["city", "district", "postalCode", "ownerName"] as const;
-  const invalidTextFilter = textFilters.some(key => req.query[key] !== undefined && (typeof req.query[key] !== "string" || req.query[key].length > 120));
+  const invalidTextFilter = textFilters.some((key) => {
+    const value = req.query[key];
+    return value !== undefined && (typeof value !== "string" || value.length > 120);
+  });
   const propertyType = req.query.propertyType; const transactionType = req.query.transactionType; const listingStatus = req.query.listingStatus; const isActive = req.query.isActive;
   if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || invalidTextFilter ||
       (propertyType !== undefined && (typeof propertyType !== "string" || !Object.values(PropertyType).includes(propertyType as PropertyType))) ||
