@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, LoaderCircle, RefreshCw, Search, ShieldCheck } from "lucide-react";
+import { Building2, LoaderCircle, RefreshCw, Search } from "lucide-react";
 import { useOwnerProperties } from "../hooks/useOwnerProperties";
 import type { OwnerProperty } from "../types/owner";
 import { Modal } from "@/shared/components/Modal";
 
 export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mobile: string }; mode?: "properties" | "agents" }) {
-  const [pendingAgentAction, setPendingAgentAction] = useState<{ propertyId: string; agentId: string; action: "approval" | "revoke" } | null>(null);
   const [editingProperty, setEditingProperty] = useState<OwnerProperty | null>(null);
   const [pendingDeleteProperty, setPendingDeleteProperty] = useState<OwnerProperty | null>(null);
   const [savingProperty, setSavingProperty] = useState(false);
@@ -55,7 +54,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
             <td className="p-3"><div className="space-y-3">{item.property.agents.length ? item.property.agents.map((relation) => (
               <div key={relation.agentId} className="rounded-lg bg-slate-50 p-3">
                 <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.approvedByOwner ? "اجازه فعالیت داده شده" : "در انتظار اجازه مالک"}</p><p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
-                <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={busyAgent !== null} onClick={() => setPendingAgentAction({ propertyId: item.propertyId, agentId: relation.agentId, action: "approval" })} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyAgent === `${item.propertyId}:${relation.agentId}` ? "در حال ثبت..." : "تأیید دسترسی"}</button><button type="button" disabled={busyAgent !== null} onClick={() => setPendingAgentAction({ propertyId: item.propertyId, agentId: relation.agentId, action: "revoke" })} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">لغو دسترسی</button></div>
+                
               </div>
             )) : <span className="text-slate-500">مشاوری متصل نیست.</span>}</div></td>
           </tr>
@@ -76,14 +75,6 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
       </Modal>
       <Modal open={Boolean(pendingDeleteProperty)} title="حذف ملک از فهرست فعال" description="ملک غیرفعال می‌شود؛ سوابق و اطلاعات وابسته حفظ می‌شوند." onClose={() => { if (!savingProperty) setPendingDeleteProperty(null); }}>
         <div className="space-y-4" dir="rtl"><p>آیا ملک «{pendingDeleteProperty?.property.city}، {pendingDeleteProperty?.property.district}» از فهرست فعال حذف شود؟</p><p className="break-all font-mono text-xs text-slate-500" dir="ltr">{pendingDeleteProperty?.propertyId}</p><div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setPendingDeleteProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={savingProperty} onClick={() => void confirmPropertyDelete()} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال حذف..." : "تأیید حذف"}</button></div></div>
-      </Modal>
-      <Modal open={Boolean(pendingAgentAction)} title={pendingAgentAction?.action === "approval" ? "تأیید دسترسی مشاور" : "لغو دسترسی مشاور"} description={pendingAgentAction?.action === "approval" ? "اجازه فعالیت مشاور برای ملک مشخص‌شده ثبت می‌شود." : "اجازه فعالیت مشاور برای ملک مشخص‌شده لغو می‌شود."} onClose={() => setPendingAgentAction(null)}>
-        <div className="space-y-3">
-          <p className="text-sm text-slate-700">شناسه ملک: <span dir="ltr" className="break-all font-mono">{pendingAgentAction?.propertyId}</span></p>
-          <p className="text-sm text-slate-700">شناسه مشاور: <span dir="ltr" className="break-all font-mono">{pendingAgentAction?.agentId}</span></p>
-          {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
-          <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingAgentAction(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" disabled={busyAgent !== null} onClick={() => { const action = pendingAgentAction; if (action) void updateAgentAccess(action.propertyId, action.agentId, action.action); setPendingAgentAction(null); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">تأیید عملیات</button></div>
-        </div>
       </Modal>
     </section>
   );
