@@ -155,7 +155,7 @@ export function CustomerDashboard() {
 
   return (
     <main dir="rtl" className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 overflow-x-hidden bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-      <aside aria-label="ابزارهای پنل مشتری" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
+      <aside aria-label="ابزارهای پنل مشتری" className="h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
           {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span></button>; })}
