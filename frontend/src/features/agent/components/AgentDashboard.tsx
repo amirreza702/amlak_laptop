@@ -160,56 +160,32 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             ) : visibleRequests.length === 0 ? (
               <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو و فیلتر پیدا نشد.</p>
             ) : (
-              <div className="mt-4 space-y-3">
-                {visibleRequests.map((request) => (
-                  <article key={request.id} className="rounded-xl border border-slate-200 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</h3>
-                        <p className="mt-1 text-sm text-slate-600">بودجه: {displayMoney(request.budget)}</p>
-                        {request.description && <p className="mt-2 text-sm leading-7 text-slate-600">{request.description}</p>}
-                        <p className="mt-2 text-xs text-slate-400">کد درخواست: <span dir="ltr" className="font-mono">{request.id}</span></p>
-                        <p className="mt-1 text-xs text-slate-500">ثبت‌کننده: {request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p>
-                      </div>
-                      
-                    </div>
-                    {request.isCreatedByMe && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={async () => {
-                          const city = window.prompt("شهر درخواست", request.city);
-                          if (city === null) return;
-                          const description = window.prompt("توضیحات درخواست", request.description ?? "");
-                          if (description === null) return;
-                          const budget = window.prompt("بودجه (تومان)", String(request.budget ?? ""));
-                          if (budget === null) return;
-                          try {
-                            await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ city, description, budget: Number(budget) }) });
-                            await loadRequests();
-                          } catch (error) { window.alert(error instanceof Error ? error.message : "ویرایش درخواست ناموفق بود."); }
-                        }} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">ویرایش درخواست من</button>
-                        <button type="button" onClick={async () => {
-                          if (!window.confirm("درخواست خودتان حذف شود؟ این کار قابل بازگشت نیست.")) return;
-                          try {
-                            await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "DELETE" });
-                            await loadRequests();
-                          } catch (error) { window.alert(error instanceof Error ? error.message : "حذف درخواست ناموفق بود."); }
-                        }} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">حذف درخواست من</button>
-                      </div>
-                    )}
-                    {contacts[request.id] ? (
-                      <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
-                        <p className="mb-2 font-bold">{request.createdByRole === "AGENT" ? "اطلاعات تماس مشاور ثبت‌کننده" : "اطلاعات تماس مشتری"}</p>
-                        <b>{contacts[request.id].firstName} {contacts[request.id].lastName}</b>
-                        <p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p>
-                      </div>
-                    ) : (
-                      <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60">
-                        {busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />} {request.createdByRole === "AGENT" ? "درخواست دسترسی به اطلاعات تماس مشاور ثبت‌کننده" : "درخواست دسترسی به اطلاعات تماس مشتری"}
-                      </button>
-                    )}
-                  </article>
-                ))}
-              </div>
+              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده و شناسه</th><th className="p-3">اطلاعات تماس</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
+                  <tr key={request.id} className="border-t border-slate-200 align-top">
+                    <td className="p-3"><p className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</p></td>
+                    <td className="p-3"><p>{displayMoney(request.budget)}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap leading-6 text-slate-600">{request.description}</p>}</td>
+                    <td className="p-3"><p>{request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
+                    <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => void openContact(request.id)} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
+                    <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={async () => {
+                      const city = window.prompt("شهر درخواست", request.city);
+                      if (city === null) return;
+                      const description = window.prompt("توضیحات درخواست", request.description ?? "");
+                      if (description === null) return;
+                      const budget = window.prompt("بودجه (تومان)", String(request.budget ?? ""));
+                      if (budget === null) return;
+                      try {
+                        await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ city, description, budget: Number(budget) }) });
+                        await loadRequests();
+                      } catch (error) { window.alert(error instanceof Error ? error.message : "ویرایش درخواست ناموفق بود."); }
+                    }} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={async () => {
+                      if (!window.confirm("درخواست خودتان حذف شود؟ این کار قابل بازگشت نیست.")) return;
+                      try {
+                        await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(request.id)}`, { method: "DELETE" });
+                        await loadRequests();
+                      } catch (error) { window.alert(error instanceof Error ? error.message : "حذف درخواست ناموفق بود."); }
+                    }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
+                  </tr>
+                ))}</tbody></table></div>
             )}
           </section>
 
