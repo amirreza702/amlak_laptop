@@ -154,7 +154,7 @@ export function CustomerDashboard() {
   ];
 
   return (
-    <main dir="rtl" className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-6 overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-900 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <main dir="rtl" className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 overflow-x-hidden bg-slate-50 px-3 py-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
       <aside aria-label="ابزارهای پنل مشتری" className="h-fit rounded-xl border border-slate-200 bg-white p-3">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
@@ -178,7 +178,7 @@ export function CustomerDashboard() {
         </div>
       </header>
 
-      <section hidden={tab === null} className="mr-16 min-h-[calc(100vh-4rem)] w-auto px-3 py-4 sm:px-5 lg:mr-64 lg:px-6">
+      <section hidden={tab === null} className="min-w-0 min-h-[calc(100vh-7rem)] w-full px-3 py-4 sm:px-5 lg:px-6">
         <div className="mb-6">
           <p className="text-sm font-semibold text-[#2563eb]">پنل مشتری</p>
           <h1 className="mt-2 text-2xl font-black sm:text-3xl">{profile ? `سلام ${profile.firstName}` : "حساب مشتری"}</h1>
