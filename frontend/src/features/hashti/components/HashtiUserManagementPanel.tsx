@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRoundCog } from "lucide-react";
 
 import { hashtiManagementRequest as requestJson } from "../api/hashtiUserManagementApi";
@@ -215,54 +215,86 @@ export function HashtiUserManagementPanel() {
       {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600"><span>نتیجه: {total.toLocaleString("fa-IR")} حساب</span><span>صفحه فعلی: {Math.floor(offset / 25) + 1}</span></div>
       {loading ? <p className="flex items-center gap-2 rounded-xl bg-white p-4 text-sm text-slate-600"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت اطلاعات...</p> : users.length === 0 ? <p className="rounded-xl bg-white p-4 text-sm text-slate-500">حسابی مطابق فیلترها پیدا نشد.</p> : (
-        <div className="space-y-3">
-          {users.map((item) => {
-            const profile = profileOf(item);
-            return (
-              <article key={item.id} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0">
-                  <p className="font-bold text-slate-900">{displayName(item)}{item.isSuperAdmin && <span className="ms-2 rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-900">مدیر ارشد</span>}</p>
-                  <p className="mt-1 text-sm text-slate-600"><span dir="ltr" className="inline-block">{item.mobile}</span> · {({ CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" })[item.role]}</p>
-                  <p className="mt-1 text-xs text-slate-500">شناسه: <span dir="ltr" className="break-all font-mono">{item.id}</span> · ایجاد: {formatPersianDateTime(item.createdAt)}</p>
-                  {item.agent && <p className="mt-1 text-sm text-slate-600">وضعیت بررسی مشاور: {({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.agent.verificationStatus]}{item.agent.agencyName ? ` · ${item.agent.agencyName}` : ""}</p>}
-                </div><span className={`rounded-full px-3 py-1 text-xs font-bold ${item.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{item.isActive ? "فعال" : "غیرفعال"}</span></div>
-                <div className="flex flex-wrap gap-2"><button type="button" hidden={item.role === "HASHTI" && !isSuperAdmin} onClick={() => void changeStatus(item)} disabled={savingUserId === item.id} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">{savingUserId === item.id ? "در حال ثبت..." : item.isActive ? "غیرفعال‌کردن حساب" : "فعال‌کردن حساب"}</button>{profile && <button type="button" hidden={profile.type === "hashti" && !isSuperAdmin} onClick={() => beginEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">ویرایش پروفایل</button>}<button type="button" onClick={() => void toggleHistory(item)} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"><Clock3 className="h-4 w-4" /> {historyUser === item.id ? "بستن تاریخچه" : "تاریخچه تغییرات"}</button></div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" hidden={!isSuperAdmin} onClick={() => beginPasswordReset(item)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                    بازنشانی رمز عبور
-                  </button>
-                </div>
-                {resetUser?.id === item.id && (
-                  <form onSubmit={resetManagedPassword} className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:grid-cols-2">
-                    <h4 className="font-bold sm:col-span-2">بازنشانی امن رمز حساب</h4>
-                    <label className="space-y-1 text-sm">رمز جدید (حداقل ۱۲ کاراکتر)
-                      <input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" dir="ltr" />
-                    </label>
-                    <label className="space-y-1 text-sm">دلیل بازنشانی (اجباری)
-                      <textarea required minLength={3} maxLength={1000} rows={2} value={resetReason} onChange={(event) => setResetReason(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
-                    </label>
-                    <div className="flex flex-wrap gap-2 sm:col-span-2">
-                      <button type="submit" disabled={savingUserId === item.id} className="rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-                        {savingUserId === item.id ? "در حال ثبت..." : "بازنشانی و ثبت تاریخچه"}
-                      </button>
-                      <button type="button" onClick={() => setResetUser(null)} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm">
-                        انصراف
-                      </button>
-                    </div>
-                  </form>
-                )}
-                {editUser?.id === item.id && profile && <form onSubmit={saveProfile} className="grid gap-3 rounded-lg bg-slate-50 p-3 sm:grid-cols-2">
-                  <h4 className="font-bold sm:col-span-2">ویرایش پروفایل {profile.type === "agent" ? "مشاور" : profile.type === "owner" ? "مالک" : profile.type === "hashti" ? "کارمند هشتی" : "مشتری"}</h4>
-                  <label className="space-y-1 text-sm">نام<input required maxLength={120} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-                  <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-                  {profile.type === "agent" && <><label className="space-y-1 text-sm">نام آژانس<input maxLength={200} value={editAgencyName} onChange={(e) => setEditAgencyName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label className="space-y-1 text-sm">نشانی<input maxLength={500} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label></>}
-                  <label className="space-y-1 text-sm sm:col-span-2">دلیل تغییر (اجباری)<textarea required minLength={3} maxLength={1000} rows={2} value={editReason} onChange={(e) => setEditReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-                  <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={savingUserId === item.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === item.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت تغییر با تاریخچه</button><button type="button" onClick={() => setEditUser(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button></div>
-                </form>}
-                {historyUser === item.id && <div className="space-y-3 rounded-lg bg-slate-50 p-3"><h4 className="font-bold">سوابق مرتبط با این حساب و پروفایل</h4>{historyLoading && <p className="text-sm text-slate-600">در حال دریافت تاریخچه...</p>}{historyError && <p role="alert" className="text-sm text-red-700">{historyError}</p>}{!historyLoading && !historyError && historyLogs.length === 0 && <p className="text-sm text-slate-500">رویداد مدیریتی برای شناسه‌های این حساب ثبت نشده است.</p>}{historyLogs.map((log) => <article key={log.id} className="rounded-lg border border-slate-200 bg-white p-3"><div className="flex flex-wrap justify-between gap-2"><b>{log.action}</b><span className="text-xs text-slate-500">{formatPersianDateTime(log.createdAt)}</span></div><p className="mt-1 text-sm text-slate-600">عامل: {log.actorMobile ?? "نامشخص"} · {log.actorRole ?? "نامشخص"} · هدف: {log.targetType}</p>{log.details !== null && log.details !== undefined && <pre dir="ltr" className="mt-2 overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs leading-6">{JSON.stringify(log.details, null, 2)}</pre>}</article>)}</div>}
-              </article>
-            );
-          })}
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table className="w-full min-w-[1200px] text-right text-sm">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="p-3">رکورد کاربر</th>
+                <th className="p-3">نقش و وضعیت</th>
+                <th className="p-3">پروفایل مرتبط</th>
+                <th className="p-3">تاریخ ایجاد</th>
+                <th className="p-3">عملیات رکورد</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((item) => {
+                const profile = profileOf(item);
+                return (
+                  <Fragment key={item.id}>
+                    <tr className="border-t border-slate-200 align-top">
+                      <td className="p-3">
+                        <p className="font-bold text-slate-900">{displayName(item)}{item.isSuperAdmin && <span className="ms-2 inline-block rounded bg-amber-100 px-2 py-1 text-xs text-amber-900">مدیر ارشد</span>}</p>
+                        <p className="mt-1" dir="ltr">{item.mobile}</p>
+                        <p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.id}</p>
+                      </td>
+                      <td className="p-3">
+                        <p>{({ CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" })[item.role]}</p>
+                        <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${item.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{item.isActive ? "فعال" : "غیرفعال"}</span>
+                        {item.agent && <p className="mt-2 text-xs text-slate-600">وضعیت مشاور: {({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.agent.verificationStatus]}{item.agent.agencyName ? ` · ${item.agent.agencyName}` : ""}</p>}
+                      </td>
+                      <td className="p-3">
+                        {profile ? <><p>{profile.firstName} {profile.lastName}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{profile.id}</p>{profile.type === "agent" && profile.agencyName && <p className="mt-1 text-xs text-slate-600">{profile.agencyName}</p>}</> : <span className="text-slate-500">پروفایل ثبت نشده</span>}
+                      </td>
+                      <td className="whitespace-nowrap p-3">{formatPersianDateTime(item.createdAt)}</td>
+                      <td className="p-3">
+                        <div className="flex min-w-[180px] flex-wrap gap-2">
+                          <button type="button" hidden={item.role === "HASHTI" && !isSuperAdmin} onClick={() => void changeStatus(item)} disabled={savingUserId === item.id} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold disabled:opacity-50">{savingUserId === item.id ? "در حال ثبت..." : item.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button>
+                          {profile && <button type="button" hidden={profile.type === "hashti" && !isSuperAdmin} onClick={() => beginEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">ویرایش پروفایل</button>}
+                          <button type="button" onClick={() => void toggleHistory(item)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold"><Clock3 className="h-4 w-4" />{historyUser === item.id ? "بستن سوابق" : "تاریخچه"}</button>
+                          <button type="button" hidden={!isSuperAdmin} onClick={() => beginPasswordReset(item)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">بازنشانی رمز</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {(resetUser?.id === item.id || (editUser?.id === item.id && profile) || historyUser === item.id) && (
+                      <tr className="border-t border-slate-200 bg-slate-50">
+                        <td colSpan={5} className="p-4">
+                          <div className="space-y-4">
+                            {resetUser?.id === item.id && (
+                              <form onSubmit={resetManagedPassword} className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:grid-cols-2">
+                                <h4 className="font-bold sm:col-span-2">بازنشانی امن رمز حساب: {displayName(item)}</h4>
+                                <label className="space-y-1 text-sm">رمز جدید (حداقل ۱۲ کاراکتر)<input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" dir="ltr" /></label>
+                                <label className="space-y-1 text-sm">دلیل بازنشانی (اجباری)<textarea required minLength={3} maxLength={1000} rows={2} value={resetReason} onChange={(event) => setResetReason(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2" /></label>
+                                <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={savingUserId === item.id} className="rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === item.id ? "در حال ثبت..." : "بازنشانی و ثبت تاریخچه"}</button><button type="button" onClick={() => setResetUser(null)} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm">انصراف</button></div>
+                              </form>
+                            )}
+                            {editUser?.id === item.id && profile && (
+                              <form onSubmit={saveProfile} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2">
+                                <h4 className="font-bold sm:col-span-2">ویرایش پروفایل {profile.type === "agent" ? "مشاور" : profile.type === "owner" ? "مالک" : profile.type === "hashti" ? "کارمند هشتی" : "مشتری"}</h4>
+                                <label className="space-y-1 text-sm">نام<input required maxLength={120} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+                                <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+                                {profile.type === "agent" && <><label className="space-y-1 text-sm">نام آژانس<input maxLength={200} value={editAgencyName} onChange={(e) => setEditAgencyName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label className="space-y-1 text-sm">نشانی<input maxLength={500} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label></>}
+                                <label className="space-y-1 text-sm sm:col-span-2">دلیل تغییر (اجباری)<textarea required minLength={3} maxLength={1000} rows={2} value={editReason} onChange={(e) => setEditReason(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
+                                <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={savingUserId === item.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{savingUserId === item.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت تغییر با تاریخچه</button><button type="button" onClick={() => setEditUser(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button></div>
+                              </form>
+                            )}
+                            {historyUser === item.id && (
+                              <section className="rounded-lg border border-slate-200 bg-white p-3">
+                                <h4 className="mb-3 font-bold">سوابق مرتبط با این حساب و پروفایل</h4>
+                                {historyLoading && <p className="text-sm text-slate-600">در حال دریافت تاریخچه...</p>}
+                                {historyError && <p role="alert" className="text-sm text-red-700">{historyError}</p>}
+                                {!historyLoading && !historyError && historyLogs.length === 0 && <p className="text-sm text-slate-500">رویداد مدیریتی برای شناسه‌های این حساب ثبت نشده است.</p>}
+                                {!historyLoading && historyLogs.length > 0 && <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-right text-xs"><thead className="bg-slate-100"><tr><th className="p-2">رویداد</th><th className="p-2">عامل</th><th className="p-2">هدف</th><th className="p-2">زمان</th><th className="p-2">جزئیات</th></tr></thead><tbody>{historyLogs.map((log) => <tr key={log.id} className="border-t"><td className="p-2 font-semibold">{log.action}</td><td className="p-2">{log.actorMobile ?? "نامشخص"} · {log.actorRole ?? "نامشخص"}</td><td className="p-2">{log.targetType}</td><td className="whitespace-nowrap p-2">{formatPersianDateTime(log.createdAt)}</td><td className="p-2">{log.details !== null && log.details !== undefined ? <pre dir="ltr" className="max-w-md overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-2">{JSON.stringify(log.details, null, 2)}</pre> : "—"}</td></tr>)}</tbody></table></div>}
+                              </section>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
       <div className="flex items-center justify-between gap-3"><button type="button" disabled={loading || offset <= 0} onClick={() => void loadUsers(Math.max(0, offset - 25))} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">قبلی</button><span className="text-xs text-slate-500">{Math.min(total, offset + 25).toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")}</span><button type="button" disabled={loading || offset + 25 >= total} onClick={() => void loadUsers(offset + 25)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40">بعدی</button></div>
