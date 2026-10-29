@@ -30,7 +30,7 @@ export function useOwnerProfile(mobile: string) {
   }, []);
 
   useEffect(() => {
-    void loadProfile();
+    void Promise.resolve().then(() => loadProfile());
   }, [loadProfile, mobile]);
 
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
