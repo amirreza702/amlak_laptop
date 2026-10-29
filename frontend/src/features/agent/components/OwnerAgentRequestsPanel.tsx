@@ -41,7 +41,7 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "دریافت درخواست‌های مالکان ناموفق بود."); }
     finally { setLoading(false); }
   }, [agentId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   async function respond(id: string, response: "ACCEPTED" | "REJECTED") {
     setBusyId(id); setError(null); setMessage(null);
