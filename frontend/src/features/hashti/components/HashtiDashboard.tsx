@@ -56,7 +56,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
     reviewNotes, setReviewNotes, busyReviewId, loadDuplicateWork, createReview, decideReview,
   } = useHashtiDuplicateReview();
   const {
-    resetUserId, setResetUserId, newPassword, setNewPassword, resetBusy, resetError, resetMessage, resetPassword,
     verificationCaseId, setVerificationCaseId, verificationNotes, setVerificationNotes, verificationBusy,
     verificationError, verificationMessage, reviewVerificationCase,
     logPropertyId, setLogPropertyId, accessLogs, logsBusy, logsError, loadAccessLogs,
@@ -86,6 +85,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           {[
             ["dashboard-home", "نمای کلی"],
             ["user-management", "مدیریت کاربران"],
+            ["agent-management", "مدیریت مشاوران"],
             ["property-management", "مدیریت املاک"],
             ["reports", "گزارش‌ها و سوابق"],
             ["profile", "پروفایل"],
@@ -107,12 +107,12 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <MiniFeature icon={<Users className="h-5 w-5" />} title="مدیریت مشاوران" detail="فهرست مشاوران و صف تأیید هشتی." />
           <MiniFeature icon={<FileSearch className="h-5 w-5" />} title="مغایرت املاک" detail="بررسی مشابهت، ایجاد پرونده و ثبت تصمیم فعال است." />
-          <MiniFeature icon={<LockKeyhole className="h-5 w-5" />} title="بازنشانی رمز" detail="رمز کاربر با شناسهٔ User قابل تغییر است." />
+          <MiniFeature icon={<LockKeyhole className="h-5 w-5" />} title="مدیریت کاربران" detail="جست‌وجو، ویرایش، تغییر وضعیت و بازنشانی رمز حساب‌ها در یک ابزار." />
           <MiniFeature icon={<ShieldCheck className="h-5 w-5" />} title="سوابق دسترسی" detail="سوابق دسترسی به موقعیت دقیق ملک قابل مشاهده است." />
         </div>
       </section>
 
-      <section id="agent-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section id="agent-management" hidden={selectedTool !== "agent-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">مدیریت و تأیید مشاوران</h2>
@@ -252,17 +252,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section id="password-reset" hidden={selectedTool !== "user-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold"><LockKeyhole className="h-5 w-5 text-[#043873]" /> بازنشانی رمز عبور کاربر</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">برای امنیت، رمز فقط با شناسهٔ User تغییر می‌کند و پس از آن نشست‌های قبلی آن حساب باطل می‌شوند. API جست‌وجو/فهرست کاربران در بک‌اند فعلی وجود ندارد.</p>
-          <form onSubmit={(event) => void resetPassword(event)} className="mt-4 space-y-3">
-            <label className="block space-y-1 text-sm font-medium">شناسه User<input value={resetUserId} onChange={(e) => setResetUserId(e.target.value)} dir="ltr" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-            <label className="block space-y-1 text-sm font-medium">رمز جدید<input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-            {resetError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{resetError}</p>}
-            {resetMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{resetMessage}</p>}
-            <button type="submit" disabled={resetBusy} className="rounded-xl bg-[#043873] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{resetBusy ? "در حال تغییر..." : "بازنشانی رمز"}</button>
-          </form>
-        </section>
 
         <section id="verification-case" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-bold">بررسی پروندهٔ تأیید ملک</h2>
@@ -332,7 +321,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           )}
         </section>
 
-        <section hidden={selectedTool !== "user-management"} className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+        <section hidden={selectedTool !== "agent-management"} className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h2 className="font-bold text-amber-950">وضعیت ثبت و تاریخچه تأیید مشاور</h2>
           <p className="mt-3 text-sm leading-7 text-amber-900">برای سازگاری با کد قدیمی، isVerified حفظ شده و وضعیت دقیق بررسی با verificationStatus نگهداری می‌شود. تغییر وضعیت مشاور، دلیل تصمیم و رویدادهای مدیریتی در تاریخچه ثبت می‌شوند.</p>
         </section>
