@@ -7,6 +7,8 @@ type SearchablePrivateNote = { entityType: string; entityId: string; note: strin
 export interface FilterableAgentRequest {
   id: string;
   customerId?: string | null;
+  contactName: string;
+  contactMobile: string | null;
   transactionType: string;
   propertyType: string;
   city: string;
