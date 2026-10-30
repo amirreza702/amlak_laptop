@@ -68,17 +68,7 @@ export function useAuthForm({
     setIsLoading(true);
 
     try {
-      const result = await loginUser(mobile.trim(), password);
-
-      if (result.user.role !== expectedRole) {
-        try {
-          await logoutUser();
-        } catch {
-          // خطای خروج نباید پیام اصلی عدم تطابق نقش را بپوشاند.
-        }
-
-        throw new Error(`این حساب کاربری، حساب ${roleLabel} نیست.`);
-      }
+      const result = await loginUser(mobile.trim(), password, expectedRole);
 
       onSuccess?.();
       onClose();
