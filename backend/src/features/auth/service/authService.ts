@@ -65,7 +65,7 @@ export const registerUserService = async ({
     throw new Error("PASSWORD_TOO_SHORT");
   }
 
-  const existingUser = await findUserByMobile(normalizedMobile);
+  const existingUser = await findUserByMobile(normalizedMobile, role);
 
   if (existingUser) {
     throw new Error("USER_ALREADY_EXISTS");
@@ -91,7 +91,9 @@ export const loginUserService = async (
   expectedRole?: UserRole,
   previousSessionToken?: string
 ) => {
-  const user = await findUserByMobile(mobile);
+  const user = expectedRole
+    ? await findUserByMobile(mobile, expectedRole)
+    : await findUserByMobile(mobile);
 
   if (!user || !user.passwordHash) {
     throw new Error("INVALID_CREDENTIALS");
