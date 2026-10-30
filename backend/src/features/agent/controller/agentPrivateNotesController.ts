@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
-const allowedEntityTypes = new Set(["property", "owner", "customer"]);
+const allowedEntityTypes = new Set(["property", "owner", "customer", "request"]);
 
 function currentUserId(req: Request): string | undefined {
   return (req as AuthenticatedRequest).user?.id;

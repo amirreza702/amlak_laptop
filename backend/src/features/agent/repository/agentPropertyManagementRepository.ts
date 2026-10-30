@@ -16,6 +16,13 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const parsedDate = search ? new Date(search) : null;
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined;
   const exact = search?.trim().toUpperCase();
+  const matchingPrivateNotes = search
+    ? await prisma.agentPrivateNote.findMany({
+        where: { agentId: input.agentId, entityType: "property", note: contains(search) },
+        select: { entityId: true },
+      })
+    : [];
+  const propertyIdsWithMatchingNotes = matchingPrivateNotes.map((item) => item.entityId);
   const fieldConditions: Prisma.PropertyWhereInput[] = [];
   if (input.city?.trim()) fieldConditions.push({ city: contains(input.city.trim()) });
   if (input.district?.trim()) fieldConditions.push({ district: contains(input.district.trim()) });
@@ -53,6 +60,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           { owners: { some: { owner: { is: { firstName: contains(search) } } } } },
           { owners: { some: { owner: { is: { lastName: contains(search) } } } } },
         ] } } },
+        ...(propertyIdsWithMatchingNotes.length ? [{ propertyId: { in: propertyIdsWithMatchingNotes } }] : []),
         { status: exact as any },
         ...(boolSearch !== undefined ? [{ approvedByOwner: boolSearch }, { isFirstRegistrant: boolSearch }] : []),
         ...(validDate ? [

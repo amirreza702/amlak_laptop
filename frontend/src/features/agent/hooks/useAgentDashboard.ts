@@ -5,6 +5,7 @@ import type { UserPublic } from "@/features/auth/api/authApi";
 import { getActiveSearchRequests, getAgentContact, getAgentProfile, updateAgentProfile } from "../api/agentApi";
 import type { ActiveRequest, ContactResult } from "../types/agent";
 import { useAgentRequestFilters } from "./useAgentRequestFilters";
+import { useAgentPrivateNotes } from "./useAgentPrivateNotes";
 
 /** مدیریت وضعیت پروفایل، درخواست‌ها و دسترسی تماس مشاور. */
 export function useAgentDashboard(user: UserPublic) {
@@ -23,6 +24,7 @@ export function useAgentDashboard(user: UserPublic) {
   const [requests, setRequests] = useState<ActiveRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [requestsError, setRequestsError] = useState<string | null>(null);
+  const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes(profileState === "verified");
   const {
     visibleRequests,
     requestSearch, setRequestSearch,
@@ -34,7 +36,7 @@ export function useAgentDashboard(user: UserPublic) {
     requestFrom, setRequestFrom,
     requestTo, setRequestTo,
     resetRequestFilters,
-  } = useAgentRequestFilters(requests);
+  } = useAgentRequestFilters(requests, privateNotes);
   const [contacts, setContacts] = useState<Record<string, ContactResult["customer"]>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -145,6 +147,7 @@ export function useAgentDashboard(user: UserPublic) {
     agencyName, setAgencyName, address, setAddress,
     isSavingProfile, profileSaveMessage, profileSaveError,
     requests, loadingRequests, requestsError,
+    privateNotes, savingNoteKey, saveNote, noteError, noteMessage,
     visibleRequests,
     requestSearch, setRequestSearch,
     requestTransaction, setRequestTransaction,
