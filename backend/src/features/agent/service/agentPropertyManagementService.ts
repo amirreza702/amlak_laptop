@@ -11,7 +11,13 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     ...result,
     properties: result.properties.map((record) => ({
       ...record,
-      canManage: record.status === "ACTIVE" && record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId,
+      canManage: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId,
+      property: {
+        ...record.property,
+        createdByUserId: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId
+          ? record.property.createdByUserId
+          : null,
+      },
     })),
   };
 }
