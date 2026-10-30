@@ -213,7 +213,9 @@ model User {
   owner    Owner?
   agent    Agent?
   createdSearchRequests PropertySearchRequest[] @relation("SearchRequestCreator")
-  createdProperties Property[] @relation("PropertyCreator")\n  createdOwners Owner[] @relation("OwnerCreator")\n  createdCustomers Customer[] @relation("CustomerCreator")
+  createdProperties Property[] @relation("PropertyCreator")
+  createdOwners Owner[] @relation("OwnerCreator")
+  createdCustomers Customer[] @relation("CustomerCreator")
 
   notifications Notification[]
   messages      Message[]
@@ -271,7 +273,9 @@ model Customer {
   // سوابق مشاهده اطلاعات تماس توسط مشاوران
   contactAccessLogs ContactAccessLog[]
 
-  @@index([createdByUserId])\n  @@index([createdByRole])\n  @@map("customers")
+  @@index([createdByUserId])
+  @@index([createdByRole])
+  @@map("customers")
 }
 
 // ============================================================
@@ -367,7 +371,9 @@ model Owner {
   evaluations Evaluation[]
   agentRequests OwnerAgentRequest[]
 
-  @@index([createdByUserId])\n  @@index([createdByRole])\n  @@map("owners")
+  @@index([createdByUserId])
+  @@index([createdByRole])
+  @@map("owners")
 }
 
 // ============================================================
