@@ -97,9 +97,12 @@ function FormDetails({ record }: { record: unknown }) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">فیلد ثبت‌شده‌ای از فرم ایجاد این مورد برای نمایش وجود ندارد.</p>;
   }
 
-  return <dl className="grid gap-3 sm:grid-cols-2">
-    {fields.map(([key, value]) => <FormField key={key} label={formFieldLabels[key] ?? key} value={value} />)}
-  </dl>;
+  return <div className="space-y-4">
+    {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label="موقعیت رکورد" />}
+    <dl className="grid gap-3 sm:grid-cols-2">
+      {fields.map(([key, value]) => <FormField key={key} label={formFieldLabels[key] ?? key} value={value} />)}
+    </dl>
+  </div>;
 }
 
 /** ردیف قابل کلیک جدول؛ مدال فقط فیلدهای ورودی فرم همان رکورد را نشان می‌دهد. */
