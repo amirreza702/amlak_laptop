@@ -5,7 +5,7 @@ import { agentApiRequest } from "../api/agentApi";
 
 export type AgentPrivateNote = {
   id: string;
-  entityType: "property" | "owner" | "customer";
+  entityType: "property" | "owner" | "customer" | "request";
   entityId: string;
   note: string;
   updatedAt: string;
