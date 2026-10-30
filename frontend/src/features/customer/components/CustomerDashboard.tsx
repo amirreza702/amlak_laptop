@@ -167,22 +167,12 @@ export function CustomerDashboard() {
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
           {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span></button>; })}
-          <Link href="/search" title="جست‌وجوی ملک" className="flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-right text-sm font-semibold text-slate-700 hover:bg-blue-50"><span>جست‌وجو</span></Link>
-          <Link href="/request" title="درخواست جدید" className="flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-[#043873] px-3 py-2 text-right text-sm font-semibold text-white"><span>درخواست جدید</span></Link>
         </nav>
       </aside>
       <div className="min-w-0 space-y-5">
       <header hidden={tab === null} className="rounded-xl border border-slate-200 bg-white">
         <div className="flex w-full items-center justify-between gap-3 px-3 py-4 sm:px-5 lg:px-6">
           <Link href="/" className="text-lg font-black text-[#043873]">هشتی</Link>
-          <div className="flex items-center gap-2">
-            <Link href="/search" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50">
-              <Search className="h-4 w-4" /> جست‌وجوی ملک
-            </Link>
-            <Link href="/request" className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-sm font-semibold text-white hover:bg-[#062a5b]">
-              <Plus className="h-4 w-4" /> درخواست جدید
-            </Link>
-          </div>
         </div>
       </header>
 
@@ -232,6 +222,14 @@ export function CustomerDashboard() {
 
             {tab === "requests" && (
               <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Link href="/search" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    <Search className="h-4 w-4" /> جست‌وجوی ملک
+                  </Link>
+                  <Link href="/request" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-semibold text-white hover:bg-[#062a5b]">
+                    <Plus className="h-4 w-4" /> درخواست جدید
+                  </Link>
+                </div>
                 {requests.length === 0 ? <EmptyState text="هنوز درخواستی ثبت نکرده‌اید." action={<Link href="/request" className="font-bold text-[#043873] underline">ثبت درخواست جدید</Link>} /> : <><div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-3"><input aria-label="جست‌وجوی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد، شهر یا توضیحات..." className={inputClass} /><input aria-label="شهر درخواست" value={requestCityFilter} onChange={(event) => setRequestCityFilter(event.target.value)} placeholder="شهر" className={inputClass} /><select aria-label="نوع معامله درخواست" value={requestTransactionFilter} onChange={(event) => setRequestTransactionFilter(event.target.value)} className={inputClass}><option value="all">همه معاملات</option>{transactionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><select aria-label="نوع ملک درخواست" value={requestTypeFilter} onChange={(event) => setRequestTypeFilter(event.target.value)} className={inputClass}><option value="all">همه انواع ملک</option>{propertyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><input aria-label="حداقل بودجه درخواست" type="number" min="0" value={requestBudgetMin} onChange={(event) => setRequestBudgetMin(event.target.value)} placeholder="حداقل بودجه" className={inputClass} /><input aria-label="حداکثر بودجه درخواست" type="number" min="0" value={requestBudgetMax} onChange={(event) => setRequestBudgetMax(event.target.value)} placeholder="حداکثر بودجه" className={inputClass} /><select aria-label="وضعیت درخواست" value={requestStatusFilter} onChange={(event) => setRequestStatusFilter(event.target.value)} className={inputClass}><option value="all">همه وضعیت‌ها</option><option value="ACTIVE">فعال</option><option value="CLOSED">بسته</option></select><div className="flex items-center justify-between gap-2 text-sm text-slate-500"><span>{filteredRequests.length} مورد</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold">پاک‌کردن فیلترها</button></div></div>
                   <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table className="w-full min-w-[1000px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">شهر و بودجه</th><th className="p-3">توضیحات</th><th className="p-3">وضعیت / تاریخ</th><th className="p-3">عملیات</th></tr></thead><tbody>{filteredRequests.map((request) => (
                     <tr key={request.id} className="border-t border-slate-200 align-top">
