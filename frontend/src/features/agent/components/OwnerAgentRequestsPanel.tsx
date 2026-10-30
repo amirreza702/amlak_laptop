@@ -14,7 +14,8 @@ type OwnerRequest = {
   status: string;
   createdAt: string;
   responses?: Array<{ status: string }>;
-  property: { propertyType: string; city: string; district: string; area: number | null; rooms: number | null; listing: { transactionType: string } | null; agents?: Array<{ status: string; approvedByOwner: boolean }> };
+  owner: { createdByRole: string | null };
+  property: { createdByRole: string | null; propertyType: string; city: string; district: string; area: number | null; rooms: number | null; listing: { transactionType: string } | null; agents?: Array<{ status: string; approvedByOwner: boolean }> };
 };
 type AccessResult = {
   owner: { id: string; firstName: string; lastName: string; mobile: string };
