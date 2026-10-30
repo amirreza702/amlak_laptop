@@ -39,7 +39,7 @@ const propertyEditors = [UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI] as con
 
 // اطلاعات عمومی منتشرشده ملک و جست‌وجو عمومی باقی می‌مانند.
 router.get("/properties/search", searchPropertyController);
-router.delete("/agents/me/properties/:id", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, requirePropertyAccess("id", false), deleteAgentManagedOwnerPropertyController);
+router.delete("/agents/me/properties/:id", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), deleteAgentManagedOwnerPropertyController);
 router.get("/properties/:id/public", getPublicPropertyByIdController);
 router.get(
   "/properties/:id",
@@ -81,12 +81,12 @@ router.post(
 router.post(
   "/properties/:id/listing",
   authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent,
-  requirePropertyAccess("id", false, false),
+  requirePropertyAccess("id", false, false, true),
   createPropertyListingController
 );
 router.put(
   "/properties/:id/price",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false), requireAgentOwnRegisteredProperty(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), requireAgentOwnRegisteredProperty(),
   updatePropertyPriceController
 );
 router.put(
@@ -121,7 +121,7 @@ router.patch(
 
 router.patch(
   "/properties/:id",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false), requireAgentOwnRegisteredProperty(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), requireAgentOwnRegisteredProperty(),
   updatePropertyController
 );
 
