@@ -395,8 +395,6 @@ model Agent {
   propertyAgents PropertyAgent[]
   evaluations    Evaluation[]
 
-  // سوابق مشاهده اطلاعات تماس مشتریان
-  contactAccessLogs ContactAccessLog[]
 
   ownerAgentRequestAccessLogs OwnerAgentRequestAccessLog[]
   ownerAgentRequestResponses OwnerAgentRequestResponse[]
