@@ -30,6 +30,7 @@ type PropertyRecord = {
     registrationSource: "OWNER" | "AGENT";
     createdByUserId: string | null;
     createdByRole: "CUSTOMER" | "OWNER" | "AGENT" | "HASHTI" | null;
+    creatorMobile: string | null;
     propertyType: string;
     city: string;
     district: string;
@@ -185,7 +186,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     <p className="font-bold">{propertyLabels[property.propertyType] ?? property.propertyType} در {property.city}، {property.district}</p>
                     <p className="mt-1 text-xs text-slate-600">{property.area ? `${property.area} مترمربع` : "متراژ نامشخص"}{property.rooms !== null ? ` · ${property.rooms} اتاق` : ""}</p>
                     <p className="mt-2 break-all font-mono text-xs text-slate-500" dir="ltr">{property.id}</p>
-                    <p className="mt-1 text-xs text-slate-500">ثبت ملک: {dateLabel(property.createdAt)}</p><p className="mt-1 text-xs text-slate-600">نقش ایجادکننده: {property.createdByRole ? creatorRoleLabels[property.createdByRole] ?? property.createdByRole : "نامشخص (رکورد قدیمی)"}</p>
+                    <p className="mt-1 text-xs text-slate-500">ثبت ملک: {dateLabel(property.createdAt)}</p><p className="mt-1 text-xs text-slate-600">نقش ایجادکننده: {property.createdByRole ? creatorRoleLabels[property.createdByRole] ?? property.createdByRole : "نامشخص (رکورد قدیمی)"}</p><p className="mt-1 text-xs text-slate-700">شماره تماس ثبت‌کننده: {property.creatorMobile ? <a href={`tel:${property.creatorMobile}`} dir="ltr" className="font-semibold text-blue-700 hover:underline">{property.creatorMobile}</a> : "در اطلاعات این رکورد ثبت نشده"}</p>
                     {!property.isActive && <span className="mt-2 inline-block rounded bg-slate-200 px-2 py-1 text-xs">ملک غیرفعال</span>}
                   </td>
                   <td className="p-3">
