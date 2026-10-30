@@ -12,6 +12,8 @@ export interface AgentProfile {
 export interface ActiveRequest {
   id: string;
   customerId: string | null;
+  contactName: string;
+  contactMobile: string | null;
   transactionType: string;
   propertyType: string;
   city: string;
@@ -23,7 +25,4 @@ export interface ActiveRequest {
   isCreatedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
-}
-export interface ContactResult {
-  customer: { id: string; firstName: string; lastName: string; mobile: string };
 }

@@ -36,9 +36,20 @@ export async function getAllAgentSearchRequestsController(req: Request, res: Res
   const rows = await prisma.propertySearchRequest.findMany({
    // در ابزار مدیریت مشتریان مشاور فقط درخواست‌های باز و فعال نمایش داده می‌شوند.
    where: { status: "ACTIVE" },
-   select: { id: true, customerId: true, transactionType: true, propertyType: true, city: true, budget: true, description: true, hashtiVerified: true, status: true, createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true },
+   select: {
+    id: true, customerId: true, requesterMobile: true,
+    customer: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+    transactionType: true, propertyType: true, city: true, budget: true,
+    description: true, hashtiVerified: true, status: true,
+    createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true,
+   },
    orderBy: { createdAt: "desc" },
   });
-  return res.status(200).json(rows.map(({ createdByUserId, ...request }) => ({ ...request, isCreatedByMe: createdByUserId === id })));
+  return res.status(200).json(rows.map(({ createdByUserId, requesterMobile, customer, ...request }) => ({
+   ...request,
+   contactName: customer ? `${customer.firstName} ${customer.lastName}`.trim() : request.createdByRole === UserRole.AGENT ? "مشاور املاک" : "مشتری",
+   contactMobile: requesterMobile ?? customer?.user.mobile ?? null,
+   isCreatedByMe: createdByUserId === id,
+  })));
  } catch (error) { console.error("Could not list search requests for agent:", error); return res.status(500).json({ message: "Internal server error" }); }
 }

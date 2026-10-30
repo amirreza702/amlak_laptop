@@ -11,7 +11,6 @@ import {
   getActivePropertySearchRequestByIdController,
 } from "../controller/propertySearchRequestController";
 import { getCurrentCustomerProfileController } from "../controller/currentCustomerProfileController";
-import { accessCustomerContactController } from "../controller/contactAccessController";
 import {
   getCustomerProfileController,
   updateCustomerProfileController,
@@ -118,16 +117,6 @@ router.get(
   requireRole(UserRole.AGENT),
   requireVerifiedAgent,
   getActivePropertySearchRequestByIdController
-);
-
-// دسترسی مشاور تأییدشده به اطلاعات تماس؛ اشتراک و سهمیه شرط دسترسی نیستند.
-router.post(
-  "/agents/:agentId/search-requests/:searchRequestId/contact",
-  authMiddleware,
-  requireRole(UserRole.AGENT),
-  requireOwnProfile("agent", "agentId"),
-  requireVerifiedAgent,
-  accessCustomerContactController
 );
 
 export default router;

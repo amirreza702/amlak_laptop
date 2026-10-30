@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { UserPublic } from "@/features/auth/api/authApi";
-import { getActiveSearchRequests, getAgentContact, getAgentProfile, updateAgentProfile } from "../api/agentApi";
-import type { ActiveRequest, ContactResult } from "../types/agent";
+import { getActiveSearchRequests, getAgentProfile, updateAgentProfile } from "../api/agentApi";
+import type { ActiveRequest } from "../types/agent";
 import { useAgentRequestFilters } from "./useAgentRequestFilters";
 import { useAgentPrivateNotes } from "./useAgentPrivateNotes";
 
-/** مدیریت وضعیت پروفایل، درخواست‌ها و دسترسی تماس مشاور. */
+/** مدیریت وضعیت پروفایل و درخواست‌های مشاور. */
 export function useAgentDashboard(user: UserPublic) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -37,10 +37,6 @@ export function useAgentDashboard(user: UserPublic) {
     requestTo, setRequestTo,
     resetRequestFilters,
   } = useAgentRequestFilters(requests, privateNotes);
-  const [contacts, setContacts] = useState<Record<string, ContactResult["customer"]>>({});
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
-
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
@@ -96,25 +92,6 @@ export function useAgentDashboard(user: UserPublic) {
     if (profileState === "verified") void Promise.resolve().then(() => loadRequests());
   }, [profileState, loadRequests]);
 
-  const openContact = async (requestId: string) => {
-    if (!profileId) {
-      setRequestsError("شناسهٔ پروفایل مشاور در دسترس نیست؛ دریافت آن به API سمت سرور نیاز دارد.");
-      return;
-    }
-    setBusyId(requestId);
-    setRequestsError(null);
-    setActionMessage(null);
-    try {
-      const result = await getAgentContact(profileId, requestId);
-      setContacts((current) => ({ ...current, [requestId]: result.customer }));
-      setActionMessage("دسترسی به اطلاعات تماس از سرور دریافت شد.");
-    } catch (error: unknown) {
-      setRequestsError(error instanceof Error ? error.message : "دسترسی به اطلاعات تماس انجام نشد.");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!profileId) return;
@@ -158,7 +135,6 @@ export function useAgentDashboard(user: UserPublic) {
     requestFrom, setRequestFrom,
     requestTo, setRequestTo,
     resetRequestFilters,
-    contacts, busyId, actionMessage,
-    loadRequests, openContact, saveProfile,
+    loadRequests, saveProfile,
   };
 }

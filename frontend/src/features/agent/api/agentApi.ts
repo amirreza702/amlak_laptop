@@ -1,4 +1,4 @@
-import type { ActiveRequest, AgentProfile, ContactResult } from "../types/agent";
+import type { ActiveRequest, AgentProfile } from "../types/agent";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -31,14 +31,6 @@ export function getAgentProfile(): Promise<AgentProfile> {
 /** دریافت درخواست‌های فعال مشتریان. */
 export function getActiveSearchRequests(): Promise<ActiveRequest[]> {
   return agentApiRequest<ActiveRequest[]>("/agents/me/search-requests");
-}
-
-/** دریافت اطلاعات تماس مشتری برای یک درخواست؛ مجوز نهایی را سرور بررسی می‌کند. */
-export function getAgentContact(agentId: string, requestId: string): Promise<ContactResult> {
-  return agentApiRequest<ContactResult>(
-    `/agents/${encodeURIComponent(agentId)}/search-requests/${encodeURIComponent(requestId)}/contact`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
-  );
 }
 
 /** ذخیره مشخصات پروفایل مشاور. */

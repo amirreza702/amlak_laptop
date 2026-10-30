@@ -270,9 +270,6 @@ model Customer {
 
   searchRequests PropertySearchRequest[]
 
-  // سوابق مشاهده اطلاعات تماس توسط مشاوران
-  contactAccessLogs ContactAccessLog[]
-
   @@index([createdByUserId])
   @@index([createdByRole])
   @@map("customers")
@@ -338,9 +335,6 @@ model PropertySearchRequest {
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
   createdByUser User? @relation("SearchRequestCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
-
-  // سوابق مشاهده اطلاعات تماس این درخواست توسط مشاوران
-  contactAccessLogs ContactAccessLog[]
 
   
 
@@ -437,58 +431,6 @@ model AgentPrivateNote {
   @@map("agent_private_notes")
 }
 
-// ============================================================
-// CONTACT ACCESS LOG
-// ============================================================
-//
-// ثبت سابقه دسترسی مشاور به اطلاعات تماس مشتری.
-//
-// نکته:
-// در این مرحله فقط دسترسی به Contact مشتری از طریق
-// PropertySearchRequest را پوشش می‌دهیم.
-//
-// بعداً می‌توان همین مفهوم را برای Contact مالک نیز
-// گسترش داد.
-//
-
-model ContactAccessLog {
-  id String @id @default(uuid())
-
-  // مشاوری که اطلاعات تماس را مشاهده کرده است
-  agentId String
-
-  // مشتری صاحب اطلاعات تماس
-  customerId String?
-
-  // درخواست ملکی که از طریق آن Contact مشاهده شده است
-  searchRequestId String
-
-  // زمان مشاهده اطلاعات تماس
-  accessedAt DateTime @default(now())
-
-  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  searchRequest PropertySearchRequest @relation(fields: [searchRequestId], references: [id], onDelete: Cascade)
-
-  // هر مشاور برای هر درخواست فقط یک بار Contact را مشاهده می‌کند
-  //
-  // بنابراین مشاهده دوباره همان Contact برای همان درخواست
-  // نباید یک دسترسی جدید محسوب شود.
-  @@unique([agentId, searchRequestId])
-
-  // دسترسی‌های هر مشاور
-  @@index([agentId, accessedAt])
-
-  // دسترسی‌های هر مشتری
-  @@index([customerId, accessedAt])
-
-  // دسترسی‌های مربوط به یک درخواست
-  @@index([searchRequestId])
-
-  @@map("contact_access_logs")
-}
 
 // ============================================================
 // HASHTI STAFF
