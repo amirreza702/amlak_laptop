@@ -5,7 +5,8 @@ import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
 import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
 
 const roles: Record<UserRole, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" };
-const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };\nconst profileName = (user: AdminUser) => {
+const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };
+const profileName = (user: AdminUser) => {
   const profile = user.customer ?? user.owner ?? user.agent;
   return profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : "—";
 };
@@ -55,7 +56,7 @@ export default function AdminUsersPage() {
               <div className="overflow-x-auto"><table className="w-full min-w-[900px] border-collapse text-right text-sm">
                 <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش حساب</th><th className="px-4 py-3">نقش ایجادکننده پروفایل</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تأیید مشاور</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
                 <tbody>{users.map(user => <tr key={user.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
+                  <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td><td className="px-4 py-3">{user.customer || user.owner ? creatorRoleName(user) : "—"}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
                   <td className="px-4 py-3">{user.agent ? (user.agent.isVerified ? "تأییدشده" : "تأییدنشده") : "—"}</td><td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || Boolean(user.isSuperAdmin)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
                 </tr>)}</tbody>
