@@ -149,7 +149,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
               <thead className="bg-slate-100"><tr><th className="p-3">رکورد مشاور</th><th className="p-3">حساب</th><th className="p-3">وضعیت تأیید</th><th className="p-3">یادداشت و آخرین بررسی</th><th className="p-3">عملیات</th></tr></thead>
               <tbody>
                 {visibleManagedAgents.map((agent) => (
-                  <RecordDetailsRow key={agent.id} record={agent} title="رکورد" className="border-t border-slate-200 align-top">
+                  <RecordDetailsRow key={agent.id} record={{ ...agent, mobile: agent.user.mobile }} title="رکورد" className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{agent.firstName} {agent.lastName}</p><p className="mt-1">{agent.agencyName || "بدون نام دفتر"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{idText(agent.id)}</p></td>
                     <td className="p-3"><p dir="ltr">{agent.user.mobile}</p><p className="mt-1">{agent.user.isActive ? "فعال" : "غیرفعال"}</p></td>
                     <td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${agent.verificationStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-800" : agent.verificationStatus === "REJECTED" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{agent.verificationStatus === "VERIFIED" ? "تأییدشده" : agent.verificationStatus === "REJECTED" ? "ردشده" : "در انتظار بررسی"}</span></td>
