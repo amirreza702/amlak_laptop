@@ -1,9 +1,12 @@
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
-/** یافتن کاربر با شماره موبایل */
-export async function findUserByMobile(mobile: string) {
-  return prisma.user.findUnique({ where: { mobile } });
+/** یافتن حساب با شماره موبایل و در صورت مشخص بودن نقش همان حساب */
+export async function findUserByMobile(mobile: string, role?: UserRole) {
+  if (role) {
+    return prisma.user.findUnique({ where: { mobile_role: { mobile, role } } });
+  }
+  return prisma.user.findFirst({ where: { mobile }, orderBy: { createdAt: "asc" } });
 }
 
 /**
