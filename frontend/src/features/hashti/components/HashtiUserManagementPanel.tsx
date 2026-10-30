@@ -72,7 +72,9 @@ export function HashtiUserManagementPanel() {
     if (active !== "ALL") params.set("active", active);
     try {
       const result = await requestJson<{ users: ManagedUser[]; pagination: { total: number; limit: number; offset: number } }>(`/hashti/management/users?${params.toString()}`);
-      setUsers(result.users); setTotal(result.pagination.total); setOffset(result.pagination.offset);
+      // فقط حساب‌های عمومی سامانه در این ابزار نمایش داده می‌شوند؛ حساب‌های داخلی هشتی و مدیر ارشد حذف می‌شوند.
+      setUsers(result.users.filter((user) => (user.role === "CUSTOMER" || user.role === "OWNER" || user.role === "AGENT") && !user.isSuperAdmin));
+      setTotal(result.pagination.total); setOffset(result.pagination.offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : "دریافت کاربران ناموفق بود."); setUsers([]);
     } finally { setLoading(false); }
@@ -208,7 +210,7 @@ export function HashtiUserManagementPanel() {
 
   return (
     <section className="space-y-5 rounded-2xl border border-blue-200 bg-slate-50 p-4 sm:p-6" dir="rtl">
-      <div><h2 className="flex items-center gap-2 text-xl font-bold text-slate-900"><UserRoundCog className="h-6 w-6 text-[#043873]" /> مدیریت کاربران، مالکان، مشاوران و کارکنان هشتی</h2><p className="mt-2 text-sm leading-7 text-slate-600">کارکنان هشتی می‌توانند حساب‌های کاربران، مالکان و مشاوران را جست‌وجو، ویرایش و بررسی تاریخچه کنند. ساخت و مدیریت حساب‌های کارکنان هشتی و بازنشانی رمز فقط برای مدیر ارشد فعال است.</p></div>
+      <div><h2 className="flex items-center gap-2 text-xl font-bold text-slate-900"><UserRoundCog className="h-6 w-6 text-[#043873]" /> مدیریت کاربران، مالکان و مشاوران</h2><p className="mt-2 text-sm leading-7 text-slate-600">در این بخش فقط حساب‌های مشتریان، مالکان و مشاوران نمایش داده می‌شود. حساب‌های داخلی هشتی و مدیران در فهرست کاربران عمومی قرار نمی‌گیرند.</p></div>
       {isSuperAdmin && <div className="flex justify-end"><button type="button" onClick={() => setCreateStaffModalOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white"><UserRoundCog className="h-4 w-4" /> ایجاد همکار هشتی</button></div>}
       <Modal open={createStaffModalOpen} title="ایجاد حساب همکار هشتی" description="حساب همکار ایجاد می‌شود و به‌صورت خودکار مدیر ارشد نخواهد بود." onClose={() => setCreateStaffModalOpen(false)}>
         <form onSubmit={createStaff} className="grid gap-3 sm:grid-cols-2">
@@ -223,7 +225,7 @@ export function HashtiUserManagementPanel() {
 
       <form onSubmit={submitSearch} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1 text-sm">جست‌وجو با شماره، نام یا نام خانوادگی<input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="مثلاً شماره موبایل یا نام" /></label>
-        <label className="space-y-1 text-sm">نوع حساب<select value={role} onChange={(event) => { setRole(event.target.value as typeof role); setOffset(0); }} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="ALL">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option><option value="HASHTI">کارمند هشتی</option></select></label>
+        <label className="space-y-1 text-sm">نوع حساب<select value={role} onChange={(event) => { setRole(event.target.value as typeof role); setOffset(0); }} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="ALL">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option></select></label>
         <label className="space-y-1 text-sm">وضعیت حساب<select value={active} onChange={(event) => { setActive(event.target.value as typeof active); setOffset(0); }} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="ALL">همه وضعیت‌ها</option><option value="true">فعال</option><option value="false">غیرفعال</option></select></label>
         <div className="flex items-end gap-2"><button type="submit" className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#043873] px-3 py-2.5 text-sm font-bold text-white"><Search className="h-4 w-4" /> جست‌وجو</button><button type="button" onClick={() => { setQuery(""); setAppliedQuery(""); setRole("ALL"); setActive("ALL"); setOffset(0); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold"><RefreshCw className="h-4 w-4" /> پاک‌سازی</button></div>
       </form>
