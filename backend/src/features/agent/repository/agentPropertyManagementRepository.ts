@@ -47,7 +47,9 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   if (input.district?.trim()) fieldConditions.push({ district: contains(input.district.trim()) });
   if (input.postalCode?.trim()) fieldConditions.push({ postalCode: contains(input.postalCode.trim()) });
   if (input.propertyType) fieldConditions.push({ propertyType: input.propertyType as PropertyType });
-  if (input.isActive !== undefined) fieldConditions.push({ isActive: input.isActive });
+  // املاک غیرفعال‌شده توسط مالک/سامانه در پنل مشاور نمایش داده نمی‌شوند.
+  fieldConditions.push({ isActive: true });
+  if (input.isActive === false) fieldConditions.push({ isActive: false });
   if (input.areaMin !== undefined || input.areaMax !== undefined) {
     fieldConditions.push({ area: {
       ...(input.areaMin !== undefined ? { gte: input.areaMin } : {}),
@@ -176,7 +178,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         ...propertyData,
         // برای املاک فاقد رابطه، اطلاعات هویتی و موقعیت دقیق مالک محفوظ می‌ماند.
         ...(hasUsableRelation ? {} : {
-          createdByUserId: null,
           address: "برای مشاهده نشانی دقیق، ابتدا باید همکاری مالک با مشاور تأیید شود.",
           latitudeExact: property.latitudePublic,
           longitudeExact: property.longitudePublic,
