@@ -144,7 +144,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">مدیریت املاک و یادداشت‌های خصوصی</h2>
-          <p className="mt-1 text-sm leading-7 text-slate-600">همه املاک ثبت‌شده سامانه نمایش داده می‌شوند؛ وضعیت ارتباط شما با هر ملک جداگانه مشخص است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
+          <p className="mt-1 text-sm leading-7 text-slate-600">فقط املاک فعال نمایش داده می‌شوند؛ وضعیت ارتباط شما با هر ملک جداگانه مشخص است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
         </div>
         <button type="button" onClick={() => { void load(pagination.offset); }} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
@@ -160,7 +160,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           <select value={filters.propertyType} onChange={e => setFilters(v => ({...v,propertyType:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه انواع ملک</option>{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
           <select value={filters.transactionType} onChange={e => setFilters(v => ({...v,transactionType:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه معاملات</option><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select>
           <select value={filters.listingStatus} onChange={e => setFilters(v => ({...v,listingStatus:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">همه وضعیت‌های آگهی</option>{Object.entries(listingLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
-          <select value={filters.isActive} onChange={e => setFilters(v => ({...v,isActive:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">فعال و غیرفعال</option><option value="true">فعال</option><option value="false">غیرفعال</option></select>
+          <select value={filters.isActive} onChange={e => setFilters(v => ({...v,isActive:e.target.value}))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">فقط املاک فعال</option><option value="true">فعال</option></select>
           <input type="number" min="0" value={filters.areaMin} onChange={e => setFilters(v => ({...v,areaMin:e.target.value}))} placeholder="حداقل متراژ" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
           <input type="number" min="0" value={filters.areaMax} onChange={e => setFilters(v => ({...v,areaMax:e.target.value}))} placeholder="حداکثر متراژ" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
           <input type="number" min="0" value={filters.roomsMin} onChange={e => setFilters(v => ({...v,roomsMin:e.target.value}))} placeholder="حداقل اتاق" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
@@ -169,7 +169,6 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
         <div className="flex flex-wrap gap-2"><button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" /> اعمال فیلترها</button><button type="button" onClick={() => { const empty={city:"",district:"",postalCode:"",ownerName:"",propertyType:"",transactionType:"",listingStatus:"",isActive:"",areaMin:"",areaMax:"",roomsMin:"",roomsMax:""}; setFilters(empty); setAppliedFilters(empty); setQuery(""); setAppliedQuery(""); }} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm">پاک‌کردن فیلترها</button></div>
       </form>
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
       {actionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{actionMessage}</p>}
       {noteError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{noteError}</p>}
       {noteMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{noteMessage}</p>}
@@ -222,6 +221,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
       </div>
       <Modal open={Boolean(editingProperty)} title="ویرایش مشخصات ملک" description="تغییرات در سابقهٔ ملک ثبت می‌شوند." onClose={() => setEditingProperty(null)} size="full">
         <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
+          {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{actionError}</p>}
           <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value as PropertyType}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label className="space-y-1 text-sm">شهر<input required maxLength={100} value={editValues.city} onChange={e=>setEditValues(v=>({...v,city:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
           <label className="space-y-1 text-sm">محله / منطقه<input required maxLength={120} value={editValues.district} onChange={e=>setEditValues(v=>({...v,district:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
@@ -237,7 +237,10 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
         </form>
       </Modal>
       <Modal open={Boolean(deletingPropertyId)} title="حذف ملک از فهرست فعال" description="اطلاعات و سوابق ملک پاک نمی‌شوند؛ فقط از فهرست فعال خارج می‌شود." onClose={() => setDeletingPropertyId(null)}>
-        <div className="flex justify-end gap-2"><button type="button" onClick={()=>setDeletingPropertyId(null)} className="rounded-lg border px-4 py-2">انصراف</button><button type="button" onClick={()=>void deleteOwnerProperty()} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white">تأیید حذف</button></div>
+        <div className="space-y-3">
+          {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
+          <div className="flex justify-end gap-2"><button type="button" onClick={()=>setDeletingPropertyId(null)} className="rounded-lg border px-4 py-2">انصراف</button><button type="button" onClick={()=>void deleteOwnerProperty()} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white">تأیید حذف</button></div>
+        </div>
       </Modal>
     </section>
   );
