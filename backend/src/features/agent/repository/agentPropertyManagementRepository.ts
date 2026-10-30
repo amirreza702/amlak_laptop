@@ -176,9 +176,13 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         ...(relation ? {} : {
           createdByUserId: null,
           address: "برای مشاهده نشانی دقیق، ابتدا باید همکاری مالک با مشاور تأیید شود.",
-          latitudeExact: property.latitudePublic ?? 0,
-          longitudeExact: property.longitudePublic ?? 0,
+          latitudeExact: property.latitudePublic,
+          longitudeExact: property.longitudePublic,
           owners: [],
+          listing: property.listing ? {
+            ...property.listing,
+            ...(property.listing.status === "PUBLISHED" ? {} : { salePrice: null, depositAmount: null, rentAmount: null }),
+          } : null,
         }),
       },
     };
