@@ -13,6 +13,8 @@ type RecordDetailsRowProps = {
 
 const formFieldLabels: Record<string, string> = {
   firstName: "نام", lastName: "نام خانوادگی", mobile: "شماره موبایل",
+  propertyId: "شناسه ملک", ownerId: "شناسه مالک", agentId: "شناسه مشاور",
+  userId: "شناسه کاربر", customerId: "شناسه مشتری", requestId: "شناسه درخواست", role: "نقش",
   agencyName: "نام آژانس", address: "نشانی", city: "شهر", district: "محله / منطقه",
   postalCode: "کد پستی", propertyType: "نوع ملک", transactionType: "نوع معامله",
   description: "توضیحات", notes: "یادداشت", reason: "دلیل",
