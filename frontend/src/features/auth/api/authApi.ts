@@ -156,7 +156,7 @@ export interface AdminUser {
   createdAt: string;
   updatedAt: string;
   customer: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null; createdByUser?: { mobile: string } | null } | null;
-  owner: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null } | null;
+  owner: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null; createdByUser?: { mobile: string } | null } | null;
   agent: {
     id: string;
     firstName: string;
