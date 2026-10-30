@@ -155,8 +155,8 @@ export interface AdminUser {
   adminPermissions?: string[];
   createdAt: string;
   updatedAt: string;
-  customer: { id: string; firstName: string; lastName: string } | null;
-  owner: { id: string; firstName: string; lastName: string } | null;
+  customer: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null } | null;
+  owner: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null } | null;
   agent: {
     id: string;
     firstName: string;
