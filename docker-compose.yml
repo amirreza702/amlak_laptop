@@ -11,7 +11,7 @@ services:
 
   backend:
     build: ./backend
-    command: sh -c "npx prisma generate && npx prisma db push && npx tsx watch src/app.ts"
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npx tsx watch src/app.ts"
     environment:
       PORT: 4000
       DATABASE_URL: postgresql://postgres:1234@db:5432/amlak
