@@ -39,13 +39,13 @@ export async function createUser(data: {
     let profileId: string;
     if (data.role === UserRole.CUSTOMER) {
       const profile = await tx.customer.create({
-        data: { userId: user.id, firstName: data.firstName, lastName: data.lastName },
+        data: { userId: user.id, firstName: data.firstName, lastName: data.lastName, createdByUserId: user.id, createdByRole: data.role },
         select: { id: true },
       });
       profileId = profile.id;
     } else if (data.role === UserRole.OWNER) {
       const profile = await tx.owner.create({
-        data: { userId: user.id, firstName: data.firstName, lastName: data.lastName },
+        data: { userId: user.id, firstName: data.firstName, lastName: data.lastName, createdByUserId: user.id, createdByRole: data.role },
         select: { id: true },
       });
       profileId = profile.id;
