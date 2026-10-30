@@ -158,9 +158,9 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           <div><h2 className="text-lg font-bold">مدیریت املاک</h2><p className="mt-1 text-sm text-slate-600">رکوردهای ملک مرتبط با حساب مشاور را مدیریت کنید.</p></div>
           <button type="button" onClick={() => setPropertyModalOpen(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
         </section>
-        <AgentPropertyManagementPanel />
+        <AgentPropertyManagementPanel notes={privateNotes} savingNoteKey={savingNoteKey} saveNote={saveNote} noteError={noteError} noteMessage={noteMessage} />
         <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
-          <PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { await agentApiRequest("/agents/me/private-notes", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "property", entityId: propertyId, note }) }); }} />
+          <PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { if (!(await saveNote("property", propertyId, note))) throw new Error("ذخیره یادداشت خصوصی ملک ناموفق بود."); }} />
         </Modal>
       </>}
             {profileState === "verified" && (
@@ -246,7 +246,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             )}
           </section>
 
-          <section hidden={selectedTool !== "owner-management"}>{profileId && <OwnerAgentRequestsPanel agentId={profileId} />}</section>
+          <section hidden={selectedTool !== "owner-management"}>{profileId && <OwnerAgentRequestsPanel agentId={profileId} notes={privateNotes} savingNoteKey={savingNoteKey} saveNote={saveNote} noteError={noteError} noteMessage={noteMessage} />}</section>
           
 
           <div className="grid gap-3 lg:grid-cols-2">

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
-import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
+import type { AgentPrivateNote } from "../hooks/useAgentPrivateNotes";
 
 type OwnerRequest = {
   id: string;
@@ -23,7 +23,14 @@ type AccessResult = {
 const propertyLabels: Record<string, string> = { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" };
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
 
-export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
+export function OwnerAgentRequestsPanel({ agentId, notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage }: {
+  agentId: string;
+  notes: AgentPrivateNote[];
+  savingNoteKey: string | null;
+  saveNote: (entityType: AgentPrivateNote["entityType"], entityId: string, note: string) => Promise<boolean>;
+  noteError: string | null;
+  noteMessage: string | null;
+}) {
   const [requests, setRequests] = useState<OwnerRequest[]>([]);
   const [access, setAccess] = useState<Record<string, AccessResult>>({});
   const [loading, setLoading] = useState(true);
@@ -31,7 +38,6 @@ export function OwnerAgentRequestsPanel({ agentId }: { agentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [filters, setFilters] = useState({ text: "", ownerName: "", ownerMobile: "", city: "", district: "", propertyType: "", transactionType: "", status: "", areaMin: "", areaMax: "", roomsMin: "", roomsMax: "" });
-  const { notes: privateNotes, savingNoteKey, saveNote, noteError, noteMessage } = useAgentPrivateNotes();
 
   const load = useCallback(async () => {
     if (!agentId) return;

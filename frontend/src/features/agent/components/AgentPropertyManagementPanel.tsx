@@ -7,7 +7,7 @@ import { LoaderCircle, RefreshCw, Search, Pencil, Trash2 } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
-import { useAgentPrivateNotes } from "../hooks/useAgentPrivateNotes";
+import type { AgentPrivateNote } from "../hooks/useAgentPrivateNotes";
 
 const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
   ssr: false,
@@ -60,7 +60,13 @@ const verificationLabels: Record<string, string> = { PENDING: "در انتظار
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleDateString("fa-IR") : "—";
 
-export function AgentPropertyManagementPanel() {
+export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, noteError, noteMessage }: {
+  notes: AgentPrivateNote[];
+  savingNoteKey: string | null;
+  saveNote: (entityType: AgentPrivateNote["entityType"], entityId: string, note: string) => Promise<boolean>;
+  noteError: string | null;
+  noteMessage: string | null;
+}) {
   const [properties, setProperties] = useState<PropertyRecord[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ total: 0, limit: 25, offset: 0 });
   const [query, setQuery] = useState("");
@@ -75,7 +81,6 @@ export function AgentPropertyManagementPanel() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { notes, savingNoteKey, saveNote, noteError, noteMessage, refreshNotes } = useAgentPrivateNotes();
 
   const load = useCallback(async (offset = 0, search = appliedQuery, currentFilters = appliedFilters) => {
     setLoading(true);
@@ -135,7 +140,7 @@ export function AgentPropertyManagementPanel() {
           <h2 className="text-lg font-bold">مدیریت املاک و یادداشت‌های خصوصی</h2>
           <p className="mt-1 text-sm leading-7 text-slate-600">هر ردیف یک رکورد واقعی ملک مرتبط با این مشاور است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
         </div>
-        <button type="button" onClick={() => { void load(pagination.offset); void refreshNotes(); }} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
+        <button type="button" onClick={() => { void load(pagination.offset); }} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
         </button>
       </div>
