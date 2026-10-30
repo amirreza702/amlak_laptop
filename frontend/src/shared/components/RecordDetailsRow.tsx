@@ -3,6 +3,9 @@
 import { useEffect, useState, type ReactNode, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "@/shared/components/Modal";
+import dynamic from "next/dynamic";
+
+const RecordLocationMap = dynamic(() => import("@/shared/components/RecordLocationMap"), { ssr: false });
 
 type RecordDetailsRowProps = {
   record: unknown;
@@ -61,12 +64,32 @@ function FormField({ label, value }: { label: string; value: unknown }) {
   </div>;
 }
 
+function findCoordinates(value: unknown, depth = 0): { latitude: number; longitude: number } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || depth > 4) return null;
+  const data = value as Record<string, unknown>;
+  const latitudeValue = data.latitudeExact ?? data.latitude ?? data.lat;
+  const longitudeValue = data.longitudeExact ?? data.longitude ?? data.lng ?? data.lon;
+  const latitude = typeof latitudeValue === "number" ? latitudeValue : Number(latitudeValue);
+  const longitude = typeof longitudeValue === "number" ? longitudeValue : Number(longitudeValue);
+  if (latitudeValue !== null && latitudeValue !== undefined && longitudeValue !== null && longitudeValue !== undefined &&
+      Number.isFinite(latitude) && Number.isFinite(longitude) &&
+      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180 &&
+      (latitude !== 0 || longitude !== 0)) {
+    return { latitude, longitude };
+  }
+  for (const child of Object.values(data)) {
+    const found = findCoordinates(child, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
 function FormDetails({ record }: { record: unknown }) {
   if (!record || typeof record !== "object" || Array.isArray(record)) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm">اطلاعات فرم برای نمایش وجود ندارد.</p>;
   }
 
-  const fields = Object.entries(record as Record<string, unknown>)
+  const coordinates = findCoordinates(record);\n  const fields = Object.entries(record as Record<string, unknown>)
     .filter(([key]) => formFieldKeys.has(key) && !hiddenField.test(key));
 
   if (!fields.length) {
