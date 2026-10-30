@@ -89,7 +89,8 @@ function FormDetails({ record }: { record: unknown }) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm">اطلاعات فرم برای نمایش وجود ندارد.</p>;
   }
 
-  const coordinates = findCoordinates(record);\n  const fields = Object.entries(record as Record<string, unknown>)
+  const coordinates = findCoordinates(record);
+  const fields = Object.entries(record as Record<string, unknown>)
     .filter(([key]) => formFieldKeys.has(key) && !hiddenField.test(key));
 
   if (!fields.length) {
