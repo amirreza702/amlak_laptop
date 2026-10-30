@@ -13,7 +13,7 @@
  *   ↓
  * بررسی PropertyOwner
  *   ↓
- * بررسی VERIFIED بودن Owner
+ * بررسی تعلق ملک به مالک
  *   ↓
  * بررسی PropertyAgent
  *   ↓
@@ -22,10 +22,7 @@
  * ثبت PropertyHistory
  */
 
-import {
-  VerificationStatus,
-  PropertyHistoryAction,
-} from "@prisma/client";
+import { PropertyHistoryAction } from "@prisma/client";
 
 import {
   findPropertyAgent,
@@ -87,21 +84,6 @@ export async function approvePropertyAgentByOwnerService(
   if (!propertyOwner) {
     throw new Error(
       "این مالک به ملک مورد نظر متصل نیست."
-    );
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * 3. مالک باید VERIFIED باشد
-   * ----------------------------------------------------------
-   */
-
-  if (
-    propertyOwner.verificationStatus !==
-    VerificationStatus.VERIFIED
-  ) {
-    throw new Error(
-      "مالک هنوز توسط هشتی تأیید نشده است."
     );
   }
 
