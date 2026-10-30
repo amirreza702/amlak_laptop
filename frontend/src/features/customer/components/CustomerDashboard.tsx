@@ -34,6 +34,7 @@ import {
   markUserNotificationAsRead,
 } from "@/features/notification/api/notificationApi";
 import { Modal } from "@/shared/components/Modal";
+import { CustomerSearchRequestPage } from "./CustomerSearchRequestPage";
 
 type DashboardTab = "requests" | "favorites" | "notifications" | "profile";
 
@@ -70,6 +71,7 @@ function propertyLabel(value: string): string {
 
 export function CustomerDashboard() {
   const [tab, setTab] = useState<DashboardTab | null>(null);
+  const [isCreateRequestOpen, setIsCreateRequestOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ kind: "close-request" | "remove-favorite"; id: string } | null>(null);
   const [favoritesSearch, setFavoritesSearch] = useState("");
   const [notificationsSearch, setNotificationsSearch] = useState("");
@@ -226,11 +228,11 @@ export function CustomerDashboard() {
                   <Link href="/search" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                     <Search className="h-4 w-4" /> جست‌وجوی ملک
                   </Link>
-                  <Link href="/request" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-semibold text-white hover:bg-[#062a5b]">
+                  <button type="button" onClick={() => setIsCreateRequestOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#043873] px-4 py-2 text-sm font-semibold text-white hover:bg-[#062a5b]">
                     <Plus className="h-4 w-4" /> درخواست جدید
-                  </Link>
+                  </button>
                 </div>
-                {requests.length === 0 ? <EmptyState text="هنوز درخواستی ثبت نکرده‌اید." action={<Link href="/request" className="font-bold text-[#043873] underline">ثبت درخواست جدید</Link>} /> : <><div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-3"><input aria-label="جست‌وجوی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد، شهر یا توضیحات..." className={inputClass} /><input aria-label="شهر درخواست" value={requestCityFilter} onChange={(event) => setRequestCityFilter(event.target.value)} placeholder="شهر" className={inputClass} /><select aria-label="نوع معامله درخواست" value={requestTransactionFilter} onChange={(event) => setRequestTransactionFilter(event.target.value)} className={inputClass}><option value="all">همه معاملات</option>{transactionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><select aria-label="نوع ملک درخواست" value={requestTypeFilter} onChange={(event) => setRequestTypeFilter(event.target.value)} className={inputClass}><option value="all">همه انواع ملک</option>{propertyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><input aria-label="حداقل بودجه درخواست" type="number" min="0" value={requestBudgetMin} onChange={(event) => setRequestBudgetMin(event.target.value)} placeholder="حداقل بودجه" className={inputClass} /><input aria-label="حداکثر بودجه درخواست" type="number" min="0" value={requestBudgetMax} onChange={(event) => setRequestBudgetMax(event.target.value)} placeholder="حداکثر بودجه" className={inputClass} /><select aria-label="وضعیت درخواست" value={requestStatusFilter} onChange={(event) => setRequestStatusFilter(event.target.value)} className={inputClass}><option value="all">همه وضعیت‌ها</option><option value="ACTIVE">فعال</option><option value="CLOSED">بسته</option></select><div className="flex items-center justify-between gap-2 text-sm text-slate-500"><span>{filteredRequests.length} مورد</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold">پاک‌کردن فیلترها</button></div></div>
+                {requests.length === 0 ? <EmptyState text="هنوز درخواستی ثبت نکرده‌اید." action={<button type="button" onClick={() => setIsCreateRequestOpen(true)} className="font-bold text-[#043873] underline">ثبت درخواست جدید</button>} /> : <><div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-3"><input aria-label="جست‌وجوی درخواست" value={requestSearch} onChange={(event) => setRequestSearch(event.target.value)} placeholder="کد، شهر یا توضیحات..." className={inputClass} /><input aria-label="شهر درخواست" value={requestCityFilter} onChange={(event) => setRequestCityFilter(event.target.value)} placeholder="شهر" className={inputClass} /><select aria-label="نوع معامله درخواست" value={requestTransactionFilter} onChange={(event) => setRequestTransactionFilter(event.target.value)} className={inputClass}><option value="all">همه معاملات</option>{transactionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><select aria-label="نوع ملک درخواست" value={requestTypeFilter} onChange={(event) => setRequestTypeFilter(event.target.value)} className={inputClass}><option value="all">همه انواع ملک</option>{propertyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><input aria-label="حداقل بودجه درخواست" type="number" min="0" value={requestBudgetMin} onChange={(event) => setRequestBudgetMin(event.target.value)} placeholder="حداقل بودجه" className={inputClass} /><input aria-label="حداکثر بودجه درخواست" type="number" min="0" value={requestBudgetMax} onChange={(event) => setRequestBudgetMax(event.target.value)} placeholder="حداکثر بودجه" className={inputClass} /><select aria-label="وضعیت درخواست" value={requestStatusFilter} onChange={(event) => setRequestStatusFilter(event.target.value)} className={inputClass}><option value="all">همه وضعیت‌ها</option><option value="ACTIVE">فعال</option><option value="CLOSED">بسته</option></select><div className="flex items-center justify-between gap-2 text-sm text-slate-500"><span>{filteredRequests.length} مورد</span><button type="button" onClick={resetRequestFilters} className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold">پاک‌کردن فیلترها</button></div></div>
                   <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table className="w-full min-w-[1000px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">شهر و بودجه</th><th className="p-3">توضیحات</th><th className="p-3">وضعیت / تاریخ</th><th className="p-3">عملیات</th></tr></thead><tbody>{filteredRequests.map((request) => (
                     <tr key={request.id} className="border-t border-slate-200 align-top">
                       {editingId === request.id ? <td colSpan={5} className="p-4"><Modal open={editingId === request.id} title="ویرایش درخواست" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingId(null)} size="xl"><div className="space-y-4"><h3 className="font-bold">ویرایش درخواست</h3><div className="grid gap-3 sm:grid-cols-2">
@@ -278,6 +280,19 @@ export function CustomerDashboard() {
         )}
       </section>
       </div>
+      <Modal open={isCreateRequestOpen} title="ثبت درخواست جدید" description="مشخصات ملک موردنظرتان را وارد کنید." onClose={() => setIsCreateRequestOpen(false)} size="xl">
+        <CustomerSearchRequestPage
+          compact
+          onClose={() => {
+            setIsCreateRequestOpen(false);
+            if (profile && user) {
+              void runAction("refresh", async () => {
+                setActionMessage("درخواست جدید با موفقیت ثبت شد.");
+              });
+            }
+          }}
+        />
+      </Modal>
       <Modal open={Boolean(confirmAction)} title={confirmAction?.kind === "close-request" ? "بستن درخواست" : "حذف از علاقه‌مندی‌ها"} description={confirmAction?.kind === "close-request" ? "پس از بستن درخواست، دیگر به‌عنوان درخواست فعال نمایش داده نمی‌شود." : "این ملک از فهرست علاقه‌مندی‌های شما حذف خواهد شد."} onClose={() => setConfirmAction(null)}>
         <div className="space-y-4">
           <p className="text-sm leading-7 text-slate-700">آیا از انجام این عملیات مطمئن هستید؟</p>
