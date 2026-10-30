@@ -26,6 +26,7 @@ type PropertyRecord = {
     id: string;
     registrationSource: "OWNER" | "AGENT";
     createdByUserId: string;
+    createdByRole: "CUSTOMER" | "OWNER" | "AGENT" | "HASHTI" | null;
     propertyType: string;
     city: string;
     district: string;
