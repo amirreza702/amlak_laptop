@@ -51,11 +51,6 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
     throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
   }
 
-  const relation = await prisma.propertyAgent.findFirst({
-    where: { propertyId, status: "ACTIVE", agent: { is: { userId } } },
-    select: { propertyId: true },
-  });
-  if (!relation) throw new Error("PROPERTY_AGENT_RELATION_NOT_FOUND");
   if (!property.isActive) throw new Error("PROPERTY_ALREADY_DELETED");
 
   return prisma.$transaction(async (tx) => {
@@ -71,6 +66,21 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
         reason: "مشاور ثبت‌کننده، ملک خود را از فهرست فعال خارج کرد؛ سوابق حفظ شدند.",
       },
     });
+    return updated;
+  });
+}
+
+
+/** مالک می‌تواند ملکی را که قبلاً از فهرست فعال خارج کرده دوباره فعال کند. */
+export async function reactivateOwnPropertyService(propertyId: string, userId: string) {
+  const ownership = await prisma.propertyOwner.findFirst({ where: { propertyId, owner: { userId } }, select: { propertyId: true } });
+  if (!ownership) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
+  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { id: true, isActive: true } });
+  if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  if (property.isActive) throw new Error("PROPERTY_ALREADY_ACTIVE");
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.property.update({ where: { id: propertyId }, data: { isActive: true } });
+    await tx.propertyHistory.create({ data: { propertyId, action: PropertyHistoryAction.OTHER, field: "isActive", oldValue: "false", newValue: "true", performedBy: userId, reason: "مالک ملک را دوباره فعال کرد." } });
     return updated;
   });
 }
