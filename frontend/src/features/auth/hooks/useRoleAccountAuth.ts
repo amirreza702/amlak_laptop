@@ -15,7 +15,7 @@ export type AuthMode = "login" | "register";
 
 function translateError(message: string): string {
   if (message.includes("already registered")) {
-    return "این شماره موبایل قبلاً ثبت شده است؛ حالت ورود را انتخاب کنید.";
+    return "برای این شماره موبایل، حسابی با این نقش از قبل وجود دارد؛ حالت ورود را انتخاب کنید.";
   }
   if (message.includes("Invalid Iranian mobile number")) {
     return "شماره موبایل باید با 09 شروع شود و ۱۱ رقم داشته باشد.";
