@@ -180,7 +180,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
               const property = record.property;
               const latestCase = property.verificationCases[0];
               return (
-                <RecordDetailsRow key={property.id} record={record} title="رکورد" className="border-t border-slate-200 align-top">
+                <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
                   <td className="p-3">
                     <p className="font-bold">{propertyLabels[property.propertyType] ?? property.propertyType} در {property.city}، {property.district}</p>
                     <p className="mt-1 text-xs text-slate-600">{property.area ? `${property.area} مترمربع` : "متراژ نامشخص"}{property.rooms !== null ? ` · ${property.rooms} اتاق` : ""}</p>
