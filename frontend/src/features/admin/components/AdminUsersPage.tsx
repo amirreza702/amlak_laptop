@@ -5,7 +5,8 @@ import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
 import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
 
 const roles: Record<UserRole, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" };
-const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };\nconst creatorIdentity = (user: AdminUser) => user.customer?.createdByUser?.mobile ?? user.owner?.createdByUser?.mobile ?? "نامشخص (رکورد قدیمی)";
+const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };
+const creatorIdentity = (user: AdminUser) => user.customer?.createdByUser?.mobile ?? user.owner?.createdByUser?.mobile ?? "نامشخص (رکورد قدیمی)";
 const profileName = (user: AdminUser) => {
   const profile = user.customer ?? user.owner ?? user.agent;
   return profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : "—";
