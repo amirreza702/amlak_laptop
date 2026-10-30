@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { loginUser, logoutUser } from "../api/authApi";
+import { loginUser } from "../api/authApi";
 import type { AuthRole } from "../types";
 
 interface UseAuthFormOptions {
