@@ -65,6 +65,15 @@ export async function registerUserController(
       user,
     });
   } catch (error: unknown) {
+    if (
+      (error instanceof Error && error.message === "USER_ALREADY_EXISTS") ||
+      (typeof error === "object" && error !== null && "code" in error && error.code === "P2002")
+    ) {
+      return res.status(409).json({
+        message: "This mobile number is already registered for this role",
+      });
+    }
+
     if (error instanceof Error) {
       if (error.message === "USER_ALREADY_EXISTS") {
         return res.status(409).json({
