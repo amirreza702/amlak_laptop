@@ -160,6 +160,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
 
   const records = properties.map((property) => {
     const relation = property.agents[0] ?? null;
+    const hasUsableRelation = relation?.status === "ACTIVE";
     const { agents: _agents, ...propertyData } = property;
     return {
       propertyId: property.id,
@@ -173,7 +174,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
       property: {
         ...propertyData,
         // برای املاک فاقد رابطه، اطلاعات هویتی و موقعیت دقیق مالک محفوظ می‌ماند.
-        ...(relation ? {} : {
+        ...(hasUsableRelation ? {} : {
           createdByUserId: null,
           address: "برای مشاهده نشانی دقیق، ابتدا باید همکاری مالک با مشاور تأیید شود.",
           latitudeExact: property.latitudePublic,
