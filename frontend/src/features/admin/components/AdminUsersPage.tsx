@@ -5,7 +5,7 @@ import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
 import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
 
 const roles: Record<UserRole, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" };
-const profileName = (user: AdminUser) => {
+const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };\nconst profileName = (user: AdminUser) => {
   const profile = user.customer ?? user.owner ?? user.agent;
   return profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : "—";
 };
@@ -53,7 +53,7 @@ export default function AdminUsersPage() {
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             {loading ? <p className="p-8 text-center text-sm text-slate-600">در حال دریافت اطلاعات…</p> : users.length === 0 ? <p className="p-8 text-center text-sm text-slate-600">کاربری با این مشخصات پیدا نشد.</p> : (
               <div className="overflow-x-auto"><table className="w-full min-w-[900px] border-collapse text-right text-sm">
-                <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تأیید مشاور</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
+                <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش حساب</th><th className="px-4 py-3">نقش ایجادکننده پروفایل</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تأیید مشاور</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
                 <tbody>{users.map(user => <tr key={user.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
@@ -69,7 +69,7 @@ export default function AdminUsersPage() {
               </div>
             </footer>
           </section>
-          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-3 text-sm">شناسه: <span dir="ltr">{selectedUser.id}</span></p><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {formatPersianDateTime(selectedUser.createdAt)} | آخرین بروزرسانی: {formatPersianDateTime(selectedUser.updatedAt)}</p>{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"} | تأیید مشاور: {selectedUser.agent.isVerified ? "تأییدشده" : "تأییدنشده"}</p>}{selectedUser.role === "HASHTI" && <p className="mt-1 text-sm">سطح دسترسی: {selectedUser.isSuperAdmin ? "مدیر ارشد هشتی" : (selectedUser.adminPermissions || []).join("، ") || "بدون مجوز"}</p>}</section>}
+          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-3 text-sm">شناسه: <span dir="ltr">{selectedUser.id}</span></p><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {formatPersianDateTime(selectedUser.createdAt)} | آخرین بروزرسانی: {formatPersianDateTime(selectedUser.updatedAt)}</p>{(selectedUser.customer || selectedUser.owner) && <p className="mt-1 text-sm">نقش ایجادکننده پروفایل: {creatorRoleName(selectedUser)}</p>}{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"} | تأیید مشاور: {selectedUser.agent.isVerified ? "تأییدشده" : "تأییدنشده"}</p>}{selectedUser.role === "HASHTI" && <p className="mt-1 text-sm">سطح دسترسی: {selectedUser.isSuperAdmin ? "مدیر ارشد هشتی" : (selectedUser.adminPermissions || []).join("، ") || "بدون مجوز"}</p>}</section>}
         </>}
       </div>
     </main>
