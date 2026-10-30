@@ -256,8 +256,8 @@ export async function listAdminUsers(data: {
         adminPermissions: true,
         createdAt: true,
         updatedAt: true,
-        customer: { select: { id: true, firstName: true, lastName: true, createdByRole: true } },
-        owner: { select: { id: true, firstName: true, lastName: true, createdByRole: true } },
+        customer: { select: { id: true, firstName: true, lastName: true, createdByRole: true, createdByUser: { select: { mobile: true } } } },
+        owner: { select: { id: true, firstName: true, lastName: true, createdByRole: true, createdByUser: { select: { mobile: true } } } },
         agent: {
           select: {
             id: true,
