@@ -19,15 +19,16 @@ const PropertyLocationPicker = dynamic(() => import("@/features/property/compone
 type PropertyRecord = {
   propertyId: string;
   canManage: boolean;
-  status: "ACTIVE" | "REVOKED";
+  status: "ACTIVE" | "REVOKED" | null;
   approvedByOwner: boolean;
   approvedAt: string | null;
-  registeredAt: string;
+  registeredAt: string | null;
   isFirstRegistrant: boolean;
+  hasAgentRelation: boolean;
   property: {
     id: string;
     registrationSource: "OWNER" | "AGENT";
-    createdByUserId: string;
+    createdByUserId: string | null;
     createdByRole: "CUSTOMER" | "OWNER" | "AGENT" | "HASHTI" | null;
     propertyType: string;
     city: string;
@@ -142,7 +143,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">مدیریت املاک و یادداشت‌های خصوصی</h2>
-          <p className="mt-1 text-sm leading-7 text-slate-600">هر ردیف یک رکورد واقعی ملک مرتبط با این مشاور است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
+          <p className="mt-1 text-sm leading-7 text-slate-600">همه املاک ثبت‌شده سامانه نمایش داده می‌شوند؛ وضعیت ارتباط شما با هر ملک جداگانه مشخص است. یادداشت خصوصی به شناسه ثابت همان ملک متصل می‌شود.</p>
         </div>
         <button type="button" onClick={() => { void load(pagination.offset); }} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
@@ -171,7 +172,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
       {actionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{actionMessage}</p>}
       {noteError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{noteError}</p>}
       {noteMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{noteMessage}</p>}
-      {loading && properties.length === 0 ? <p className="flex items-center gap-2 py-4 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردها...</p> : properties.length === 0 ? <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">رکورد ملکی مرتبطی برای این مشاور پیدا نشد.</p> : (
+      {loading && properties.length === 0 ? <p className="flex items-center gap-2 py-4 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردها...</p> : properties.length === 0 ? <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">ملکی با این مشخصات پیدا نشد.</p> : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full min-w-[1250px] text-right text-sm">
             <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">وضعیت آگهی</th><th className="p-3">مالکیت</th><th className="p-3">تأییدها</th><th className="p-3">ارتباط مشاور</th><th className="p-3">یادداشت خصوصی ملک</th><th className="p-3">عملیات</th></tr></thead>
@@ -179,7 +180,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
               const property = record.property;
               const latestCase = property.verificationCases[0];
               return (
-                <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
+                <RecordDetailsRow key={property.id} record={record} title="رکورد" className="border-t border-slate-200 align-top">
                   <td className="p-3">
                     <p className="font-bold">{propertyLabels[property.propertyType] ?? property.propertyType} در {property.city}، {property.district}</p>
                     <p className="mt-1 text-xs text-slate-600">{property.area ? `${property.area} مترمربع` : "متراژ نامشخص"}{property.rooms !== null ? ` · ${property.rooms} اتاق` : ""}</p>
@@ -200,10 +201,8 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     {latestCase && <p className="mt-1 text-xs text-slate-500">تاریخ پرونده: {dateLabel(latestCase.createdAt)}</p>}
                   </td>
                   <td className="p-3">
-                    <p>{record.status === "ACTIVE" ? "ارتباط فعال" : "ارتباط خاتمه‌یافته"}</p>
-                    <p className="mt-1 text-xs text-slate-600">{record.approvedByOwner ? "تأیید مالک دارد" : "در انتظار تأیید مالک"}</p>
-                    <p className="mt-1 text-xs text-slate-500">ثبت ارتباط: {dateLabel(record.registeredAt)}</p>
-                    {record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}
+                    <p>{record.status === "ACTIVE" ? "ارتباط فعال" : record.status === "REVOKED" ? "ارتباط خاتمه‌یافته" : "بدون ارتباط با این مشاور"}</p>
+                    {record.hasAgentRelation && <><p className="mt-1 text-xs text-slate-600">{record.approvedByOwner ? "تأیید مالک دارد" : "در انتظار تأیید مالک"}</p><p className="mt-1 text-xs text-slate-500">ثبت ارتباط: {dateLabel(record.registeredAt)}</p>{record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}</>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
                   <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:{latitude:property.latitudeExact,longitude:property.longitudeExact},transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
