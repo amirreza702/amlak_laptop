@@ -111,6 +111,8 @@ export function requirePropertyAccess(paramName = "id", requireVerifiedOwner = t
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          registrationSource: true,
+          createdByUserId: true,
           owners: {
             where: {
               owner: { is: { userId: user.id } },
@@ -136,7 +138,10 @@ export function requirePropertyAccess(paramName = "id", requireVerifiedOwner = t
       const allowed = Boolean(
         property &&
         ((user.role === "OWNER" && property.owners.length > 0) ||
-         (user.role === "AGENT" && property.agents.length > 0))
+         (user.role === "AGENT" && (
+           property.agents.length > 0 ||
+           (property.registrationSource === "AGENT" && property.createdByUserId === user.id)
+         )))
       );
 
       if (!allowed) {
