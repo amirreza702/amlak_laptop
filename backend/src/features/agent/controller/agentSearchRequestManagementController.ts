@@ -36,7 +36,7 @@ export async function getAllAgentSearchRequestsController(req: Request, res: Res
   const rows = await prisma.propertySearchRequest.findMany({
    // در ابزار مدیریت مشتریان مشاور فقط درخواست‌های باز و فعال نمایش داده می‌شوند.
    where: { status: "ACTIVE" },
-   select: { id: true, transactionType: true, propertyType: true, city: true, budget: true, description: true, hashtiVerified: true, status: true, createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true },
+   select: { id: true, customerId: true, transactionType: true, propertyType: true, city: true, budget: true, description: true, hashtiVerified: true, status: true, createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true },
    orderBy: { createdAt: "desc" },
   });
   return res.status(200).json(rows.map(({ createdByUserId, ...request }) => ({ ...request, isCreatedByMe: createdByUserId === id })));
