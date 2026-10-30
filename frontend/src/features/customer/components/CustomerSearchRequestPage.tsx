@@ -44,7 +44,12 @@ function Alert({ children }: { children: ReactNode }) {
   );
 }
 
-export function CustomerSearchRequestPage() {
+interface CustomerSearchRequestPageProps {
+  compact?: boolean;
+  onClose?: () => void;
+}
+
+export function CustomerSearchRequestPage({ compact = false, onClose }: CustomerSearchRequestPageProps) {
   const {
     authStatus,
     authMode,
@@ -72,9 +77,10 @@ export function CustomerSearchRequestPage() {
   } = useCustomerSearchRequest();
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mb-6">
+    <main dir="rtl" className={compact ? "bg-white text-slate-900" : "min-h-screen bg-slate-50 text-slate-900"}>
+      <section className={compact ? "mx-auto w-full" : "mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12"}>
+        {!compact && (
+<div className="mb-6">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#043873]">
             <FileText className="h-6 w-6" />
           </div>
@@ -85,6 +91,7 @@ export function CustomerSearchRequestPage() {
             مشخصات ملک موردنظرتان را ثبت کنید تا درخواست شما در هشتی ثبت شود. برای حفظ حریم خصوصی، اطلاعات تماس شما در فهرست عمومی درخواست‌ها نمایش داده نمی‌شود.
           </p>
         </div>
+        )}
 
         {authStatus === "checking" && (
           <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
@@ -334,10 +341,10 @@ export function CustomerSearchRequestPage() {
             </p>
             <button
               type="button"
-              onClick={startAnotherRequest}
+              onClick={compact ? onClose : startAnotherRequest}
               className="mt-6 rounded-xl bg-[#043873] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#062a5b]"
             >
-              ثبت درخواست دیگر
+              {compact ? "بازگشت به درخواست‌های من" : "ثبت درخواست دیگر"}
             </button>
           </section>
         )}
