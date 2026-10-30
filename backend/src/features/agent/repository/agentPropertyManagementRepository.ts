@@ -113,6 +113,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         id: true,
         createdByUserId: true,
         createdByRole: true,
+        creatorMobile: true,
         registrationSource: true,
         propertyType: true,
         city: true,
