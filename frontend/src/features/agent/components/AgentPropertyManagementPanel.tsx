@@ -59,6 +59,7 @@ const listingLabels: Record<string, string> = {
 const verificationLabels: Record<string, string> = { PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" };
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleDateString("fa-IR") : "—";
+const creatorRoleLabels: Record<string, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "هشتی" };
 
 export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, noteError, noteMessage }: {
   notes: AgentPrivateNote[];
@@ -180,7 +181,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     <p className="font-bold">{propertyLabels[property.propertyType] ?? property.propertyType} در {property.city}، {property.district}</p>
                     <p className="mt-1 text-xs text-slate-600">{property.area ? `${property.area} مترمربع` : "متراژ نامشخص"}{property.rooms !== null ? ` · ${property.rooms} اتاق` : ""}</p>
                     <p className="mt-2 break-all font-mono text-xs text-slate-500" dir="ltr">{property.id}</p>
-                    <p className="mt-1 text-xs text-slate-500">ثبت ملک: {dateLabel(property.createdAt)}</p>
+                    <p className="mt-1 text-xs text-slate-500">ثبت ملک: {dateLabel(property.createdAt)}</p><p className="mt-1 text-xs text-slate-600">نقش ایجادکننده: {property.createdByRole ? creatorRoleLabels[property.createdByRole] ?? property.createdByRole : "نامشخص (رکورد قدیمی)"}</p>
                     {!property.isActive && <span className="mt-2 inline-block rounded bg-slate-200 px-2 py-1 text-xs">ملک غیرفعال</span>}
                   </td>
                   <td className="p-3">
