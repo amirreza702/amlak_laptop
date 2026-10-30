@@ -135,7 +135,7 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.OWNER),
   bindOwnProfileIdToBody("owner", "ownerId"),
-  requirePropertyAccess(),
+  requirePropertyAccess("id", false),
   approvePropertyAgentByOwnerController
 );
 router.patch(
