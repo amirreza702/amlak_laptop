@@ -20,7 +20,7 @@ import { createDuplicateReviewController, getDuplicateReviewsController, reviewD
 import { archivePropertyController, getPropertyArchiveController, restorePropertyController } from "../controller/propertyArchiveController";
 import { createExactLocationAccessLogController, getExactLocationAccessLogsController } from "../controller/exactLocationAccessLogController";
 import { updatePropertyController } from "../controller/propertyUpdateController";
-import { deleteOwnPropertyController, deleteAgentManagedOwnerPropertyController } from "../controller/propertyOwnerDeleteController";
+import { deleteOwnPropertyController, deleteAgentManagedOwnerPropertyController, reactivateOwnPropertyController } from "../controller/propertyOwnerDeleteController";
 import { findDuplicateMatchesController } from "../controller/duplicateMatchingController";
 
 import { authMiddleware, type AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
@@ -109,6 +109,14 @@ router.delete(
   authMiddleware,
   requireRole(UserRole.OWNER),
   deleteOwnPropertyController
+);
+
+// فعال‌سازی مجدد فقط برای مالک ثبت‌شده همان ملک.
+router.patch(
+  "/properties/:id/activate",
+  authMiddleware,
+  requireRole(UserRole.OWNER),
+  reactivateOwnPropertyController
 );
 
 router.patch(
