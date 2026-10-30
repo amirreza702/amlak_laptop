@@ -1,7 +1,8 @@
 "use client";
 
 
-import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
+import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRoundCog } from "lucide-react";
 
