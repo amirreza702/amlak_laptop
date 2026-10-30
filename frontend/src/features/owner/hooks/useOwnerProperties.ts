@@ -88,6 +88,17 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     setReload((value) => value + 1);
   }
 
+  async function reactivateProperty(propertyId: string) {
+    setActionMessage(null); setActionError(null);
+    try {
+      await ownerApiRequest("/properties/" + encodeURIComponent(propertyId) + "/activate", { method: "PATCH" });
+      setActionMessage("ملک دوباره فعال شد.");
+      setReload((value) => value + 1);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "فعال‌سازی مجدد ملک ناموفق بود.");
+    }
+  }
+
   async function updateAgentAccess(propertyId: string, agentId: string, action: "approval" | "revoke") {
     setBusyAgent(`${propertyId}:${agentId}`);
     setActionMessage(null);
@@ -126,6 +137,6 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     cityFilter, setCityFilter, districtFilter, setDistrictFilter, transactionFilter, setTransactionFilter,
     propertyTypeFilter, setPropertyTypeFilter, minPrice, setMinPrice, maxPrice, setMaxPrice,
     minArea, setMinArea, maxArea, setMaxArea, minRooms, setMinRooms, occupancyFilter, setOccupancyFilter,
-    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty,
+    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty, reactivateProperty,
   };
 }
