@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { Building2, LoaderCircle, RefreshCw, Search } from "lucide-react";
@@ -55,7 +57,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
       {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت املاک...</p>
         : !error && visibleProperties.length === 0 ? <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{properties.length === 0 ? "هنوز ملکی به این پروفایل مالک متصل نشده است." : "موردی با این جست‌وجو و فیلتر پیدا نشد."}</p>
         : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[980px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">مالکیت / آگهی</th><th className="p-3">مشاوران مرتبط</th></tr></thead><tbody>{visibleProperties.map((item) => (
-          <tr key={item.propertyId} className="border-t border-slate-200 align-top">
+          <RecordDetailsRow key={item.propertyId} record={item} title="رکورد" className="border-t border-slate-200 align-top">
             <td className="p-3"><p className="font-bold">{item.property.city}، {item.property.district} · {item.property.propertyType}</p><p className="mt-1 text-sm text-slate-600">{item.property.address}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.propertyId}</p>{mode === "properties" && <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => startEditing(item)} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">ویرایش همه اطلاعات</button><button type="button" onClick={() => setPendingDeleteProperty(item)} disabled={!item.property.isActive} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">حذف از فهرست فعال</button></div>}</td>
             <td className="p-3"><p>{item.property.isActive ? "ملک فعال" : "ملک غیرفعال"} · {item.isPrimary ? "مالک اصلی" : "مالک مشترک"}</p>{item.property.listing && <p className="mt-1">آگهی: {item.property.listing.status} · {item.property.listing.transactionType}</p>}{item.property.listing?.salePrice != null && <p className="mt-1">فروش: {Number(item.property.listing.salePrice).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.depositAmount != null && <p className="mt-1">ودیعه: {Number(item.property.listing.depositAmount).toLocaleString("fa-IR")} ریال</p>}{item.property.listing?.rentAmount != null && <p className="mt-1">اجاره: {Number(item.property.listing.rentAmount).toLocaleString("fa-IR")} ریال</p>}</td>
             <td className="p-3"><p>{({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p><p className="mt-1">{item.share.toLocaleString("fa-IR")} دانگ</p></td>
@@ -65,7 +67,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
                 
               </div>
             )) : <span className="text-slate-500">مشاوری متصل نیست.</span>}</div></td>
-          </tr>
+          </RecordDetailsRow>
         ))}</tbody></table></div>}
       <Modal open={Boolean(editingProperty)} title="ویرایش کامل ملک" description="مقادیر فعلی در فرم قرار گرفته‌اند؛ شناسه و سوابق سیستمی قابل ویرایش نیستند." onClose={() => { if (!savingProperty) setEditingProperty(null); }}>
         <form onSubmit={submitPropertyEdit} className="max-h-[75vh] space-y-4 overflow-y-auto p-1" dir="rtl">

@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
 import { Modal } from "@/shared/components/Modal";
 import { CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRoundCog } from "lucide-react";
 
@@ -245,7 +246,7 @@ export function HashtiUserManagementPanel() {
                 const profile = profileOf(item);
                 return (
                   <Fragment key={item.id}>
-                    <tr className="border-t border-slate-200 align-top">
+                    <RecordDetailsRow record={item} title="جزئیات کاربر" className="border-t border-slate-200 align-top">
                       <td className="p-3">
                         <p className="font-bold text-slate-900">{displayName(item)}{item.isSuperAdmin && <span className="ms-2 inline-block rounded bg-amber-100 px-2 py-1 text-xs text-amber-900">مدیر ارشد</span>}</p>
                         <p className="mt-1" dir="ltr">{item.mobile}</p>
@@ -268,7 +269,7 @@ export function HashtiUserManagementPanel() {
                           <button type="button" hidden={!isSuperAdmin} onClick={() => beginPasswordReset(item)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">بازنشانی رمز</button>
                         </div>
                       </td>
-                    </tr>
+                    </RecordDetailsRow>
                     {(resetUser?.id === item.id || (editUser?.id === item.id && profile) || historyUser === item.id) && (
                       <tr className="border-t border-slate-200 bg-slate-50">
                         <td colSpan={5} className="p-4">

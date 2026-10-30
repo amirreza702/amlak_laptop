@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { type AdminUser, type UserRole } from "@/features/auth/api/authApi";
 import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
 import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
@@ -56,11 +58,11 @@ export default function AdminUsersPage() {
             {loading ? <p className="p-8 text-center text-sm text-slate-600">در حال دریافت اطلاعات…</p> : users.length === 0 ? <p className="p-8 text-center text-sm text-slate-600">کاربری با این مشخصات پیدا نشد.</p> : (
               <div className="overflow-x-auto"><table className="w-full min-w-[900px] border-collapse text-right text-sm">
                 <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش حساب</th><th className="px-4 py-3">ایجادکننده</th><th className="px-4 py-3">نقش ایجادکننده</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تأیید مشاور</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
-                <tbody>{users.map(user => <tr key={user.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <tbody>{users.map(user => <RecordDetailsRow key={user.id} record={user} title="رکورد" className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td><td className="px-4 py-3">{user.customer || user.owner ? creatorIdentity(user) : "—"}</td><td className="px-4 py-3">{user.customer || user.owner ? creatorRoleName(user) : "—"}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
                   <td className="px-4 py-3">{user.agent ? (user.agent.isVerified ? "تأییدشده" : "تأییدنشده") : "—"}</td><td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || Boolean(user.isSuperAdmin)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
-                </tr>)}</tbody>
+                </RecordDetailsRow>)}</tbody>
               </table></div>
             )}
             <footer className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">

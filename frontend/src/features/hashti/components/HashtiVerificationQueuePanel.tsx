@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, Search, XCircle } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
@@ -133,7 +135,7 @@ export function HashtiVerificationQueuePanel() {
             </thead>
             <tbody>
               {cases.map((item) => (
-                <tr key={item.id} className="border-t border-slate-200 align-top">
+                <RecordDetailsRow key={item.id} record={item} title="رکورد" className="border-t border-slate-200 align-top">
                   <td className="p-3">
                     <p className="font-bold">پرونده تأیید ملک</p>
                     <p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{item.id}</p>
@@ -186,7 +188,7 @@ export function HashtiVerificationQueuePanel() {
                       </div>
                     ) : <span className="text-xs text-slate-500">عملیات رسیدگی انجام شده</span>}
                   </td>
-                </tr>
+                </RecordDetailsRow>
               ))}
             </tbody>
           </table>

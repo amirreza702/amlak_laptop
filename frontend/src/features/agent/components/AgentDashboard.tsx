@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { BadgeCheck, Contact, FileText, LoaderCircle, LockKeyhole, RefreshCw, Save, ShieldAlert, UserRound } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
@@ -234,14 +236,14 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
               <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو و فیلتر پیدا نشد.</p>
             ) : (
               <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده و شناسه</th><th className="p-3">اطلاعات تماس</th><th className="p-3">یادداشت خصوصی</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
-                  <tr key={request.id} className="border-t border-slate-200 align-top">
+                  <RecordDetailsRow key={request.id} record={request} title="رکورد" className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</p></td>
                     <td className="p-3"><p>{displayMoney(request.budget)}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap leading-6 text-slate-600">{request.description}</p>}</td>
                     <td className="p-3"><p>{request.createdByRole === "AGENT" ? "مشاور املاک" : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
                     <td className="p-3">{contacts[request.id] ? <div className="min-w-[180px] rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="font-bold">{contacts[request.id].firstName} {contacts[request.id].lastName}</p><p className="mt-1" dir="ltr">{contacts[request.id].mobile}</p></div> : <button type="button" onClick={() => { setContactModalRequestId(request.id); setRecordActionError(null); }} disabled={busyId === request.id} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{busyId === request.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}دریافت دسترسی مجاز</button>}</td>
                     <td className="p-3">{request.isCreatedByMe ? <AgentPrivateNoteEditor entityType="request" entityId={request.id} notes={privateNotes} saving={savingNoteKey === `request:${request.id}`} onSave={saveNote} /> : request.customerId ? <AgentPrivateNoteEditor entityType="customer" entityId={request.customerId} notes={privateNotes} saving={savingNoteKey === `customer:${request.customerId}`} onSave={saveNote} /> : <p className="max-w-[220px] text-xs leading-6 text-slate-500">این درخواست به حساب مشتری ثبت‌شده متصل نیست.</p>}</td>
                     <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={() => openRequestEditor(request)} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={() => { setDeletingRequestId(request.id); setRecordActionError(null); }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
-                  </tr>
+                  </RecordDetailsRow>
                 ))}</tbody></table></div>
             )}
           </section>

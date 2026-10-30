@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useState } from "react";
 import { Bell, Check, LoaderCircle } from "lucide-react";
 import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
@@ -28,7 +30,7 @@ export function UserNotificationsPanel({ userId }: { userId: string }) {
       ) : items.length === 0 ? (
         <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">در حال حاضر اعلانی برای نمایش وجود ندارد.</p>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[680px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">عنوان</th><th className="p-3">پیام</th><th className="p-3">زمان</th><th className="p-3">وضعیت</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleItems.map((item) => <tr key={item.id} className={`border-t border-slate-200 align-top ${item.isRead ? "" : "bg-blue-50/30"}`}><td className="p-3 font-semibold">{item.title}</td><td className="max-w-lg whitespace-pre-wrap p-3 leading-6 text-slate-600">{item.message}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(item.createdAt)}</td><td className="p-3">{item.isRead ? "خوانده‌شده" : "خوانده‌نشده"}</td><td className="p-3">{!item.isRead && <button type="button" onClick={() => void markRead(item.id)} disabled={busyId === item.id} aria-label="علامت‌گذاری به‌عنوان خوانده‌شده" className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50">{busyId === item.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} خواندم</button>}</td></tr>)}</tbody></table></div>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[680px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">عنوان</th><th className="p-3">پیام</th><th className="p-3">زمان</th><th className="p-3">وضعیت</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleItems.map((item) => <RecordDetailsRow key={item.id} record={item} title="رکورد" className={`border-t border-slate-200 align-top ${item.isRead ? "" : "bg-blue-50/30"}`}><td className="p-3 font-semibold">{item.title}</td><td className="max-w-lg whitespace-pre-wrap p-3 leading-6 text-slate-600">{item.message}</td><td className="whitespace-nowrap p-3">{formatPersianDateTime(item.createdAt)}</td><td className="p-3">{item.isRead ? "خوانده‌شده" : "خوانده‌نشده"}</td><td className="p-3">{!item.isRead && <button type="button" onClick={() => void markRead(item.id)} disabled={busyId === item.id} aria-label="علامت‌گذاری به‌عنوان خوانده‌شده" className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50">{busyId === item.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} خواندم</button>}</td></RecordDetailsRow>)}</tbody></table></div>
       )}
     </section>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, Search, TimerReset, UserPlus } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
@@ -182,7 +184,7 @@ export function HashtiPropertyAdminToolsPanel() {
             <tbody>{properties.map((property) => {
               const latestCase = property.verificationCases[0];
               return (
-                <tr key={property.id} className="border-t border-slate-200 align-top">
+                <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
                   <td className="p-3">
                     <p className="font-bold">{propertyLabels[property.propertyType] ?? property.propertyType} · {property.city}، {property.district}</p>
                     <p className="mt-1 max-w-xs whitespace-pre-wrap leading-6 text-slate-600">{property.address}</p>
@@ -220,7 +222,7 @@ export function HashtiPropertyAdminToolsPanel() {
                       </form></Modal>}
                     </div>
                   </td>
-                </tr>
+                </RecordDetailsRow>
               );
             })}</tbody>
           </table>
