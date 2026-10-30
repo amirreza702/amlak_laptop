@@ -213,7 +213,7 @@ model User {
   owner    Owner?
   agent    Agent?
   createdSearchRequests PropertySearchRequest[] @relation("SearchRequestCreator")
-  createdProperties Property[] @relation("PropertyCreator")
+  createdProperties Property[] @relation("PropertyCreator")\n  createdOwners Owner[] @relation("OwnerCreator")\n  createdCustomers Customer[] @relation("CustomerCreator")
 
   notifications Notification[]
   messages      Message[]
@@ -257,7 +257,10 @@ model Customer {
   firstName String
   lastName  String
 
+  createdByUserId String?
+  createdByRole   UserRole?
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("CustomerCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   viewingRequests ViewingRequest[]
   evaluations     Evaluation[]
@@ -268,7 +271,7 @@ model Customer {
   // سوابق مشاهده اطلاعات تماس توسط مشاوران
   contactAccessLogs ContactAccessLog[]
 
-  @@map("customers")
+  @@index([createdByUserId])\n  @@index([createdByRole])\n  @@map("customers")
 }
 
 // ============================================================
@@ -355,13 +358,16 @@ model Owner {
   firstName String
   lastName  String
 
+  createdByUserId String?
+  createdByRole   UserRole?
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("OwnerCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   properties  PropertyOwner[]
   evaluations Evaluation[]
   agentRequests OwnerAgentRequest[]
 
-  @@map("owners")
+  @@index([createdByUserId])\n  @@index([createdByRole])\n  @@map("owners")
 }
 
 // ============================================================
