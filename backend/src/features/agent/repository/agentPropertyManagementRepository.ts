@@ -52,7 +52,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         { property: { is: { OR: [
           { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
           { address: contains(search) }, { postalCode: contains(search) },
-          ...(exactPropertyType ? [{ propertyType: exactPropertyType }] : []),\n          ...(exactOccupancyStatus ? [{ occupancyStatus: exactOccupancyStatus }] : []),
+          ...(exactPropertyType ? [{ propertyType: exactPropertyType }] : []),
+          ...(exactOccupancyStatus ? [{ occupancyStatus: exactOccupancyStatus }] : []),
           ...(numericSearch !== undefined ? [{ area: numericSearch }, { rooms: numericSearch }, { floor: numericSearch }] : []),
           ...(boolSearch !== undefined ? [{ isActive: boolSearch }] : []),
           ...(validDate ? [
