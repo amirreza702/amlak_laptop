@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { ListingStatus, OccupancyStatus, PropertyAgentStatus, PropertyType, TransactionType, VerificationStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
@@ -16,6 +16,16 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const parsedDate = search ? new Date(search) : null;
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined;
   const exact = search?.trim().toUpperCase();
+  const enumMatch = <T extends string>(values: readonly T[]) =>
+    exact && (values as readonly string[]).includes(exact) ? exact as T : undefined;
+  const exactPropertyType = enumMatch(Object.values(PropertyType));
+  const exactOccupancyStatus = enumMatch(Object.values(OccupancyStatus));
+  const exactListingStatus = enumMatch(Object.values(ListingStatus));
+  const exactTransactionType = enumMatch(Object.values(TransactionType));
+  const exactVerificationStatus = enumMatch(Object.values(VerificationStatus));
+  const exactPropertyAgentStatus = enumMatch(Object.values(PropertyAgentStatus));
+  const dayStart = validDate ? new Date(validDate.getFullYear(), validDate.getMonth(), validDate.getDate()) : undefined;
+  const dayEnd = dayStart ? new Date(dayStart.getTime() + 24 * 60 * 60 * 1000) : undefined;
   const matchingPrivateNotes = search
     ? await prisma.agentPrivateNote.findMany({
         where: { agentId: input.agentId, entityType: "property", note: contains(search) },
@@ -42,18 +52,18 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         { property: { is: { OR: [
           { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
           { address: contains(search) }, { postalCode: contains(search) },
-          ...(exact ? [{ propertyType: exact as any }, { occupancyStatus: exact as any }] : []),
+          ...(exactPropertyType ? [{ propertyType: exactPropertyType }] : []),\n          ...(exactOccupancyStatus ? [{ occupancyStatus: exactOccupancyStatus }] : []),
           ...(numericSearch !== undefined ? [{ area: numericSearch }, { rooms: numericSearch }, { floor: numericSearch }] : []),
           ...(boolSearch !== undefined ? [{ isActive: boolSearch }] : []),
           ...(validDate ? [
-            { createdAt: { gte: new Date(validDate.setHours(0,0,0,0)), lt: new Date(validDate.getTime() + 24*60*60*1000) } },
-            { confirmUntil: { gte: new Date(validDate.setHours(0,0,0,0)), lt: new Date(validDate.getTime() + 24*60*60*1000) } },
+            { createdAt: { gte: dayStart, lt: dayEnd } },
+            { confirmUntil: { gte: dayStart, lt: dayEnd } },
           ] : []),
-          ...(exact ? [
-            { listing: { is: { status: exact as any } } },
-            { listing: { is: { transactionType: exact as any } } },
-            { owners: { some: { verificationStatus: exact as any } } },
-            { verificationCases: { some: { status: exact as any } } },
+          ...(exactListingStatus ? [{ listing: { is: { status: exactListingStatus } } }] : []),
+          ...(exactTransactionType ? [{ listing: { is: { transactionType: exactTransactionType } } }] : []),
+          ...(exactVerificationStatus ? [
+            { owners: { some: { verificationStatus: exactVerificationStatus } } },
+            { verificationCases: { some: { status: exactVerificationStatus } } },
           ] : []),
           ...(numericSearch !== undefined ? [{ owners: { some: { share: numericSearch } } }] : []),
           ...(boolSearch !== undefined ? [{ owners: { some: { isPrimary: boolSearch } } }] : []),
@@ -61,11 +71,11 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           { owners: { some: { owner: { is: { lastName: contains(search) } } } } },
         ] } } },
         ...(propertyIdsWithMatchingNotes.length ? [{ propertyId: { in: propertyIdsWithMatchingNotes } }] : []),
-        { status: exact as any },
+        ...(exactPropertyAgentStatus ? [{ status: exactPropertyAgentStatus }] : []),
         ...(boolSearch !== undefined ? [{ approvedByOwner: boolSearch }, { isFirstRegistrant: boolSearch }] : []),
         ...(validDate ? [
-          { registeredAt: { gte: new Date(validDate.setHours(0,0,0,0)), lt: new Date(validDate.getTime() + 24*60*60*1000) } },
-          { approvedAt: { gte: new Date(validDate.setHours(0,0,0,0)), lt: new Date(validDate.getTime() + 24*60*60*1000) } },
+          { registeredAt: { gte: dayStart, lt: dayEnd } },
+          { approvedAt: { gte: dayStart, lt: dayEnd } },
         ] : []),
       ],
     } : {}),
