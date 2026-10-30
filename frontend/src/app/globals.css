@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/vazirmatn";
+@import "leaflet/dist/leaflet.css";
 
 @theme {
   --color-brand-navy: #062a5b;
