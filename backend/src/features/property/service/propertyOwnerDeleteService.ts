@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/prisma";
 import { PropertyHistoryAction } from "@prisma/client";
+import { restorePropertyService } from "./propertyArchiveService";
 
 /**
  * Soft-delete a property owned by the authenticated owner.
@@ -78,6 +79,11 @@ export async function reactivateOwnPropertyService(propertyId: string, userId: s
   const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { id: true, isActive: true } });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
   if (property.isActive) throw new Error("PROPERTY_ALREADY_ACTIVE");
+  const archive = await prisma.propertyArchive.findUnique({ where: { propertyId }, select: { propertyId: true } });
+  if (archive) {
+    await restorePropertyService(propertyId);
+    return prisma.property.findUniqueOrThrow({ where: { id: propertyId } });
+  }
   return prisma.$transaction(async (tx) => {
     const updated = await tx.property.update({ where: { id: propertyId }, data: { isActive: true } });
     await tx.propertyHistory.create({ data: { propertyId, action: PropertyHistoryAction.OTHER, field: "isActive", oldValue: "false", newValue: "true", performedBy: userId, reason: "مالک ملک را دوباره فعال کرد." } });
