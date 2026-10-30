@@ -11,6 +11,7 @@ export interface AgentProfile {
 }
 export interface ActiveRequest {
   id: string;
+  customerId: string | null;
   transactionType: string;
   propertyType: string;
   city: string;
