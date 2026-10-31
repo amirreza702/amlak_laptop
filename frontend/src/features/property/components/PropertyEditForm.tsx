@@ -64,6 +64,7 @@ export function PropertyEditForm({
         const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, { credentials: "include", cache: "no-store" });
         const property = await response.json();
         if (!response.ok) throw new Error(property.message || "دریافت اطلاعات ملک ناموفق بود.");
+        if (!property || property.id !== propertyId) throw new Error("پاسخ سرور برای این شناسه ملک معتبر نیست.");
         const listing = property.listing ?? null;
         if (!active) return;
         setHasListing(listing !== null);
