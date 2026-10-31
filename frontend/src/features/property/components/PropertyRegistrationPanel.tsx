@@ -40,7 +40,7 @@ interface PropertyRegistrationPanelProps {
 
 export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePrivateNote }: PropertyRegistrationPanelProps) {
   const {
-    ownerMobile, setOwnerMobile,
+    ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
     transactionType, setTransactionType,
     city, setCity, district, setDistrict, address, setAddress,
@@ -60,6 +60,10 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
           {mode === "owner"
             ? "مشخصات ملک و نوع معامله را ثبت کنید. ادعای مالکیت باید توسط هشتی تأیید شود؛ ثبت اطلاعات به معنی انتشار آگهی نیست."
             : "مشخصات ملک و نوع معامله را ثبت کنید. هویت مشاور از نشست امن سرور تعیین می‌شود و دسترسی به ملک تابع تأییدهای لازم است. شماره تماس مالک به سایر کاربران نمایش داده نمی‌شود و شماره تماس خود مشاور ثبت‌کننده نمایش داده خواهد شد."}
+            {mode === "agent" && <>
+              <label className={inputClass + " block space-y-1.5 text-sm font-semibold"}><span aria-hidden="true" className="ml-1 text-red-600">*</span>نام مالک<input className={inputClass} value={ownerFirstName} onChange={(e) => setOwnerFirstName(e.target.value)} required maxLength={80} autoComplete="given-name" /></label>
+              <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نام خانوادگی مالک<input className={inputClass} value={ownerLastName} onChange={(e) => setOwnerLastName(e.target.value)} required maxLength={100} autoComplete="family-name" /></label>
+            </>}
         </p>
       </div>
 

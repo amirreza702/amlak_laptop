@@ -126,8 +126,10 @@ export async function registerProperty(
   }
   if ((data.description?.length ?? 0) > 10000) throw new Error("توضیحات بیش از حد مجاز طولانی است.");
 
-  if (creator.role === "AGENT" && (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim()))) {
-    throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
+  if (creator.role === "AGENT") {
+    if (typeof data.ownerFirstName !== "string" || !data.ownerFirstName.trim() || data.ownerFirstName.trim().length > 80) throw new Error("نام مالک الزامی است و حداکثر باید ۸۰ نویسه باشد.");
+    if (typeof data.ownerLastName !== "string" || !data.ownerLastName.trim() || data.ownerLastName.trim().length > 100) throw new Error("نام خانوادگی مالک الزامی است و حداکثر باید ۱۰۰ نویسه باشد.");
+    if (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim())) throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
   }
 
   const isAgentRegistration = creator.role === "AGENT";
@@ -174,8 +176,12 @@ export async function registerProperty(
 
     if (existingProperty) {
       property = existingProperty;
-      if (isAgentRegistration && !existingProperty.ownerMobile) {
-        property = await updateProperty(existingProperty.id, { ownerMobile: data.ownerMobile!.trim() }, tx);
+      if (isAgentRegistration && existingProperty.createdByUserId === creator.id) {
+        property = await updateProperty(existingProperty.id, {
+          ...(!existingProperty.ownerMobile ? { ownerMobile: data.ownerMobile!.trim() } : {}),
+          ...(!existingProperty.ownerFirstName ? { ownerFirstName: data.ownerFirstName!.trim() } : {}),
+          ...(!existingProperty.ownerLastName ? { ownerLastName: data.ownerLastName!.trim() } : {}),
+        }, tx);
       }
     } else {
       property = await createProperty(
@@ -187,6 +193,8 @@ export async function registerProperty(
           createdByRole: creator.role,
           creatorMobile: creator.mobile,
           ownerMobile: isOwnerRegistration ? creator.mobile : data.ownerMobile!.trim(),
+          ownerFirstName: isAgentRegistration ? data.ownerFirstName!.trim() : null,
+          ownerLastName: isAgentRegistration ? data.ownerLastName!.trim() : null,
           propertyType: data.propertyType,
           city: data.city,
           district: data.district,
@@ -372,6 +380,8 @@ export async function updatePropertyService(
   if (has("district") && !data.district?.trim()) throw new Error("محله یا منطقه الزامی است.");
   if (has("address") && !data.address?.trim()) throw new Error("نشانی ملک الزامی است.");
   if (has("ownerMobile") && (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim()))) throw new Error("شماره همراه مالک معتبر نیست.");
+  if (has("ownerFirstName") && (typeof data.ownerFirstName !== "string" || !data.ownerFirstName.trim() || data.ownerFirstName.trim().length > 80)) throw new Error("نام مالک معتبر نیست.");
+  if (has("ownerLastName") && (typeof data.ownerLastName !== "string" || !data.ownerLastName.trim() || data.ownerLastName.trim().length > 100)) throw new Error("نام خانوادگی مالک معتبر نیست.");
   if (has("latitudeExact") && (data.latitudeExact == null || !Number.isFinite(data.latitudeExact) || data.latitudeExact < -90 || data.latitudeExact > 90)) throw new Error("عرض جغرافیایی معتبر نیست.");
   if (has("longitudeExact") && (data.longitudeExact == null || !Number.isFinite(data.longitudeExact) || data.longitudeExact < -180 || data.longitudeExact > 180)) throw new Error("طول جغرافیایی معتبر نیست.");
   if (has("area") && (data.area == null || !Number.isFinite(data.area) || data.area <= 0)) throw new Error("متراژ باید بیشتر از صفر باشد.");

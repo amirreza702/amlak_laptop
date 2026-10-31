@@ -16,7 +16,7 @@ type Values = {
   hasElevator: string; hasStorage: string; hasBalcony: string; hasYard: string; heatingSystem: string; coolingSystem: string;
   documentType: string; ownershipType: string; landTenure: string; description: string;
   renovationStatus: string; renovationYear: string; occupancyStatus: string;
-  ownerMobile: string; transactionType: TransactionType; salePrice: string; depositAmount: string; rentAmount: string; internalNote: string;
+  ownerMobile: string; ownerFirstName: string; ownerLastName: string; transactionType: TransactionType; salePrice: string; depositAmount: string; rentAmount: string; internalNote: string;
 };
 
 const emptyValues: Values = {
@@ -25,7 +25,7 @@ const emptyValues: Values = {
   yearBuilt: "", unitNumber: "", totalUnits: "1", parkingCount: "", parkingType: "", parkingNumber: "",
   hasElevator: "", hasStorage: "", hasBalcony: "", hasYard: "", heatingSystem: "", coolingSystem: "",
   documentType: "", ownershipType: "", landTenure: "", description: "", renovationStatus: "", renovationYear: "",
-  occupancyStatus: "VACANT", ownerMobile: "", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "", internalNote: "",
+  occupancyStatus: "VACANT", ownerMobile: "", ownerFirstName: "", ownerLastName: "", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "", internalNote: "",
 };
 
 const numberOrNull = (value: string) => value.trim() === "" ? null : Number(value);
@@ -87,6 +87,7 @@ export function PropertyEditForm({
           renovationStatus: property.renovationStatus ?? "", renovationYear: String(property.renovationYear ?? ""),
           occupancyStatus: property.occupancyStatus ?? "VACANT",
           ownerMobile: property.ownerMobile ?? "",
+          ownerFirstName: property.ownerFirstName ?? "", ownerLastName: property.ownerLastName ?? "",
           transactionType: listing?.transactionType ?? "SALE",
           salePrice: String(listing?.salePrice ?? ""), depositAmount: String(listing?.depositAmount ?? ""),
           rentAmount: String(listing?.rentAmount ?? ""), internalNote: initialInternalNote,
@@ -128,8 +129,9 @@ export function PropertyEditForm({
         landTenure: values.landTenure || null, description: values.description.trim() || null,
         renovationStatus: values.renovationStatus || null, renovationYear: numberOrNull(values.renovationYear),
         occupancyStatus: values.occupancyStatus,
-        ...(mode === "agent" && values.ownerMobile.trim() ? { ownerMobile: values.ownerMobile.trim() } : {}),
+        ...(mode === "agent" ? { ownerFirstName: values.ownerFirstName.trim(), ownerLastName: values.ownerLastName.trim(), ...(values.ownerMobile.trim() ? { ownerMobile: values.ownerMobile.trim() } : {}) } : {}),
       };
+      if (mode === "agent" && (!details.ownerFirstName || !details.ownerLastName || details.ownerFirstName.length > 80 || details.ownerLastName.length > 100)) throw new Error("نام و نام خانوادگی مالک را به‌درستی وارد کنید.");
       if (!details.city || !details.district || !details.address || !Number.isFinite(details.area) || details.area <= 0 ||
           !Number.isInteger(details.rooms) || details.rooms < 0 || !Number.isInteger(details.floor) ||
           !Number.isInteger(details.totalUnits) || details.totalUnits < 1 ||
@@ -187,6 +189,10 @@ export function PropertyEditForm({
           <label className="space-y-1 text-sm">محله / منطقه *<input required maxLength={120} value={values.district} onChange={e=>update("district",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">نشانی ملک *<input required maxLength={500} value={values.address} onChange={e=>update("address",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">شماره تماس مالک{mode === "owner" ? " *" : " (برای اصلاح)"}<input type="tel" inputMode="numeric" dir="ltr" pattern="09[0-9]{9}" maxLength={11} required={mode === "owner"} readOnly={mode === "owner"} value={values.ownerMobile} onChange={e=>update("ownerMobile",e.target.value)} placeholder={mode === "agent" ? "برای تغییر، شماره جدید را وارد کنید" : ""} className={inputClass}/><span className="text-xs text-slate-500">{mode === "agent" ? "شماره فعلی برای حفظ حریم خصوصی نمایش داده نمی‌شود؛ برای اصلاح، شماره جدید را وارد کنید." : "شماره همراه حساب مالک؛ فقط برای مالک و هشتی قابل مشاهده است."}</span></label>
+          {mode === "agent" && <>
+            <label className="space-y-1 text-sm">نام مالک *<input required maxLength={80} autoComplete="given-name" value={values.ownerFirstName} onChange={e=>update("ownerFirstName",e.target.value)} className={inputClass}/></label>
+            <label className="space-y-1 text-sm">نام خانوادگی مالک *<input required maxLength={100} autoComplete="family-name" value={values.ownerLastName} onChange={e=>update("ownerLastName",e.target.value)} className={inputClass}/></label>
+          </>}
           <label className="space-y-1 text-sm">متراژ *<input required type="number" min="0.1" step="any" value={values.area} onChange={e=>update("area",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">تعداد اتاق *<input required type="number" min="0" step="1" value={values.rooms} onChange={e=>update("rooms",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">طبقه *<input required type="number" min="-10" max="200" step="1" value={values.floor} onChange={e=>update("floor",e.target.value)} className={inputClass}/></label>

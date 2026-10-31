@@ -92,6 +92,8 @@ export async function getPropertyByIdController(
         longitudeExact: _longitudeExact,
         creatorMobile: _creatorMobile,
         ownerMobile: _ownerMobile,
+        ownerFirstName: _ownerFirstName,
+        ownerLastName: _ownerLastName,
         ...customerVisibleProperty
       } = property;
       return res.status(200).json(customerVisibleProperty);
@@ -99,11 +101,15 @@ export async function getPropertyByIdController(
 
     // شماره ثبت‌کننده فقط برای هشتی و شماره مالک فقط برای مالک مرتبط/هشتی قابل مشاهده است.
     if (user?.role === "HASHTI") return res.status(200).json(property);
+    if (user?.role === "AGENT" && property.createdByUserId === user.id) {
+      const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ...agentOwnerVisibleProperty } = property;
+      return res.status(200).json(agentOwnerVisibleProperty);
+    }
     if (user?.role === "OWNER") {
       const { creatorMobile: _creatorMobile, ...ownerVisibleProperty } = property;
       return res.status(200).json(ownerVisibleProperty);
     }
-    const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ...visibleProperty } = property;
+    const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ownerFirstName: _ownerFirstName, ownerLastName: _ownerLastName, ...visibleProperty } = property;
     return res.status(200).json(visibleProperty);
   } catch (error: any) {
     res.status(404).json({

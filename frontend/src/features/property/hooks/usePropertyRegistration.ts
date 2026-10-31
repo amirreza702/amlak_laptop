@@ -11,6 +11,8 @@ import { validatePropertyRegistration } from "../utils/validatePropertyRegistrat
  */
 export function usePropertyRegistration(mode: "owner" | "agent", accountMobile = "", onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>) {
   const [ownerMobile, setOwnerMobile] = useState(mode === "owner" ? accountMobile : "");
+  const [ownerFirstName, setOwnerFirstName] = useState("");
+  const [ownerLastName, setOwnerLastName] = useState("");
   const [propertyType, setPropertyType] = useState<PropertyType>("APARTMENT");
   const [transactionType, setTransactionType] = useState<TransactionType>("SALE");
   const [city, setCity] = useState("شاهرود");
@@ -67,6 +69,8 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
         return;
       }
 
+      if (mode === "agent" && !ownerFirstName.trim()) throw new Error("نام مالک را وارد کنید.");
+      if (mode === "agent" && !ownerLastName.trim()) throw new Error("نام خانوادگی مالک را وارد کنید.");
       if (mode === "agent" && !/^09\\d{9}$/.test(ownerMobile.trim())) {
         throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
       }
@@ -86,7 +90,7 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
       }
 
       const body = await createPropertyRecord({
-        ...(mode === "agent" ? { ownerMobile: ownerMobile.trim() } : {}),
+        ...(mode === "agent" ? { ownerFirstName: ownerFirstName.trim(), ownerLastName: ownerLastName.trim(), ownerMobile: ownerMobile.trim() } : {}),
         propertyType,
         city: city.trim(),
         district: district.trim(),
@@ -134,7 +138,7 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
 
 
   return {
-    ownerMobile, setOwnerMobile,
+    ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
     transactionType, setTransactionType,
     city, setCity, district, setDistrict, address, setAddress,

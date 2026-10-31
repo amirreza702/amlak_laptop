@@ -86,6 +86,9 @@ export interface RegisterPropertyInput {
   renovationYear?: number | null;
   occupancyStatus?: "VACANT" | "OWNER_OCCUPIED" | "TENANT_OCCUPIED";
 
+  /** اطلاعات هویتی مالک؛ در ثبت ملک توسط مشاور الزامی و خصوصی است. */
+  ownerFirstName?: string | null;
+  ownerLastName?: string | null;
   /** شماره همراه واقعی مالک؛ برای ثبت مشاور الزامی است. */
   ownerMobile?: string | null;
 

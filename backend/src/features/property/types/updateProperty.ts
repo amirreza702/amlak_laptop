@@ -11,6 +11,9 @@ export interface UpdatePropertyInput {
 
   postalCode?: string | null;
 
+  /** نام و نام خانوادگی مالک؛ فقط مشاور ثبت‌کننده و هشتی مجاز به ویرایش هستند. */
+  ownerFirstName?: string;
+  ownerLastName?: string;
   /** شماره تماس مالک؛ فقط مشاور ثبت‌کننده و هشتی می‌توانند آن را تغییر دهند. */
   ownerMobile?: string;
 

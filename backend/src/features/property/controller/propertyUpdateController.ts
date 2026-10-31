@@ -33,7 +33,7 @@ export async function updatePropertyController(
     const user = (req as AuthenticatedRequest).user;
     const editableFields = [
       "propertyType", "city", "district", "address", "postalCode",
-      ...(user?.role === "AGENT" || user?.role === "HASHTI" ? ["ownerMobile"] : []),
+      ...(user?.role === "AGENT" || user?.role === "HASHTI" ? ["ownerMobile", "ownerFirstName", "ownerLastName"] : []),
       "latitudeExact", "longitudeExact", "latitudePublic", "longitudePublic",
       "area", "rooms", "floor", "yearBuilt", "unitNumber", "totalUnits",
       "parkingCount", "parkingType", "parkingNumber", "hasElevator",

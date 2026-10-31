@@ -467,6 +467,8 @@ model Property {
   creatorMobile   String?
   // شماره تماس مالک؛ خصوصی و جدا از شماره ثبت‌کننده/مشاور
   ownerMobile     String?
+  ownerFirstName  String?
+  ownerLastName   String?
   createdByUser   User? @relation("PropertyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   city     String
