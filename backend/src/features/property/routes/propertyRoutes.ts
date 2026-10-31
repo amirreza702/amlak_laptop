@@ -15,7 +15,7 @@ import { approvePropertyAgentByOwnerController } from "../controller/propertyAge
 import { revokePropertyAgentController } from "../controller/propertyAgentRevocationController";
 import { createVerificationCaseController, reviewVerificationCaseController } from "../controller/verificationCaseController";
 import { createVerificationDocumentController, getVerificationDocumentsController } from "../controller/verificationDocumentController";
-import { createPropertyMediaController, getPropertyMediaController } from "../controller/propertyMediaController";
+import { createPropertyMediaController, getPropertyMediaController, getPublicPropertyMediaContentController, getPrivatePropertyMediaContentController, deletePropertyMediaController, reorderPropertyMediaController } from "../controller/propertyMediaController";
 import { createDuplicateReviewController, getDuplicateReviewsController, reviewDuplicateController } from "../controller/duplicateReviewController";
 import { archivePropertyController, getPropertyArchiveController, restorePropertyController } from "../controller/propertyArchiveController";
 import { createExactLocationAccessLogController, getExactLocationAccessLogsController } from "../controller/exactLocationAccessLogController";
