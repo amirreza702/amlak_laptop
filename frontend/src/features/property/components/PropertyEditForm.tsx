@@ -51,6 +51,7 @@ export function PropertyEditForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [hasListing, setHasListing] = useState(false);
 
   useEffect(() => {
     let active = true;
