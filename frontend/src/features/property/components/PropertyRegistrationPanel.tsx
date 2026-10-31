@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { usePropertyRegistration } from "../hooks/usePropertyRegistration";
 import { PropertyMediaEditor } from "./PropertyMediaEditor";
+import { AgentContactPolicyNotice } from "./AgentContactPolicyNotice";
 import type { PropertyType, TransactionType } from "../types/propertyRegistration";
 
 // نقشه به صورت client-only بارگذاری می‌شود تا Leaflet در Static Export به window وابسته نشود.
