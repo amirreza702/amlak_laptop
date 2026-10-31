@@ -161,11 +161,10 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
         {createdPropertyId && !listingCreated && (
           <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-7 text-amber-900">
             ملک با شناسه زیر ثبت شده، اما اطلاعات معامله هنوز ثبت نشده است. با زدن دکمه تلاش مجدد فقط معامله ثبت می‌شود و ملک تکراری ساخته نخواهد شد.
-            <span className="mt-2 block break-all font-mono text-xs" dir="ltr">{createdPropertyId}</span>
           </p>
         )}
         {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-7 text-red-800">{error}</p>}
-        {message && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-800">{message}{createdPropertyId && <span className="mt-2 block break-all font-mono text-xs" dir="ltr">شناسه ملک: {createdPropertyId}</span>}</p>}
+        {message && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-800">{message}</p>}
 
         <div className="flex justify-end border-t border-slate-100 pt-4">
           <button type="submit" disabled={busy || listingCreated} className="min-h-11 rounded-xl bg-[#043873] px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-60">
