@@ -52,6 +52,11 @@ export async function registerPropertyController(
       role: user.role,
     });
 
+    if (user.role === "AGENT") {
+      const { ownerMobile: _ownerMobile, ...agentVisibleProperty } = result.property;
+      return res.status(201).json({ ...result, property: agentVisibleProperty });
+    }
+
     return res.status(201).json(result);
   } catch (error: any) {
     return res.status(400).json({
