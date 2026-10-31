@@ -42,12 +42,12 @@ jobs:
         run: npx prisma validate
       - name: Generate Prisma client
         run: npx prisma generate
-      - name: Type-check backend
-        run: npx tsc --noEmit
       - name: Build production backend runtime image
         run: docker build --target runtime -f Dockerfile.production -t hashti-backend:ci .
       - name: Build production migration image
         run: docker build --target migration -f Dockerfile.production -t hashti-backend-migrate:ci .
+      - name: Type-check backend
+        run: npx tsc --noEmit
 
   frontend:
     name: Frontend validation
