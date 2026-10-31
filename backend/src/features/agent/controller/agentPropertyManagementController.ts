@@ -43,7 +43,7 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
   const invalidTextFilter = ["city", "district"].some((key) => {
     const value = req.query[key];
     return value !== undefined && (typeof value !== "string" || value.length > 120);
-  }) || (req.query.address !== undefined && (typeof req.query.address !== "string" || req.query.address.length > 500)) || (totalUnits !== undefined && totalUnits < 1);
+  }) || (req.query.address !== undefined && (typeof req.query.address !== "string" || req.query.address.length > 500)) || (totalUnits !== undefined && totalUnits !== null && totalUnits < 1);
   const propertyType = req.query.propertyType; const transactionType = req.query.transactionType;
   const documentType = req.query.documentType; const ownershipType = req.query.ownershipType; const landTenure = req.query.landTenure;
   if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || floor === null || totalUnits === null || invalidTextFilter ||
