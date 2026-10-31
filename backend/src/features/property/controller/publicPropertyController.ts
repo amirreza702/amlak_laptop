@@ -14,7 +14,14 @@ export async function getPublicPropertyByIdController(
 ) {
   try {
     const property = await getPublishedPublicPropertyById(req.params.id);
-    return res.status(200).json(property);
+    const apiBase = (process.env.PUBLIC_API_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+    return res.status(200).json({
+      ...property,
+      media: property.media.map((item) => ({
+        ...item,
+        url: item.url.startsWith("http") ? item.url : apiBase + item.url,
+      })),
+    });
   } catch (error: unknown) {
     const message =
       error instanceof Error
