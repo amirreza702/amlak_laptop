@@ -17,6 +17,7 @@ services:
     environment:
       PORT: 4000
       DATABASE_URL: postgresql://postgres:1234@db:5432/amlak
+      HASHTI_BOOTSTRAP_SECRET: ${HASHTI_BOOTSTRAP_SECRET:-}
       CHOKIDAR_USEPOLLING: "true"
       CORS_ORIGINS: "http://localhost:3000"
     ports:
