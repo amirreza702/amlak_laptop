@@ -177,7 +177,7 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
               <tbody>
                 {visibleAcceptedAgents.map(({ request, agent, relation }) => {
                   const approved = relation?.status === "ACTIVE" && relation.approvedByOwner;
-                  const canApprove = request.status === "ACTIVE" && relation?.status !== "REVOKED";
+                  const canApprove = request.status === "ACTIVE";
                   return (
                     <tr key={request.propertyId + ":" + agent.id} className="border-t border-slate-200 align-middle">
                       <td className="p-3 font-semibold">{agent.firstName} {agent.lastName}</td>
