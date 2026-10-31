@@ -60,17 +60,23 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   const [editingRequestTransaction, setEditingRequestTransaction] = useState<"SALE" | "FULL_DEPOSIT" | "RENT">("SALE");
   const [editingRequestPropertyType, setEditingRequestPropertyType] = useState<"APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN">("APARTMENT");
   const [editingRequestDescription, setEditingRequestDescription] = useState("");
+  const [editingRequesterFirstName, setEditingRequesterFirstName] = useState("");
+  const [editingRequesterLastName, setEditingRequesterLastName] = useState("");
+  const [editingRequesterMobile, setEditingRequesterMobile] = useState("");
   const [editingRequestBudget, setEditingRequestBudget] = useState("");
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
   const [recordActionError, setRecordActionError] = useState<string | null>(null);
   const [recordActionMessage, setRecordActionMessage] = useState<string | null>(null);
 
-  const openRequestEditor = (request: { id: string; city: string; transactionType: string; propertyType: string; description: string | null; budget: string | number | null }) => {
+  const openRequestEditor = (request: { id: string; city: string; transactionType: string; propertyType: string; description: string | null; budget: string | number | null; requesterFirstName?: string | null; requesterLastName?: string | null; requesterMobile?: string | null }) => {
     setEditingRequestId(request.id);
     setEditingRequestCity(request.city);
     setEditingRequestTransaction(request.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT");
     setEditingRequestPropertyType(request.propertyType as "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN");
     setEditingRequestDescription(request.description ?? "");
+    setEditingRequesterFirstName(request.requesterFirstName ?? "");
+    setEditingRequesterLastName(request.requesterLastName ?? "");
+    setEditingRequesterMobile(request.requesterMobile ?? "");
     setEditingRequestBudget(request.budget == null ? "" : String(request.budget));
     setRecordActionError(null);
     setRecordActionMessage(null);
@@ -81,6 +87,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     if (!editingRequestId) return;
     const city = editingRequestCity.trim();
     const budget = Number(editingRequestBudget);
+    if (!editingRequesterLastName.trim() || !editingRequesterMobile.trim()) { setRecordActionError("نام خانوادگی و شماره تماس مشتری الزامی است."); return; }
     if (!city) { setRecordActionError("شهر درخواست الزامی است."); return; }
     if (!editingRequestBudget.trim() || !Number.isFinite(budget) || budget < 0) { setRecordActionError("بودجه باید عددی معتبر و صفر یا بیشتر باشد."); return; }
     setRecordActionError(null);
@@ -88,7 +95,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       await agentApiRequest(`/agents/me/search-requests/${encodeURIComponent(editingRequestId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transactionType: editingRequestTransaction, propertyType: editingRequestPropertyType, city, description: editingRequestDescription.trim(), budget }),
+        body: JSON.stringify({ requesterFirstName: editingRequesterFirstName.trim(), requesterLastName: editingRequesterLastName.trim(), requesterMobile: editingRequesterMobile.trim(), transactionType: editingRequestTransaction, propertyType: editingRequestPropertyType, city, description: editingRequestDescription.trim(), budget }),
       });
       setEditingRequestId(null);
       setRecordActionMessage("درخواست با موفقیت ویرایش شد.");
@@ -259,6 +266,9 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       {recordActionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{recordActionMessage}</p>}
       <Modal open={Boolean(editingRequestId)} title="ویرایش درخواست مشتری" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingRequestId(null)}>
         <form onSubmit={saveRequestEdit} className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-semibold">نام مشتری<input maxLength={80} value={editingRequesterFirstName} onChange={(event) => setEditingRequesterFirstName(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          <label className="block space-y-1.5 text-sm font-semibold">نام خانوادگی مشتری *<input required maxLength={100} value={editingRequesterLastName} onChange={(event) => setEditingRequesterLastName(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
+          <label className="block space-y-1.5 text-sm font-semibold">شماره تماس مشتری *<input required type="tel" inputMode="tel" value={editingRequesterMobile} onChange={(event) => setEditingRequesterMobile(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
           <label className="block space-y-1.5 text-sm font-semibold">نوع معامله<select value={editingRequestTransaction} onChange={event=>setEditingRequestTransaction(event.target.value as typeof editingRequestTransaction)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5">{requestTransactionOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
           <label className="block space-y-1.5 text-sm font-semibold">نوع ملک<select value={editingRequestPropertyType} onChange={event=>setEditingRequestPropertyType(event.target.value as typeof editingRequestPropertyType)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5">{requestPropertyOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
           <label className="block space-y-1.5 text-sm font-semibold">شهر درخواست<input required value={editingRequestCity} onChange={(event) => setEditingRequestCity(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>

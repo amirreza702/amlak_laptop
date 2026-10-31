@@ -33,6 +33,9 @@ interface CreatedRequest {
 export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () => void }) {
   const [transactionType, setTransactionType] = useState<CustomerRequestTransactionType>("SALE");
   const [propertyType, setPropertyType] = useState<CustomerRequestPropertyType>("APARTMENT");
+  const [requesterFirstName, setRequesterFirstName] = useState("");
+  const [requesterLastName, setRequesterLastName] = useState("");
+  const [requesterMobile, setRequesterMobile] = useState("");
   const [city, setCity] = useState("");
   const [budget, setBudget] = useState("");
   const [description, setDescription] = useState("");
@@ -43,7 +46,11 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const normalizedFirstName = requesterFirstName.trim();
+    const normalizedLastName = requesterLastName.trim();
+    const normalizedMobile = requesterMobile.trim();
     const normalizedCity = city.trim();
+    if (!normalizedLastName || !normalizedMobile) { setError("نام خانوادگی و شماره تماس مشتری الزامی است."); return; }
     if (!normalizedCity) {
       setError("شهر موردنظر را وارد کنید.");
       return;
@@ -64,6 +71,9 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          requesterFirstName: normalizedFirstName,
+          requesterLastName: normalizedLastName,
+          requesterMobile: normalizedMobile,
           transactionType,
           propertyType,
           city: normalizedCity,
@@ -94,7 +104,7 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
         <div>
           <h2 className="text-lg font-bold">ثبت درخواست مشتری</h2>
           <p className="mt-1 text-sm leading-7 text-slate-600">
-            اطلاعات نیاز ملکی را ثبت کنید. نوع ثبت‌کننده و شماره تماس، خودکار از نشست ورود مشاور ثبت می‌شود؛ نیازی به واردکردن شماره تماس نیست.
+            مشخصات مشتری و نیاز ملکی او را ثبت کنید. شماره تماس واردشده متعلق به مشتری است.
           </p>
         </div>
       </div>
@@ -103,12 +113,23 @@ export function AgentCreateSearchRequestPanel({ onCreated }: { onCreated?: () =>
         <div role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-900">
           <div className="flex items-center gap-2 font-bold"><CheckCircle2 className="h-5 w-5" /> درخواست با موفقیت ثبت شد.</div>
           <p className="mt-2">ثبت‌کننده: مشاور املاک (حساب جاری)</p>
-          <p>شماره تماس ثبت‌کننده از نشست معتبر سرور گرفته شده است.</p>
+          <p>نام و شماره تماس مشتری در درخواست ذخیره شد.</p>
           <p className="mt-2">کد پیگیری: <span dir="ltr" className="select-all font-mono">{created.id}</span></p>
-          <button type="button" onClick={() => { setCreated(null); setCity(""); setBudget(""); setDescription(""); }} className="mt-3 rounded-lg bg-[#043873] px-4 py-2 font-bold text-white">ثبت درخواست دیگر</button>
+          <button type="button" onClick={() => { setCreated(null); setRequesterFirstName(""); setRequesterLastName(""); setRequesterMobile(""); setCity(""); setBudget(""); setDescription(""); }} className="mt-3 rounded-lg bg-[#043873] px-4 py-2 font-bold text-white">ثبت درخواست دیگر</button>
         </div>
       ) : (
         <form onSubmit={submit} className="mt-5 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="space-y-2 text-sm font-medium">نام مشتری
+              <input className={inputClassName} value={requesterFirstName} onChange={e => setRequesterFirstName(e.target.value)} maxLength={80} />
+            </label>
+            <label className="space-y-2 text-sm font-medium">نام خانوادگی مشتری *
+              <input className={inputClassName} value={requesterLastName} onChange={e => setRequesterLastName(e.target.value)} required maxLength={100} />
+            </label>
+            <label className="space-y-2 text-sm font-medium">شماره تماس مشتری *
+              <input className={inputClassName} type="tel" inputMode="tel" value={requesterMobile} onChange={e => setRequesterMobile(e.target.value)} required />
+            </label>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm font-medium">نوع معامله
               <select className={inputClassName} value={transactionType} onChange={e => setTransactionType(e.target.value as CustomerRequestTransactionType)}>

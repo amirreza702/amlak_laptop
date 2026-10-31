@@ -66,33 +66,44 @@ export const createCustomerSearchRequest = async (
     city: string;
     budget: number;
     description?: string;
+    requesterFirstName?: string;
+    requesterLastName?: string;
+    requesterMobile?: string;
   },
   creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string }
 ) => {
-  // فقط درخواست ثبت‌شده توسط حساب مشتری باید به پروفایل مشتری متصل باشد.
+  let requesterFirstName: string | null;
+  let requesterLastName: string;
+  let requesterMobile: string;
+
+  // اطلاعات مشتری دارای حساب از پروفایل متصل به نشست معتبر خوانده می‌شود.
   if (creator.role === "CUSTOMER") {
     if (!customerId) throw new Error("Customer not found");
     const customer = await findCustomerById(customerId);
-    if (!customer || customer.userId !== creator.id) {
-      throw new Error("Customer not found");
-    }
-  } else if (customerId !== null) {
-    throw new Error("Agent-created requests cannot be assigned to a customer profile");
+    if (!customer || customer.userId !== creator.id) throw new Error("Customer not found");
+    requesterFirstName = customer.firstName.trim() || null;
+    requesterLastName = customer.lastName.trim();
+    requesterMobile = creator.mobile;
+  } else {
+    if (customerId !== null) throw new Error("Agent-created requests cannot be assigned to a customer profile");
+    requesterFirstName = data.requesterFirstName?.trim() || null;
+    requesterLastName = data.requesterLastName?.trim() ?? "";
+    requesterMobile = data.requesterMobile?.trim() ?? "";
+    if (!requesterLastName) throw new Error("Customer last name is required");
+    if (!requesterMobile) throw new Error("Customer mobile is required");
   }
 
   if (!data.city.trim()) throw new Error("City is required");
-  if (data.budget === undefined || data.budget === null) {
-    throw new Error("Budget is required");
-  }
-  if (!Number.isFinite(data.budget) || data.budget < 0) {
-    throw new Error("Budget cannot be negative");
-  }
+  if (data.budget === undefined || data.budget === null) throw new Error("Budget is required");
+  if (!Number.isFinite(data.budget) || data.budget < 0) throw new Error("Budget cannot be negative");
 
   return createPropertySearchRequest({
     customerId,
     createdByUserId: creator.id,
     createdByRole: creator.role,
-    requesterMobile: creator.mobile,
+    requesterMobile,
+    requesterFirstName,
+    requesterLastName,
     transactionType: data.transactionType,
     propertyType: data.propertyType,
     city: data.city.trim(),

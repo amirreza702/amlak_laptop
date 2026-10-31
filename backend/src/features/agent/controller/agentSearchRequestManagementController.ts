@@ -12,11 +12,11 @@ const transactionTypes = new Set(Object.values(TransactionType));
 export async function updateOwnAgentSearchRequestController(req: Request, res: Response) {
  try {
   const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
-  const { transactionType, propertyType, city, budget, description } = req.body ?? {};
-  if ((transactionType !== undefined && !transactionTypes.has(transactionType)) || (propertyType !== undefined && !propertyTypes.has(propertyType)) || (city !== undefined && (typeof city !== "string" || !city.trim())) || (budget !== undefined && (!Number.isFinite(Number(budget)) || Number(budget) < 0)) || (description !== undefined && description !== null && typeof description !== "string")) return res.status(400).json({ message: "Invalid search request data" });
+  const { transactionType, propertyType, city, budget, description, requesterFirstName, requesterLastName, requesterMobile } = req.body ?? {};
+  if ((transactionType !== undefined && !transactionTypes.has(transactionType)) || (propertyType !== undefined && !propertyTypes.has(propertyType)) || (city !== undefined && (typeof city !== "string" || !city.trim())) || (budget !== undefined && (!Number.isFinite(Number(budget)) || Number(budget) < 0)) || (description !== undefined && description !== null && typeof description !== "string") || (requesterFirstName !== undefined && requesterFirstName !== null && typeof requesterFirstName !== "string") || typeof requesterLastName !== "string" || !requesterLastName.trim() || typeof requesterMobile !== "string" || !requesterMobile.trim()) return res.status(400).json({ message: "نام خانوادگی و شماره تماس مشتری الزامی است." });
   const existing = await prisma.propertySearchRequest.findFirst({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!existing) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
-  const updated = await prisma.propertySearchRequest.update({ where: { id: existing.id }, data: { ...(transactionType !== undefined ? { transactionType } : {}), ...(propertyType !== undefined ? { propertyType } : {}), ...(city !== undefined ? { city: city.trim() } : {}), ...(budget !== undefined ? { budget } : {}), ...(description !== undefined ? { description } : {}) } });
+  const updated = await prisma.propertySearchRequest.update({ where: { id: existing.id }, data: { ...(transactionType !== undefined ? { transactionType } : {}), ...(propertyType !== undefined ? { propertyType } : {}), ...(city !== undefined ? { city: city.trim() } : {}), ...(budget !== undefined ? { budget } : {}), ...(description !== undefined ? { description } : {}), requesterFirstName: typeof requesterFirstName === "string" ? requesterFirstName.trim() || null : null, requesterLastName: requesterLastName.trim(), requesterMobile: requesterMobile.trim() } });
   return res.status(200).json(updated);
  } catch (error) { console.error("Could not update agent search request:", error); return res.status(500).json({ message: "Internal server error" }); }
 }
@@ -37,7 +37,7 @@ export async function getAllAgentSearchRequestsController(req: Request, res: Res
    // در ابزار مدیریت مشتریان مشاور فقط درخواست‌های باز و فعال نمایش داده می‌شوند.
    where: { status: "ACTIVE" },
    select: {
-    id: true, customerId: true, requesterMobile: true,
+    id: true, customerId: true, requesterMobile: true, requesterFirstName: true, requesterLastName: true,
     customer: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
     transactionType: true, propertyType: true, city: true, budget: true,
     description: true, hashtiVerified: true, status: true,
@@ -45,9 +45,12 @@ export async function getAllAgentSearchRequestsController(req: Request, res: Res
    },
    orderBy: { createdAt: "desc" },
   });
-  return res.status(200).json(rows.map(({ createdByUserId, requesterMobile, customer, ...request }) => ({
+  return res.status(200).json(rows.map(({ createdByUserId, requesterMobile, requesterFirstName, requesterLastName, customer, ...request }) => ({
    ...request,
-   contactName: customer ? `${customer.firstName} ${customer.lastName}`.trim() : request.createdByRole === UserRole.AGENT ? "مشاور املاک" : "مشتری",
+   requesterFirstName: requesterFirstName ?? customer?.firstName ?? null,
+   requesterLastName: requesterLastName ?? customer?.lastName ?? null,
+   requesterMobile: requesterMobile ?? customer?.user.mobile ?? null,
+   contactName: [requesterFirstName ?? customer?.firstName, requesterLastName ?? customer?.lastName].filter(Boolean).join(" ") || (request.createdByRole === UserRole.AGENT ? "مشاور املاک" : "مشتری"),
    contactMobile: requesterMobile ?? customer?.user.mobile ?? null,
    isCreatedByMe: createdByUserId === id,
   })));

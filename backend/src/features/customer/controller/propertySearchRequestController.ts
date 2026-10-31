@@ -75,7 +75,7 @@ export async function createAgentSearchRequestController(req: Request, res: Resp
     return res.status(201).json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "خطا در ایجاد درخواست جستجو";
-    if (message === "City is required" || message === "Budget is required" || message === "Budget cannot be negative") {
+    if (message === "City is required" || message === "Budget is required" || message === "Budget cannot be negative" || message === "Customer last name is required" || message === "Customer mobile is required") {
       return res.status(400).json({ message });
     }
     console.error("Error creating agent search request:", error);

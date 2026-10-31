@@ -314,7 +314,8 @@ model PropertySearchRequest {
   createdByUserId String?
   createdByRole   UserRole?
   requesterMobile String?
-  
+  requesterFirstName String?
+  requesterLastName  String?
 
   transactionType TransactionType
   propertyType    PropertyType
