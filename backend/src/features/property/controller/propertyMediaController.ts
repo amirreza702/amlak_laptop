@@ -20,7 +20,7 @@ export async function createPropertyMediaController(
     unknown,
     {
       type: MediaType;
-      url: string;
+      imageData: string;
       sortOrder?: number;
     }
   >,
@@ -31,7 +31,7 @@ export async function createPropertyMediaController(
 
     const {
       type,
-      url,
+      imageData,
       sortOrder,
     } = req.body;
 
