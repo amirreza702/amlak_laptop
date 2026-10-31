@@ -16,16 +16,19 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npx tsc
 
-# One-shot image used only to apply database migrations at deployment time.
-FROM build AS migration
-ENV NODE_ENV=production
-CMD ["npx", "prisma", "migrate", "deploy"]
-
-# Install only runtime dependencies for the application image.
+# Install only runtime dependencies for the application and migration images.
 FROM node:22-alpine AS production-dependencies
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
+
+# One-shot migration image: production dependencies plus Prisma CLI only.
+FROM production-dependencies AS migration
+RUN npm install --no-save --package-lock=false --omit=dev prisma@6.19.3
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+ENV NODE_ENV=production
+CMD ["npx", "prisma", "migrate", "deploy"]
 
 # Small runtime image: no TypeScript compiler, tsx, Prisma CLI, or source files.
 FROM node:22-alpine AS runtime
