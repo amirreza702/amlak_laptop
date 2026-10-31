@@ -62,6 +62,7 @@ export function PropertyEditForm({
         const property = await response.json();
         if (!response.ok) throw new Error(property.message || "دریافت اطلاعات ملک ناموفق بود.");
         const listing = property.listing ?? null;
+        setHasListing(listing !== null);
         if (!active) return;
         setValues({
           propertyType: property.propertyType ?? "APARTMENT",
