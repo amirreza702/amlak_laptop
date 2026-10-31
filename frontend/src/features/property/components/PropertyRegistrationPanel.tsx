@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { usePropertyRegistration } from "../hooks/usePropertyRegistration";
+import { PropertyMediaEditor } from "./PropertyMediaEditor";
 import type { PropertyType, TransactionType } from "../types/propertyRegistration";
 
 // نقشه به صورت client-only بارگذاری می‌شود تا Leaflet در Static Export به window وابسته نشود.
@@ -162,6 +163,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
           <p className="text-xs leading-6 text-slate-500">طبق منطق فعلی سرور، برای فروش قیمت فروش، برای رهن کامل مبلغ رهن و برای اجاره مبلغ اجاره الزامی است.</p>
         </fieldset>
 
+        {createdPropertyId && <PropertyMediaEditor propertyId={createdPropertyId} />}
         {createdPropertyId && !listingCreated && (
           <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-7 text-amber-900">
             ملک با شناسه زیر ثبت شده، اما اطلاعات معامله هنوز ثبت نشده است. با زدن دکمه تلاش مجدد فقط معامله ثبت می‌شود و ملک تکراری ساخته نخواهد شد.
