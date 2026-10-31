@@ -72,7 +72,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
         ))}</tbody></table></div>}
       <Modal open={Boolean(editingProperty)} title="ویرایش کامل ملک" description="مقادیر فعلی در فرم قرار گرفته‌اند؛ شناسه و سوابق سیستمی قابل ویرایش نیستند." onClose={() => { if (!savingProperty) setEditingProperty(null); }}>
         {editingProperty && <PropertyEditForm propertyId={editingProperty.propertyId} mode="owner" onClose={() => setEditingProperty(null)} onSaved={() => { setEditingProperty(null); setReload(value => value + 1); }} />}
-        <form hidden onSubmit={submitPropertyEdit} className="max-h-[75vh] space-y-4 overflow-y-auto p-1" dir="rtl">
+        {false && <form onSubmit={submitPropertyEdit} className="max-h-[75vh] space-y-4 overflow-y-auto p-1" dir="rtl">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1 text-sm">نوع ملک<select required value={editForm.propertyType} onChange={(e) => setEditForm(v => ({...v, propertyType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label className="space-y-1 text-sm">نوع معامله<select required value={editForm.transactionType} onChange={(e) => setEditForm(v => ({...v, transactionType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["SALE","فروش"],["FULL_DEPOSIT","رهن کامل"],["RENT","اجاره"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
@@ -99,7 +99,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
           {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{actionError}</p>}
           <p className="text-xs leading-6 text-slate-500">وضعیت تأیید مالکیت، انتشار و سوابق سیستمی فقط از مسیرهای مجاز تغییر می‌کنند.</p>
           <div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setEditingProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="submit" disabled={savingProperty} className="rounded-lg bg-[#043873] px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
-        </form>
+        </form>}
       </Modal>
       <Modal open={Boolean(pendingDeleteProperty)} title="حذف ملک از فهرست فعال" description="ملک غیرفعال می‌شود؛ سوابق و اطلاعات وابسته حفظ می‌شوند." onClose={() => { if (!savingProperty) setPendingDeleteProperty(null); }}>
         <div className="space-y-4" dir="rtl">{actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}<p>آیا ملک «{pendingDeleteProperty?.property.city}، {pendingDeleteProperty?.property.district}» از فهرست فعال حذف شود؟</p><p className="break-all font-mono text-xs text-slate-500" dir="ltr">{pendingDeleteProperty?.propertyId}</p><div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setPendingDeleteProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={savingProperty} onClick={() => void confirmPropertyDelete()} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال حذف..." : "تأیید حذف"}</button></div></div>
