@@ -5,12 +5,12 @@ import { findPublishedPublicPropertyById } from "../repository/publicPropertyRep
  *
  * سیاست تماس:
  * - ملک ثبت‌شده توسط مالک: تا پیش از تأیید مشاور، شماره مالک نمایش داده می‌شود.
- * - پس از تأیید مشاور: فقط شماره مشاور تأییدشده نمایش داده می‌شود.
+ * - پس از تأیید مشاور: فقط شماره همان مشاور نمایش داده می‌شود.
  * - ملک ثبت‌شده توسط مشاور: فقط شماره مشاور ثبت‌کننده نمایش داده می‌شود.
- * - اطلاعات تماس مالک و مشاوران دیگر از پاسخ عمومی حذف می‌شود.
+ * - شماره مالک در ملک ثبت‌شده توسط مشاور هرگز در پاسخ عمومی قرار نمی‌گیرد.
  *
- * دسترسی کارکنان هشتی و ادمین از مسیرهای مدیریتی احراز هویت‌شده انجام می‌شود؛
- * این سرویس صرفاً پاسخ عمومی آگهی را می‌سازد.
+ * اطلاعات تماس کامل کارکنان هشتی فقط از مسیرهای مدیریتی احراز هویت‌شده
+ * قابل دریافت است؛ این سرویس صرفاً پاسخ عمومی آگهی را می‌سازد.
  */
 export async function getPublishedPublicPropertyById(id: string) {
   const property = await findPublishedPublicPropertyById(id);
@@ -23,22 +23,48 @@ export async function getPublishedPublicPropertyById(id: string) {
 
   const firstRegistrant = agents.find((relation) => relation.isFirstRegistrant)?.agent
     ?? agents[0]?.agent;
-  const approvedAgent = agents.find((relation) => relation.approvedByOwner)?.agent;
+
+  // فقط رابطه فعال و تأییدشده می‌تواند شماره عمومی مشاور باشد.
+  const approvedAgent = agents.find(
+    (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
+  )?.agent;
+
   const primaryOwner = owners[0]?.owner;
 
-  const selectedContact =
-    registrationSource === "AGENT"
-      ? firstRegistrant
-      : approvedAgent ?? primaryOwner;
+  let contact: {
+    type: "OWNER" | "AGENT";
+    firstName: string;
+    lastName: string;
+    mobile: string;
+  } | null = null;
 
-  const contact = selectedContact
-    ? {
-        type: selectedContact === primaryOwner ? "OWNER" as const : "AGENT" as const,
-        firstName: selectedContact.firstName,
-        lastName: selectedContact.lastName,
-        mobile: selectedContact.user.mobile,
-      }
-    : null;
+  if (registrationSource === "AGENT") {
+    // ثبت مشاور: فقط شماره همان مشاور ثبت‌کننده؛ بدون fallback به مالک.
+    if (firstRegistrant) {
+      contact = {
+        type: "AGENT",
+        firstName: firstRegistrant.firstName,
+        lastName: firstRegistrant.lastName,
+        mobile: firstRegistrant.user.mobile,
+      };
+    }
+  } else if (approvedAgent) {
+    // ثبت مالک پس از تأیید نهایی: فقط شماره مشاور منتخب مالک.
+    contact = {
+      type: "AGENT",
+      firstName: approvedAgent.firstName,
+      lastName: approvedAgent.lastName,
+      mobile: approvedAgent.user.mobile,
+    };
+  } else if (primaryOwner) {
+    // ثبت مالک پیش از تأیید مشاور: شماره مالک تأییدشده.
+    contact = {
+      type: "OWNER",
+      firstName: primaryOwner.firstName,
+      lastName: primaryOwner.lastName,
+      mobile: primaryOwner.user.mobile,
+    };
+  }
 
   return { ...publicProperty, contact };
 }

@@ -5,41 +5,17 @@
  *
  * تأیید مشاور توسط مالک
  *
- * جریان:
- *
- * Owner
- *   ↓
- * بررسی Property
- *   ↓
- * بررسی PropertyOwner
- *   ↓
- * بررسی تعلق ملک به مالک
- *   ↓
- * بررسی PropertyAgent
- *   ↓
- * تأیید Agent
- *   ↓
- * ثبت PropertyHistory
+ * در هر ملک فقط یک ارتباط ACTIVE می‌تواند تأیید نهایی مالک را
+ * داشته باشد. تأیید مشاور جدید، تأیید قبلی را لغو می‌کند؛
+ * اما ارتباط و سوابق مشاور قبلی حذف نمی‌شود.
  */
 
-import { PropertyHistoryAction } from "@prisma/client";
+import { Prisma, PropertyHistoryAction } from "@prisma/client";
 
-import {
-  findPropertyAgent,
-} from "../repository/propertyAgentRepository";
-
-import {
-  findPropertyById,
-} from "../repository/propertyRepository";
-
-import {
-  findPropertyOwner,
-} from "../repository/propertyOwnerRepository";
-
-import {
-  createPropertyHistory,
-} from "../repository/propertyHistoryRepository";
-
+import { findPropertyAgent } from "../repository/propertyAgentRepository";
+import { findPropertyById } from "../repository/propertyRepository";
+import { findPropertyOwner } from "../repository/propertyOwnerRepository";
+import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 import { prisma } from "../../../lib/prisma";
 
 export interface ApprovePropertyAgentInput {
@@ -51,61 +27,22 @@ export interface ApprovePropertyAgentInput {
 export async function approvePropertyAgentByOwnerService(
   data: ApprovePropertyAgentInput
 ) {
-  /**
-   * ----------------------------------------------------------
-   * 1. بررسی وجود ملک
-   * ----------------------------------------------------------
-   */
-
-  const property = await findPropertyById(
-    data.propertyId
-  );
-
+  const property = await findPropertyById(data.propertyId);
   if (!property) {
-    throw new Error(
-      "ملک مورد نظر پیدا نشد."
-    );
+    throw new Error("ملک مورد نظر پیدا نشد.");
   }
 
-  /**
-   * ----------------------------------------------------------
-   * 2. بررسی ارتباط مالک با ملک
-   * ----------------------------------------------------------
-   *
-   * دسترسی به PropertyOwner از طریق Repository انجام می‌شود.
-   */
-
-  const propertyOwner =
-    await findPropertyOwner(
-      data.propertyId,
-      data.ownerId
-    );
-
+  const propertyOwner = await findPropertyOwner(data.propertyId, data.ownerId);
   if (!propertyOwner) {
-    throw new Error(
-      "این مالک به ملک مورد نظر متصل نیست."
-    );
+    throw new Error("این مالک به ملک مورد نظر متصل نیست.");
   }
 
-  /**
-   * ----------------------------------------------------------
-   * 4. بررسی مشاور
-   * ----------------------------------------------------------
-   */
-
-  const propertyAgent =
-    await findPropertyAgent(
-      data.propertyId,
-      data.agentId
-    );
-
+  const propertyAgent = await findPropertyAgent(data.propertyId, data.agentId);
   if (!propertyAgent) {
-    throw new Error(
-      "این مشاور به ملک مورد نظر متصل نیست."
-    );
+    throw new Error("این مشاور به ملک مورد نظر متصل نیست.");
   }
 
-  if (propertyAgent.approvedByOwner) {
+  if (propertyAgent.approvedByOwner && propertyAgent.status === "ACTIVE") {
     throw new Error("این مشاور قبلاً توسط مالک تأیید شده است.");
   }
 
@@ -113,31 +50,36 @@ export async function approvePropertyAgentByOwnerService(
     where: {
       agentId: data.agentId,
       status: "ACCEPTED",
-      ownerRequest: { is: { propertyId: data.propertyId, ownerId: data.ownerId, status: "ACTIVE" } },
+      ownerRequest: {
+        is: {
+          propertyId: data.propertyId,
+          ownerId: data.ownerId,
+          status: "ACTIVE",
+        },
+      },
     },
     select: { id: true },
   });
+
   if (!acceptedRequest) {
     throw new Error("این مشاور درخواست همکاری فعال این ملک را نپذیرفته است.");
   }
 
-  /**
-   * ----------------------------------------------------------
-   * 5. تغییر وضعیت + ثبت History
-   *
-   * هر دو عملیات داخل یک Transaction انجام می‌شوند.
-   * بنابراین یا هر دو موفق می‌شوند یا هیچ‌کدام ثبت نمی‌شوند.
-   * ----------------------------------------------------------
-   */
+  return prisma.$transaction(
+    async (tx) => {
+      // ابتدا هر تأیید قبلی لغو می‌شود؛ سوابق و رابطه مشاور حفظ می‌شوند.
+      await tx.propertyAgent.updateMany({
+        where: {
+          propertyId: data.propertyId,
+          approvedByOwner: true,
+        },
+        data: {
+          approvedByOwner: false,
+          approvedAt: null,
+        },
+      });
 
-  return prisma.$transaction(async (tx) => {
-    // در هر ملک فقط یک مشاور تأییدشده باقی می‌ماند؛ تاریخچه و ارتباط‌ها حفظ می‌شوند.
-    await tx.propertyAgent.updateMany({
-      where: { propertyId: data.propertyId, agentId: { not: data.agentId }, approvedByOwner: true },
-      data: { approvedByOwner: false, approvedAt: null },
-    });
-    const updatedPropertyAgent =
-      await tx.propertyAgent.update({
+      const updatedPropertyAgent = await tx.propertyAgent.update({
         where: {
           propertyId_agentId: {
             propertyId: data.propertyId,
@@ -151,21 +93,25 @@ export async function approvePropertyAgentByOwnerService(
         },
       });
 
-    await createPropertyHistory(
-      {
-        propertyId: data.propertyId,
-        action:
-          PropertyHistoryAction.LISTING_CHANGED,
-        field: "propertyAgent.approvedByOwner",
-        oldValue: "false",
-        newValue: "true",
-        performedBy: data.ownerId,
-        reason:
-          "تأیید مشاور توسط مالک",
-      },
-      tx
-    );
+      await createPropertyHistory(
+        {
+          propertyId: data.propertyId,
+          action: PropertyHistoryAction.LISTING_CHANGED,
+          field: "propertyAgent.approvedByOwner",
+          oldValue: "false",
+          newValue: "true",
+          performedBy: data.ownerId,
+          reason: "تأیید نهایی مشاور توسط مالک؛ تأیید مشاور قبلی در صورت وجود لغو شد",
+        },
+        tx
+      );
 
-    return updatedPropertyAgent;
-  });
+      return updatedPropertyAgent;
+    },
+    {
+      // از تأیید هم‌زمان دو مشاور برای یک ملک جلوگیری می‌کند.
+      // قید یکتای پایگاه داده نیز این قانون را مستقل از لایه برنامه تضمین می‌کند.
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    }
+  );
 }
