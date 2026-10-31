@@ -90,6 +90,12 @@ export async function getPropertyByIdController(
       return res.status(200).json(customerVisibleProperty);
     }
 
+    // شماره ثبت‌کننده فقط برای کارکنان هشتی در API مدیریتی قابل مشاهده است.
+    if (user?.role !== "HASHTI") {
+      const { creatorMobile: _creatorMobile, ...visibleProperty } = property;
+      return res.status(200).json(visibleProperty);
+    }
+
     return res.status(200).json(property);
   } catch (error: any) {
     res.status(404).json({
