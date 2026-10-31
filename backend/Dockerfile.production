@@ -1,0 +1,42 @@
+# Production backend image.
+# The local development Dockerfile and docker-compose.yml remain unchanged.
+
+FROM node:22-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+# Prisma config reads DATABASE_URL even when generating the client.
+RUN DATABASE_URL="postgresql://postgres:build-only@localhost:5432/amlak" npx prisma generate
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npx tsc
+
+# One-shot image used only to apply database migrations at deployment time.
+FROM build AS migration
+ENV NODE_ENV=production
+CMD ["npx", "prisma", "migrate", "deploy"]
+
+# Install only runtime dependencies for the application image.
+FROM node:22-alpine AS production-dependencies
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Small runtime image: no TypeScript compiler, tsx, Prisma CLI, or source files.
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
+# Reuse the Prisma Client generated against the production schema and Alpine runtime.
+COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build --chown=node:node /app/dist ./dist
+
+USER node
+EXPOSE 4000
+CMD ["node", "dist/app.js"]
