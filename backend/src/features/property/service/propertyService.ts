@@ -129,7 +129,7 @@ export async function registerProperty(
   if (creator.role === "AGENT") {
     if (typeof data.ownerFirstName !== "string" || !data.ownerFirstName.trim() || data.ownerFirstName.trim().length > 80) throw new Error("نام مالک الزامی است و حداکثر باید ۸۰ نویسه باشد.");
     if (typeof data.ownerLastName !== "string" || !data.ownerLastName.trim() || data.ownerLastName.trim().length > 100) throw new Error("نام خانوادگی مالک الزامی است و حداکثر باید ۱۰۰ نویسه باشد.");
-    if (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim())) throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
+    if (typeof data.ownerMobile !== "string" || !/^09\d{9}$/.test(data.ownerMobile.trim())) throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
   }
 
   const isAgentRegistration = creator.role === "AGENT";
@@ -379,7 +379,7 @@ export async function updatePropertyService(
   if (has("city") && !data.city?.trim()) throw new Error("شهر الزامی است.");
   if (has("district") && typeof data.district !== "string") throw new Error("محله یا منطقه معتبر نیست.");
   if (has("address") && !data.address?.trim()) throw new Error("نشانی ملک الزامی است.");
-  if (has("ownerMobile") && (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim()))) throw new Error("شماره همراه مالک معتبر نیست.");
+  if (has("ownerMobile") && (typeof data.ownerMobile !== "string" || !/^09\d{9}$/.test(data.ownerMobile.trim()))) throw new Error("شماره همراه مالک معتبر نیست.");
   if (has("ownerFirstName") && (typeof data.ownerFirstName !== "string" || !data.ownerFirstName.trim() || data.ownerFirstName.trim().length > 80)) throw new Error("نام مالک معتبر نیست.");
   if (has("ownerLastName") && (typeof data.ownerLastName !== "string" || !data.ownerLastName.trim() || data.ownerLastName.trim().length > 100)) throw new Error("نام خانوادگی مالک معتبر نیست.");
   if (has("latitudeExact") && (data.latitudeExact == null || !Number.isFinite(data.latitudeExact) || data.latitudeExact < -90 || data.latitudeExact > 90)) throw new Error("عرض جغرافیایی معتبر نیست.");
