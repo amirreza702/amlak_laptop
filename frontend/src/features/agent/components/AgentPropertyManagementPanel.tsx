@@ -10,6 +10,7 @@ import { Modal } from "@/shared/components/Modal";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { PropertyMediaEditor } from "@/features/property/components/PropertyMediaEditor";
+import { PropertyEditForm } from "@/features/property/components/PropertyEditForm";
 import type { AgentPrivateNote } from "../hooks/useAgentPrivateNotes";
 
 const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
@@ -220,8 +221,17 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           <button type="button" disabled={loading || pagination.offset + pagination.limit >= pagination.total} onClick={() => void load(pagination.offset + pagination.limit)} className="rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-40">بعدی</button>
         </div>
       </div>
-      <Modal open={Boolean(editingProperty)} title="ویرایش مشخصات ملک" description="تغییرات در سابقهٔ ملک ثبت می‌شوند." onClose={() => setEditingProperty(null)} size="full">
-        <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
+      <Modal open={Boolean(editingProperty)} title="ویرایش کامل مشخصات ملک" description="فرم مشترک مالک و مشاور؛ اطلاعات فعلی، قیمت و تصاویر ملک بارگذاری می‌شوند." onClose={() => setEditingProperty(null)} size="full">
+        {editingProperty && <PropertyEditForm
+          key={editingProperty.id}
+          propertyId={editingProperty.id}
+          mode="agent"
+          initialInternalNote={notes.find((item) => item.entityType === "property" && item.entityId === editingProperty.id)?.note ?? ""}
+          onSavePrivateNote={(propertyId, note) => saveNote("property", propertyId, note)}
+          onClose={() => setEditingProperty(null)}
+          onSaved={() => { setEditingProperty(null); setActionMessage("مشخصات ملک و یادداشت خصوصی ذخیره شد."); void load(pagination.offset); }}
+        />}
+        <div hidden>        <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
           {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{actionError}</p>}
           <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value as PropertyType}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label className="space-y-1 text-sm">شهر<input required maxLength={100} value={editValues.city} onChange={e=>setEditValues(v=>({...v,city:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
@@ -236,7 +246,8 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           <div className="space-y-3 rounded-xl border p-3 sm:col-span-2"><h3 className="font-bold">نوع معامله و قیمت</h3><label className="block space-y-1 text-sm">نوع معامله<select required value={editValues.transactionType} onChange={e=>setEditValues(v=>({...v,transactionType:e.target.value as TransactionType}))} className="w-full rounded-lg border px-3 py-2"><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select></label>{editValues.transactionType === "SALE" && <label className="block space-y-1 text-sm">قیمت فروش (تومان)<input required type="number" min="1" step="1" value={editValues.salePrice} onChange={e=>setEditValues(v=>({...v,salePrice:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}{editValues.transactionType === "FULL_DEPOSIT" && <label className="block space-y-1 text-sm">مبلغ رهن کامل (تومان)<input required type="number" min="1" step="1" value={editValues.depositAmount} onChange={e=>setEditValues(v=>({...v,depositAmount:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}{editValues.transactionType === "RENT" && <label className="block space-y-1 text-sm">مبلغ اجاره ماهانه (تومان)<input required type="number" min="1" step="1" value={editValues.rentAmount} onChange={e=>setEditValues(v=>({...v,rentAmount:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>}</div>
           <label className="space-y-1 text-sm sm:col-span-2">توضیحات خصوصی مشاور (اختیاری)<textarea rows={4} maxLength={10000} value={editValues.internalNote} onChange={e=>setEditValues(v=>({...v,internalNote:e.target.value}))} className="w-full rounded-lg border px-3 py-2" placeholder="فقط برای شما و مدیر ارشد هشتی" /></label>
           <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={()=>setEditingProperty(null)} className="rounded-lg border px-4 py-2">انصراف</button><button disabled={savingProperty} type="submit" className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
-        </form>
+       </div>
+      </Modal>
       </Modal>
       <Modal open={Boolean(deletingPropertyId)} title="حذف ملک از فهرست فعال" description="اطلاعات و سوابق ملک پاک نمی‌شوند؛ فقط از فهرست فعال خارج می‌شود." onClose={() => setDeletingPropertyId(null)}>
         <div className="space-y-3">
