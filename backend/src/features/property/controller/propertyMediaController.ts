@@ -4,6 +4,8 @@ import {
   createPropertyMediaService,
   getPropertyMediaService,
   getPropertyMediaFileService,
+  deletePropertyMediaService,
+  reorderPropertyMediaService,
 } from "../service/propertyMediaService";
 
 import { MediaType } from "@prisma/client";
@@ -108,5 +110,25 @@ export async function getPrivatePropertyMediaContentController(req: Request<{ id
     res.end(file.bytes);
   } catch {
     res.status(404).json({ message: "تصویر ملک پیدا نشد." });
+  }
+}
+
+
+export async function deletePropertyMediaController(req: Request<{ id: string; mediaId: string }>, res: Response) {
+  try {
+    await deletePropertyMediaService(req.params.id, req.params.mediaId);
+    return res.status(200).json({ message: "تصویر حذف شد." });
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "حذف تصویر ناموفق بود." });
+  }
+}
+
+export async function reorderPropertyMediaController(req: Request<{ id: string }>, res: Response) {
+  try {
+    const { orderedIds } = req.body as { orderedIds: string[] };
+    const propertyMedia = await reorderPropertyMediaService(req.params.id, orderedIds);
+    return res.status(200).json({ propertyMedia });
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "مرتب‌سازی تصاویر ناموفق بود." });
   }
 }
