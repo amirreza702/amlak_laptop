@@ -82,13 +82,13 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
             <label className="space-y-1.5 text-sm font-semibold">کد پستی (اختیاری)
               <input className={inputClass} inputMode="numeric" pattern="[0-9]{10}" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="۱۰ رقم" />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">متراژ (مترمربع)
+            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>متراژ (مترمربع)
               <input className={inputClass} type="number" min="0.1" step="0.1" required value={area} onChange={(e) => setArea(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">تعداد اتاق
+            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>تعداد اتاق
               <input className={inputClass} type="number" min="0" max="100" step="1" required value={rooms} onChange={(e) => setRooms(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">طبقه
+            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>طبقه
               <input className={inputClass} type="number" min="-10" max="200" step="1" required value={floor} onChange={(e) => setFloor(e.target.value)} />
             </label>
           </div>
@@ -116,8 +116,8 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
           )}
         </fieldset>
 
-          <div className="space-y-4 rounded-xl border border-slate-200 p-4">
-            <h3 className="font-bold">۳. جزئیات تکمیلی ملک</h3>
+          <fieldset disabled={Boolean(createdPropertyId) || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
+            <legend className="px-2 font-bold">۳. جزئیات تکمیلی ملک</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={details.yearBuilt} onChange={e=>setDetails(v=>({...v,yearBuilt:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره واحد<input value={details.unitNumber} onChange={e=>setDetails(v=>({...v,unitNumber:e.target.value}))} className={inputClass} /></label>
@@ -136,7 +136,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
               <label className="space-y-1 text-sm">وضعیت سکونت<select value={details.occupancyStatus} onChange={e=>setDetails(v=>({...v,occupancyStatus:e.target.value}))} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
             </div>
             <label className="block space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={details.description} onChange={e=>setDetails(v=>({...v,description:e.target.value}))} className={inputClass} /></label>
-          </div>
+          </fieldset>
 
         <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
           <legend className="px-2 text-base font-bold">۲. نوع معامله و قیمت</legend>
