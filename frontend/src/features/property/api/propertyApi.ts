@@ -153,3 +153,41 @@ export async function createPropertyListing(
     throw new Error(body.message || `ثبت اطلاعات معامله ناموفق بود (خطای ${response.status}). می‌توانید دوباره تلاش کنید.`);
   }
 }
+
+
+/** Upload a browser-optimized WebP image; image bytes are never stored in PostgreSQL. */
+export async function uploadPropertyMedia(
+  propertyId: string,
+  imageData: string,
+  sortOrder: number,
+  type: "MAIN_IMAGE" | "IMAGE" = "IMAGE"
+): Promise<{ id: string; url: string }> {
+  const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}/media`, {
+    method: "POST",
+    credentials: "include",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, imageData, sortOrder }),
+  });
+  const body = await readApiBody<{ propertyMedia?: { id: string; url: string }; message?: string }>(response);
+  if (!response.ok || !body.propertyMedia) throw new Error(body.message || "بارگذاری تصویر ناموفق بود.");
+  return body.propertyMedia;
+}
+
+export async function getPropertyMedia(propertyId: string): Promise<Array<{ id: string; url: string; type: string; sortOrder: number }>> {
+  const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}/media`, {
+    credentials: "include", cache: "no-store",
+  });
+  const body = await readApiBody<{ propertyMedia?: Array<{ id: string; url: string; type: string; sortOrder: number }>; message?: string }>(response);
+  if (!response.ok) throw new Error(body.message || "دریافت تصاویر ملک ناموفق بود.");
+  return body.propertyMedia ?? [];
+}
+
+export async function getPropertyMediaPreview(propertyId: string, mediaId: string): Promise<string> {
+  const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}/media?fileId=${encodeURIComponent(mediaId)}`, {
+    credentials: "include", cache: "no-store",
+  });
+  const body = await readApiBody<{ imageData?: string; message?: string }>(response);
+  if (!response.ok || !body.imageData) throw new Error(body.message || "پیش‌نمایش تصویر دریافت نشد.");
+  return body.imageData;
+}
