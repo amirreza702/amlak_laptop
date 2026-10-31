@@ -21,8 +21,7 @@ export async function getPublishedPublicPropertyById(id: string) {
 
   const { owners, agents, registrationSource, ...publicProperty } = property;
 
-  const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant)
-    ?? agents[0];
+  const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant);
   const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE"
     ? firstRegistrantRelation.agent
     : null;
