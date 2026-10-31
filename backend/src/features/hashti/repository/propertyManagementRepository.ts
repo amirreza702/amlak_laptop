@@ -98,7 +98,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             share: true,
             isPrimary: true,
             verificationStatus: true,
-            owner: { select: { firstName: true, lastName: true } },
+            owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         agents: {
@@ -108,7 +108,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             approvedByOwner: true,
             approvedAt: true,
             isFirstRegistrant: true,
-            agent: { select: { firstName: true, lastName: true } },
+            agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         verificationCases: {
