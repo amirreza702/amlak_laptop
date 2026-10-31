@@ -21,8 +21,11 @@ export async function getPublishedPublicPropertyById(id: string) {
 
   const { owners, agents, registrationSource, ...publicProperty } = property;
 
-  const firstRegistrant = agents.find((relation) => relation.isFirstRegistrant)?.agent
-    ?? agents[0]?.agent;
+  const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant)
+    ?? agents[0];
+  const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE"
+    ? firstRegistrantRelation.agent
+    : null;
 
   // فقط رابطه فعال و تأییدشده می‌تواند شماره عمومی مشاور باشد.
   const approvedAgent = agents.find(

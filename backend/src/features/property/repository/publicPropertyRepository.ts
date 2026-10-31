@@ -61,7 +61,8 @@ export async function findPublishedPublicPropertyById(id: string) {
         },
       },
       agents: {
-        where: { status: "ACTIVE" },
+        // رابطه ثبت‌کننده نخست حتی در صورت لغو ارتباط خوانده می‌شود؛
+        // در سرویس هرگز به مشاور دیگری به‌عنوان جایگزین او fallback نمی‌کنیم.
         orderBy: [
           { isFirstRegistrant: "desc" },
           { registeredAt: "asc" },
