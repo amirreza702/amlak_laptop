@@ -46,6 +46,29 @@ jobs:
         run: docker build --target runtime -f Dockerfile.production -t hashti-backend:ci .
       - name: Build production migration image
         run: docker build --target migration -f Dockerfile.production -t hashti-backend-migrate:ci .
+      - name: Run production backend startup smoke test
+        run: |
+          docker run -d --name hashti-backend-smoke \
+            -e PORT=4000 \
+            -e DATABASE_URL=postgresql://postgres:smoke-test@127.0.0.1:5432/amlak \
+            -e CORS_ORIGINS=http://localhost:3000 \
+            -p 4000:4000 \
+            hashti-backend:ci
+          trap 'docker rm -f hashti-backend-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --silent --output /dev/null http://127.0.0.1:4000/; then
+              echo "Production backend process started and accepted an HTTP request."
+              exit 0
+            fi
+            if [ "$(docker inspect --format '{{.State.Running}}' hashti-backend-smoke)" != "true" ]; then
+              docker logs hashti-backend-smoke
+              exit 1
+            fi
+            sleep 1
+          done
+          docker logs hashti-backend-smoke
+          echo "Production backend did not become reachable within 20 seconds."
+          exit 1
       - name: Type-check backend
         run: npx tsc --noEmit
 
