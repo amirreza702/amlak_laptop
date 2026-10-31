@@ -127,12 +127,6 @@ export function PropertyEditForm({
           !details.documentType || !details.ownershipType || !details.landTenure) {
         throw new Error("فیلدهای ستاره‌دار را با مقادیر معتبر تکمیل کنید.");
       }
-      const updateResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, {
-        method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(details),
-      });
-      const updateBody = await updateResponse.json().catch(() => ({}));
-      if (!updateResponse.ok) throw new Error(updateBody.message || "ذخیره مشخصات ملک ناموفق بود.");
-
       const price = {
         transactionType: values.transactionType,
         salePrice: values.transactionType === "SALE" ? values.salePrice.trim() : null,
@@ -140,7 +134,14 @@ export function PropertyEditForm({
         rentAmount: values.transactionType === "RENT" ? values.rentAmount.trim() : null,
       };
       const requiredPrice = values.transactionType === "SALE" ? price.salePrice : values.transactionType === "FULL_DEPOSIT" ? price.depositAmount : price.rentAmount;
-      if (!requiredPrice || !Number.isFinite(Number(requiredPrice)) || Number(requiredPrice) <= 0) throw new Error("مبلغ مربوط به نوع معامله را وارد کنید.");
+      if (!requiredPrice || !/^[0-9]+$/.test(requiredPrice) || !Number.isFinite(Number(requiredPrice)) || Number(requiredPrice) <= 0) throw new Error("مبلغ مربوط به نوع معامله را به تومان و به‌صورت عدد صحیح مثبت وارد کنید.");
+
+      const updateResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, {
+        method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(details),
+      });
+      const updateBody = await updateResponse.json().catch(() => ({}));
+      if (!updateResponse.ok) throw new Error(updateBody.message || "ذخیره مشخصات ملک ناموفق بود.");
+
       const priceResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}${hasListing ? "/price" : "/listing"}`, {
         method: hasListing ? "PUT" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(price),
       });
