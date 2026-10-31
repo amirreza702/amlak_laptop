@@ -141,8 +141,8 @@ export function PropertyEditForm({
       };
       const requiredPrice = values.transactionType === "SALE" ? price.salePrice : values.transactionType === "FULL_DEPOSIT" ? price.depositAmount : price.rentAmount;
       if (!requiredPrice || !Number.isFinite(Number(requiredPrice)) || Number(requiredPrice) <= 0) throw new Error("مبلغ مربوط به نوع معامله را وارد کنید.");
-      const priceResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}/price`, {
-        method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(price),
+      const priceResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}${hasListing ? "/price" : "/listing"}`, {
+        method: hasListing ? "PUT" : "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(price),
       });
       const priceBody = await priceResponse.json().catch(() => ({}));
       if (!priceResponse.ok) throw new Error(priceBody.message || "ذخیره قیمت ناموفق بود.");
