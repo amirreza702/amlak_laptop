@@ -97,3 +97,15 @@ export async function getPublicPropertyMediaContentController(req: Request<{ med
     res.status(404).json({ message: "تصویر عمومی پیدا نشد." });
   }
 }
+
+
+export async function getPrivatePropertyMediaContentController(req: Request<{ id: string; mediaId: string }>, res: Response) {
+  try {
+    const file = await getPropertyMediaFileService(req.params.mediaId, req.params.id, false);
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.end(file.bytes);
+  } catch {
+    res.status(404).json({ message: "تصویر ملک پیدا نشد." });
+  }
+}
