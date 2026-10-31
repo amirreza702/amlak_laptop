@@ -3,7 +3,7 @@
  * خروجی WebP با حداکثر ضلع ۱۶۰۰ پیکسل و کیفیت ۸۲٪ است.
  */
 export async function compressPropertyImage(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("فقط فایل تصویری انتخاب کنید.");
+  if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) throw new Error("فقط تصویر با فرمت‌های JPG، PNG، WebP یا AVIF مجاز است.");
   if (file.size > 20 * 1024 * 1024) throw new Error("حجم تصویر اولیه نباید بیشتر از ۲۰ مگابایت باشد.");
 
   const bitmap = await createImageBitmap(file);
