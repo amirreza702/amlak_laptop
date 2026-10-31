@@ -81,6 +81,22 @@ export async function registerProperty(
     throw new Error("نقش ثبت‌کننده معتبر نیست.");
   }
 
+  if (!Number.isFinite(data.area) || data.area == null || data.area <= 0) {
+    throw new Error("متراژ ملک باید بیشتر از صفر باشد.");
+  }
+  if (!Number.isInteger(data.rooms) || data.rooms == null || data.rooms < 0) {
+    throw new Error("تعداد اتاق باید یک عدد صحیح معتبر باشد.");
+  }
+  if (!Number.isInteger(data.floor) || data.floor == null) {
+    throw new Error("طبقه ملک الزامی است.");
+  }
+  if (!Number.isInteger(data.totalUnits) || data.totalUnits == null || data.totalUnits < 1) {
+    throw new Error("تعداد کل واحدها باید حداقل یک باشد.");
+  }
+  if (!data.documentType || !data.ownershipType || !data.landTenure) {
+    throw new Error("نوع سند، نوع مالکیت و وضعیت عرصه الزامی هستند.");
+  }
+
   const isAgentRegistration = creator.role === "AGENT";
   const isOwnerRegistration = creator.role === "OWNER";
 

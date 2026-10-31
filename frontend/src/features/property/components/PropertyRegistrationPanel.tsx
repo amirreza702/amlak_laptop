@@ -81,14 +81,14 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
             <label className="space-y-1.5 text-sm font-semibold">کد پستی (اختیاری)
               <input className={inputClass} inputMode="numeric" pattern="[0-9]{10}" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="۱۰ رقم" />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">متراژ (مترمربع، اختیاری)
-              <input className={inputClass} type="number" min="0.1" step="0.1" value={area} onChange={(e) => setArea(e.target.value)} />
+            <label className="space-y-1.5 text-sm font-semibold">متراژ (مترمربع)
+              <input className={inputClass} type="number" min="0.1" step="0.1" required value={area} onChange={(e) => setArea(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">تعداد اتاق (اختیاری)
-              <input className={inputClass} type="number" min="0" max="100" step="1" value={rooms} onChange={(e) => setRooms(e.target.value)} />
+            <label className="space-y-1.5 text-sm font-semibold">تعداد اتاق
+              <input className={inputClass} type="number" min="0" max="100" step="1" required value={rooms} onChange={(e) => setRooms(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">طبقه (اختیاری)
-              <input className={inputClass} type="number" min="0" max="200" step="1" value={floor} onChange={(e) => setFloor(e.target.value)} />
+            <label className="space-y-1.5 text-sm font-semibold">طبقه
+              <input className={inputClass} type="number" min="-10" max="200" step="1" required value={floor} onChange={(e) => setFloor(e.target.value)} />
             </label>
           </div>
 
