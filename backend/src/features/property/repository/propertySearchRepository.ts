@@ -294,9 +294,7 @@ export async function searchProperties(
       property.listing?.rentAmount ?? null,
 
     mainImage:
-      property.media.find(
-        (media) => media.type === "MAIN_IMAGE"
-      )?.url ?? null,
+      (property.media.find((media) => media.type === "MAIN_IMAGE") ?? property.media[0])?.url ?? null,
 
     updatedAt: property.updatedAt,
   }));
