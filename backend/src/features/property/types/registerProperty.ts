@@ -66,6 +66,25 @@ export interface RegisterPropertyInput {
   area?: number | null;
   rooms?: number | null;
   floor?: number | null;
+  yearBuilt?: number | null;
+  unitNumber?: string | null;
+  totalUnits?: number | null;
+  parkingCount?: number | null;
+  parkingType?: string | null;
+  parkingNumber?: string | null;
+  hasElevator?: boolean | null;
+  hasStorage?: boolean | null;
+  hasBalcony?: boolean | null;
+  hasYard?: boolean | null;
+  heatingSystem?: string | null;
+  coolingSystem?: string | null;
+  documentType?: "SINGLE_SHEET" | "OLD_DEED" | "OFFICIAL_CONTRACT" | "ORDINARY_CONTRACT" | null;
+  ownershipType?: "SIX_DANG" | "SHARED" | null;
+  landTenure?: "FREEHOLD" | "ENDOWMENT" | null;
+  description?: string | null;
+  renovationStatus?: "NO_RENOVATION" | "PARTIAL" | "FULL" | null;
+  renovationYear?: number | null;
+  occupancyStatus?: "VACANT" | "OWNER_OCCUPIED" | "TENANT_OCCUPIED";
 
   /**
    * شناسه پروفایل ثبت‌کننده؛ فقط یکی از این دو مقدار تعیین می‌شود.
