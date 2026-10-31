@@ -82,6 +82,20 @@ export async function createPropertyListingWithInitialPrice(
    * ==========================================================
    */
 
+  const allowedTransactionTypes = Object.values(TransactionType);
+  if (!allowedTransactionTypes.includes(data.transactionType)) {
+    throw new Error("نوع معامله معتبر نیست.");
+  }
+  const selectedPrice = data.transactionType === TransactionType.SALE
+    ? data.salePrice
+    : data.transactionType === TransactionType.FULL_DEPOSIT
+      ? data.depositAmount
+      : data.rentAmount;
+  if (typeof selectedPrice !== "string" || !/^\\d+$/.test(selectedPrice) ||
+      !Number.isFinite(Number(selectedPrice)) || Number(selectedPrice) <= 0) {
+    throw new Error("مبلغ معامله باید یک عدد صحیح مثبت به تومان باشد.");
+  }
+
   if (
     data.transactionType === TransactionType.SALE &&
     !data.salePrice
