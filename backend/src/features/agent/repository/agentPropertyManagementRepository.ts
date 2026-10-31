@@ -1,10 +1,11 @@
-import { ListingStatus, OccupancyStatus, PropertyAgentStatus, PropertyType, TransactionType, VerificationStatus, type Prisma } from "@prisma/client";
+import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType, PropertyAgentStatus, PropertyType, TransactionType, VerificationStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
-  agentId: string; query?: string; city?: string; district?: string; postalCode?: string; ownerName?: string;
-  propertyType?: string; transactionType?: string; listingStatus?: string; isActive?: boolean;
-  areaMin?: number; areaMax?: number; roomsMin?: number; roomsMax?: number; limit: number; offset: number;
+  agentId: string; query?: string; city?: string; district?: string; address?: string;
+  propertyType?: PropertyType; transactionType?: TransactionType;
+  documentType?: DocumentType; ownershipType?: OwnershipType; landTenure?: LandTenure;
+  areaMin?: number; areaMax?: number; roomsMin?: number; roomsMax?: number; floor?: number; totalUnits?: number; limit: number; offset: number;
 }
 
 /**
@@ -45,11 +46,15 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const fieldConditions: Prisma.PropertyWhereInput[] = [];
   if (input.city?.trim()) fieldConditions.push({ city: contains(input.city.trim()) });
   if (input.district?.trim()) fieldConditions.push({ district: contains(input.district.trim()) });
-  if (input.postalCode?.trim()) fieldConditions.push({ postalCode: contains(input.postalCode.trim()) });
-  if (input.propertyType) fieldConditions.push({ propertyType: input.propertyType as PropertyType });
+  if (input.address?.trim()) fieldConditions.push({ address: contains(input.address.trim()) });
+  if (input.propertyType) fieldConditions.push({ propertyType: input.propertyType });
+  if (input.documentType) fieldConditions.push({ documentType: input.documentType });
+  if (input.ownershipType) fieldConditions.push({ ownershipType: input.ownershipType });
+  if (input.landTenure) fieldConditions.push({ landTenure: input.landTenure });
+  if (input.floor !== undefined) fieldConditions.push({ floor: input.floor });
+  if (input.totalUnits !== undefined) fieldConditions.push({ totalUnits: input.totalUnits });
   // املاک غیرفعال‌شده توسط مالک/سامانه در پنل مشاور نمایش داده نمی‌شوند.
   fieldConditions.push({ isActive: true });
-  if (input.isActive === false) fieldConditions.push({ isActive: false });
   if (input.areaMin !== undefined || input.areaMax !== undefined) {
     fieldConditions.push({ area: {
       ...(input.areaMin !== undefined ? { gte: input.areaMin } : {}),
@@ -62,12 +67,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
       ...(input.roomsMax !== undefined ? { lte: input.roomsMax } : {}),
     } });
   }
-  if (input.transactionType) fieldConditions.push({ listing: { is: { transactionType: input.transactionType as TransactionType } } });
-  if (input.listingStatus) fieldConditions.push({ listing: { is: { status: input.listingStatus as ListingStatus } } });
-  if (input.ownerName?.trim()) {
-    const name = input.ownerName.trim();
-    fieldConditions.push({ owners: { some: { owner: { is: { OR: [{ firstName: contains(name) }, { lastName: contains(name) }] } } } } });
-  }
+  if (input.transactionType) fieldConditions.push({ listing: { is: { transactionType: input.transactionType } } });
 
   const searchConditions: Prisma.PropertyWhereInput[] = search ? [
     { id: contains(search) }, { city: contains(search) }, { district: contains(search) },

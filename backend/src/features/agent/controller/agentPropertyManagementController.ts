@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { ListingStatus, PropertyType, TransactionType } from "@prisma/client";
+import { DocumentType, LandTenure, ListingStatus, OwnershipType, PropertyType, TransactionType } from "@prisma/client";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { getMyAgentPropertyRecords } from "../service/agentPropertyManagementService";
 
@@ -34,17 +34,20 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
   const offset = parseIntegerQuery(req.query.offset, 0, 0, 1_000_000);
   const areaMin = parseNumberFilter(req.query.areaMin); const areaMax = parseNumberFilter(req.query.areaMax);
   const roomsMin = parseIntegerFilter(req.query.roomsMin); const roomsMax = parseIntegerFilter(req.query.roomsMax);
-  const textFilters = ["city", "district", "postalCode", "ownerName"] as const;
+  const floor = parseIntegerFilter(req.query.floor); const totalUnits = parseIntegerFilter(req.query.totalUnits);
+  const textFilters = ["city", "district", "address"] as const;
   const invalidTextFilter = textFilters.some((key) => {
     const value = req.query[key];
     return value !== undefined && (typeof value !== "string" || value.length > 120);
   });
-  const propertyType = req.query.propertyType; const transactionType = req.query.transactionType; const listingStatus = req.query.listingStatus; const isActive = req.query.isActive;
-  if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || invalidTextFilter ||
+  const propertyType = req.query.propertyType; const transactionType = req.query.transactionType;
+  const documentType = req.query.documentType; const ownershipType = req.query.ownershipType; const landTenure = req.query.landTenure;
+  if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || floor === null || totalUnits === null || invalidTextFilter ||
       (propertyType !== undefined && (typeof propertyType !== "string" || !Object.values(PropertyType).includes(propertyType as PropertyType))) ||
       (transactionType !== undefined && (typeof transactionType !== "string" || !Object.values(TransactionType).includes(transactionType as TransactionType))) ||
-      (listingStatus !== undefined && (typeof listingStatus !== "string" || !Object.values(ListingStatus).includes(listingStatus as ListingStatus))) ||
-      (isActive !== undefined && isActive !== "true" && isActive !== "false") ||
+      (documentType !== undefined && (typeof documentType !== "string" || !Object.values(DocumentType).includes(documentType as DocumentType))) ||
+      (ownershipType !== undefined && (typeof ownershipType !== "string" || !Object.values(OwnershipType).includes(ownershipType as OwnershipType))) ||
+      (landTenure !== undefined && (typeof landTenure !== "string" || !Object.values(LandTenure).includes(landTenure as LandTenure))) ||
       (areaMin !== undefined && areaMax !== undefined && areaMin > areaMax) || (roomsMin !== undefined && roomsMax !== undefined && roomsMin > roomsMax)) {
     return res.status(400).json({ message: "Invalid property filters or pagination parameters" });
   }
@@ -53,11 +56,11 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
       city: typeof req.query.city === "string" ? req.query.city.trim() : undefined,
       district: typeof req.query.district === "string" ? req.query.district.trim() : undefined,
-      postalCode: typeof req.query.postalCode === "string" ? req.query.postalCode.trim() : undefined,
-      ownerName: typeof req.query.ownerName === "string" ? req.query.ownerName.trim() : undefined,
+      address: typeof req.query.address === "string" ? req.query.address.trim() : undefined,
       propertyType: propertyType as PropertyType | undefined, transactionType: transactionType as TransactionType | undefined,
-      listingStatus: listingStatus as ListingStatus | undefined, isActive: isActive === undefined ? undefined : isActive === "true",
-      areaMin, areaMax, roomsMin, roomsMax, limit, offset,
+      documentType: documentType as DocumentType | undefined, ownershipType: ownershipType as OwnershipType | undefined,
+      landTenure: landTenure as LandTenure | undefined,
+      areaMin, areaMax, roomsMin, roomsMax, floor, totalUnits, limit, offset,
     });
     return res.status(200).json({
       properties: result.properties,

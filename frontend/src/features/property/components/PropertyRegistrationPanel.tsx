@@ -34,11 +34,13 @@ const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2
 
 interface PropertyRegistrationPanelProps {
   mode: "owner" | "agent";
+  accountMobile?: string;
   onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>;
 }
 
-export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyRegistrationPanelProps) {
+export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePrivateNote }: PropertyRegistrationPanelProps) {
   const {
+    ownerMobile, setOwnerMobile,
     propertyType, setPropertyType,
     transactionType, setTransactionType,
     city, setCity, district, setDistrict, address, setAddress,
@@ -49,7 +51,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
     busy, error, message, createdPropertyId, listingCreated,
     submit,
     internalNote, setInternalNote,
-  } = usePropertyRegistration(mode === "agent" ? onSavePrivateNote : undefined);
+  } = usePropertyRegistration(mode, accountMobile, mode === "agent" ? onSavePrivateNote : undefined);
   return (
     <section dir="rtl" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-5">
@@ -79,8 +81,9 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نشانی ملک
               <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} required maxLength={500} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">کد پستی (اختیاری)
-              <input className={inputClass} inputMode="numeric" pattern="[0-9]{10}" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="۱۰ رقم" />
+            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شماره تماس مالک
+              <input className={inputClass} type="tel" inputMode="numeric" dir="ltr" placeholder="09123456789" pattern="09[0-9]{9}" maxLength={11} required={mode === "agent"} readOnly={mode === "owner"} value={ownerMobile} onChange={(e) => setOwnerMobile(e.target.value)} />
+              <span className="block text-xs font-normal text-slate-500">{mode === "owner" ? "شماره همراه حساب مالک؛ فقط برای مالک و هشتی قابل مشاهده است." : "شماره واقعی مالک؛ در فهرست عمومی و پنل سایر مشاوران نمایش داده نمی‌شود."}</span>
             </label>
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>متراژ (مترمربع)
               <input className={inputClass} type="number" min="0.1" step="0.1" required value={area} onChange={(e) => setArea(e.target.value)} />
@@ -93,6 +96,20 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
             </label>
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> تعداد کل واحدها
+              <input className={inputClass} type="number" min="1" step="1" required value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} />
+            </label>
+            <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> نوع سند
+              <select required value={details.documentType} onChange={e=>setDetails(v=>({...v,documentType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">سند دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select>
+            </label>
+            <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> نوع مالکیت
+              <select required value={details.ownershipType} onChange={e=>setDetails(v=>({...v,ownershipType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select>
+            </label>
+            <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> وضعیت عرصه
+              <select required value={details.landTenure} onChange={e=>setDetails(v=>({...v,landTenure:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select>
+            </label>
+          </div>
           <fieldset className="rounded-xl border border-slate-200 p-4">
             <legend className="px-2 text-sm font-bold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>موقعیت جغرافیایی (اجباری)</legend>
             <PropertyLocationPicker value={coordinates} onChange={setCoordinates} city={city} />
@@ -116,21 +133,37 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
           )}
         </fieldset>
 
+        <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
+          <legend className="px-2 text-base font-bold">۲. نوع معامله و قیمت</legend>
+          <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نوع معامله
+            <select className={inputClass} value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)} required>
+              {transactionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          {transactionType === "SALE" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>قیمت فروش (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} required />
+          </label>}
+          {transactionType === "FULL_DEPOSIT" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ رهن کامل (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required />
+          </label>}
+          {transactionType === "RENT" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ اجاره ماهانه (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={rentAmount} onChange={(e) => setRentAmount(e.target.value)} required />
+          </label>}
+          <p className="text-xs leading-6 text-slate-500">طبق منطق فعلی سرور، برای فروش قیمت فروش، برای رهن کامل مبلغ رهن و برای اجاره مبلغ اجاره الزامی است.</p>
+        </fieldset>
+
           <fieldset disabled={Boolean(createdPropertyId) || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
-            <legend className="px-2 font-bold">۲. جزئیات تکمیلی ملک</legend>
+            <legend className="px-2 font-bold">۳. جزئیات اختیاری ملک</legend>
             <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm">کد پستی (اختیاری)<input inputMode="numeric" pattern="[0-9]{10}" value={postalCode} onChange={e=>setPostalCode(e.target.value)} className={inputClass} placeholder="۱۰ رقم" /></label>
               <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={details.yearBuilt} onChange={e=>setDetails(v=>({...v,yearBuilt:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره واحد<input value={details.unitNumber} onChange={e=>setDetails(v=>({...v,unitNumber:e.target.value}))} className={inputClass} /></label>
-              <label className="space-y-1 text-sm"><span className="text-red-600">*</span> تعداد کل واحدها<input required type="number" min="1" step="1" value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">تعداد پارکینگ<input type="number" min="0" step="1" value={details.parkingCount} onChange={e=>setDetails(v=>({...v,parkingCount:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">نوع پارکینگ<input value={details.parkingType} onChange={e=>setDetails(v=>({...v,parkingType:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره پارکینگ<input value={details.parkingNumber} onChange={e=>setDetails(v=>({...v,parkingNumber:e.target.value}))} className={inputClass} /></label>
               {([["hasElevator","آسانسور"],["hasStorage","انباری"],["hasBalcony","بالکن"],["hasYard","حیاط"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}<select value={details[key]} onChange={e=>setDetails(v=>({...v,[key]:e.target.value}))} className={inputClass}><option value="">نامشخص</option><option value="true">دارد</option><option value="false">ندارد</option></select></label>)}
               <label className="space-y-1 text-sm">سیستم گرمایش<input value={details.heatingSystem} onChange={e=>setDetails(v=>({...v,heatingSystem:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">سیستم سرمایش<input value={details.coolingSystem} onChange={e=>setDetails(v=>({...v,coolingSystem:e.target.value}))} className={inputClass} /></label>
-              <label className="space-y-1 text-sm"><span className="text-red-600">*</span> نوع سند<select required value={details.documentType} onChange={e=>setDetails(v=>({...v,documentType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">سند دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
-              <label className="space-y-1 text-sm"><span className="text-red-600">*</span> نوع مالکیت<select required value={details.ownershipType} onChange={e=>setDetails(v=>({...v,ownershipType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select></label>
-              <label className="space-y-1 text-sm"><span className="text-red-600">*</span> وضعیت عرصه<select required value={details.landTenure} onChange={e=>setDetails(v=>({...v,landTenure:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select></label>
               <label className="space-y-1 text-sm">وضعیت بازسازی<select value={details.renovationStatus} onChange={e=>setDetails(v=>({...v,renovationStatus:e.target.value}))} className={inputClass}><option value="">نامشخص</option><option value="NO_RENOVATION">بدون بازسازی</option><option value="PARTIAL">بازسازی جزئی</option><option value="FULL">بازسازی کامل</option></select></label>
               <label className="space-y-1 text-sm">سال بازسازی<input type="number" min="1300" max="1500" value={details.renovationYear} onChange={e=>setDetails(v=>({...v,renovationYear:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">وضعیت سکونت<select value={details.occupancyStatus} onChange={e=>setDetails(v=>({...v,occupancyStatus:e.target.value}))} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
@@ -138,24 +171,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
             <label className="block space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={details.description} onChange={e=>setDetails(v=>({...v,description:e.target.value}))} className={inputClass} /></label>
           </fieldset>
 
-        <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
-          <legend className="px-2 text-base font-bold">۳. نوع معامله و قیمت</legend>
-          <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نوع معامله
-            <select className={inputClass} value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)} required>
-              {transactionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
-          </label>
-          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "SALE" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}قیمت فروش (تومان)
-            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} required={transactionType === "SALE"} />
-          </label>
-          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "FULL_DEPOSIT" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}مبلغ رهن کامل (تومان)
-            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required={transactionType === "FULL_DEPOSIT"} />
-          </label>
-          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "RENT" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}مبلغ اجاره ماهانه (تومان)
-            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={rentAmount} onChange={(e) => setRentAmount(e.target.value)} required={transactionType === "RENT"} />
-          </label>
-          <p className="text-xs leading-6 text-slate-500">طبق منطق فعلی سرور، برای فروش قیمت فروش، برای رهن کامل مبلغ رهن و برای اجاره مبلغ اجاره الزامی است.</p>
-        </fieldset>
+
 
         {createdPropertyId && <PropertyMediaEditor propertyId={createdPropertyId} />}
         {createdPropertyId && !listingCreated && (

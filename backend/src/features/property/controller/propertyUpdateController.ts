@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   updatePropertyService,
@@ -29,8 +30,10 @@ export async function updatePropertyController(
      */
     // فقط فیلدهای قابل ویرایش ملک پذیرفته می‌شوند؛
     // شناسه‌ها، وضعیت انتشار، تأییدها و فیلدهای مدیریتی از Body حذف می‌شوند.
+    const user = (req as AuthenticatedRequest).user;
     const editableFields = [
       "propertyType", "city", "district", "address", "postalCode",
+      ...(user?.role === "AGENT" || user?.role === "HASHTI" ? ["ownerMobile"] : []),
       "latitudeExact", "longitudeExact", "latitudePublic", "longitudePublic",
       "area", "rooms", "floor", "yearBuilt", "unitNumber", "totalUnits",
       "parkingCount", "parkingType", "parkingNumber", "hasElevator",

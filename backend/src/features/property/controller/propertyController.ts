@@ -85,18 +85,21 @@ export async function getPropertyByIdController(
       const {
         latitudeExact: _latitudeExact,
         longitudeExact: _longitudeExact,
+        creatorMobile: _creatorMobile,
+        ownerMobile: _ownerMobile,
         ...customerVisibleProperty
       } = property;
       return res.status(200).json(customerVisibleProperty);
     }
 
-    // شماره ثبت‌کننده فقط برای کارکنان هشتی در API مدیریتی قابل مشاهده است.
-    if (user?.role !== "HASHTI") {
-      const { creatorMobile: _creatorMobile, ...visibleProperty } = property;
-      return res.status(200).json(visibleProperty);
+    // شماره ثبت‌کننده فقط برای هشتی و شماره مالک فقط برای مالک مرتبط/هشتی قابل مشاهده است.
+    if (user?.role === "HASHTI") return res.status(200).json(property);
+    if (user?.role === "OWNER") {
+      const { creatorMobile: _creatorMobile, ...ownerVisibleProperty } = property;
+      return res.status(200).json(ownerVisibleProperty);
     }
-
-    return res.status(200).json(property);
+    const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ...visibleProperty } = property;
+    return res.status(200).json(visibleProperty);
   } catch (error: any) {
     res.status(404).json({
       message: error.message || "ملک مورد نظر پیدا نشد.",

@@ -58,7 +58,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
       </section>
       <div hidden={selectedTool !== "property-management"}><OwnerPropertiesPanel user={user} mode="properties" /></div>
       <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
-        <PropertyRegistrationPanel mode="owner" />
+        <PropertyRegistrationPanel mode="owner" accountMobile={user.mobile} />
       </Modal>
             <div hidden={selectedTool !== "agents"}><OwnerAgentRequestsPanel ownerId={profile?.id} /></div>
       <div hidden={selectedTool !== "notifications"}><UserNotificationsPanel userId={user.id} /></div>

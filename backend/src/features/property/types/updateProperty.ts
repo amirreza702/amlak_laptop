@@ -11,6 +11,9 @@ export interface UpdatePropertyInput {
 
   postalCode?: string | null;
 
+  /** شماره تماس مالک؛ فقط مشاور ثبت‌کننده و هشتی می‌توانند آن را تغییر دهند. */
+  ownerMobile?: string;
+
   /**
    * مختصات دقیق ملک.
    *

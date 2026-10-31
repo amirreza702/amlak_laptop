@@ -16,7 +16,7 @@ type Values = {
   hasElevator: string; hasStorage: string; hasBalcony: string; hasYard: string; heatingSystem: string; coolingSystem: string;
   documentType: string; ownershipType: string; landTenure: string; description: string;
   renovationStatus: string; renovationYear: string; occupancyStatus: string;
-  transactionType: TransactionType; salePrice: string; depositAmount: string; rentAmount: string; internalNote: string;
+  ownerMobile: string; transactionType: TransactionType; salePrice: string; depositAmount: string; rentAmount: string; internalNote: string;
 };
 
 const emptyValues: Values = {
@@ -25,7 +25,7 @@ const emptyValues: Values = {
   yearBuilt: "", unitNumber: "", totalUnits: "1", parkingCount: "", parkingType: "", parkingNumber: "",
   hasElevator: "", hasStorage: "", hasBalcony: "", hasYard: "", heatingSystem: "", coolingSystem: "",
   documentType: "", ownershipType: "", landTenure: "", description: "", renovationStatus: "", renovationYear: "",
-  occupancyStatus: "VACANT", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "", internalNote: "",
+  occupancyStatus: "VACANT", ownerMobile: "", transactionType: "SALE", salePrice: "", depositAmount: "", rentAmount: "", internalNote: "",
 };
 
 const numberOrNull = (value: string) => value.trim() === "" ? null : Number(value);
@@ -86,6 +86,7 @@ export function PropertyEditForm({
           landTenure: property.landTenure ?? "", description: property.description ?? "",
           renovationStatus: property.renovationStatus ?? "", renovationYear: String(property.renovationYear ?? ""),
           occupancyStatus: property.occupancyStatus ?? "VACANT",
+          ownerMobile: property.ownerMobile ?? "",
           transactionType: listing?.transactionType ?? "SALE",
           salePrice: String(listing?.salePrice ?? ""), depositAmount: String(listing?.depositAmount ?? ""),
           rentAmount: String(listing?.rentAmount ?? ""), internalNote: initialInternalNote,
@@ -127,6 +128,7 @@ export function PropertyEditForm({
         landTenure: values.landTenure || null, description: values.description.trim() || null,
         renovationStatus: values.renovationStatus || null, renovationYear: numberOrNull(values.renovationYear),
         occupancyStatus: values.occupancyStatus,
+        ...(mode === "agent" && values.ownerMobile.trim() ? { ownerMobile: values.ownerMobile.trim() } : {}),
       };
       if (!details.city || !details.district || !details.address || !Number.isFinite(details.area) || details.area <= 0 ||
           !Number.isInteger(details.rooms) || details.rooms < 0 || !Number.isInteger(details.floor) ||
@@ -177,18 +179,41 @@ export function PropertyEditForm({
     <form onSubmit={submit} className="max-h-[78vh] space-y-4 overflow-y-auto p-1" dir="rtl">
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {notice && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">نوع ملک *<select required value={values.propertyType} onChange={e=>update("propertyType",e.target.value as PropertyType)} className={inputClass}>{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-        {([["city","شهر"],["district","محله / منطقه"],["address","نشانی"],["postalCode","کد پستی"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}{key!=="postalCode" && " *"}<input required={key!=="postalCode"} maxLength={key==="address"?500:120} value={values[key]} onChange={e=>update(key,e.target.value)} className={inputClass}/></label>)}
-        {([["area","متراژ"],["rooms","تعداد اتاق"],["floor","طبقه"],["yearBuilt","سال ساخت"],["unitNumber","شماره واحد"],["totalUnits","تعداد کل واحدها"],["parkingCount","تعداد پارکینگ"],["parkingType","نوع پارکینگ"],["parkingNumber","شماره پارکینگ"],["heatingSystem","سیستم گرمایش"],["coolingSystem","سیستم سرمایش"],["renovationYear","سال بازسازی"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}{["area","rooms","floor","totalUnits"].includes(key) && " *"}<input required={["area","rooms","floor","totalUnits"].includes(key)} type={["area","rooms","floor","yearBuilt","totalUnits","parkingCount","renovationYear"].includes(key)?"number":"text"} min={key==="area"?"0.1":key==="totalUnits"?"1":key==="yearBuilt"||key==="renovationYear"?"1300":key==="floor"?"-10":"0"} max={key==="yearBuilt"||key==="renovationYear"?"1500":key==="floor"?"200":undefined} step={key==="area"?"any":"1"} value={values[key]} onChange={e=>update(key,e.target.value)} className={inputClass}/></label>)}
-        {([["hasElevator","آسانسور"],["hasStorage","انباری"],["hasBalcony","بالکن"],["hasYard","حیاط"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}<select value={values[key]} onChange={e=>update(key,e.target.value)} className={inputClass}><option value="">نامشخص</option><option value="true">دارد</option><option value="false">ندارد</option></select></label>)}
-        <label className="space-y-1 text-sm">نوع سند *<select required value={values.documentType} onChange={e=>update("documentType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
-        <label className="space-y-1 text-sm">نوع مالکیت *<select required value={values.ownershipType} onChange={e=>update("ownershipType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select></label>
-        <label className="space-y-1 text-sm">وضعیت عرصه *<select required value={values.landTenure} onChange={e=>update("landTenure",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select></label>
-        <label className="space-y-1 text-sm">وضعیت بازسازی<select value={values.renovationStatus} onChange={e=>update("renovationStatus",e.target.value)} className={inputClass}><option value="">نامشخص</option><option value="NO_RENOVATION">بدون بازسازی</option><option value="PARTIAL">جزئی</option><option value="FULL">کامل</option></select></label>
-        <label className="space-y-1 text-sm">وضعیت سکونت<select value={values.occupancyStatus} onChange={e=>update("occupancyStatus",e.target.value)} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
-        <label className="col-span-full space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={values.description} onChange={e=>update("description",e.target.value)} className={inputClass}/></label>
-      </div>
+      <section className="space-y-3 rounded-xl border border-slate-200 p-3">
+        <h3 className="font-bold">۱. فیلدهای الزامی</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">نوع ملک *<select required value={values.propertyType} onChange={e=>update("propertyType",e.target.value as PropertyType)} className={inputClass}>{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+          <label className="space-y-1 text-sm">شهر *<input required maxLength={100} value={values.city} onChange={e=>update("city",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">محله / منطقه *<input required maxLength={120} value={values.district} onChange={e=>update("district",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">نشانی ملک *<input required maxLength={500} value={values.address} onChange={e=>update("address",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">شماره تماس مالک{mode === "owner" ? " *" : " (برای اصلاح)"}<input type="tel" inputMode="numeric" dir="ltr" pattern="09[0-9]{9}" maxLength={11} required={mode === "owner"} readOnly={mode === "owner"} value={values.ownerMobile} onChange={e=>update("ownerMobile",e.target.value)} placeholder={mode === "agent" ? "برای تغییر، شماره جدید را وارد کنید" : ""} className={inputClass}/><span className="text-xs text-slate-500">{mode === "agent" ? "شماره فعلی برای حفظ حریم خصوصی نمایش داده نمی‌شود؛ برای اصلاح، شماره جدید را وارد کنید." : "شماره همراه حساب مالک؛ فقط برای مالک و هشتی قابل مشاهده است."}</span></label>
+          <label className="space-y-1 text-sm">متراژ *<input required type="number" min="0.1" step="any" value={values.area} onChange={e=>update("area",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">تعداد اتاق *<input required type="number" min="0" step="1" value={values.rooms} onChange={e=>update("rooms",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">طبقه *<input required type="number" min="-10" max="200" step="1" value={values.floor} onChange={e=>update("floor",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">تعداد کل واحدها *<input required type="number" min="1" step="1" value={values.totalUnits} onChange={e=>update("totalUnits",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">نوع سند *<select required value={values.documentType} onChange={e=>update("documentType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
+          <label className="space-y-1 text-sm">نوع مالکیت *<select required value={values.ownershipType} onChange={e=>update("ownershipType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select></label>
+          <label className="space-y-1 text-sm">وضعیت عرصه *<select required value={values.landTenure} onChange={e=>update("landTenure",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select></label>
+        </div>
+      </section>
+      <section className="space-y-3 rounded-xl border border-slate-200 p-3">
+        <h3 className="font-bold">فیلدهای اختیاری</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">کد پستی<input maxLength={10} value={values.postalCode} onChange={e=>update("postalCode",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={values.yearBuilt} onChange={e=>update("yearBuilt",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">شماره واحد<input value={values.unitNumber} onChange={e=>update("unitNumber",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">تعداد پارکینگ<input type="number" min="0" value={values.parkingCount} onChange={e=>update("parkingCount",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">نوع پارکینگ<input value={values.parkingType} onChange={e=>update("parkingType",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">شماره پارکینگ<input value={values.parkingNumber} onChange={e=>update("parkingNumber",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">سیستم گرمایش<input value={values.heatingSystem} onChange={e=>update("heatingSystem",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">سیستم سرمایش<input value={values.coolingSystem} onChange={e=>update("coolingSystem",e.target.value)} className={inputClass}/></label>
+          {([["hasElevator","آسانسور"],["hasStorage","انباری"],["hasBalcony","بالکن"],["hasYard","حیاط"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}<select value={values[key]} onChange={e=>update(key,e.target.value)} className={inputClass}><option value="">نامشخص</option><option value="true">دارد</option><option value="false">ندارد</option></select></label>)}
+          <label className="space-y-1 text-sm">سال بازسازی<input type="number" min="1300" max="1500" value={values.renovationYear} onChange={e=>update("renovationYear",e.target.value)} className={inputClass}/></label>
+          <label className="space-y-1 text-sm">وضعیت بازسازی<select value={values.renovationStatus} onChange={e=>update("renovationStatus",e.target.value)} className={inputClass}><option value="">نامشخص</option><option value="NO_RENOVATION">بدون بازسازی</option><option value="PARTIAL">جزئی</option><option value="FULL">کامل</option></select></label>
+          <label className="space-y-1 text-sm">وضعیت سکونت<select value={values.occupancyStatus} onChange={e=>update("occupancyStatus",e.target.value)} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
+          <label className="col-span-full space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={values.description} onChange={e=>update("description",e.target.value)} className={inputClass}/></label>
+        </div>
+      </section>
       <fieldset className="space-y-2 rounded-xl border p-3"><legend className="px-2 text-sm font-bold">موقعیت ملک *</legend><LocationPicker value={coordinateValue} onChange={point=>setValues(v=>({...v,latitudeExact:point?String(point.latitude):"",longitudeExact:point?String(point.longitude):""}))} city={values.city}/></fieldset>
       <section className="space-y-3 rounded-xl border p-3">
         <h3 className="font-bold">نوع معامله و قیمت *</h3>

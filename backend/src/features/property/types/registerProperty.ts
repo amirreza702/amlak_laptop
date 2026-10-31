@@ -86,6 +86,9 @@ export interface RegisterPropertyInput {
   renovationYear?: number | null;
   occupancyStatus?: "VACANT" | "OWNER_OCCUPIED" | "TENANT_OCCUPIED";
 
+  /** شماره همراه واقعی مالک؛ برای ثبت مشاور الزامی است. */
+  ownerMobile?: string | null;
+
   /**
    * شناسه پروفایل ثبت‌کننده؛ فقط یکی از این دو مقدار تعیین می‌شود.
    * مقدار معتبر از نشست احراز هویت‌شده در Route تزریق می‌شود.

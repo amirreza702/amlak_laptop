@@ -58,6 +58,7 @@ export async function createProperty(
 }
 
 export interface PropertyRegistrationPayload {
+  ownerMobile?: string;
   propertyType: PropertyType;
   city: string;
   district: string;

@@ -9,7 +9,8 @@ import { validatePropertyRegistration } from "../utils/validatePropertyRegistrat
  * تمام state، اعتبارسنجی و ارسال فرم ثبت ملک در این Hook نگهداری می‌شود.
  * کامپوننت ثبت ملک فقط فرم را نمایش می‌دهد و رویداد submit را واگذار می‌کند.
  */
-export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>) {
+export function usePropertyRegistration(mode: "owner" | "agent", accountMobile = "", onSavePrivateNote?: (propertyId: string, note: string) => Promise<void>) {
+  const [ownerMobile, setOwnerMobile] = useState(mode === "owner" ? accountMobile : "");
   const [propertyType, setPropertyType] = useState<PropertyType>("APARTMENT");
   const [transactionType, setTransactionType] = useState<TransactionType>("SALE");
   const [city, setCity] = useState("شاهرود");
@@ -66,6 +67,10 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
         return;
       }
 
+      if (mode === "agent" && !/^09\\d{9}$/.test(ownerMobile.trim())) {
+        throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
+      }
+
       const validationError = validatePropertyRegistration({
         city, district, address, coordinates, area, rooms, floor, details,
         transactionType, salePrice, depositAmount, rentAmount,
@@ -81,6 +86,7 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
       }
 
       const body = await createPropertyRecord({
+        ...(mode === "agent" ? { ownerMobile: ownerMobile.trim() } : {}),
         propertyType,
         city: city.trim(),
         district: district.trim(),
@@ -128,6 +134,7 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
 
 
   return {
+    ownerMobile, setOwnerMobile,
     propertyType, setPropertyType,
     transactionType, setTransactionType,
     city, setCity, district, setDistrict, address, setAddress,
