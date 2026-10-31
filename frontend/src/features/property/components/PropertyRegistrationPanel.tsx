@@ -145,21 +145,15 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
               {transactionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </label>
-          {transactionType === "SALE" && (
-            <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>قیمت فروش (تومان)
-              <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} required />
-            </label>
-          )}
-          {transactionType === "FULL_DEPOSIT" && (
-            <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>مبلغ رهن کامل (تومان)
-              <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required />
-            </label>
-          )}
-          {transactionType === "RENT" && (
-            <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>مبلغ اجاره ماهانه (تومان)
-              <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={rentAmount} onChange={(e) => setRentAmount(e.target.value)} required />
-            </label>
-          )}
+          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "SALE" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}قیمت فروش (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} required={transactionType === "SALE"} />
+          </label>
+          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "FULL_DEPOSIT" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}مبلغ رهن کامل (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required={transactionType === "FULL_DEPOSIT"} />
+          </label>
+          <label className="block space-y-1.5 text-sm font-semibold">{transactionType === "RENT" && <span aria-hidden="true" className="ml-1 text-red-600">*</span>}مبلغ اجاره ماهانه (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={rentAmount} onChange={(e) => setRentAmount(e.target.value)} required={transactionType === "RENT"} />
+          </label>
           <p className="text-xs leading-6 text-slate-500">طبق منطق فعلی سرور، برای فروش قیمت فروش، برای رهن کامل مبلغ رهن و برای اجاره مبلغ اجاره الزامی است.</p>
         </fieldset>
 
