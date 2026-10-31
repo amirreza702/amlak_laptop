@@ -3,6 +3,7 @@ name: Project CI
 on:
   push:
     branches:
+      - main
       - feat/complete-platform-hardening-2026-10-25
       - feat/owner-agent-requests-subscription-access
   pull_request:
