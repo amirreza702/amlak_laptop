@@ -4,7 +4,8 @@ import { prisma } from "../../../lib/prisma";
  * دریافت جزئیات فقط از آگهی‌های عمومی منتشرشده.
  *
  * این Query عمداً مختصات دقیق، نشانی، کد پستی،
- * اطلاعات مالک/مشاور و سوابق داخلی را برنمی‌گرداند.
+ * اطلاعات مدیریتی و سوابق داخلی را برنمی‌گرداند.
+ * روابط تماس فقط برای ساخت contact عمومی در Service انتخاب می‌شوند.
  */
 export async function findPublishedPublicPropertyById(id: string) {
   const now = new Date();
@@ -22,6 +23,7 @@ export async function findPublishedPublicPropertyById(id: string) {
     },
     select: {
       id: true,
+      registrationSource: true,
       propertyType: true,
       city: true,
       district: true,
@@ -48,12 +50,33 @@ export async function findPublishedPublicPropertyById(id: string) {
         where: { verificationStatus: "VERIFIED" },
         orderBy: { isPrimary: "desc" },
         take: 1,
-        select: { owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } } },
+        select: {
+          owner: {
+            select: {
+              firstName: true,
+              lastName: true,
+              user: { select: { mobile: true } },
+            },
+          },
+        },
       },
       agents: {
-        where: { status: "ACTIVE", approvedByOwner: true },
-        take: 1,
-        select: { agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } } },
+        where: { status: "ACTIVE" },
+        orderBy: [
+          { isFirstRegistrant: "desc" },
+          { registeredAt: "asc" },
+        ],
+        select: {
+          isFirstRegistrant: true,
+          approvedByOwner: true,
+          agent: {
+            select: {
+              firstName: true,
+              lastName: true,
+              user: { select: { mobile: true } },
+            },
+          },
+        },
       },
       media: {
         where: {

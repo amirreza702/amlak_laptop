@@ -3,7 +3,14 @@ import { findPublishedPublicPropertyById } from "../repository/publicPropertyRep
 /**
  * دریافت اطلاعات قابل نمایش عمومی یک آگهی.
  *
- * آگهی حذف‌شده، منقضی یا منتشرنشده در دسترس عمومی نیست.
+ * سیاست تماس:
+ * - ملک ثبت‌شده توسط مالک: تا پیش از تأیید مشاور، شماره مالک نمایش داده می‌شود.
+ * - پس از تأیید مشاور: فقط شماره مشاور تأییدشده نمایش داده می‌شود.
+ * - ملک ثبت‌شده توسط مشاور: فقط شماره مشاور ثبت‌کننده نمایش داده می‌شود.
+ * - اطلاعات تماس مالک و مشاوران دیگر از پاسخ عمومی حذف می‌شود.
+ *
+ * دسترسی کارکنان هشتی و ادمین از مسیرهای مدیریتی احراز هویت‌شده انجام می‌شود؛
+ * این سرویس صرفاً پاسخ عمومی آگهی را می‌سازد.
  */
 export async function getPublishedPublicPropertyById(id: string) {
   const property = await findPublishedPublicPropertyById(id);
@@ -12,14 +19,26 @@ export async function getPublishedPublicPropertyById(id: string) {
     throw new Error("آگهی عمومی موردنظر پیدا نشد.");
   }
 
-  const { owners, agents, ...publicProperty } = property;
-  const selectedAgent = agents[0]?.agent;
-  const selectedOwner = owners[0]?.owner;
-  const contact = selectedAgent
-    ? { type: "AGENT" as const, firstName: selectedAgent.firstName, lastName: selectedAgent.lastName, mobile: selectedAgent.user.mobile }
-    : selectedOwner
-      ? { type: "OWNER" as const, firstName: selectedOwner.firstName, lastName: selectedOwner.lastName, mobile: selectedOwner.user.mobile }
-      : null;
+  const { owners, agents, registrationSource, ...publicProperty } = property;
+
+  const firstRegistrant = agents.find((relation) => relation.isFirstRegistrant)?.agent
+    ?? agents[0]?.agent;
+  const approvedAgent = agents.find((relation) => relation.approvedByOwner)?.agent;
+  const primaryOwner = owners[0]?.owner;
+
+  const selectedContact =
+    registrationSource === "AGENT"
+      ? firstRegistrant
+      : approvedAgent ?? primaryOwner;
+
+  const contact = selectedContact
+    ? {
+        type: selectedContact === primaryOwner ? "OWNER" as const : "AGENT" as const,
+        firstName: selectedContact.firstName,
+        lastName: selectedContact.lastName,
+        mobile: selectedContact.user.mobile,
+      }
+    : null;
 
   return { ...publicProperty, contact };
 }
