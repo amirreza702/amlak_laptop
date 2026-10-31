@@ -24,6 +24,7 @@ services:
       - "4000:4000"
     volumes:
       - ./backend:/app
+      - ./backend/uploads:/app/uploads
       - backend_node_modules:/app/node_modules
     depends_on:
       - db
