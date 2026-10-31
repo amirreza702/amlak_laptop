@@ -9,6 +9,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import propertyRoutes from "./features/property/routes/propertyRoutes";
+import { getPublicPropertyMediaContentController } from "./features/property/controller/propertyMediaController";
 import customerRoutes from "./features/customer/routes/customerRoutes";
 
 
@@ -74,6 +75,7 @@ app.use(cookieParser());
  * ============================================================
  */
 
+app.get("/public/property-media/:mediaId", getPublicPropertyMediaContentController);
 app.use(propertyRoutes);
 app.use(customerRoutes);
 app.use(evaluationRoutes);
