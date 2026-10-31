@@ -39,7 +39,6 @@ interface PropertyRegistrationPanelProps {
 }
 
 export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePrivateNote }: PropertyRegistrationPanelProps) {
-  const isLandLike = propertyType === "LAND" || propertyType === "GARDEN";
   const {
     ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
@@ -53,6 +52,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
     submit,
     internalNote, setInternalNote,
   } = usePropertyRegistration(mode, accountMobile, mode === "agent" ? onSavePrivateNote : undefined);
+  const isLandLike = propertyType === "LAND" || propertyType === "GARDEN";
   return (
     <section dir="rtl" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-5">
@@ -73,7 +73,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
                 {propertyTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
               </select>
             </label>
-            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شهر
+            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شهر / روستا
               <input className={inputClass} value={city} onChange={(e) => setCity(e.target.value)} required maxLength={100} />
             </label>
             <label className="space-y-1.5 text-sm font-semibold">محله / منطقه (اختیاری)
@@ -83,7 +83,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
               <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} required maxLength={500} />
             </label>
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شماره تماس مالک
-              <input className={inputClass} type="tel" inputMode="numeric" dir="ltr" placeholder="09123456789" pattern="09[0-9]{9}" maxLength={11} required={mode === "agent"} readOnly={mode === "owner"} value={ownerMobile} onChange={(e) => setOwnerMobile(e.target.value)} />
+              <input className={inputClass} type="tel" inputMode="numeric" dir="ltr" placeholder="09123456789" pattern="09[0-9]{9}" maxLength={11} required readOnly={mode === "owner"} value={ownerMobile} onChange={(e) => setOwnerMobile(e.target.value)} />
               <span className="block text-xs font-normal text-slate-500">{mode === "owner" ? "شماره همراه حساب مالک؛ فقط برای مالک و هشتی قابل مشاهده است." : "شماره واقعی مالک؛ در فهرست عمومی و پنل سایر مشاوران نمایش داده نمی‌شود."}</span>
             </label>
             {mode === "agent" && <>
