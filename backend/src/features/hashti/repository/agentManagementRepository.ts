@@ -135,58 +135,10 @@ export async function updateAgentVerification(input: {
  * سوابق مصرف اطلاعات تماس مشتری توسط مشاوران؛ فقط برای هشتی.
  * این مدل گزارش، گزارش دسترسی به Contact است نه ثبت عمومی تمام رویدادهای سامانه.
  */
-export async function findContactAccessLogs(query: ContactAccessLogQuery) {
-  const where = {
-    ...(query.agentId ? { agentId: query.agentId } : {}),
-    ...(query.from || query.to
-      ? {
-          accessedAt: {
-            ...(query.from ? { gte: query.from } : {}),
-            ...(query.to ? { lte: query.to } : {}),
-          },
-        }
-      : {}),
-  };
-
-  const [total, logs] = await Promise.all([
-    prisma.contactAccessLog.count({ where }),
-    prisma.contactAccessLog.findMany({
-      where,
-      skip: query.offset,
-      take: query.limit,
-      orderBy: { accessedAt: "desc" },
-      select: {
-        id: true,
-        accessedAt: true,
-        agent: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            agencyName: true,
-            user: { select: { mobile: true } },
-          },
-        },
-        customer: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            user: { select: { mobile: true } },
-          },
-        },
-        searchRequest: {
-          select: {
-            id: true,
-            city: true,
-            transactionType: true,
-            propertyType: true,
-            status: true,
-          },
-        },
-      },
-    }),
-  ]);
-
-  return { logs, total };
+/**
+ * جدول contact_access_logs در مهاجرت 20261031100000 عمداً حذف شده است.
+ * این تابع برای حفظ سازگاری پاسخ API باقی می‌ماند و نتیجه خالی برمی‌گرداند.
+ */
+export async function findContactAccessLogs(_query: ContactAccessLogQuery) {
+  return { logs: [], total: 0 };
 }

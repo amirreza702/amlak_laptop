@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode, type MouseEvent } from "react";
+import { useState, useSyncExternalStore, type ReactNode, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "@/shared/components/Modal";
 import dynamic from "next/dynamic";
 
 const RecordLocationMap = dynamic(() => import("@/shared/components/RecordLocationMap"), { ssr: false });
+
+// Hydration-aware client flag without synchronously setting state inside an effect.
+const subscribeToNothing = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 type RecordDetailsRowProps = {
   record: unknown;
@@ -108,9 +113,7 @@ function FormDetails({ record }: { record: unknown }) {
 /** ردیف قابل کلیک جدول؛ مدال فقط فیلدهای ورودی فرم همان رکورد را نشان می‌دهد. */
 export function RecordDetailsRow({ record, title = "رکورد", className = "", children }: RecordDetailsRowProps) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
 
   const openFromRow = (event: MouseEvent<HTMLTableRowElement>) => {
     const target = event.target as HTMLElement;

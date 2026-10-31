@@ -169,7 +169,7 @@ export async function createManagedHashtiUser(input: {
     if (!actor || actor.role !== UserRole.HASHTI || !actor.isActive || !actor.isSuperAdmin) {
       throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
     }
-    const existingUser = await tx.user.findUnique({ where: { mobile: input.mobile }, select: { id: true } });
+    const existingUser = await tx.user.findUnique({ where: { mobile_role: { mobile: input.mobile, role: UserRole.HASHTI } }, select: { id: true } });
     if (existingUser) throw new Error("USER_ALREADY_EXISTS");
     const existingStaff = await tx.hashtiStaff.findUnique({
       where: { mobile: input.mobile },
