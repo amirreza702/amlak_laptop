@@ -29,7 +29,10 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [pendingCloseRequestId, setPendingCloseRequestId] = useState<string | null>(null);
-  const [pendingAgentDecision, setPendingAgentDecision] = useState<{ propertyId: string; agentId: string; action: "approval" | "revoke" } | null>(null);
+  const [agentSelectionModalOpen, setAgentSelectionModalOpen] = useState(false);
+  const [agentSearch, setAgentSearch] = useState("");
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!ownerId) return;
@@ -77,16 +80,47 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
   }
 
   async function setAgentApproval(propertyId: string, agentId: string, action: "approval" | "revoke") {
-    setBusy(true); setError(null); setMessage(null);
+    setBusy(true);
+    setModalError(null);
+    setModalMessage(null);
     try {
       await ownerApiRequest("/properties/" + encodeURIComponent(propertyId) + "/agents/" + encodeURIComponent(agentId) + "/" + action, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}),
       });
-      setMessage(action === "approval" ? "مشاور منتخب این ملک تأیید شد؛ تأیید قبلی در صورت وجود لغو شد." : "انتخاب مشاور لغو شد؛ شماره تماس مالک جایگزین می‌شود.");
+      setModalMessage(action === "approval" ? "همکاری مشاور برای این ملک تأیید شد." : "همکاری مشاور برای این ملک لغو شد.");
       await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "تغییر مشاور منتخب ناموفق بود."); }
-    finally { setBusy(false); }
+    } catch (cause) {
+      setModalError(cause instanceof Error ? cause.message : "تغییر وضعیت همکاری مشاور ناموفق بود.");
+    } finally {
+      setBusy(false);
+    }
   }
+
+  // فهرست مشاوران پذیرفته‌شده از پاسخ‌های موجود ساخته می‌شود؛
+  // هر ردیف نشان‌دهنده رابطه همان مشاور با یک ملک متعلق به این مالک است.
+  const acceptedAgentRows = new Map<string, {
+    request: OwnerRequest;
+    agent: OwnerRequest["responses"][number]["agent"];
+    relation?: OwnerRequest["property"]["agents"][number];
+  }>();
+  for (const request of requests) {
+    for (const response of request.responses) {
+      if (response.status !== "ACCEPTED") continue;
+      const key = `${request.propertyId}:${response.agent.id}`;
+      if (!acceptedAgentRows.has(key)) {
+        acceptedAgentRows.set(key, {
+          request,
+          agent: response.agent,
+          relation: request.property.agents.find((item) => item.agentId === response.agent.id),
+        });
+      }
+    }
+  }
+  const visibleAcceptedAgents = Array.from(acceptedAgentRows.values()).filter(({ request, agent }) => {
+    const query = agentSearch.trim().toLocaleLowerCase();
+    const fullName = `${agent.firstName} ${agent.lastName}`.toLocaleLowerCase();
+    return !query || fullName.includes(query) || agent.user.mobile.includes(query);
+  });
 
   const visibleRequests = requests.filter((request) => {
     const responseText = request.responses.map((response) => response.status + " " + response.agent.firstName + " " + response.agent.lastName + " " + (response.agent.agencyName ?? "") + " " + response.agent.user.mobile).join(" ");
@@ -115,11 +149,59 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
     {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-bold">درخواست‌های ثبت‌شده و پاسخ مشاوران</h3><input value={search} onChange={(e) => setSearch(e.target.value)} aria-label="جست‌وجوی درخواست و مشاور" placeholder="جست‌وجو در تمام اطلاعات نمایش‌داده‌شده..." className="min-w-[240px] flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm" /></div>
-      {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت...</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">هنوز درخواستی ثبت نشده است.</p> : visibleRequests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو پیدا نشد.</p> : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1100px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">توضیحات</th><th className="p-3">وضعیت</th><th className="p-3">تاریخ</th><th className="p-3">عملیات</th><th className="p-3">پاسخ و انتخاب مشاور</th></tr></thead><tbody>{visibleRequests.map((request) => <RecordDetailsRow key={request.id} record={request} title="رکورد" className="border-t border-slate-200 align-top"><td className="p-3"><p className="font-semibold">{propertyLabels[request.property.propertyType] ?? request.property.propertyType} در {request.property.city}، {request.property.district}</p><p className="mt-1 text-xs text-slate-500">{request.property.area ?? "—"} مترمربع</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{request.id}</p></td><td className="max-w-sm whitespace-pre-wrap p-3">{request.description || "بدون توضیحات"}</td><td className="p-3">{request.status === "ACTIVE" ? "فعال و قابل مشاهده برای مشاوران" : "بسته‌شده"}</td><td className="whitespace-nowrap p-3">{new Date(request.createdAt).toLocaleDateString("fa-IR")}</td><td className="p-3">{request.status === "ACTIVE" && <button type="button" onClick={() => setPendingCloseRequestId(request.id)} disabled={busy} className="whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50">بستن درخواست</button>}</td><td className="min-w-[280px] p-3"><div className="space-y-3">{request.responses.map((response) => { const relation = request.property.agents.find((item) => item.agentId === response.agent.id); return <div key={response.agent.id} className="rounded-lg border border-slate-200 p-3"><p className="font-semibold">{response.agent.firstName} {response.agent.lastName}</p><p className="text-xs text-slate-500">{response.agent.agencyName || "بدون نام آژانس"} · {response.status === "ACCEPTED" ? "پذیرفته‌شده توسط مشاور" : "ردشده توسط مشاور"}</p>{response.status === "ACCEPTED" && request.status === "ACTIVE" && <div className="mt-2 flex flex-wrap gap-2">{relation?.approvedByOwner ? <><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800">مشاور منتخب</span><button type="button" disabled={busy} onClick={() => setPendingAgentDecision({ propertyId: request.propertyId, agentId: response.agent.id, action: "revoke" })} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">لغو انتخاب</button></> : <button type="button" disabled={busy} onClick={() => setPendingAgentDecision({ propertyId: request.propertyId, agentId: response.agent.id, action: "approval" })} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">انتخاب این مشاور</button>}</div>}</div>; })}{request.responses.length === 0 && <span className="text-xs text-slate-500">هنوز مشاوری پاسخ نداده است.</span>}</div></td></RecordDetailsRow>)}</tbody></table></div>}
+      {loading ? <p className="flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت...</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">هنوز درخواستی ثبت نشده است.</p> : visibleRequests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو پیدا نشد.</p> : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1100px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">توضیحات</th><th className="p-3">وضعیت</th><th className="p-3">تاریخ</th><th className="p-3">عملیات</th><th className="p-3">پاسخ و انتخاب مشاور</th></tr></thead><tbody>{visibleRequests.map((request) => <RecordDetailsRow key={request.id} record={request} title="رکورد" className="border-t border-slate-200 align-top"><td className="p-3"><p className="font-semibold">{propertyLabels[request.property.propertyType] ?? request.property.propertyType} در {request.property.city}، {request.property.district}</p><p className="mt-1 text-xs text-slate-500">{request.property.area ?? "—"} مترمربع</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{request.id}</p></td><td className="max-w-sm whitespace-pre-wrap p-3">{request.description || "بدون توضیحات"}</td><td className="p-3">{request.status === "ACTIVE" ? "فعال و قابل مشاهده برای مشاوران" : "بسته‌شده"}</td><td className="whitespace-nowrap p-3">{new Date(request.createdAt).toLocaleDateString("fa-IR")}</td><td className="p-3">{request.status === "ACTIVE" && <button type="button" onClick={() => setPendingCloseRequestId(request.id)} disabled={busy} className="whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50">بستن درخواست</button>}</td><td className="min-w-[280px] p-3"><div className="space-y-3">{request.responses.map((response) => { const relation = request.property.agents.find((item) => item.agentId === response.agent.id); return <div key={response.agent.id} className="rounded-lg border border-slate-200 p-3"><p className="font-semibold">{response.agent.firstName} {response.agent.lastName}</p><p className="text-xs text-slate-500">{response.agent.agencyName || "بدون نام آژانس"} · {response.status === "ACCEPTED" ? "پذیرفته‌شده توسط مشاور" : "ردشده توسط مشاور"}</p>{response.status === "ACCEPTED" && <div className="mt-2 flex flex-wrap items-center gap-2">{relation?.approvedByOwner && <span className="rounded bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800">مشاور منتخب</span>}<button type="button" disabled={busy} onClick={() => { setModalError(null); setModalMessage(null); setAgentSelectionModalOpen(true); }} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">انتخاب مشاور</button></div>}</div>; })}{request.responses.length === 0 && <span className="text-xs text-slate-500">هنوز مشاوری پاسخ نداده است.</span>}</div></td></RecordDetailsRow>)}</tbody></table></div>}
     </div>
 
-    <Modal open={Boolean(pendingAgentDecision)} title={pendingAgentDecision?.action === "approval" ? "انتخاب مشاور برای ملک" : "لغو انتخاب مشاور"} description={pendingAgentDecision?.action === "approval" ? "با تأیید، این مشاور تنها مشاور منتخب ملک می‌شود و انتخاب قبلی لغو خواهد شد." : "با لغو انتخاب، شماره تماس مالک به‌جای شماره مشاور نمایش داده می‌شود."} onClose={() => { if (!busy) setPendingAgentDecision(null); }}>
-      <div className="flex justify-end gap-2" dir="rtl"><button type="button" disabled={busy} onClick={() => setPendingAgentDecision(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={busy} onClick={() => { if (pendingAgentDecision) { const action = pendingAgentDecision; setPendingAgentDecision(null); void setAgentApproval(action.propertyId, action.agentId, action.action); } }} className="rounded-lg bg-[#043873] px-4 py-2.5 font-bold text-white disabled:opacity-50">{busy ? "در حال ثبت..." : "تأیید عملیات"}</button></div>
+    <Modal open={agentSelectionModalOpen} title="انتخاب مشاور" description="مشاورانی که درخواست همکاری با املاک شما را پذیرفته‌اند. تأیید یا لغو هر مشاور فقط برای ملک مربوط اعمال می‌شود." onClose={() => { if (!busy) setAgentSelectionModalOpen(false); }} size="xl">
+      <div className="space-y-4" dir="rtl">
+        <input
+          type="search"
+          value={agentSearch}
+          onChange={(event) => setAgentSearch(event.target.value)}
+          aria-label="فیلتر نام یا شماره تماس مشاور"
+          placeholder="جست‌وجو بر اساس نام یا شماره تماس..."
+          className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm outline-none focus:border-[#043873] focus:ring-2 focus:ring-blue-100"
+        />
+        {modalError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{modalError}</p>}
+        {modalMessage && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{modalMessage}</p>}
+        {loading ? (
+          <p className="flex items-center gap-2 py-6 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" />در حال دریافت فهرست مشاوران...</p>
+        ) : visibleAcceptedAgents.length === 0 ? (
+          <p className="rounded-xl bg-slate-50 p-5 text-center text-sm text-slate-600">{acceptedAgentRows.size === 0 ? "هنوز مشاوری درخواست همکاری را نپذیرفته است." : "مشاوری با این نام یا شماره تماس پیدا نشد."}</p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full min-w-[620px] text-right text-sm">
+              <thead className="bg-slate-100 text-slate-700">
+                <tr><th className="p-3">نام مشاور</th><th className="p-3">شماره تماس</th><th className="p-3">ملک مرتبط</th><th className="p-3">وضعیت همکاری</th><th className="p-3">عملیات</th></tr>
+              </thead>
+              <tbody>
+                {visibleAcceptedAgents.map(({ request, agent, relation }) => {
+                  const approved = relation?.status === "ACTIVE" && relation.approvedByOwner;
+                  const canApprove = request.status === "ACTIVE" && relation?.status !== "REVOKED";
+                  return (
+                    <tr key={request.propertyId + ":" + agent.id} className="border-t border-slate-200 align-middle">
+                      <td className="p-3 font-semibold">{agent.firstName} {agent.lastName}</td>
+                      <td className="p-3 font-mono" dir="ltr">{agent.user.mobile}</td>
+                      <td className="p-3">{propertyLabels[request.property.propertyType] ?? request.property.propertyType}، {request.property.city}، {request.property.district}</td>
+                      <td className="p-3">{approved ? <span className="font-bold text-emerald-700">تأییدشده</span> : relation?.status === "REVOKED" ? <span className="font-semibold text-red-700">لغوشده</span> : request.status !== "ACTIVE" ? <span className="text-slate-500">درخواست همکاری بسته شده</span> : <span className="text-amber-700">در انتظار تأیید مالک</span>}</td>
+                      <td className="p-3">
+                        {approved ? (
+                          <button type="button" disabled={busy} onClick={() => void setAgentApproval(request.propertyId, agent.id, "revoke")} className="whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busy ? "در حال ثبت..." : "لغو همکاری"}</button>
+                        ) : (
+                          <button type="button" disabled={busy || !canApprove} onClick={() => void setAgentApproval(request.propertyId, agent.id, "approval")} className="whitespace-nowrap rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{busy ? "در حال ثبت..." : "تأیید همکاری"}</button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="flex justify-end">
+          <button type="button" disabled={busy} onClick={() => setAgentSelectionModalOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">بستن</button>
+        </div>
+      </div>
     </Modal>
     <Modal open={Boolean(pendingCloseRequestId)} title="بستن درخواست همکاری" description="پس از بستن، درخواست برای مشاوران جدید قابل پاسخ‌گویی نخواهد بود." onClose={() => { if (!busy) setPendingCloseRequestId(null); }}>
       <div className="flex justify-end gap-2" dir="rtl"><button type="button" disabled={busy} onClick={() => setPendingCloseRequestId(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={busy} onClick={() => { if (pendingCloseRequestId) { const id = pendingCloseRequestId; setPendingCloseRequestId(null); void closeRequest(id); } }} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">بستن درخواست</button></div>
