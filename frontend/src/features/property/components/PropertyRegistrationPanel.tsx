@@ -117,7 +117,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
         </fieldset>
 
           <fieldset disabled={Boolean(createdPropertyId) || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
-            <legend className="px-2 font-bold">۳. جزئیات تکمیلی ملک</legend>
+            <legend className="px-2 font-bold">۲. جزئیات تکمیلی ملک</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={details.yearBuilt} onChange={e=>setDetails(v=>({...v,yearBuilt:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره واحد<input value={details.unitNumber} onChange={e=>setDetails(v=>({...v,unitNumber:e.target.value}))} className={inputClass} /></label>
@@ -139,7 +139,7 @@ export function PropertyRegistrationPanel({ mode, onSavePrivateNote }: PropertyR
           </fieldset>
 
         <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
-          <legend className="px-2 text-base font-bold">۲. نوع معامله و قیمت</legend>
+          <legend className="px-2 text-base font-bold">۳. نوع معامله و قیمت</legend>
           <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نوع معامله
             <select className={inputClass} value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)} required>
               {transactionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
