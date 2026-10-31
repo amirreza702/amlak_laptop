@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import {
   createPropertyMediaService,
   getPropertyMediaService,
+  getPropertyMediaFileService,
 } from "../service/propertyMediaService";
 
 import { MediaType } from "@prisma/client";
@@ -83,5 +84,16 @@ export async function getPropertyMediaController(
           ? error.message
           : "خطایی در دریافت رسانه‌های ملک رخ داد.",
     });
+  }
+}
+
+export async function getPublicPropertyMediaContentController(req: Request<{ mediaId: string }>, res: Response) {
+  try {
+    const file = await getPropertyMediaFileService(req.params.mediaId, undefined, true);
+    res.setHeader("Content-Type", file.contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+    res.end(file.bytes);
+  } catch {
+    res.status(404).json({ message: "تصویر عمومی پیدا نشد." });
   }
 }
