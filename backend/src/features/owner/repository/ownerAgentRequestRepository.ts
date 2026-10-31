@@ -85,7 +85,7 @@ export const findOwnerRequestForAccess = (requestId: string) =>
     where: { id: requestId, status: "ACTIVE", property: { isActive: true } },
     select: {
       id: true, ownerId: true, propertyId: true, status: true,
-      owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+      owner: { select: { firstName: true, lastName: true } },
       property: { select: { address: true, postalCode: true, city: true, district: true } },
     },
   });
