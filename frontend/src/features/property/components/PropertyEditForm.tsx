@@ -57,13 +57,14 @@ export function PropertyEditForm({
     let active = true;
     async function load() {
       setLoading(true);
+      setHasListing(false);
       try {
         const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, { credentials: "include", cache: "no-store" });
         const property = await response.json();
         if (!response.ok) throw new Error(property.message || "دریافت اطلاعات ملک ناموفق بود.");
         const listing = property.listing ?? null;
-        setHasListing(listing !== null);
         if (!active) return;
+        setHasListing(listing !== null);
         setValues({
           propertyType: property.propertyType ?? "APARTMENT",
           city: property.city ?? "", district: property.district ?? "", address: property.address ?? "",
