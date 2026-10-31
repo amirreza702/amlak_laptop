@@ -33,9 +33,13 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
     if (!files?.length) return;
     setBusy(true); setMessage("");
     try {
-      for (const file of Array.from(files)) {
+      const selectedFiles = Array.from(files).slice(0, Math.max(0, 20 - items.length));
+      if (selectedFiles.length < files.length) {
+        setMessage("حداکثر ۲۰ تصویر برای هر ملک قابل ثبت است؛ فقط تعداد مجاز انتخاب‌شده بارگذاری می‌شود.");
+      }
+      for (const [index, file] of selectedFiles.entries()) {
         const imageData = await compressPropertyImage(file);
-        const created = await uploadPropertyMedia(propertyId, imageData, items.length);
+        const created = await uploadPropertyMedia(propertyId, imageData, items.length + index);
         setItems((current) => [...current, { ...created, type: "IMAGE", sortOrder: current.length, preview: imageData }]);
       }
       setMessage("تصاویر بهینه و ذخیره شدند.");
