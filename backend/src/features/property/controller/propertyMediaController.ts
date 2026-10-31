@@ -42,7 +42,7 @@ export async function createPropertyMediaController(
       await createPropertyMediaService({
         propertyId,
         type,
-        url,
+        imageData,
         sortOrder,
       });
 
