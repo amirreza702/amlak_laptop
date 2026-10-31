@@ -38,7 +38,10 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
     if (!files?.length) return;
     setBusy(true); setMessage(""); setErrorMessage("");
     try {
-      const selectedFiles = Array.from(files).slice(0, Math.max(0, 20 - items.length));
+      const allFiles = Array.from(files);
+      const invalidFile = allFiles.find((file) => !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type));
+      if (invalidFile) throw new Error("فقط تصویر با فرمت‌های JPG، PNG، WebP یا AVIF مجاز است.");
+      const selectedFiles = allFiles.slice(0, Math.max(0, 20 - items.length));
       if (selectedFiles.length < files.length) {
         setMessage("حداکثر ۲۰ تصویر برای هر ملک قابل ثبت است؛ فقط تعداد مجاز انتخاب‌شده بارگذاری می‌شود.");
       }
@@ -99,11 +102,11 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-bold">تصاویر ملک</h3>
         <label className="cursor-pointer rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">
-          {busy ? "در حال پردازش..." : "افزودن تصویر"}
-          <input type="file" accept="image/*" multiple disabled={busy || items.length >= 20} onChange={(event) => { void addFiles(event.target.files); event.currentTarget.value = ""; }} className="hidden" />
+          {busy ? "در حال پردازش..." : "بارگذاری تصویر"}
+          <input type="file" accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif" multiple disabled={busy || items.length >= 20} onChange={(event) => { void addFiles(event.target.files); event.currentTarget.value = ""; }} className="hidden" />
         </label>
       </div>
-      <p className="text-xs text-slate-500">حداکثر ۲۰ تصویر؛ تصاویر در مرورگر به WebP و ضلع حداکثر ۱۶۰۰ پیکسل تبدیل می‌شوند.</p>
+      <p className="text-xs text-slate-500">فقط JPG، PNG، WebP و AVIF پذیرفته می‌شود؛ حداکثر ۲۰ تصویر. تصاویر پیش از ذخیره به WebP تبدیل می‌شوند.</p>
       {errorMessage && <p role="alert" className="rounded-lg bg-red-50 p-2 text-xs text-red-700">{errorMessage}</p>}
       {message && <p role="status" className="text-xs text-emerald-700">{message}</p>}
       {items.length === 0 ? <p className="text-sm text-slate-500">هنوز تصویری برای این ملک ثبت نشده است.</p> : (
