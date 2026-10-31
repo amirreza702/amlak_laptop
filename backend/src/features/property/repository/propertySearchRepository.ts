@@ -199,7 +199,7 @@ export async function searchProperties(
      */
     if (filters.transactionType === "RENT") {
       priceConditions.push(
-        createRange("depositAmount")
+        createRange("rentAmount")
       );
     }
 
@@ -214,6 +214,10 @@ export async function searchProperties(
 
       priceConditions.push(
         createRange("depositAmount")
+      );
+
+      priceConditions.push(
+        createRange("rentAmount")
       );
     }
 
