@@ -23,9 +23,16 @@ export async function searchPropertyController(
       req.query as Record<string, string | undefined>
     );
 
+    const apiBase = (process.env.PUBLIC_API_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+    const items = result.map((item) => ({
+      ...item,
+      mainImage: item.mainImage
+        ? (item.mainImage.startsWith("http") ? item.mainImage : apiBase + item.mainImage)
+        : null,
+    }));
     res.status(200).json({
-      count: result.length,
-      items: result,
+      count: items.length,
+      items,
     });
   } catch (error: any) {
     res.status(400).json({
