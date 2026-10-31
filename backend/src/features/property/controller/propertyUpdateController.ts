@@ -27,8 +27,23 @@ export async function updatePropertyController(
     /**
      * اطلاعات ویرایش‌شده از Body دریافت می‌شوند.
      */
-    const data =
-      req.body as UpdatePropertyInput;
+    // فقط فیلدهای قابل ویرایش ملک پذیرفته می‌شوند؛
+    // شناسه‌ها، وضعیت انتشار، تأییدها و فیلدهای مدیریتی از Body حذف می‌شوند.
+    const editableFields = [
+      "propertyType", "city", "district", "address", "postalCode",
+      "latitudeExact", "longitudeExact", "latitudePublic", "longitudePublic",
+      "area", "rooms", "floor", "yearBuilt", "unitNumber", "totalUnits",
+      "parkingCount", "parkingType", "parkingNumber", "hasElevator",
+      "hasStorage", "hasBalcony", "hasYard", "heatingSystem", "coolingSystem",
+      "documentType", "ownershipType", "landTenure", "description",
+      "renovationStatus", "renovationYear", "occupancyStatus",
+    ] as const;
+    const body = req.body as Record<string, unknown>;
+    const data = Object.fromEntries(
+      editableFields
+        .filter((field) => Object.prototype.hasOwnProperty.call(body, field))
+        .map((field) => [field, body[field]])
+    ) as UpdatePropertyInput;
 
     /**
      * اجرای Use Case
