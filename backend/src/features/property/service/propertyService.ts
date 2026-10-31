@@ -174,6 +174,9 @@ export async function registerProperty(
 
     if (existingProperty) {
       property = existingProperty;
+      if (isAgentRegistration && !existingProperty.ownerMobile) {
+        property = await updateProperty(existingProperty.id, { ownerMobile: data.ownerMobile!.trim() }, tx);
+      }
     } else {
       property = await createProperty(
         {

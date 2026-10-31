@@ -115,22 +115,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
             <PropertyLocationPicker value={coordinates} onChange={setCoordinates} city={city} />
           </fieldset>
 
-          {mode === "agent" && (
-            <label className="block space-y-1.5 text-sm font-semibold">
-              توضیحات خصوصی مشاور (اختیاری)
-              <textarea
-                rows={3}
-                maxLength={10000}
-                value={internalNote}
-                onChange={(event) => setInternalNote(event.target.value)}
-                className={inputClass}
-                placeholder="یادداشت داخلی درباره این ملک؛ فقط برای شما و مدیر ارشد هشتی"
-              />
-              <span className="block text-xs font-normal leading-6 text-slate-500">
-                این متن در توضیحات عمومی آگهی قرار نمی‌گیرد و پس از ثبت ملک به‌صورت خصوصی ذخیره می‌شود.
-              </span>
-            </label>
-          )}
+
         </fieldset>
 
         <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
@@ -169,11 +154,32 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
               <label className="space-y-1 text-sm">وضعیت سکونت<select value={details.occupancyStatus} onChange={e=>setDetails(v=>({...v,occupancyStatus:e.target.value}))} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
             </div>
             <label className="block space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={details.description} onChange={e=>setDetails(v=>({...v,description:e.target.value}))} className={inputClass} /></label>
+          {mode === "agent" && (
+            <label className="block space-y-1.5 text-sm font-semibold">
+              توضیحات خصوصی مشاور (اختیاری)
+              <textarea
+                rows={3}
+                maxLength={10000}
+                value={internalNote}
+                onChange={(event) => setInternalNote(event.target.value)}
+                className={inputClass}
+                placeholder="یادداشت داخلی درباره این ملک؛ فقط برای شما و مدیر ارشد هشتی"
+              />
+              <span className="block text-xs font-normal leading-6 text-slate-500">
+                این متن در توضیحات عمومی آگهی قرار نمی‌گیرد و پس از ثبت ملک به‌صورت خصوصی ذخیره می‌شود.
+              </span>
+            </label>
+          )}
           </fieldset>
 
 
 
-        {createdPropertyId && <PropertyMediaEditor propertyId={createdPropertyId} />}
+        {createdPropertyId ? <PropertyMediaEditor propertyId={createdPropertyId} /> : (
+          <section className="space-y-2 rounded-xl border border-dashed border-slate-300 p-4">
+            <button type="button" disabled className="cursor-not-allowed rounded-lg bg-slate-300 px-4 py-2 text-sm font-bold text-slate-600">بارگذاری تصویر</button>
+            <p className="text-xs text-slate-500">پس از ثبت مشخصات اولیه ملک، دکمه بارگذاری فعال می‌شود تا تصاویر به همان ملک متصل شوند.</p>
+          </section>
+        )}
         {createdPropertyId && !listingCreated && (
           <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-7 text-amber-900">
             ملک با شناسه زیر ثبت شده، اما اطلاعات معامله هنوز ثبت نشده است. با زدن دکمه تلاش مجدد فقط معامله ثبت می‌شود و ملک تکراری ساخته نخواهد شد.

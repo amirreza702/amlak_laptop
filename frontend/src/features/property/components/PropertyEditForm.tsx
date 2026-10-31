@@ -191,10 +191,19 @@ export function PropertyEditForm({
           <label className="space-y-1 text-sm">تعداد اتاق *<input required type="number" min="0" step="1" value={values.rooms} onChange={e=>update("rooms",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">طبقه *<input required type="number" min="-10" max="200" step="1" value={values.floor} onChange={e=>update("floor",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">تعداد کل واحدها *<input required type="number" min="1" step="1" value={values.totalUnits} onChange={e=>update("totalUnits",e.target.value)} className={inputClass}/></label>
-          <label className="space-y-1 text-sm">نوع سند *<select required value={values.documentType} onChange={e=>update("documentType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
+          <label className="space-y-1 text-sm">نوع سند *<select required value={values.documentType} onChange={e=>update("documentType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
           <label className="space-y-1 text-sm">نوع مالکیت *<select required value={values.ownershipType} onChange={e=>update("ownershipType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select></label>
           <label className="space-y-1 text-sm">وضعیت عرصه *<select required value={values.landTenure} onChange={e=>update("landTenure",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select></label>
         </div>
+      </section>
+
+      <fieldset className="space-y-2 rounded-xl border p-3"><legend className="px-2 text-sm font-bold">موقعیت ملک *</legend><LocationPicker value={coordinateValue} onChange={point=>setValues(v=>({...v,latitudeExact:point?String(point.latitude):"",longitudeExact:point?String(point.longitude):""}))} city={values.city}/></fieldset>
+      <section className="space-y-3 rounded-xl border p-3">
+        <h3 className="font-bold">نوع معامله و قیمت *</h3>
+        <label className="block space-y-1 text-sm">نوع معامله<select required value={values.transactionType} onChange={e=>update("transactionType",e.target.value as TransactionType)} className={inputClass}><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select></label>
+        {values.transactionType==="SALE" && <label className="block space-y-1 text-sm">قیمت فروش (تومان) *<input required type="number" min="1" value={values.salePrice} onChange={e=>update("salePrice",e.target.value)} className={inputClass}/></label>}
+        {values.transactionType==="FULL_DEPOSIT" && <label className="block space-y-1 text-sm">مبلغ رهن (تومان) *<input required type="number" min="1" value={values.depositAmount} onChange={e=>update("depositAmount",e.target.value)} className={inputClass}/></label>}
+        {values.transactionType==="RENT" && <label className="block space-y-1 text-sm">اجاره ماهانه (تومان) *<input required type="number" min="1" value={values.rentAmount} onChange={e=>update("rentAmount",e.target.value)} className={inputClass}/></label>}
       </section>
       <section className="space-y-3 rounded-xl border border-slate-200 p-3">
         <h3 className="font-bold">فیلدهای اختیاری</h3>
@@ -213,14 +222,6 @@ export function PropertyEditForm({
           <label className="space-y-1 text-sm">وضعیت سکونت<select value={values.occupancyStatus} onChange={e=>update("occupancyStatus",e.target.value)} className={inputClass}><option value="VACANT">خالی</option><option value="OWNER_OCCUPIED">مالک ساکن است</option><option value="TENANT_OCCUPIED">مستأجر دارد</option></select></label>
           <label className="col-span-full space-y-1 text-sm">توضیحات<textarea rows={4} maxLength={10000} value={values.description} onChange={e=>update("description",e.target.value)} className={inputClass}/></label>
         </div>
-      </section>
-      <fieldset className="space-y-2 rounded-xl border p-3"><legend className="px-2 text-sm font-bold">موقعیت ملک *</legend><LocationPicker value={coordinateValue} onChange={point=>setValues(v=>({...v,latitudeExact:point?String(point.latitude):"",longitudeExact:point?String(point.longitude):""}))} city={values.city}/></fieldset>
-      <section className="space-y-3 rounded-xl border p-3">
-        <h3 className="font-bold">نوع معامله و قیمت *</h3>
-        <label className="block space-y-1 text-sm">نوع معامله<select required value={values.transactionType} onChange={e=>update("transactionType",e.target.value as TransactionType)} className={inputClass}><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select></label>
-        {values.transactionType==="SALE" && <label className="block space-y-1 text-sm">قیمت فروش (تومان) *<input required type="number" min="1" value={values.salePrice} onChange={e=>update("salePrice",e.target.value)} className={inputClass}/></label>}
-        {values.transactionType==="FULL_DEPOSIT" && <label className="block space-y-1 text-sm">مبلغ رهن (تومان) *<input required type="number" min="1" value={values.depositAmount} onChange={e=>update("depositAmount",e.target.value)} className={inputClass}/></label>}
-        {values.transactionType==="RENT" && <label className="block space-y-1 text-sm">اجاره ماهانه (تومان) *<input required type="number" min="1" value={values.rentAmount} onChange={e=>update("rentAmount",e.target.value)} className={inputClass}/></label>}
       </section>
       {mode==="agent" && <label className="block space-y-1 text-sm">یادداشت خصوصی مشاور<textarea rows={3} maxLength={10000} value={values.internalNote} onChange={e=>update("internalNote",e.target.value)} className={inputClass}/></label>}
       <PropertyMediaEditor propertyId={propertyId} onError={setError}/>

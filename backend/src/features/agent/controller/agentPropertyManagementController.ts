@@ -20,6 +20,11 @@ function parseIntegerFilter(value: unknown): number | null | undefined {
   const parsed = typeof value === "string" ? Number(value) : Number.NaN;
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
 }
+function parseFloorFilter(value: unknown): number | null | undefined {
+  if (value === undefined || value === "") return undefined;
+  const parsed = typeof value === "string" ? Number(value) : Number.NaN;
+  return Number.isSafeInteger(parsed) && parsed >= -10 && parsed <= 200 ? parsed : null;
+}
 
 /** GET /agents/me/properties */
 export async function getMyAgentPropertyRecordsController(req: Request, res: Response) {
@@ -34,12 +39,11 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
   const offset = parseIntegerQuery(req.query.offset, 0, 0, 1_000_000);
   const areaMin = parseNumberFilter(req.query.areaMin); const areaMax = parseNumberFilter(req.query.areaMax);
   const roomsMin = parseIntegerFilter(req.query.roomsMin); const roomsMax = parseIntegerFilter(req.query.roomsMax);
-  const floor = parseIntegerFilter(req.query.floor); const totalUnits = parseIntegerFilter(req.query.totalUnits);
-  const textFilters = ["city", "district", "address"] as const;
-  const invalidTextFilter = textFilters.some((key) => {
+  const floor = parseFloorFilter(req.query.floor); const totalUnits = parseIntegerFilter(req.query.totalUnits);
+  const invalidTextFilter = ["city", "district"].some((key) => {
     const value = req.query[key];
     return value !== undefined && (typeof value !== "string" || value.length > 120);
-  });
+  }) || (req.query.address !== undefined && (typeof req.query.address !== "string" || req.query.address.length > 500)) || (totalUnits !== undefined && totalUnits < 1);
   const propertyType = req.query.propertyType; const transactionType = req.query.transactionType;
   const documentType = req.query.documentType; const ownershipType = req.query.ownershipType; const landTenure = req.query.landTenure;
   if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || floor === null || totalUnits === null || invalidTextFilter ||
