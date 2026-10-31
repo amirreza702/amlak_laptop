@@ -1,0 +1,110 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { compressPropertyImage } from "../utils/compressPropertyImage";
+import { getPropertyMedia, getPropertyMediaPreview, uploadPropertyMedia } from "../api/propertyApi";
+
+type MediaItem = { id: string; url: string; type: string; sortOrder: number; preview?: string };
+
+export function PropertyMediaEditor({ propertyId, onError }: { propertyId: string; onError?: (message: string) => void }) {
+  const [items, setItems] = useState<MediaItem[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const media = await getPropertyMedia(propertyId);
+        const withPreviews = await Promise.all(media.map(async (item) => ({
+          ...item,
+          preview: await getPropertyMediaPreview(propertyId, item.id).catch(() => ""),
+        })));
+        if (active) setItems(withPreviews);
+      } catch (error) {
+        if (active) onError?.(error instanceof Error ? error.message : "دریافت تصاویر ناموفق بود.");
+      }
+    }
+    void load();
+    return () => { active = false; };
+  }, [propertyId, onError]);
+
+  async function addFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setBusy(true); setMessage("");
+    try {
+      for (const file of Array.from(files)) {
+        const imageData = await compressPropertyImage(file);
+        const created = await uploadPropertyMedia(propertyId, imageData, items.length);
+        setItems((current) => [...current, { ...created, type: "IMAGE", sortOrder: current.length, preview: imageData }]);
+      }
+      setMessage("تصاویر بهینه و ذخیره شدند.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "بارگذاری تصویر ناموفق بود.";
+      onError?.(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(true);
+    try {
+      const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+      const response = await fetch(`${api}/properties/${encodeURIComponent(propertyId)}/media/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.message || "حذف تصویر ناموفق بود.");
+      setItems((current) => current.filter((item) => item.id !== id));
+    } catch (error) {
+      onError?.(error instanceof Error ? error.message : "حذف تصویر ناموفق بود.");
+    } finally { setBusy(false); }
+  }
+
+  async function move(index: number, direction: -1 | 1) {
+    const next = [...items];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setBusy(true);
+    try {
+      const api = process.env.NEXT_PUBLIC_API_URL || "/api";
+      const response = await fetch(`${api}/properties/${encodeURIComponent(propertyId)}/media/order`, {
+        method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: next.map((item) => item.id) }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.message || "مرتب‌سازی تصاویر ناموفق بود.");
+      setItems(next.map((item, sortOrder) => ({ ...item, sortOrder })));
+    } catch (error) {
+      onError?.(error instanceof Error ? error.message : "مرتب‌سازی تصاویر ناموفق بود.");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <section className="space-y-3 rounded-xl border border-slate-200 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-bold">تصاویر ملک</h3>
+        <label className="cursor-pointer rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">
+          {busy ? "در حال پردازش..." : "افزودن تصویر"}
+          <input type="file" accept="image/*" multiple disabled={busy || items.length >= 20} onChange={(event) => { void addFiles(event.target.files); event.currentTarget.value = ""; }} className="hidden" />
+        </label>
+      </div>
+      <p className="text-xs text-slate-500">حداکثر ۲۰ تصویر؛ تصاویر در مرورگر به WebP و ضلع حداکثر ۱۶۰۰ پیکسل تبدیل می‌شوند.</p>
+      {message && <p role="status" className="text-xs text-emerald-700">{message}</p>}
+      {items.length === 0 ? <p className="text-sm text-slate-500">هنوز تصویری برای این ملک ثبت نشده است.</p> : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {items.map((item, index) => (
+            <div key={item.id} className="space-y-2 rounded-lg border p-2">
+              {item.preview ? <img src={item.preview} alt={`تصویر ملک ${index + 1}`} className="aspect-[4/3] w-full rounded-md object-cover" /> : <div className="flex aspect-[4/3] items-center justify-center rounded-md bg-slate-100 text-xs text-slate-500">پیش‌نمایش در دسترس نیست</div>}
+              <div className="flex flex-wrap justify-center gap-1">
+                <button type="button" disabled={busy || index === 0} onClick={() => void move(index, -1)} className="rounded border px-2 py-1 text-xs">←</button>
+                <button type="button" disabled={busy || index === items.length - 1} onClick={() => void move(index, 1)} className="rounded border px-2 py-1 text-xs">→</button>
+                <button type="button" disabled={busy} onClick={() => void remove(item.id)} className="rounded border border-red-200 px-2 py-1 text-xs text-red-700">حذف</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
