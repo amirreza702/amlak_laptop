@@ -48,6 +48,7 @@ export function PropertyEditForm({
 }) {
   const [values, setValues] = useState<Values>({ ...emptyValues, internalNote: initialInternalNote });
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -57,6 +58,7 @@ export function PropertyEditForm({
     let active = true;
     async function load() {
       setLoading(true);
+      setLoadFailed(false);
       setHasListing(false);
       try {
         const response = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, { credentials: "include", cache: "no-store" });
@@ -72,7 +74,7 @@ export function PropertyEditForm({
           longitudeExact: String(property.longitudeExact ?? ""), area: String(property.area ?? ""),
           rooms: String(property.rooms ?? ""), floor: String(property.floor ?? ""),
           yearBuilt: String(property.yearBuilt ?? ""), unitNumber: property.unitNumber ?? "",
-          totalUnits: String(property.totalUnits ?? 1), parkingCount: String(property.parkingCount ?? ""),
+          totalUnits: String(property.totalUnits ?? ""), parkingCount: String(property.parkingCount ?? ""),
           parkingType: property.parkingType ?? "", parkingNumber: property.parkingNumber ?? "",
           hasElevator: property.hasElevator == null ? "" : String(property.hasElevator),
           hasStorage: property.hasStorage == null ? "" : String(property.hasStorage),
@@ -88,7 +90,10 @@ export function PropertyEditForm({
           rentAmount: String(listing?.rentAmount ?? ""), internalNote: initialInternalNote,
         });
       } catch (cause) {
-        if (active) setError(cause instanceof Error ? cause.message : "دریافت اطلاعات ملک ناموفق بود.");
+        if (active) {
+          setLoadFailed(true);
+          setError(cause instanceof Error ? cause.message : "دریافت اطلاعات ملک ناموفق بود.");
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -165,6 +170,7 @@ export function PropertyEditForm({
     : null;
 
   if (loading) return <p className="p-4 text-sm text-slate-500">در حال دریافت اطلاعات فعلی ملک...</p>;
+  if (loadFailed) return <div dir="rtl" className="space-y-3 p-4"><p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p><button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm">بستن فرم</button></div>;
 
   return (
     <form onSubmit={submit} className="max-h-[78vh] space-y-4 overflow-y-auto p-1" dir="rtl">
