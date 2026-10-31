@@ -42,7 +42,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
         const created = await uploadPropertyMedia(propertyId, imageData, items.length + index);
         setItems((current) => [...current, { ...created, type: "IMAGE", sortOrder: current.length, preview: imageData }]);
       }
-      setMessage("تصاویر بهینه و ذخیره شدند.");
+      if (selectedFiles.length === files.length) setMessage("تصاویر بهینه و ذخیره شدند.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "بارگذاری تصویر ناموفق بود.";
       onError?.(message);
