@@ -71,7 +71,8 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
           </RecordDetailsRow>
         ))}</tbody></table></div>}
       <Modal open={Boolean(editingProperty)} title="ویرایش کامل ملک" description="مقادیر فعلی در فرم قرار گرفته‌اند؛ شناسه و سوابق سیستمی قابل ویرایش نیستند." onClose={() => { if (!savingProperty) setEditingProperty(null); }}>
-        <form onSubmit={submitPropertyEdit} className="max-h-[75vh] space-y-4 overflow-y-auto p-1" dir="rtl">
+        {editingProperty && <PropertyEditForm propertyId={editingProperty.propertyId} mode="owner" onClose={() => setEditingProperty(null)} onSaved={() => { setEditingProperty(null); setReload(value => value + 1); }} />}
+        <form hidden onSubmit={submitPropertyEdit} className="max-h-[75vh] space-y-4 overflow-y-auto p-1" dir="rtl">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1 text-sm">نوع ملک<select required value={editForm.propertyType} onChange={(e) => setEditForm(v => ({...v, propertyType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label className="space-y-1 text-sm">نوع معامله<select required value={editForm.transactionType} onChange={(e) => setEditForm(v => ({...v, transactionType:e.target.value}))} className="w-full rounded-lg border p-2.5">{[["SALE","فروش"],["FULL_DEPOSIT","رهن کامل"],["RENT","اجاره"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label>
