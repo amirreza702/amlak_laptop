@@ -34,7 +34,7 @@ export async function createPropertyMediaService(data: {
   imageData: string;
   sortOrder?: number;
 }): Promise<PropertyMedia> {
-  if (!Object.values(MediaType).includes(data.type)) throw new Error("نوع رسانه معتبر نیست.");
+  if (data.type !== MediaType.IMAGE && data.type !== MediaType.MAIN_IMAGE) throw new Error("فقط فایل تصویری مجاز است.");
   const property = await findPropertyById(data.propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   if (await countActivePropertyMedia(data.propertyId) >= maxImagesPerProperty) {
