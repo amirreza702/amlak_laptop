@@ -10,6 +10,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
   const [items, setItems] = useState<MediaItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -22,7 +23,11 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
         })));
         if (active) setItems(withPreviews);
       } catch (error) {
-        if (active) onError?.(error instanceof Error ? error.message : "دریافت تصاویر ناموفق بود.");
+        if (active) {
+          const message = error instanceof Error ? error.message : "دریافت تصاویر ناموفق بود.";
+          setErrorMessage(message);
+          onError?.(message);
+        }
       }
     }
     void load();
@@ -31,7 +36,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
 
   async function addFiles(files: FileList | null) {
     if (!files?.length) return;
-    setBusy(true); setMessage("");
+    setBusy(true); setMessage(""); setErrorMessage("");
     try {
       const selectedFiles = Array.from(files).slice(0, Math.max(0, 20 - items.length));
       if (selectedFiles.length < files.length) {
@@ -45,6 +50,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
       if (selectedFiles.length === files.length) setMessage("تصاویر بهینه و ذخیره شدند.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "بارگذاری تصویر ناموفق بود.";
+      setErrorMessage(message);
       onError?.(message);
     } finally {
       setBusy(false);
@@ -52,7 +58,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
   }
 
   async function remove(id: string) {
-    setBusy(true);
+    setBusy(true); setErrorMessage("");
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "/api";
       const response = await fetch(`${api}/properties/${encodeURIComponent(propertyId)}/media/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
@@ -60,7 +66,9 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
       if (!response.ok) throw new Error(body.message || "حذف تصویر ناموفق بود.");
       setItems((current) => current.filter((item) => item.id !== id));
     } catch (error) {
-      onError?.(error instanceof Error ? error.message : "حذف تصویر ناموفق بود.");
+      const message = error instanceof Error ? error.message : "حذف تصویر ناموفق بود.";
+      setErrorMessage(message);
+      onError?.(message);
     } finally { setBusy(false); }
   }
 
@@ -69,7 +77,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
     const target = index + direction;
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target], next[index]];
-    setBusy(true);
+    setBusy(true); setErrorMessage("");
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "/api";
       const response = await fetch(`${api}/properties/${encodeURIComponent(propertyId)}/media/order`, {
@@ -80,7 +88,9 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
       if (!response.ok) throw new Error(body.message || "مرتب‌سازی تصاویر ناموفق بود.");
       setItems(next.map((item, sortOrder) => ({ ...item, sortOrder })));
     } catch (error) {
-      onError?.(error instanceof Error ? error.message : "مرتب‌سازی تصاویر ناموفق بود.");
+      const message = error instanceof Error ? error.message : "مرتب‌سازی تصاویر ناموفق بود.";
+      setErrorMessage(message);
+      onError?.(message);
     } finally { setBusy(false); }
   }
 
@@ -94,6 +104,7 @@ export function PropertyMediaEditor({ propertyId, onError }: { propertyId: strin
         </label>
       </div>
       <p className="text-xs text-slate-500">حداکثر ۲۰ تصویر؛ تصاویر در مرورگر به WebP و ضلع حداکثر ۱۶۰۰ پیکسل تبدیل می‌شوند.</p>
+      {errorMessage && <p role="alert" className="rounded-lg bg-red-50 p-2 text-xs text-red-700">{errorMessage}</p>}
       {message && <p role="status" className="text-xs text-emerald-700">{message}</p>}
       {items.length === 0 ? <p className="text-sm text-slate-500">هنوز تصویری برای این ملک ثبت نشده است.</p> : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
