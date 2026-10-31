@@ -155,6 +155,9 @@ router.patch(
   revokePropertyAgentController
 );
 
+router.delete("/properties/:id/media/:mediaId", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(), deletePropertyMediaController);
+router.patch("/properties/:id/media/order", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(), reorderPropertyMediaController);
+
 // رسانه فقط توسط مالک/مشاور مرتبط یا کارکنان هشتی قابل افزودن است.
 router.post(
   "/properties/:id/media",
