@@ -40,6 +40,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env.production}
     ports:
       - "${BACKEND_PORT:-4000}:4000"
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       backend-migrate:
         condition: service_completed_successfully
@@ -61,3 +63,5 @@ services:
 volumes:
   postgres_data:
     name: hashti_postgres_data_prod
+  uploads_data:
+    name: hashti_uploads_data_prod
