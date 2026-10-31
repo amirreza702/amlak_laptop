@@ -17,6 +17,9 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
         createdByUserId: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId
           ? record.property.createdByUserId
           : null,
+        // شماره ثبت‌کننده ممکن است متعلق به مالک باشد؛ پنل مشاور نباید آن را دریافت کند.
+        // شماره عمومی تماس از سرویس آگهی عمومی و مطابق تأیید مالک انتخاب می‌شود.
+        creatorMobile: null,
       },
     })),
   };
