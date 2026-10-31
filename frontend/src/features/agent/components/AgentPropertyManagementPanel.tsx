@@ -231,7 +231,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           onClose={() => setEditingProperty(null)}
           onSaved={() => { setEditingProperty(null); setActionMessage("مشخصات ملک و یادداشت خصوصی ذخیره شد."); void load(pagination.offset); }}
         />}
-        <div hidden>        <form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
+        {false && (<form onSubmit={savePropertyEdit} className="grid gap-3 sm:grid-cols-2">
           {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{actionError}</p>}
           <label className="space-y-1 text-sm">نوع ملک<select required value={editValues.propertyType} onChange={e=>setEditValues(v=>({...v,propertyType:e.target.value as PropertyType}))} className="w-full rounded-lg border px-3 py-2">{Object.entries(propertyLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label className="space-y-1 text-sm">شهر<input required maxLength={100} value={editValues.city} onChange={e=>setEditValues(v=>({...v,city:e.target.value}))} className="w-full rounded-lg border px-3 py-2" /></label>
