@@ -67,11 +67,8 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
       }
 
       const validationError = validatePropertyRegistration({
-        coordinates,
-        transactionType,
-        salePrice,
-        depositAmount,
-        rentAmount,
+        city, district, address, coordinates, area, rooms, floor, details,
+        transactionType, salePrice, depositAmount, rentAmount,
       });
       if (validationError) {
         throw new Error(validationError);
