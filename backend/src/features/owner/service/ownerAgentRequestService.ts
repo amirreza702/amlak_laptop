@@ -98,7 +98,7 @@ export async function accessOwnerRequestContactService(agentId: string, requestI
 
   const toPayload = (access: unknown) => ({
     access,
-    owner: { id: request.ownerId, firstName: request.owner.firstName, lastName: request.owner.lastName, mobile: request.owner.user.mobile },
+    owner: { id: request.ownerId, firstName: request.owner.firstName, lastName: request.owner.lastName },
     property: { id: request.propertyId, city: request.property.city, district: request.property.district, address: request.property.address, postalCode: request.property.postalCode },
   });
 
