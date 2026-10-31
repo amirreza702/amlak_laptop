@@ -9,6 +9,7 @@ import type { Coordinates } from "@/features/property/types/propertyRegistration
 import { useOwnerProperties } from "../hooks/useOwnerProperties";
 import type { OwnerProperty } from "../types/owner";
 import { Modal } from "@/shared/components/Modal";
+import { PropertyMediaEditor } from "@/features/property/components/PropertyMediaEditor";
 
 // همان انتخاب‌گر نقشهٔ فرم ایجاد ملک، بدون بارگذاری Leaflet در سمت سرور.
 const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
@@ -78,6 +79,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
             {editForm.transactionType === "FULL_DEPOSIT" && <label className="space-y-1 text-sm">مبلغ رهن (تومان)<input required min="1" type="number" value={editForm.depositAmount} onChange={(e) => setEditForm(v => ({...v,depositAmount:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>}
             {editForm.transactionType === "RENT" && <label className="space-y-1 text-sm">اجاره ماهانه (تومان)<input required min="1" type="number" value={editForm.rentAmount} onChange={(e) => setEditForm(v => ({...v,rentAmount:e.target.value}))} className="w-full rounded-lg border p-2.5" /></label>}
           </div>
+          {editingProperty && <PropertyMediaEditor propertyId={editingProperty.propertyId} />}
           <fieldset className="space-y-2 rounded-xl border p-3">
             <legend className="px-2 text-sm font-bold">موقعیت جغرافیایی (اجباری)</legend>
             <PropertyLocationPicker
