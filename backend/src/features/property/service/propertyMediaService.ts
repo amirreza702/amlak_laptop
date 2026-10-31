@@ -1,121 +1,89 @@
-import { MediaType } from "@prisma/client";
-
+import { MediaType, type PropertyMedia } from "@prisma/client";
+import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   createPropertyMedia,
   findPropertyMedia,
+  findPropertyMediaById,
+  countActivePropertyMedia,
+  deactivatePropertyMedia,
+  updatePropertyMediaOrder,
 } from "../repository/propertyMediaRepository";
-
 import { findPropertyById } from "../repository/propertyRepository";
 
-import type { PropertyMedia } from "@prisma/client";
+const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
+const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
+const maxImageBytes = 4 * 1024 * 1024;
+const maxImagesPerProperty = 20;
 
-/**
- * ============================================================
- * Create Property Media Service
- * ============================================================
- *
- * ثبت یک رسانه برای ملک.
- *
- * مسئولیت Service:
- * 1. بررسی وجود ملک
- * 2. بررسی اطلاعات Business
- * 3. فراخوانی Repository
- *
- * ارتباط:
- *
- * Controller
- *      ↓
- *    Service
- *      ↓
- *   Repository
- *      ↓
- *      DB
- */
-
-export interface CreatePropertyMediaInput {
-  propertyId: string;
-  type: MediaType;
-  url: string;
-  sortOrder?: number;
+function decodeOptimizedWebp(data: string): Buffer {
+  const match = /^data:image\/webp;base64,([A-Za-z0-9+/]+={0,2})$/.exec(data || "");
+  if (!match) throw new Error("تصویر باید پس از بهینه‌سازی با قالب WebP ارسال شود.");
+  const bytes = Buffer.from(match[1], "base64");
+  if (!bytes.length || bytes.length > maxImageBytes) throw new Error("حجم تصویر بهینه‌شده نباید بیشتر از ۴ مگابایت باشد.");
+  if (bytes.length < 12 || bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WEBP") {
+    throw new Error("محتوای فایل تصویر معتبر نیست.");
+  }
+  return bytes;
 }
 
-export const createPropertyMediaService = async (
-  data: CreatePropertyMediaInput
-): Promise<PropertyMedia> => {
-  /**
-   * ----------------------------------------------------------
-   * 1. بررسی وجود ملک
-   * ----------------------------------------------------------
-   */
-
+export async function createPropertyMediaService(data: {
+  propertyId: string;
+  type: MediaType;
+  imageData: string;
+  sortOrder?: number;
+}): Promise<PropertyMedia> {
+  if (!Object.values(MediaType).includes(data.type)) throw new Error("نوع رسانه معتبر نیست.");
   const property = await findPropertyById(data.propertyId);
-
-  if (!property) {
-    throw new Error("ملک مورد نظر پیدا نشد.");
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
+  if (await countActivePropertyMedia(data.propertyId) >= maxImagesPerProperty) {
+    throw new Error("حداکثر ۲۰ تصویر برای هر ملک قابل ثبت است.");
+  }
+  if (!Number.isInteger(data.sortOrder ?? 0) || (data.sortOrder ?? 0) < 0) {
+    throw new Error("ترتیب نمایش تصویر معتبر نیست.");
   }
 
-  /**
-   * ----------------------------------------------------------
-   * 2. بررسی URL
-   * ----------------------------------------------------------
-   *
-   * فعلاً فقط خالی نبودن URL را بررسی می‌کنیم.
-   * اعتبارسنجی واقعی فایل و Storage بعداً در لایه مناسب
-   * اضافه خواهد شد.
-   */
-
-  if (!data.url || data.url.trim() === "") {
-    throw new Error("آدرس رسانه الزامی است.");
+  const bytes = decodeOptimizedWebp(data.imageData);
+  const id = randomUUID();
+  const destination = storedFilePath(id);
+  await mkdir(path.dirname(destination), { recursive: true });
+  await writeFile(destination, bytes, { flag: "wx", mode: 0o640 });
+  try {
+    return await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
+  } catch (error) {
+    await unlink(destination).catch(() => undefined);
+    throw error;
   }
+}
 
-  /**
-   * ----------------------------------------------------------
-   * 3. بررسی sortOrder
-   * ----------------------------------------------------------
-   */
-
-  if (data.sortOrder !== undefined && data.sortOrder < 0) {
-    throw new Error("ترتیب نمایش رسانه نمی‌تواند منفی باشد.");
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * 4. ثبت در Repository
-   * ----------------------------------------------------------
-   */
-
-  return createPropertyMedia(
-    data.propertyId,
-    data.type,
-    data.url,
-    data.sortOrder ?? 0
-  );
-};
-
-/**
- * ============================================================
- * Get Property Media Service
- * ============================================================
- *
- * دریافت رسانه‌های فعال یک ملک.
- */
-
-export const getPropertyMediaService = async (
-  propertyId: string
-): Promise<PropertyMedia[]> => {
-  /**
-   * ابتدا بررسی می‌کنیم ملک وجود دارد.
-   */
-
+export async function getPropertyMediaService(propertyId: string): Promise<PropertyMedia[]> {
   const property = await findPropertyById(propertyId);
-
-  if (!property) {
-    throw new Error("ملک مورد نظر پیدا نشد.");
-  }
-
-  /**
-   * سپس رسانه‌های فعال ملک را دریافت می‌کنیم.
-   */
-
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   return findPropertyMedia(propertyId);
-};
+}
+
+export async function getPropertyMediaFileService(mediaId: string, propertyId?: string, publicOnly = false) {
+  const media = await findPropertyMediaById(mediaId);
+  if (!media || !media.isActive || (propertyId && media.propertyId !== propertyId)) throw new Error("تصویر مورد نظر پیدا نشد.");
+  if (publicOnly && media.property.listing?.status !== "PUBLISHED") throw new Error("تصویر هنوز عمومی نشده است.");
+  return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
+}
+
+export async function deletePropertyMediaService(propertyId: string, mediaId: string) {
+  const media = await findPropertyMediaById(mediaId);
+  if (!media || media.propertyId !== propertyId || !media.isActive) throw new Error("تصویر مورد نظر پیدا نشد.");
+  await deactivatePropertyMedia(mediaId, propertyId);
+  await unlink(storedFilePath(mediaId)).catch(() => undefined);
+}
+
+export async function reorderPropertyMediaService(propertyId: string, orderedIds: string[]) {
+  const current = await findPropertyMedia(propertyId);
+  if (!Array.isArray(orderedIds) || orderedIds.length !== current.length ||
+      new Set(orderedIds).size !== orderedIds.length ||
+      current.some((media) => !orderedIds.includes(media.id))) {
+    throw new Error("ترتیب تصاویر باید شامل تمام تصاویر فعال همین ملک باشد.");
+  }
+  await updatePropertyMediaOrder(propertyId, orderedIds);
+  return findPropertyMedia(propertyId);
+}
