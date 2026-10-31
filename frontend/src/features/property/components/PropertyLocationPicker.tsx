@@ -166,10 +166,8 @@ export default function PropertyLocationPicker({ value, onChange, city }: Proper
       </p>
 
       {value ? (
-        <div className="grid gap-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900 sm:grid-cols-2">
-          <p>عرض جغرافیایی: <b dir="ltr" className="font-mono">{value.latitude.toFixed(6)}</b></p>
-          <p>طول جغرافیایی: <b dir="ltr" className="font-mono">{value.longitude.toFixed(6)}</b></p>
-          <p className="sm:col-span-2 font-bold">موقعیت نهایی انتخاب شده است.</p>
+        <div className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-900">
+          موقعیت ملک با موفقیت انتخاب شده است.
         </div>
       ) : markerPosition ? (
         <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
