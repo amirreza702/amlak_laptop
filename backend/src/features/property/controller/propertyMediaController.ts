@@ -71,12 +71,13 @@ export async function getPropertyMediaController(
   try {
     const propertyId = req.params.id;
 
-    const propertyMedia =
-      await getPropertyMediaService(propertyId);
-
-    return res.status(200).json({
-      propertyMedia,
-    });
+    const fileId = typeof req.query.fileId === "string" ? req.query.fileId : null;
+    if (fileId) {
+      const file = await getPropertyMediaFileService(fileId, propertyId, false);
+      return res.status(200).json({ imageData: "data:image/webp;base64," + file.bytes.toString("base64") });
+    }
+    const propertyMedia = await getPropertyMediaService(propertyId);
+    return res.status(200).json({ propertyMedia });
   } catch (error) {
     return res.status(400).json({
       message:
