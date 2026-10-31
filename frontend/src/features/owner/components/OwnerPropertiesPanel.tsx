@@ -10,6 +10,7 @@ import { useOwnerProperties } from "../hooks/useOwnerProperties";
 import type { OwnerProperty } from "../types/owner";
 import { Modal } from "@/shared/components/Modal";
 import { PropertyMediaEditor } from "@/features/property/components/PropertyMediaEditor";
+import { PropertyEditForm } from "@/features/property/components/PropertyEditForm";
 
 // همان انتخاب‌گر نقشهٔ فرم ایجاد ملک، بدون بارگذاری Leaflet در سمت سرور.
 const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
