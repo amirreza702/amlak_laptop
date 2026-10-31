@@ -9,6 +9,7 @@ import { LoaderCircle, RefreshCw, Search, Pencil, Trash2 } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 import { agentApiRequest } from "../api/agentApi";
 import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
+import { PropertyMediaEditor } from "@/features/property/components/PropertyMediaEditor";
 import type { AgentPrivateNote } from "../hooks/useAgentPrivateNotes";
 
 const PropertyLocationPicker = dynamic(() => import("@/features/property/components/PropertyLocationPicker"), {
