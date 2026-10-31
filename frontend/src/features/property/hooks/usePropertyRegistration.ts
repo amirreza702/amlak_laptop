@@ -20,6 +20,13 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
   const [area, setArea] = useState("");
   const [rooms, setRooms] = useState("");
   const [floor, setFloor] = useState("");
+  const [details, setDetails] = useState({
+    yearBuilt: "", unitNumber: "", totalUnits: "", parkingCount: "",
+    parkingType: "", parkingNumber: "", hasElevator: "", hasStorage: "",
+    hasBalcony: "", hasYard: "", heatingSystem: "", coolingSystem: "",
+    documentType: "", ownershipType: "", landTenure: "", description: "",
+    renovationStatus: "", renovationYear: "", occupancyStatus: "VACANT",
+  });
   const [salePrice, setSalePrice] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [rentAmount, setRentAmount] = useState("");
@@ -87,6 +94,25 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
         area: area.trim() ? Number(area) : null,
         rooms: rooms.trim() ? Number(rooms) : null,
         floor: floor.trim() ? Number(floor) : null,
+        yearBuilt: details.yearBuilt.trim() ? Number(details.yearBuilt) : null,
+        unitNumber: details.unitNumber.trim() || null,
+        totalUnits: details.totalUnits.trim() ? Number(details.totalUnits) : null,
+        parkingCount: details.parkingCount.trim() ? Number(details.parkingCount) : null,
+        parkingType: details.parkingType || null,
+        parkingNumber: details.parkingNumber.trim() || null,
+        hasElevator: details.hasElevator === "" ? null : details.hasElevator === "true",
+        hasStorage: details.hasStorage === "" ? null : details.hasStorage === "true",
+        hasBalcony: details.hasBalcony === "" ? null : details.hasBalcony === "true",
+        hasYard: details.hasYard === "" ? null : details.hasYard === "true",
+        heatingSystem: details.heatingSystem || null,
+        coolingSystem: details.coolingSystem || null,
+        documentType: details.documentType || null,
+        ownershipType: details.ownershipType || null,
+        landTenure: details.landTenure || null,
+        description: details.description.trim() || null,
+        renovationStatus: details.renovationStatus || null,
+        renovationYear: details.renovationYear.trim() ? Number(details.renovationYear) : null,
+        occupancyStatus: details.occupancyStatus,
       });
 
       const propertyId = body.property?.id;
@@ -109,7 +135,7 @@ export function usePropertyRegistration(onSavePrivateNote?: (propertyId: string,
     transactionType, setTransactionType,
     city, setCity, district, setDistrict, address, setAddress,
     postalCode, setPostalCode, coordinates, setCoordinates,
-    area, setArea, rooms, setRooms, floor, setFloor,
+    area, setArea, rooms, setRooms, floor, setFloor, details, setDetails,
     salePrice, setSalePrice, depositAmount, setDepositAmount,
     rentAmount, setRentAmount, internalNote, setInternalNote,
     busy, error, message, createdPropertyId, listingCreated,

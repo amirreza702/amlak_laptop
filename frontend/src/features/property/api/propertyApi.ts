@@ -68,6 +68,25 @@ export interface PropertyRegistrationPayload {
   area: number | null;
   rooms: number | null;
   floor: number | null;
+  yearBuilt: number | null;
+  unitNumber: string | null;
+  totalUnits: number | null;
+  parkingCount: number | null;
+  parkingType: string | null;
+  parkingNumber: string | null;
+  hasElevator: boolean | null;
+  hasStorage: boolean | null;
+  hasBalcony: boolean | null;
+  hasYard: boolean | null;
+  heatingSystem: string | null;
+  coolingSystem: string | null;
+  documentType: string | null;
+  ownershipType: string | null;
+  landTenure: string | null;
+  description: string | null;
+  renovationStatus: string | null;
+  renovationYear: number | null;
+  occupancyStatus: string;
 }
 
 export interface PropertyRegistrationResponse {
