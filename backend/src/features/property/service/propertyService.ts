@@ -93,9 +93,38 @@ export async function registerProperty(
   if (!Number.isInteger(data.totalUnits) || data.totalUnits == null || data.totalUnits < 1) {
     throw new Error("تعداد کل واحدها باید حداقل یک باشد.");
   }
-  if (!data.documentType || !data.ownershipType || !data.landTenure) {
-    throw new Error("نوع سند، نوع مالکیت و وضعیت عرصه الزامی هستند.");
+  if (!data.city?.trim() || !data.district?.trim() || !data.address?.trim()) {
+    throw new Error("شهر، محله و نشانی ملک الزامی هستند.");
   }
+  if (!Number.isFinite(data.latitudeExact) || data.latitudeExact < -90 || data.latitudeExact > 90 ||
+      !Number.isFinite(data.longitudeExact) || data.longitudeExact < -180 || data.longitudeExact > 180) {
+    throw new Error("موقعیت جغرافیایی ملک معتبر نیست.");
+  }
+  if (!data.documentType || !["SINGLE_SHEET", "OLD_DEED", "OFFICIAL_CONTRACT", "ORDINARY_CONTRACT"].includes(data.documentType)) {
+    throw new Error("نوع سند معتبر و الزامی است.");
+  }
+  if (!data.ownershipType || !["SIX_DANG", "SHARED"].includes(data.ownershipType)) {
+    throw new Error("نوع مالکیت معتبر و الزامی است.");
+  }
+  if (!data.landTenure || !["FREEHOLD", "ENDOWMENT"].includes(data.landTenure)) {
+    throw new Error("وضعیت عرصه معتبر و الزامی است.");
+  }
+  if (data.yearBuilt != null && (!Number.isInteger(data.yearBuilt) || data.yearBuilt < 1300 || data.yearBuilt > 1500)) {
+    throw new Error("سال ساخت باید بین ۱۳۰۰ تا ۱۵۰۰ باشد.");
+  }
+  if (data.renovationYear != null && (!Number.isInteger(data.renovationYear) || data.renovationYear < 1300 || data.renovationYear > 1500)) {
+    throw new Error("سال بازسازی باید بین ۱۳۰۰ تا ۱۵۰۰ باشد.");
+  }
+  if (data.parkingCount != null && (!Number.isInteger(data.parkingCount) || data.parkingCount < 0)) {
+    throw new Error("تعداد پارکینگ باید عدد صحیح نامنفی باشد.");
+  }
+  if (data.renovationStatus != null && !["NO_RENOVATION", "PARTIAL", "FULL"].includes(data.renovationStatus)) {
+    throw new Error("وضعیت بازسازی معتبر نیست.");
+  }
+  if (!["VACANT", "OWNER_OCCUPIED", "TENANT_OCCUPIED"].includes(data.occupancyStatus ?? "VACANT")) {
+    throw new Error("وضعیت سکونت معتبر نیست.");
+  }
+  if ((data.description?.length ?? 0) > 10000) throw new Error("توضیحات بیش از حد مجاز طولانی است.");
 
   const isAgentRegistration = creator.role === "AGENT";
   const isOwnerRegistration = creator.role === "OWNER";
