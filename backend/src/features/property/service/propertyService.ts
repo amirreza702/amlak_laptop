@@ -84,17 +84,17 @@ export async function registerProperty(
   if (!Number.isFinite(data.area) || data.area == null || data.area <= 0) {
     throw new Error("متراژ ملک باید بیشتر از صفر باشد.");
   }
-  if (!Number.isInteger(data.rooms) || data.rooms == null || data.rooms < 0) {
+  if (data.rooms != null && (!Number.isInteger(data.rooms) || data.rooms < 0)) {
     throw new Error("تعداد اتاق باید یک عدد صحیح معتبر باشد.");
   }
-  if (!Number.isInteger(data.floor) || data.floor == null) {
-    throw new Error("طبقه ملک الزامی است.");
+  if (data.floor != null && !Number.isInteger(data.floor)) {
+    throw new Error("طبقه باید عدد صحیح معتبر باشد.");
   }
-  if (!Number.isInteger(data.totalUnits) || data.totalUnits == null || data.totalUnits < 1) {
+  if (data.totalUnits != null && (!Number.isInteger(data.totalUnits) || data.totalUnits < 1)) {
     throw new Error("تعداد کل واحدها باید حداقل یک باشد.");
   }
-  if (!data.city?.trim() || !data.district?.trim() || !data.address?.trim()) {
-    throw new Error("شهر، محله و نشانی ملک الزامی هستند.");
+  if (!data.city?.trim() || !data.address?.trim()) {
+    throw new Error("شهر و نشانی ملک الزامی هستند.");
   }
   if (!Number.isFinite(data.latitudeExact) || data.latitudeExact < -90 || data.latitudeExact > 90 ||
       !Number.isFinite(data.longitudeExact) || data.longitudeExact < -180 || data.longitudeExact > 180) {
@@ -377,7 +377,7 @@ export async function updatePropertyService(
   // اعتبارسنجی سمت سرور؛ اعتبارسنجی مرورگر به‌تنهایی قابل اتکا نیست.
   const has = (key: keyof UpdatePropertyInput) => Object.prototype.hasOwnProperty.call(data, key);
   if (has("city") && !data.city?.trim()) throw new Error("شهر الزامی است.");
-  if (has("district") && !data.district?.trim()) throw new Error("محله یا منطقه الزامی است.");
+  if (has("district") && typeof data.district !== "string") throw new Error("محله یا منطقه معتبر نیست.");
   if (has("address") && !data.address?.trim()) throw new Error("نشانی ملک الزامی است.");
   if (has("ownerMobile") && (typeof data.ownerMobile !== "string" || !/^09\\d{9}$/.test(data.ownerMobile.trim()))) throw new Error("شماره همراه مالک معتبر نیست.");
   if (has("ownerFirstName") && (typeof data.ownerFirstName !== "string" || !data.ownerFirstName.trim() || data.ownerFirstName.trim().length > 80)) throw new Error("نام مالک معتبر نیست.");
@@ -385,9 +385,9 @@ export async function updatePropertyService(
   if (has("latitudeExact") && (data.latitudeExact == null || !Number.isFinite(data.latitudeExact) || data.latitudeExact < -90 || data.latitudeExact > 90)) throw new Error("عرض جغرافیایی معتبر نیست.");
   if (has("longitudeExact") && (data.longitudeExact == null || !Number.isFinite(data.longitudeExact) || data.longitudeExact < -180 || data.longitudeExact > 180)) throw new Error("طول جغرافیایی معتبر نیست.");
   if (has("area") && (data.area == null || !Number.isFinite(data.area) || data.area <= 0)) throw new Error("متراژ باید بیشتر از صفر باشد.");
-  if (has("rooms") && (data.rooms == null || !Number.isInteger(data.rooms) || data.rooms < 0)) throw new Error("تعداد اتاق باید عدد صحیح نامنفی باشد.");
-  if (has("floor") && (data.floor == null || !Number.isInteger(data.floor))) throw new Error("طبقه باید عدد صحیح باشد.");
-  if (has("totalUnits") && (data.totalUnits == null || !Number.isInteger(data.totalUnits) || data.totalUnits < 1)) throw new Error("تعداد کل واحدها باید حداقل یک باشد.");
+  if (has("rooms") && data.rooms != null && (!Number.isInteger(data.rooms) || data.rooms < 0)) throw new Error("تعداد اتاق باید عدد صحیح نامنفی باشد.");
+  if (has("floor") && data.floor != null && !Number.isInteger(data.floor)) throw new Error("طبقه باید عدد صحیح باشد.");
+  if (has("totalUnits") && data.totalUnits != null && (!Number.isInteger(data.totalUnits) || data.totalUnits < 1)) throw new Error("تعداد کل واحدها باید حداقل یک باشد.");
   if (has("yearBuilt") && data.yearBuilt != null && (!Number.isInteger(data.yearBuilt) || data.yearBuilt < 1300 || data.yearBuilt > 1500)) throw new Error("سال ساخت معتبر نیست.");
   if (has("parkingCount") && data.parkingCount != null && (!Number.isInteger(data.parkingCount) || data.parkingCount < 0)) throw new Error("تعداد پارکینگ معتبر نیست.");
   if (has("renovationYear") && data.renovationYear != null && (!Number.isInteger(data.renovationYear) || data.renovationYear < 1300 || data.renovationYear > 1500)) throw new Error("سال بازسازی معتبر نیست.");

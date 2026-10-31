@@ -26,7 +26,6 @@ interface PropertyRegistrationValidationInput {
 /** اعتبارسنجی مستقل فیلدهای الزامی و داده‌های عددی ثبت ملک و معامله. */
 export function validatePropertyRegistration(input: PropertyRegistrationValidationInput): string | null {
   if (!input.city.trim()) return "وارد کردن شهر الزامی است.";
-  if (!input.district.trim()) return "وارد کردن محله یا منطقه الزامی است.";
   if (!input.address.trim()) return "وارد کردن نشانی ملک الزامی است.";
 
   if (!input.coordinates ||
@@ -36,13 +35,10 @@ export function validatePropertyRegistration(input: PropertyRegistrationValidati
   }
 
   const area = Number(input.area);
-  const rooms = Number(input.rooms);
-  const floor = Number(input.floor);
-  const totalUnits = Number(input.details.totalUnits);
   if (!input.area.trim() || !Number.isFinite(area) || area <= 0) return "متراژ باید بیشتر از صفر باشد.";
-  if (!input.rooms.trim() || !Number.isInteger(rooms) || rooms < 0) return "تعداد اتاق باید عدد صحیح نامنفی باشد.";
-  if (!input.floor.trim() || !Number.isInteger(floor)) return "طبقه باید عدد صحیح باشد.";
-  if (!input.details.totalUnits.trim() || !Number.isInteger(totalUnits) || totalUnits < 1) return "تعداد کل واحدها باید حداقل یک باشد.";
+  if (input.rooms.trim() && (!Number.isInteger(Number(input.rooms)) || Number(input.rooms) < 0)) return "تعداد اتاق باید عدد صحیح نامنفی باشد.";
+  if (input.floor.trim() && !Number.isInteger(Number(input.floor))) return "طبقه باید عدد صحیح باشد.";
+  if (input.details.totalUnits.trim() && (!Number.isInteger(Number(input.details.totalUnits)) || Number(input.details.totalUnits) < 1)) return "تعداد کل واحدها باید حداقل یک باشد.";
   if (!input.details.documentType) return "انتخاب نوع سند الزامی است.";
   if (!input.details.ownershipType) return "انتخاب نوع مالکیت الزامی است.";
   if (!input.details.landTenure) return "انتخاب وضعیت عرصه الزامی است.";

@@ -39,6 +39,7 @@ interface PropertyRegistrationPanelProps {
 }
 
 export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePrivateNote }: PropertyRegistrationPanelProps) {
+  const isLandLike = propertyType === "LAND" || propertyType === "GARDEN";
   const {
     ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
@@ -75,8 +76,8 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شهر
               <input className={inputClass} value={city} onChange={(e) => setCity(e.target.value)} required maxLength={100} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>محله / منطقه
-              <input className={inputClass} value={district} onChange={(e) => setDistrict(e.target.value)} required maxLength={120} />
+            <label className="space-y-1.5 text-sm font-semibold">محله / منطقه (اختیاری)
+              <input className={inputClass} value={district} onChange={(e) => setDistrict(e.target.value)} maxLength={120} />
             </label>
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نشانی ملک
               <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} required maxLength={500} />
@@ -92,18 +93,18 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>متراژ (مترمربع)
               <input className={inputClass} type="number" min="0.1" step="0.1" required value={area} onChange={(e) => setArea(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>تعداد اتاق
-              <input className={inputClass} type="number" min="0" max="100" step="1" required value={rooms} onChange={(e) => setRooms(e.target.value)} />
+            {!isLandLike && <><label className="space-y-1.5 text-sm font-semibold">تعداد اتاق (اختیاری)
+              <input className={inputClass} type="number" min="0" max="100" step="1" value={rooms} onChange={(e) => setRooms(e.target.value)} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>طبقه
-              <input className={inputClass} type="number" min="-10" max="200" step="1" required value={floor} onChange={(e) => setFloor(e.target.value)} />
-            </label>
+            <label className="space-y-1.5 text-sm font-semibold">طبقه (اختیاری)
+              <input className={inputClass} type="number" min="-10" max="200" step="1" value={floor} onChange={(e) => setFloor(e.target.value)} />
+            </label></>}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> تعداد کل واحدها
-              <input className={inputClass} type="number" min="1" step="1" required value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} />
-            </label>
+            {!isLandLike && <label className="space-y-1.5 text-sm font-semibold">تعداد کل واحدها (اختیاری)
+              <input className={inputClass} type="number" min="1" step="1" value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} />
+            </label>}
             <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> نوع سند
               <select required value={details.documentType} onChange={e=>setDetails(v=>({...v,documentType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">سند دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select>
             </label>
@@ -150,7 +151,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
               <label className="space-y-1 text-sm">تعداد پارکینگ<input type="number" min="0" step="1" value={details.parkingCount} onChange={e=>setDetails(v=>({...v,parkingCount:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">نوع پارکینگ<input value={details.parkingType} onChange={e=>setDetails(v=>({...v,parkingType:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره پارکینگ<input value={details.parkingNumber} onChange={e=>setDetails(v=>({...v,parkingNumber:e.target.value}))} className={inputClass} /></label>
-              {([["hasElevator","آسانسور"],["hasStorage","انباری"],["hasBalcony","بالکن"],["hasYard","حیاط"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}<select value={details[key]} onChange={e=>setDetails(v=>({...v,[key]:e.target.value}))} className={inputClass}><option value="">نامشخص</option><option value="true">دارد</option><option value="false">ندارد</option></select></label>)}
+              {!isLandLike && ([["hasElevator","آسانسور"],["hasStorage","انباری"],["hasBalcony","بالکن"],["hasYard","حیاط"]] as const).map(([key,label])=><label key={key} className="space-y-1 text-sm">{label}<select value={details[key]} onChange={e=>setDetails(v=>({...v,[key]:e.target.value}))} className={inputClass}><option value="">نامشخص</option><option value="true">دارد</option><option value="false">ندارد</option></select></label>))}
               <label className="space-y-1 text-sm">سیستم گرمایش<input value={details.heatingSystem} onChange={e=>setDetails(v=>({...v,heatingSystem:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">سیستم سرمایش<input value={details.coolingSystem} onChange={e=>setDetails(v=>({...v,coolingSystem:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">وضعیت بازسازی<select value={details.renovationStatus} onChange={e=>setDetails(v=>({...v,renovationStatus:e.target.value}))} className={inputClass}><option value="">نامشخص</option><option value="NO_RENOVATION">بدون بازسازی</option><option value="PARTIAL">بازسازی جزئی</option><option value="FULL">بازسازی کامل</option></select></label>

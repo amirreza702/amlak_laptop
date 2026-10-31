@@ -8,7 +8,7 @@ export function validateProperty(
 ): PropertyFormErrors {
   const errors: PropertyFormErrors = {};
 
-  if (!/^\d{10}$/.test(data.postalCode)) {
+  if (data.postalCode && !/^\d{10}$/.test(data.postalCode)) {
     errors.postalCode =
       "کد پستی باید ۱۰ رقم باشد.";
   }
@@ -18,12 +18,12 @@ export function validateProperty(
       "متراژ باید بیشتر از صفر باشد.";
   }
 
-  if (!data.rooms || Number(data.rooms) < 0) {
+  if (data.rooms && (!Number.isInteger(Number(data.rooms)) || Number(data.rooms) < 0)) {
     errors.rooms =
       "تعداد اتاق نامعتبر است.";
   }
 
-  if (!data.floor || Number(data.floor) < 0) {
+  if (data.floor && !Number.isInteger(Number(data.floor))) {
     errors.floor =
       "طبقه نامعتبر است.";
   }
