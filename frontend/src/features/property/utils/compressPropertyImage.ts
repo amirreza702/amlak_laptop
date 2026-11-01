@@ -72,6 +72,7 @@ export async function compressPropertyImage(file: File): Promise<string> {
     if (!bestBlob || bestBlob.size <= 0 || bestBlob.size > maxOutputBytes) {
       throw new Error("حجم تصویر پس از بهینه‌سازی هنوز بیش از ۴ مگابایت است.");
     }
+    const outputBlob = bestBlob;
 
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -79,7 +80,7 @@ export async function compressPropertyImage(file: File): Promise<string> {
         ? resolve(reader.result)
         : reject(new Error("خواندن تصویر ناموفق بود."));
       reader.onerror = () => reject(new Error("خواندن تصویر ناموفق بود."));
-      reader.readAsDataURL(bestBlob);
+      reader.readAsDataURL(outputBlob);
     });
   } finally {
     bitmap.close();
