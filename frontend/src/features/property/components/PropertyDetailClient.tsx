@@ -517,6 +517,14 @@ export default function PropertyDetailClient() {
               </div>
             </div>
 
+            {property.ownerDetails && (
+              <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4" aria-label="مشخصات مالک">
+                <h2 className="font-bold text-slate-900">مشخصات مالک</h2>
+                <p className="mt-1 text-sm text-slate-600">{[property.ownerDetails.firstName, property.ownerDetails.lastName].filter(Boolean).join(" ") || "نام مالک ثبت نشده است"}</p>
+                {property.ownerDetails.mobile && <a href={"tel:" + property.ownerDetails.mobile} dir="ltr" className="mt-2 inline-flex min-h-10 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-800">{property.ownerDetails.mobile}</a>}
+              </section>
+            )}
+
             {property.contact && (
               <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4" aria-label="اطلاعات تماس">
                 <h2 className="font-bold text-slate-900">تماس با {property.contact.label}</h2>
