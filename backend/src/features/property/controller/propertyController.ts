@@ -102,13 +102,15 @@ export async function getPropertyByIdController(
     const approvedAgent = agents.find(
       (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
     ) ?? null;
-    const approvedOwnerRequest = approvedAgent
-      ? ownerAgentRequests.find((request) =>
-          request.responses.some((response) => response.agentId === approvedAgent.agentId)
-        ) ?? null
-      : null;
-    const approvedOwnerRelation = approvedOwnerRequest
-      ? owners.find((relation) => relation.ownerId === approvedOwnerRequest.ownerId) ?? null
+    const approvedOwnerIds = approvedAgent
+      ? Array.from(new Set(ownerAgentRequests
+          .filter((request) => request.responses.some((response) => response.agentId === approvedAgent.agentId))
+          .map((request) => request.ownerId)))
+      : [];
+    // اگر چند مالک متفاوت برای همان مشاور درخواست پذیرفته‌شده داشته باشند،
+    // مالک تأییدکننده از داده‌های موجود قابل تشخیص قطعی نیست؛ پس اطلاعات هیچ‌کدام افشا نمی‌شود.
+    const approvedOwnerRelation = approvedOwnerIds.length === 1
+      ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
       : null;
     const isAgentCreator = property.registrationSource === "AGENT" &&
       property.createdByRole === "AGENT" && property.createdByUserId === user.id;
