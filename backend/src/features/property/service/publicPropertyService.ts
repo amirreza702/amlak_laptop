@@ -29,6 +29,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
+  const primaryOwner = owners[0]?.owner ?? null;
   const verifiedPrimaryOwner = owners.find((relation) => relation.verificationStatus === "VERIFIED")?.owner ?? null;
   const viewerOwnerRelation = viewer?.role === "OWNER"
     ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
@@ -77,7 +78,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     };
   }
 
-  const ownerForViewer = viewerOwnerRelation?.owner ?? verifiedPrimaryOwner;
+  const ownerForViewer = viewerOwnerRelation?.owner ?? primaryOwner;
   const ownerDetails = mayViewOwnerDetails
     ? {
         firstName: ownerFirstName ?? ownerForViewer?.firstName ?? null,
