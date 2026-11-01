@@ -17,6 +17,9 @@ export interface OwnerProperty {
     rooms: number | null;
     isActive: boolean;
     occupancyStatus: string;
+    ownerFirstName?: string | null;
+    ownerLastName?: string | null;
+    ownerMobile?: string | null;
     listing: {
       transactionType: string;
       salePrice: string | number | null;
