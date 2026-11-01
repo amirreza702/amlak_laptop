@@ -92,13 +92,23 @@ const formFieldLabels: Record<string, string> = {
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
 const hiddenField = /^(id|.*Id|createdAt|updatedAt|deletedAt|createdBy.*|updatedBy.*|registrationSource|internalNote|privateNote|password.*|.*token|.*secret|authorization|cookie|credential)$/i;
 
-function formatScalar(value: string | number | boolean): string {
+const enumLabels: Record<string, Record<string, string>> = {
+  propertyType: { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" },
+  transactionType: { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" },
+  documentType: { SINGLE_SHEET: "تک‌برگ", OLD_DEED: "دفترچه‌ای", OFFICIAL_CONTRACT: "قرارداد رسمی", ORDINARY_CONTRACT: "قولنامه عادی" },
+  ownershipType: { SIX_DANG: "شش‌دانگ", SHARED: "مشاع" },
+  landTenure: { FREEHOLD: "ملکی", ENDOWMENT: "اوقافی" },
+  renovationStatus: { NO_RENOVATION: "بدون بازسازی", PARTIAL: "بازسازی جزئی", FULL: "بازسازی کامل" },
+  occupancyStatus: { VACANT: "خالی", OWNER_OCCUPIED: "مالک ساکن است", TENANT_OCCUPIED: "مستأجر دارد" },
+};
+
+function formatScalar(value: string | number | boolean, fieldKey: string): string {
   if (typeof value === "boolean") return value ? "بله" : "خیر";
   if (typeof value === "number") return value.toLocaleString("fa-IR");
-  return value;
+  return enumLabels[fieldKey]?.[value] ?? value;
 }
 
-function FormField({ label, value }: { label: string; value: unknown }) {
+function FormField({ fieldKey, label, value }: { fieldKey: string; label: string; value: unknown }) {
   if (value === null || value === undefined || value === "") return null;
   if (Array.isArray(value)) {
     const values = value.filter((item): item is string | number | boolean =>
@@ -107,13 +117,13 @@ function FormField({ label, value }: { label: string; value: unknown }) {
     if (!values.length) return null;
     return <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:col-span-2">
       <dt className="text-xs font-semibold text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm text-slate-800">{values.map(formatScalar).join("، ")}</dd>
+      <dd className="mt-1 break-words text-sm text-slate-800">{values.map((item) => formatScalar(item, fieldKey)).join("، ")}</dd>
     </div>;
   }
   if (typeof value === "object") return null;
   return <div className="min-w-0 rounded-lg bg-slate-50 p-3">
     <dt className="text-xs font-semibold text-slate-500">{label}</dt>
-    <dd className="mt-1 break-words text-sm text-slate-800">{formatScalar(value as string | number | boolean)}</dd>
+    <dd className="mt-1 break-words text-sm text-slate-800">{formatScalar(value as string | number | boolean, fieldKey)}</dd>
   </div>;
 }
 
@@ -186,7 +196,7 @@ function FormDetails({ record }: { record: unknown }) {
   return <div className="space-y-4">
     {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label="موقعیت رکورد" />}
     <dl className="grid gap-3 sm:grid-cols-2">
-      {fields.map(({ key, value }, index) => <FormField key={key + "-" + index} label={formFieldLabels[key]} value={value} />)}
+      {fields.map(({ key, value }, index) => <FormField key={key + "-" + index} fieldKey={key} label={formFieldLabels[key]} value={value} />)}
     </dl>
   </div>;
 }
