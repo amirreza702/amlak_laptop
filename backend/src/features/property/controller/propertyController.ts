@@ -104,6 +104,7 @@ export async function getPropertyByIdController(
     const isAgentCreator = property.registrationSource === "AGENT" &&
       property.createdByRole === "AGENT" && property.createdByUserId === user.id;
     const isApprovedAgent = user.role === "AGENT" &&
+      property.registrationSource === "OWNER" &&
       approvedAgent?.agent.userId === user.id;
     const canViewOwner = (user.role === "OWNER" && Boolean(ownOwner)) ||
       (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
