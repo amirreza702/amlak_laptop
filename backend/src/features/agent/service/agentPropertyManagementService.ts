@@ -12,11 +12,11 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     properties: result.properties.map((record) => {
       const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
       const approvedAgentRelation = record.property.agents[0] ?? null;
-      const approvedOwnerRequest = record.property.ownerAgentRequests.find((request) =>
-        request.responses.some((response) => response.agentId === agent.id)
-      ) ?? null;
-      const approvedOwnerRelation = approvedOwnerRequest
-        ? record.property.owners.find((owner) => owner.ownerId === approvedOwnerRequest.ownerId) ?? null
+      const approvedOwnerIds = Array.from(new Set(record.property.ownerAgentRequests
+        .filter((request) => request.responses.some((response) => response.agentId === agent.id))
+        .map((request) => request.ownerId)));
+      const approvedOwnerRelation = approvedOwnerIds.length === 1
+        ? record.property.owners.find((owner) => owner.ownerId === approvedOwnerIds[0]) ?? null
         : null;
       const isApprovedAgent = record.property.registrationSource === "OWNER" &&
         approvedAgentRelation?.status === "ACTIVE" &&
