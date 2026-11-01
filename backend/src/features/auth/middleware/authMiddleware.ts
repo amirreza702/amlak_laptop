@@ -63,3 +63,42 @@ export async function authMiddleware(
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
+/**
+ * احراز هویت اختیاری برای مسیرهای عمومی که در صورت وجود نشست معتبر
+ * باید بتوانند استثناهای محرمانگی مالک/مشاور را اعمال کنند.
+ * نبودن یا نامعتبر بودن نشست، دسترسی عمومی را مسدود نمی‌کند.
+ */
+export async function optionalAuthMiddleware(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const sessionToken = req.cookies?.hashti_session;
+  if (typeof sessionToken !== "string" || !sessionToken) return next();
+
+  try {
+    const { expiresAt, ...user } = await getAuthenticatedUserService(sessionToken);
+    req.user = user;
+    res.cookie("hashti_session", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: expiresAt,
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error && ["SESSION_INVALID", "SESSION_EXPIRED", "USER_INACTIVE"].includes(error.message)) {
+      res.clearCookie("hashti_session", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+    } else {
+      console.error("Optional authentication lookup failed:", error);
+    }
+  }
+
+  return next();
+}
