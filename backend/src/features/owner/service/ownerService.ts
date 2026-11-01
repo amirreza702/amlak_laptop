@@ -133,5 +133,14 @@ export const updateCurrentOwnerProfileService = async (
 export const getCurrentOwnerPropertiesService = async (authenticatedUserId: string) => {
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
-  return findOwnerPropertiesByOwnerId(owner.id);
+  const records = await findOwnerPropertiesByOwnerId(owner.id);
+  return records.map((record) => ({
+    ...record,
+    property: {
+      ...record.property,
+      ownerFirstName: owner.firstName,
+      ownerLastName: owner.lastName,
+      ownerMobile: owner.user.mobile,
+    },
+  }));
 };
