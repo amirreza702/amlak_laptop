@@ -15,6 +15,9 @@ export async function getPublicPropertyByIdController(
 ) {
   try {
     const user = (req as AuthenticatedRequest).user;
+    // پاسخ شخصی‌سازی‌شده نباید در cache مشترک بین مالک، مشاور و بازدیدکننده ذخیره شود.
+    res.setHeader("Cache-Control", "private, no-store");
+    res.vary("Cookie");
     const property = await getPublishedPublicPropertyById(
       req.params.id,
       user ? { id: user.id, role: user.role } : undefined
