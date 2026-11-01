@@ -47,7 +47,7 @@ interface Property {
   latitudePublic?: number | null;
   longitudePublic?: number | null;
   isActive: boolean;
-  contact?: { type: "AGENT" | "OWNER"; firstName: string; lastName: string; mobile: string } | null;
+  contact?: { type: "AGENT" | "OWNER"; label: "مشاور ثبت‌کننده" | "مشاور تأییدشده" | "مالک"; firstName: string; lastName: string; mobile: string } | null;
 
   /**
    * Listing فعلی ملک
