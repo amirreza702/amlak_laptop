@@ -67,6 +67,55 @@ export const findPropertyById = async (
   });
 };
 
+/** جزئیات ملک همراه روابط لازم برای اعمال محرمانگی مالک و مشاور تأییدشده. */
+export const findPropertyByIdWithContacts = async (id: string) => {
+  return prisma.property.findUnique({
+    where: { id },
+    include: {
+      listing: true,
+      owners: {
+        orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+        select: {
+          ownerId: true,
+          isPrimary: true,
+          verificationStatus: true,
+          owner: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              user: { select: { mobile: true } },
+            },
+          },
+        },
+      },
+      agents: {
+        where: { status: "ACTIVE" },
+        select: {
+          agentId: true,
+          status: true,
+          approvedByOwner: true,
+          isFirstRegistrant: true,
+          agent: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              user: { select: { mobile: true } },
+            },
+          },
+        },
+      },
+      createdByUser: {
+        select: {
+          mobile: true,
+          agent: { select: { firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+};
+
 /**
  * ============================================================
  * createProperty
