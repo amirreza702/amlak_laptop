@@ -55,7 +55,7 @@ type PropertyRecord = {
     createdAt: string;
     confirmUntil: string | null;
     listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null } | null;
-    owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string } }[];
+    owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string; user?: { mobile: string } } }[];
     verificationCases: { status: string; createdAt: string; reviewedAt: string | null }[];
   };
 };
