@@ -23,7 +23,7 @@ import { updatePropertyController } from "../controller/propertyUpdateController
 import { deleteOwnPropertyController, deleteAgentManagedOwnerPropertyController, reactivateOwnPropertyController } from "../controller/propertyOwnerDeleteController";
 import { findDuplicateMatchesController } from "../controller/duplicateMatchingController";
 
-import { authMiddleware, type AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import { authMiddleware, optionalAuthMiddleware, type AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
 import {
@@ -40,7 +40,7 @@ const propertyEditors = [UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI] as con
 // اطلاعات عمومی منتشرشده ملک و جست‌وجو عمومی باقی می‌مانند.
 router.get("/properties/search", searchPropertyController);
 router.delete("/agents/me/properties/:id", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), deleteAgentManagedOwnerPropertyController);
-router.get("/properties/:id/public", getPublicPropertyByIdController);
+router.get("/properties/:id/public", optionalAuthMiddleware, getPublicPropertyByIdController);
 router.get(
   "/properties/:id",
   authMiddleware,
