@@ -35,6 +35,7 @@ export async function getPublishedPublicPropertyById(id: string) {
 
   let contact: {
     type: "OWNER" | "AGENT";
+    label: "مالک" | "مشاور ثبت‌کننده" | "مشاور تأییدشده";
     firstName: string;
     lastName: string;
     mobile: string;
@@ -45,6 +46,7 @@ export async function getPublishedPublicPropertyById(id: string) {
     if (firstRegistrant) {
       contact = {
         type: "AGENT",
+        label: "مشاور ثبت‌کننده",
         firstName: firstRegistrant.firstName,
         lastName: firstRegistrant.lastName,
         mobile: firstRegistrant.user.mobile,
@@ -54,6 +56,7 @@ export async function getPublishedPublicPropertyById(id: string) {
     // ثبت مالک پس از تأیید نهایی: فقط شماره مشاور منتخب مالک.
     contact = {
       type: "AGENT",
+      label: "مشاور تأییدشده",
       firstName: approvedAgent.firstName,
       lastName: approvedAgent.lastName,
       mobile: approvedAgent.user.mobile,
@@ -62,6 +65,7 @@ export async function getPublishedPublicPropertyById(id: string) {
     // ثبت مالک پیش از تأیید مشاور: شماره مالک تأییدشده.
     contact = {
       type: "OWNER",
+      label: "مالک",
       firstName: primaryOwner.firstName,
       lastName: primaryOwner.lastName,
       mobile: primaryOwner.user.mobile,
