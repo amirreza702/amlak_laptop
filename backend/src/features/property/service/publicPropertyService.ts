@@ -30,13 +30,13 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
-  const approvedOwnerRequest = approvedAgent
-    ? ownerAgentRequests.find((request) =>
-        request.responses.some((response) => response.agentId === approvedAgent.id)
-      ) ?? null
-    : null;
-  const approvedOwnerRelation = approvedOwnerRequest
-    ? owners.find((relation) => relation.ownerId === approvedOwnerRequest.ownerId) ?? null
+  const approvedOwnerIds = approvedAgent
+    ? Array.from(new Set(ownerAgentRequests
+        .filter((request) => request.responses.some((response) => response.agentId === approvedAgent.id))
+        .map((request) => request.ownerId)))
+    : [];
+  const approvedOwnerRelation = approvedOwnerIds.length === 1
+    ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
     : null;
   const primaryOwnerRelation = owners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
