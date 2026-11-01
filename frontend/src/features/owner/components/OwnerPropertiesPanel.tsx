@@ -64,7 +64,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
             <td className="p-3"><p>{({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p><p className="mt-1">{item.share.toLocaleString("fa-IR")} دانگ</p></td>
             <td className="p-3"><div className="space-y-3">{item.property.agents.length ? item.property.agents.map((relation) => (
               <div key={relation.agentId} className="rounded-lg bg-slate-50 p-3">
-                <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.approvedByOwner ? "اجازه فعالیت داده شده" : "در انتظار اجازه مالک"}</p><p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
+                <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.status === "ACTIVE" && relation.approvedByOwner ? "مشاور تأییدشده" : "مشاور تأییدنشده"}</p><p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
                 
               </div>
             )) : <span className="text-slate-500">مشاوری متصل نیست.</span>}</div></td>
