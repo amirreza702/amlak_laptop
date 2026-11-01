@@ -35,6 +35,9 @@ type PropertyRecord = {
     creatorMobile: string | null;
     registrantFirstName?: string | null;
     registrantLastName?: string | null;
+    ownerFirstName: string | null;
+    ownerLastName: string | null;
+    ownerMobile: string | null;
     approvedAgentFirstName?: string | null;
     approvedAgentLastName?: string | null;
     approvedAgentMobile?: string | null;
@@ -203,7 +206,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.confirmUntil)}</p>
                   </td>
                   <td className="p-3">
-                    {property.owners.length ? <div className="min-w-[190px] space-y-2">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-2 last:border-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p><p className="mt-1 text-xs text-slate-600">سهم {owner.share} دانگ · {verificationLabels[owner.verificationStatus] ?? owner.verificationStatus}</p></div>)}</div> : <span className="text-slate-500">مالک مرتبط ثبت نشده</span>}
+                    {property.owners.length ? <div className="min-w-[190px] space-y-2">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-2 last:border-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p>{owner.owner.user?.mobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{owner.owner.user.mobile}</p>}<p className="mt-1 text-xs text-slate-600">سهم {owner.share} دانگ · {verificationLabels[owner.verificationStatus] ?? owner.verificationStatus}</p></div>)}</div> : property.ownerFirstName || property.ownerLastName || property.ownerMobile ? <div><p className="font-semibold">{property.ownerFirstName} {property.ownerLastName}</p>{property.ownerMobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{property.ownerMobile}</p>}</div> : <span className="text-slate-500">اطلاعات مالک برای این مشاور قابل نمایش نیست</span>}
                   </td>
                   <td className="p-3">
                     <p>پرونده هشتی: {latestCase ? (verificationLabels[latestCase.status] ?? latestCase.status) : "تشکیل نشده"}</p>
