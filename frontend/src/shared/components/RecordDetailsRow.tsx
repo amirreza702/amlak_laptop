@@ -178,7 +178,7 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   );
   for (const source of sources) {
     const owners = source.owners;
-    if (Array.isArray(owners) && !fields.some((field) => field.key === "ownerFirstName")) {
+    if (Array.isArray(owners) && !fields.some((field) => field.key === "ownerFirstName" && field.value !== null && field.value !== undefined && field.value !== "")) {
       for (const relation of owners) {
         if (!relation || typeof relation !== "object") continue;
         const owner = (relation as Record<string, unknown>).owner;
@@ -189,7 +189,7 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
       }
     }
     const agents = source.agents;
-    if (Array.isArray(agents) && !fields.some((field) => field.key === "approvedAgentFirstName")) {
+    if (Array.isArray(agents) && !fields.some((field) => field.key === "approvedAgentFirstName" && field.value !== null && field.value !== undefined && field.value !== "")) {
       for (const relation of agents) {
         if (!relation || typeof relation !== "object") continue;
         const item = relation as Record<string, unknown>;
