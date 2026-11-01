@@ -53,6 +53,12 @@ export function PropertyEditForm({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hasListing, setHasListing] = useState(false);
+  const [identity, setIdentity] = useState({
+    registrantName: "",
+    registrantMobile: "",
+    approvedAgentName: "",
+    approvedAgentMobile: "",
+  });
 
   useEffect(() => {
     let active = true;
@@ -67,6 +73,12 @@ export function PropertyEditForm({
         if (!property || property.id !== propertyId) throw new Error("پاسخ سرور برای این شناسه ملک معتبر نیست.");
         const listing = property.listing ?? null;
         if (!active) return;
+        setIdentity({
+          registrantName: [property.registrantFirstName, property.registrantLastName].filter(Boolean).join(" "),
+          registrantMobile: property.registrantMobile ?? "",
+          approvedAgentName: [property.approvedAgentFirstName, property.approvedAgentLastName].filter(Boolean).join(" "),
+          approvedAgentMobile: property.approvedAgentMobile ?? "",
+        });
         setHasListing(listing !== null);
         setValues({
           propertyType: property.propertyType ?? "APARTMENT",
@@ -184,6 +196,10 @@ export function PropertyEditForm({
     <form onSubmit={submit} className="max-h-[78vh] space-y-4 overflow-y-auto p-1" dir="rtl">
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {notice && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
+      {(identity.registrantName || identity.approvedAgentName) && <section className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
+        {identity.registrantName && <div><p className="text-xs text-slate-500">مشاور ثبت‌کننده</p><p className="mt-1 font-semibold">{identity.registrantName}</p>{identity.registrantMobile && <p dir="ltr" className="mt-1 text-sm text-slate-600">{identity.registrantMobile}</p>}</div>}
+        {identity.approvedAgentName && <div><p className="text-xs text-slate-500">مشاور تأییدشده</p><p className="mt-1 font-semibold">{identity.approvedAgentName}</p>{identity.approvedAgentMobile && <p dir="ltr" className="mt-1 text-sm text-slate-600">{identity.approvedAgentMobile}</p>}</div>}
+      </section>}
       <section className="space-y-3 rounded-xl border border-slate-200 p-3">
         <h3 className="font-bold">۱. فیلدهای الزامی</h3>
         <div className="grid gap-3 sm:grid-cols-2">
