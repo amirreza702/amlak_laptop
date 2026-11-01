@@ -12,16 +12,19 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     properties: result.properties.map((record) => {
       const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
       const isApprovedAgent = record.status === "ACTIVE" && record.approvedByOwner;
+      const { createdByUser, ...propertyData } = record.property;
       return {
         ...record,
         canManage: isCreator,
         property: {
-          ...record.property,
+          ...propertyData,
           createdByUserId: isCreator ? record.property.createdByUserId : null,
           // مشخصات مالک فقط برای مشاور ثبت‌کننده ملک یا مشاور تأییدشده همان ملک ارسال می‌شود.
           owners: isCreator || isApprovedAgent ? record.property.owners : [],
-          // شماره تماس ثبت‌کننده فقط در صورت ثبت ملک توسط مشاور، نه مالک، مجاز است.
-          creatorMobile: record.property.registrationSource === "AGENT" ? record.property.creatorMobile : null,
+          // هویت مشاور ثبت‌کننده برای املاک مشاورمحور قابل نمایش است؛ اطلاعات مالک جایگزین آن نمی‌شود.
+          registrantFirstName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
+          registrantLastName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
+          creatorMobile: record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
         },
       };
     }),
