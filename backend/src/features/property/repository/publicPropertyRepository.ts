@@ -71,6 +71,7 @@ export async function findPublishedPublicPropertyById(id: string) {
         orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
         take: 1,
         select: {
+          ownerId: true,
           verificationStatus: true,
           owner: {
             select: {
@@ -79,6 +80,16 @@ export async function findPublishedPublicPropertyById(id: string) {
               lastName: true,
               user: { select: { mobile: true } },
             },
+          },
+        },
+      },
+      ownerAgentRequests: {
+        where: { status: "ACTIVE" },
+        select: {
+          ownerId: true,
+          responses: {
+            where: { status: "ACCEPTED" },
+            select: { agentId: true },
           },
         },
       },
@@ -95,6 +106,7 @@ export async function findPublishedPublicPropertyById(id: string) {
           approvedByOwner: true,
           agent: {
             select: {
+              id: true,
               userId: true,
               firstName: true,
               lastName: true,
