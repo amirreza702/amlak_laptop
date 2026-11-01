@@ -41,18 +41,37 @@ export async function getAllAgentSearchRequestsController(req: Request, res: Res
     customer: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
     transactionType: true, propertyType: true, city: true, budget: true,
     description: true, hashtiVerified: true, status: true,
-    createdByRole: true, createdByUserId: true, createdAt: true, updatedAt: true,
+    createdByRole: true, createdByUserId: true,
+    createdByUser: { select: { mobile: true, agent: { select: { firstName: true, lastName: true } } } },
+    createdAt: true, updatedAt: true,
    },
    orderBy: { createdAt: "desc" },
   });
-  return res.status(200).json(rows.map(({ createdByUserId, requesterMobile, requesterFirstName, requesterLastName, customer, ...request }) => ({
-   ...request,
-   requesterFirstName: requesterFirstName ?? customer?.firstName ?? null,
-   requesterLastName: requesterLastName ?? customer?.lastName ?? null,
-   requesterMobile: requesterMobile ?? customer?.user.mobile ?? null,
-   contactName: [requesterFirstName ?? customer?.firstName, requesterLastName ?? customer?.lastName].filter(Boolean).join(" ") || (request.createdByRole === UserRole.AGENT ? "مشاور املاک" : "مشتری"),
-   contactMobile: requesterMobile ?? customer?.user.mobile ?? null,
-   isCreatedByMe: createdByUserId === id,
-  })));
+  return res.status(200).json(rows.map(({ createdByUserId, requesterMobile, requesterFirstName, requesterLastName, customer, createdByUser, ...request }) => {
+   const isCreatedByMe = createdByUserId === id;
+   const isAgentCreated = request.createdByRole === UserRole.AGENT;
+   const mayViewCustomer = !isAgentCreated || isCreatedByMe;
+   const customerFirstName = mayViewCustomer ? (requesterFirstName ?? customer?.firstName ?? null) : null;
+   const customerLastName = mayViewCustomer ? (requesterLastName ?? customer?.lastName ?? null) : null;
+   const customerMobile = mayViewCustomer ? (requesterMobile ?? customer?.user.mobile ?? null) : null;
+   const creatorFirstName = createdByUser?.agent?.firstName ?? null;
+   const creatorLastName = createdByUser?.agent?.lastName ?? null;
+   const creatorMobile = isAgentCreated ? createdByUser?.mobile ?? null : customerMobile;
+   const customerName = [customerFirstName, customerLastName].filter(Boolean).join(" ");
+   const creatorName = [creatorFirstName, creatorLastName].filter(Boolean).join(" ");
+   return {
+    ...request,
+    customerId: mayViewCustomer ? request.customerId : null,
+    requesterFirstName: customerFirstName,
+    requesterLastName: customerLastName,
+    requesterMobile: customerMobile,
+    contactName: isAgentCreated && !isCreatedByMe ? (creatorName || "مشاور ثبت‌کننده") : (customerName || "مشتری"),
+    contactMobile: isAgentCreated && !isCreatedByMe ? creatorMobile : customerMobile,
+    registrantFirstName: isAgentCreated ? creatorFirstName : customerFirstName,
+    registrantLastName: isAgentCreated ? creatorLastName : customerLastName,
+    registrantMobile: creatorMobile,
+    isCreatedByMe,
+   };
+  }));
  } catch (error) { console.error("Could not list search requests for agent:", error); return res.status(500).json({ message: "Internal server error" }); }
 }
