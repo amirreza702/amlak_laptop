@@ -184,10 +184,10 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
         const owner = (relation as Record<string, unknown>).owner;
         if (!owner || typeof owner !== "object") continue;
         const profile = owner as Record<string, unknown>;
-        if (profile.firstName) fields.push({ key: "ownerFirstName", value: profile.firstName });
-        if (profile.lastName) fields.push({ key: "ownerLastName", value: profile.lastName });
+        if (profile.firstName && !fields.some((field) => field.key === "ownerFirstName" && field.value)) fields.push({ key: "ownerFirstName", value: profile.firstName });
+        if (profile.lastName && !fields.some((field) => field.key === "ownerLastName" && field.value)) fields.push({ key: "ownerLastName", value: profile.lastName });
         const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
-        if (mobile) fields.push({ key: "ownerMobile", value: mobile });
+        if (mobile && !fields.some((field) => field.key === "ownerMobile" && field.value)) fields.push({ key: "ownerMobile", value: mobile });
       }
     }
     const agents = source.agents;
