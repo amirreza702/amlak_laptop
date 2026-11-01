@@ -76,9 +76,6 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>شهر / روستا
               <input className={inputClass} value={city} onChange={(e) => setCity(e.target.value)} required maxLength={100} />
             </label>
-            <label className="space-y-1.5 text-sm font-semibold">محله / منطقه (اختیاری)
-              <input className={inputClass} value={district} onChange={(e) => setDistrict(e.target.value)} maxLength={120} />
-            </label>
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نشانی ملک
               <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} required maxLength={500} />
             </label>
@@ -93,18 +90,9 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
             <label className="space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>متراژ (مترمربع)
               <input className={inputClass} type="number" min="0.1" step="0.1" required value={area} onChange={(e) => setArea(e.target.value)} />
             </label>
-            {!isLandLike && <><label className="space-y-1.5 text-sm font-semibold">تعداد اتاق (اختیاری)
-              <input className={inputClass} type="number" min="0" max="100" step="1" value={rooms} onChange={(e) => setRooms(e.target.value)} />
-            </label>
-            <label className="space-y-1.5 text-sm font-semibold">طبقه (اختیاری)
-              <input className={inputClass} type="number" min="-10" max="200" step="1" value={floor} onChange={(e) => setFloor(e.target.value)} />
-            </label></>}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {!isLandLike && <label className="space-y-1.5 text-sm font-semibold">تعداد کل واحدها (اختیاری)
-              <input className={inputClass} type="number" min="1" step="1" value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} />
-            </label>}
             <label className="space-y-1.5 text-sm font-semibold"><span className="text-red-600">*</span> نوع سند
               <select required value={details.documentType} onChange={e=>setDetails(v=>({...v,documentType:e.target.value}))} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">سند دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select>
             </label>
@@ -145,6 +133,11 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
           <fieldset disabled={Boolean(createdPropertyId) || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
             <legend className="px-2 font-bold">۳. جزئیات اختیاری ملک</legend>
             <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm">محله / منطقه (اختیاری)<input value={district} onChange={e=>setDistrict(e.target.value)} maxLength={120} className={inputClass}/></label>
+              {!isLandLike && <label className="space-y-1 text-sm">تعداد اتاق (اختیاری)<input type="number" min="0" max="100" step="1" value={rooms} onChange={e=>setRooms(e.target.value)} className={inputClass}/></label>}
+              {!isLandLike && <label className="space-y-1 text-sm">طبقه (اختیاری)<input type="number" min="-10" max="200" step="1" value={floor} onChange={e=>setFloor(e.target.value)} className={inputClass}/></label>}
+              {!isLandLike && <label className="space-y-1 text-sm">تعداد کل واحدها (اختیاری)<input type="number" min="1" step="1" value={details.totalUnits} onChange={e=>setDetails(v=>({...v,totalUnits:e.target.value}))} className={inputClass}/></label>}
+
               <label className="space-y-1 text-sm">کد پستی (اختیاری)<input inputMode="numeric" pattern="[0-9]{10}" value={postalCode} onChange={e=>setPostalCode(e.target.value)} className={inputClass} placeholder="۱۰ رقم" /></label>
               <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={details.yearBuilt} onChange={e=>setDetails(v=>({...v,yearBuilt:e.target.value}))} className={inputClass} /></label>
               <label className="space-y-1 text-sm">شماره واحد<input value={details.unitNumber} onChange={e=>setDetails(v=>({...v,unitNumber:e.target.value}))} className={inputClass} /></label>

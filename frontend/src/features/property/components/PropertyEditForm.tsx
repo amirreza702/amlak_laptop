@@ -189,7 +189,6 @@ export function PropertyEditForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="space-y-1 text-sm">نوع ملک *<select required value={values.propertyType} onChange={e=>update("propertyType",e.target.value as PropertyType)} className={inputClass}>{[["APARTMENT","آپارتمان"],["HOUSE","خانه"],["VILLA","ویلا"],["LAND","زمین"],["SHOP","مغازه"],["OFFICE","اداری"],["GARDEN","باغ"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
           <label className="space-y-1 text-sm">شهر / روستا *<input required maxLength={100} value={values.city} onChange={e=>update("city",e.target.value)} className={inputClass}/></label>
-          <label className="space-y-1 text-sm">محله / منطقه (اختیاری)<input maxLength={120} value={values.district} onChange={e=>update("district",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">نشانی ملک *<input required maxLength={500} value={values.address} onChange={e=>update("address",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">شماره تماس مالک *<input type="tel" inputMode="numeric" dir="ltr" pattern="09[0-9]{9}" maxLength={11} required readOnly={mode === "owner"} value={values.ownerMobile} onChange={e=>update("ownerMobile",e.target.value)} placeholder={mode === "agent" ? "شماره ۱۱ رقمی مالک را وارد کنید" : ""} className={inputClass}/><span className="text-xs text-slate-500">{mode === "agent" ? "به‌دلیل حفظ حریم خصوصی، شماره فعلی نمایش داده نمی‌شود؛ شماره مالک را وارد کنید." : "شماره همراه حساب مالک؛ فقط برای مالک و هشتی قابل مشاهده است."}</span></label>
           {mode === "agent" && <>
@@ -197,9 +196,6 @@ export function PropertyEditForm({
             <label className="space-y-1 text-sm">نام خانوادگی مالک *<input required maxLength={100} autoComplete="family-name" value={values.ownerLastName} onChange={e=>update("ownerLastName",e.target.value)} className={inputClass}/></label>
           </>}
           <label className="space-y-1 text-sm">متراژ *<input required type="number" min="0.1" step="any" value={values.area} onChange={e=>update("area",e.target.value)} className={inputClass}/></label>
-          {!isLandLike && <label className="space-y-1 text-sm">تعداد اتاق (اختیاری)<input type="number" min="0" step="1" value={values.rooms} onChange={e=>update("rooms",e.target.value)} className={inputClass}/></label>}
-          {!isLandLike && <label className="space-y-1 text-sm">طبقه (اختیاری)<input type="number" min="-10" max="200" step="1" value={values.floor} onChange={e=>update("floor",e.target.value)} className={inputClass}/></label>}
-          {!isLandLike && <label className="space-y-1 text-sm">تعداد کل واحدها (اختیاری)<input type="number" min="1" step="1" value={values.totalUnits} onChange={e=>update("totalUnits",e.target.value)} className={inputClass}/></label>}
           <label className="space-y-1 text-sm">نوع سند *<select required value={values.documentType} onChange={e=>update("documentType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SINGLE_SHEET">تک‌برگ</option><option value="OLD_DEED">دفترچه‌ای</option><option value="OFFICIAL_CONTRACT">قرارداد رسمی</option><option value="ORDINARY_CONTRACT">قولنامه عادی</option></select></label>
           <label className="space-y-1 text-sm">نوع مالکیت *<select required value={values.ownershipType} onChange={e=>update("ownershipType",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="SIX_DANG">شش‌دانگ</option><option value="SHARED">مشاع</option></select></label>
           <label className="space-y-1 text-sm">وضعیت عرصه *<select required value={values.landTenure} onChange={e=>update("landTenure",e.target.value)} className={inputClass}><option value="">انتخاب کنید</option><option value="FREEHOLD">ملکی</option><option value="ENDOWMENT">اوقافی</option></select></label>
@@ -215,8 +211,13 @@ export function PropertyEditForm({
         {values.transactionType==="RENT" && <label className="block space-y-1 text-sm">اجاره ماهانه (تومان) *<input required type="number" min="1" value={values.rentAmount} onChange={e=>update("rentAmount",e.target.value)} className={inputClass}/></label>}
       </section>
       <section className="space-y-3 rounded-xl border border-slate-200 p-3">
-        <h3 className="font-bold">فیلدهای اختیاری</h3>
+        <h3 className="font-bold">جزئیات اختیاری ملک</h3>
         <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1 text-sm">محله / منطقه (اختیاری)<input maxLength={120} value={values.district} onChange={e=>update("district",e.target.value)} className={inputClass}/></label>
+          {!isLandLike && <label className="space-y-1 text-sm">تعداد اتاق (اختیاری)<input type="number" min="0" step="1" value={values.rooms} onChange={e=>update("rooms",e.target.value)} className={inputClass}/></label>}
+          {!isLandLike && <label className="space-y-1 text-sm">طبقه (اختیاری)<input type="number" min="-10" max="200" step="1" value={values.floor} onChange={e=>update("floor",e.target.value)} className={inputClass}/></label>}
+          {!isLandLike && <label className="space-y-1 text-sm">تعداد کل واحدها (اختیاری)<input type="number" min="1" step="1" value={values.totalUnits} onChange={e=>update("totalUnits",e.target.value)} className={inputClass}/></label>}
+
           <label className="space-y-1 text-sm">کد پستی<input maxLength={10} value={values.postalCode} onChange={e=>update("postalCode",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">سال ساخت<input type="number" min="1300" max="1500" value={values.yearBuilt} onChange={e=>update("yearBuilt",e.target.value)} className={inputClass}/></label>
           <label className="space-y-1 text-sm">شماره واحد<input value={values.unitNumber} onChange={e=>update("unitNumber",e.target.value)} className={inputClass}/></label>
