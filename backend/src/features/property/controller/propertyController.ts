@@ -89,7 +89,14 @@ export async function getPropertyByIdController(
     // استثنای مدیریتی هشتی حفظ می‌شود.
     if (user.role === "HASHTI") return res.status(200).json(property);
 
-    const { owners, agents, createdByUser, ...baseProperty } = property;
+    const {
+      owners,
+      agents,
+      createdByUser,
+      creatorMobile: _creatorMobile,
+      createdByUserId: _createdByUserId,
+      ...baseProperty
+    } = property;
     const ownOwner = owners.find((relation) => relation.owner.userId === user.id) ?? null;
     const approvedAgent = agents.find(
       (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
