@@ -145,6 +145,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           select: { status: true, transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, publishedAt: true },
         },
         owners: {
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
           select: {
             ownerId: true,
             share: true,
