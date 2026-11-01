@@ -9,18 +9,21 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
   const result = await findAgentPropertyRecords({ agentId: agent.id, ...query });
   return {
     ...result,
-    properties: result.properties.map((record) => ({
-      ...record,
-      canManage: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId,
-      property: {
-        ...record.property,
-        createdByUserId: record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId
-          ? record.property.createdByUserId
-          : null,
-        // شماره ثبت‌کننده ممکن است متعلق به مالک باشد؛ پنل مشاور نباید آن را دریافت کند.
-        // شماره عمومی تماس از سرویس آگهی عمومی و مطابق تأیید مالک انتخاب می‌شود.
-        creatorMobile: null,
-      },
-    })),
+    properties: result.properties.map((record) => {
+      const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
+      const isApprovedAgent = record.status === "ACTIVE" && record.approvedByOwner;
+      return {
+        ...record,
+        canManage: isCreator,
+        property: {
+          ...record.property,
+          createdByUserId: isCreator ? record.property.createdByUserId : null,
+          // مشخصات مالک فقط برای مشاور ثبت‌کننده ملک یا مشاور تأییدشده همان ملک ارسال می‌شود.
+          owners: isCreator || isApprovedAgent ? record.property.owners : [],
+          // شماره تماس ثبت‌کننده فقط در صورت ثبت ملک توسط مشاور، نه مالک، مجاز است.
+          creatorMobile: record.property.registrationSource === "AGENT" ? record.property.creatorMobile : null,
+        },
+      };
+    }),
   };
 }
