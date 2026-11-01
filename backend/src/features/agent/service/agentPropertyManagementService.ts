@@ -11,25 +11,40 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     ...result,
     properties: result.properties.map((record) => {
       const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
+      const approvedAgentRelation = record.property.agents[0] ?? null;
+      const approvedOwnerRequest = record.property.ownerAgentRequests.find((request) =>
+        request.responses.some((response) => response.agentId === agent.id)
+      ) ?? null;
+      const approvedOwnerRelation = approvedOwnerRequest
+        ? record.property.owners.find((owner) => owner.ownerId === approvedOwnerRequest.ownerId) ?? null
+        : null;
       const isApprovedAgent = record.property.registrationSource === "OWNER" &&
-        record.status === "ACTIVE" && record.approvedByOwner;
-      const { createdByUser, ...propertyData } = record.property;
+        approvedAgentRelation?.status === "ACTIVE" &&
+        approvedAgentRelation.approvedByOwner &&
+        Boolean(approvedOwnerRelation);
+      const { createdByUser, ownerAgentRequests: _ownerAgentRequests, ...propertyData } = record.property;
+      const primaryOwner = record.property.owners[0] ?? null;
+      const visibleOwner = isApprovedAgent ? approvedOwnerRelation : isCreator ? primaryOwner : null;
       return {
         ...record,
         canManage: isCreator,
         property: {
           ...propertyData,
           createdByUserId: isCreator ? record.property.createdByUserId : null,
-          // مشخصات مالک فقط برای مشاور ثبت‌کننده ملک یا مشاور تأییدشده همان ملک ارسال می‌شود.
-          // برای مشاور فقط مالک اصلیِ همان ملک نمایش داده می‌شود؛ مالکان دیگر افشا نمی‌شوند.
-          owners: isCreator || isApprovedAgent ? record.property.owners.slice(0, 1) : [],
-          ownerFirstName: isCreator || isApprovedAgent ? record.property.ownerFirstName : null,
-          ownerLastName: isCreator || isApprovedAgent ? record.property.ownerLastName : null,
-          ownerMobile: isCreator || isApprovedAgent ? record.property.ownerMobile : null,
+          // فقط مالک مرتبط با تأیید همین مشاور یا مالک اصلی ملک ثبت‌شده توسط خود مشاور مجاز است.
+          owners: visibleOwner ? [visibleOwner] : [],
+          ownerFirstName: isApprovedAgent
+            ? approvedOwnerRelation?.owner.firstName ?? null
+            : isCreator ? record.property.ownerFirstName ?? visibleOwner?.owner.firstName ?? null : null,
+          ownerLastName: isApprovedAgent
+            ? approvedOwnerRelation?.owner.lastName ?? null
+            : isCreator ? record.property.ownerLastName ?? visibleOwner?.owner.lastName ?? null : null,
+          ownerMobile: isApprovedAgent
+            ? approvedOwnerRelation?.owner.user.mobile ?? null
+            : isCreator ? record.property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null : null,
           approvedAgentFirstName: isApprovedAgent ? agent.firstName : null,
           approvedAgentLastName: isApprovedAgent ? agent.lastName : null,
           approvedAgentMobile: isApprovedAgent ? agent.user.mobile : null,
-          // هویت مشاور ثبت‌کننده برای املاک مشاورمحور قابل نمایش است؛ اطلاعات مالک جایگزین آن نمی‌شود.
           registrantFirstName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
           registrantLastName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
           creatorMobile: record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
