@@ -44,10 +44,7 @@ import {
 
 
 
-import type {
-  Property,
-  PropertyWithListing,
-} from "../types/property";
+import type { Property } from "../types/property";
 
 import type { PropertyAgent } from "../types/propertyAgent";
 
