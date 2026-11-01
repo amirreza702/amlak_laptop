@@ -21,7 +21,8 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
           ...propertyData,
           createdByUserId: isCreator ? record.property.createdByUserId : null,
           // مشخصات مالک فقط برای مشاور ثبت‌کننده ملک یا مشاور تأییدشده همان ملک ارسال می‌شود.
-          owners: isCreator || isApprovedAgent ? record.property.owners : [],
+          // برای مشاور فقط مالک اصلیِ همان ملک نمایش داده می‌شود؛ مالکان دیگر افشا نمی‌شوند.
+          owners: isCreator || isApprovedAgent ? record.property.owners.slice(0, 1) : [],
           ownerFirstName: isCreator || isApprovedAgent ? record.property.ownerFirstName : null,
           ownerLastName: isCreator || isApprovedAgent ? record.property.ownerLastName : null,
           ownerMobile: isCreator || isApprovedAgent ? record.property.ownerMobile : null,
