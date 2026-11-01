@@ -159,6 +159,16 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           take: 1,
           select: { status: true, createdAt: true, reviewedAt: true },
         },
+        ownerAgentRequests: {
+          where: { status: "ACTIVE" },
+          select: {
+            ownerId: true,
+            responses: {
+              where: { agentId: input.agentId, status: "ACCEPTED" },
+              select: { agentId: true },
+            },
+          },
+        },
         agents: {
           where: { agentId: input.agentId },
           select: {
