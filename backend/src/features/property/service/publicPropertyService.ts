@@ -1,37 +1,45 @@
 import { findPublishedPublicPropertyById } from "../repository/publicPropertyRepository";
 
+type PropertyViewer = { id: string; role: string } | undefined;
+
 /**
- * دریافت اطلاعات قابل نمایش عمومی یک آگهی.
- *
- * سیاست تماس:
- * - ملک ثبت‌شده توسط مالک: تا پیش از تأیید مشاور، شماره مالک نمایش داده می‌شود.
- * - پس از تأیید مشاور: فقط شماره همان مشاور نمایش داده می‌شود.
- * - ملک ثبت‌شده توسط مشاور: فقط شماره مشاور ثبت‌کننده نمایش داده می‌شود.
- * - شماره مالک در ملک ثبت‌شده توسط مشاور هرگز در پاسخ عمومی قرار نمی‌گیرد.
- *
- * اطلاعات تماس کامل کارکنان هشتی فقط از مسیرهای مدیریتی احراز هویت‌شده
- * قابل دریافت است؛ این سرویس صرفاً پاسخ عمومی آگهی را می‌سازد.
+ * جزئیات عمومی آگهی با استثنای محرمانگی برای مالک، مشاور تأییدشده
+ * همان ملک و مشاور ثبت‌کننده ملک‌های مشاورمحور.
  */
-export async function getPublishedPublicPropertyById(id: string) {
+export async function getPublishedPublicPropertyById(id: string, viewer?: PropertyViewer) {
   const property = await findPublishedPublicPropertyById(id);
+  if (!property) throw new Error("آگهی عمومی موردنظر پیدا نشد.");
 
-  if (!property) {
-    throw new Error("آگهی عمومی موردنظر پیدا نشد.");
-  }
-
-  const { owners, agents, registrationSource, ...publicProperty } = property;
+  const {
+    owners,
+    agents,
+    registrationSource,
+    createdByUserId,
+    ownerFirstName,
+    ownerLastName,
+    ownerMobile,
+    ...publicProperty
+  } = property;
 
   const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant);
   const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE"
     ? firstRegistrantRelation.agent
     : null;
-
-  // فقط رابطه فعال و تأییدشده می‌تواند شماره عمومی مشاور باشد.
-  const approvedAgent = agents.find(
+  const approvedAgentRelation = agents.find(
     (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
-  )?.agent;
-
-  const primaryOwner = owners[0]?.owner;
+  );
+  const approvedAgent = approvedAgentRelation?.agent ?? null;
+  const verifiedPrimaryOwner = owners.find((relation) => relation.verificationStatus === "VERIFIED")?.owner ?? null;
+  const viewerOwnerRelation = viewer?.role === "OWNER"
+    ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
+    : null;
+  const isApprovedAgent = viewer?.role === "AGENT" &&
+    registrationSource === "OWNER" &&
+    approvedAgent?.userId === viewer.id;
+  const isAgentCreator = viewer?.role === "AGENT" &&
+    registrationSource === "AGENT" &&
+    createdByUserId === viewer.id;
+  const mayViewOwnerDetails = Boolean(viewerOwnerRelation || isApprovedAgent || isAgentCreator);
 
   let contact: {
     type: "OWNER" | "AGENT";
@@ -42,7 +50,6 @@ export async function getPublishedPublicPropertyById(id: string) {
   } | null = null;
 
   if (registrationSource === "AGENT") {
-    // ثبت مشاور: فقط شماره همان مشاور ثبت‌کننده؛ بدون fallback به مالک.
     if (firstRegistrant) {
       contact = {
         type: "AGENT",
@@ -53,7 +60,6 @@ export async function getPublishedPublicPropertyById(id: string) {
       };
     }
   } else if (approvedAgent) {
-    // ثبت مالک پس از تأیید نهایی: فقط شماره مشاور منتخب مالک.
     contact = {
       type: "AGENT",
       label: "مشاور تأییدشده",
@@ -61,16 +67,24 @@ export async function getPublishedPublicPropertyById(id: string) {
       lastName: approvedAgent.lastName,
       mobile: approvedAgent.user.mobile,
     };
-  } else if (primaryOwner) {
-    // ثبت مالک پیش از تأیید مشاور: شماره مالک تأییدشده.
+  } else if (verifiedPrimaryOwner) {
     contact = {
       type: "OWNER",
       label: "مالک",
-      firstName: primaryOwner.firstName,
-      lastName: primaryOwner.lastName,
-      mobile: primaryOwner.user.mobile,
+      firstName: verifiedPrimaryOwner.firstName,
+      lastName: verifiedPrimaryOwner.lastName,
+      mobile: verifiedPrimaryOwner.user.mobile,
     };
   }
 
-  return { ...publicProperty, contact };
+  const ownerForViewer = viewerOwnerRelation?.owner ?? verifiedPrimaryOwner;
+  const ownerDetails = mayViewOwnerDetails
+    ? {
+        firstName: ownerFirstName ?? ownerForViewer?.firstName ?? null,
+        lastName: ownerLastName ?? ownerForViewer?.lastName ?? null,
+        mobile: ownerMobile ?? ownerForViewer?.user.mobile ?? null,
+      }
+    : null;
+
+  return { ...publicProperty, contact, ownerDetails };
 }
