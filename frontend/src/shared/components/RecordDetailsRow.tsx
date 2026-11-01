@@ -93,7 +93,6 @@ const formFieldLabels: Record<string, string> = {
   isPrimary: "مالک اصلی",
   hashtiVerified: "تأیید هشتی",
   adminPermissions: "مجوزهای دسترسی",
-  adminPermissions: "مجوزهای دسترسی",
 };
 
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
