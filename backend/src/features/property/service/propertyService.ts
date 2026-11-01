@@ -38,6 +38,7 @@ import {
   createProperty,
   findPropertyByPostalCode,
   findPropertyById,
+  findPropertyByIdWithContacts,
   updateProperty,
 } from "../repository/propertyRepository";
 
@@ -319,13 +320,12 @@ export async function registerProperty(
   });
 }
 
-export async function getPropertyById(
-  id: string
-): Promise<PropertyWithListing> {
+export async function getPropertyById(id: string) {
   /**
-   * دریافت ملک به همراه Listing فعلی.
+   * دریافت ملک به همراه Listing و روابط هویتی لازم؛
+   * فیلتر دسترسی و ساخت پاسخ امن در همین Use Case انجام می‌شود.
    */
-  const property = await findPropertyById(id);
+  const property = await findPropertyByIdWithContacts(id);
 
   /**
    * اگر ملک وجود نداشته باشد،
