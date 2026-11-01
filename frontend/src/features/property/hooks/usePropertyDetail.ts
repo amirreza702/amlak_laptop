@@ -48,6 +48,7 @@ interface Property {
   longitudePublic?: number | null;
   isActive: boolean;
   contact?: { type: "AGENT" | "OWNER"; label: "مشاور ثبت‌کننده" | "مشاور تأییدشده" | "مالک"; firstName: string; lastName: string; mobile: string } | null;
+  ownerDetails?: { firstName: string | null; lastName: string | null; mobile: string | null } | null;
 
   /**
    * Listing فعلی ملک
@@ -95,7 +96,7 @@ export function usePropertyDetail() {
       try {
         const response = await fetch(
           `${getPublicApiUrl()}/properties/${encodeURIComponent(id)}/public`,
-          { cache: "no-store", signal: controller.signal }
+          { cache: "no-store", credentials: "include", signal: controller.signal }
         );
 
         if (response.status === 404) {
