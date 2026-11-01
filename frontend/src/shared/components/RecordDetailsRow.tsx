@@ -31,6 +31,12 @@ const formFieldLabels: Record<string, string> = {
   requesterFirstName: "نام درخواست‌کننده",
   requesterLastName: "نام خانوادگی درخواست‌کننده",
   requesterMobile: "شماره تماس درخواست‌کننده",
+  registrantFirstName: "نام مشاور ثبت‌کننده",
+  registrantLastName: "نام خانوادگی مشاور ثبت‌کننده",
+  registrantMobile: "شماره تماس مشاور ثبت‌کننده",
+  approvedAgentFirstName: "نام مشاور تأییدشده",
+  approvedAgentLastName: "نام خانوادگی مشاور تأییدشده",
+  approvedAgentMobile: "شماره تماس مشاور تأییدشده",
   ownerFirstName: "نام مالک",
   ownerLastName: "نام خانوادگی مالک",
   ownerMobile: "شماره تماس مالک",
@@ -162,6 +168,40 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
         if (listing && typeof listing === "object" && !Array.isArray(listing)) {
           append(listing as Record<string, unknown>);
         }
+      }
+    }
+  }
+
+  // روابط مالک و مشاور فقط پس از پالایش دسترسی در API به این بخش می‌رسند.
+  const sources = [record, record.property].filter(
+    (item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item))
+  );
+  for (const source of sources) {
+    const owners = source.owners;
+    if (Array.isArray(owners) && !fields.some((field) => field.key === "ownerFirstName")) {
+      for (const relation of owners) {
+        if (!relation || typeof relation !== "object") continue;
+        const owner = (relation as Record<string, unknown>).owner;
+        if (!owner || typeof owner !== "object") continue;
+        const profile = owner as Record<string, unknown>;
+        if (profile.firstName) fields.push({ key: "ownerFirstName", value: profile.firstName });
+        if (profile.lastName) fields.push({ key: "ownerLastName", value: profile.lastName });
+      }
+    }
+    const agents = source.agents;
+    if (Array.isArray(agents) && !fields.some((field) => field.key === "approvedAgentFirstName")) {
+      for (const relation of agents) {
+        if (!relation || typeof relation !== "object") continue;
+        const item = relation as Record<string, unknown>;
+        if (item.status !== "ACTIVE" || item.approvedByOwner !== true) continue;
+        const agent = item.agent;
+        if (!agent || typeof agent !== "object") continue;
+        const profile = agent as Record<string, unknown>;
+        if (profile.firstName) fields.push({ key: "approvedAgentFirstName", value: profile.firstName });
+        if (profile.lastName) fields.push({ key: "approvedAgentLastName", value: profile.lastName });
+        const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
+        if (mobile) fields.push({ key: "approvedAgentMobile", value: mobile });
+        break;
       }
     }
   }
