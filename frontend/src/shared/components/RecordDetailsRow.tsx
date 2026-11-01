@@ -7,7 +7,6 @@ import dynamic from "next/dynamic";
 
 const RecordLocationMap = dynamic(() => import("@/shared/components/RecordLocationMap"), { ssr: false });
 
-// Hydration-aware client flag without synchronously setting state inside an effect.
 const subscribeToNothing = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -20,31 +19,74 @@ type RecordDetailsRowProps = {
 };
 
 const formFieldLabels: Record<string, string> = {
-  firstName: "نام", lastName: "نام خانوادگی", mobile: "شماره موبایل",
-  propertyId: "شناسه ملک", ownerId: "شناسه مالک", agentId: "شناسه مشاور",
-  userId: "شناسه کاربر", customerId: "شناسه مشتری", requestId: "شناسه درخواست", role: "نقش",
-  agencyName: "نام آژانس", address: "نشانی", city: "شهر", district: "محله / منطقه",
-  postalCode: "کد پستی", propertyType: "نوع ملک", transactionType: "نوع معامله",
-  description: "توضیحات", notes: "یادداشت", reason: "دلیل",
-  area: "متراژ", rooms: "تعداد اتاق", floor: "طبقه",
-  latitude: "عرض جغرافیایی", longitude: "طول جغرافیایی",
-  latitudeExact: "عرض جغرافیایی", longitudeExact: "طول جغرافیایی",
-  salePrice: "قیمت فروش", depositAmount: "مبلغ رهن", rentAmount: "مبلغ اجاره",
-  share: "سهم مالکیت", isPrimary: "مالک اصلی",
-  budget: "بودجه", minBudget: "حداقل بودجه", maxBudget: "حداکثر بودجه",
-  minArea: "حداقل متراژ", maxArea: "حداکثر متراژ",
-  minRooms: "حداقل اتاق", maxRooms: "حداکثر اتاق",
-  entityType: "نوع مورد", entityId: "شناسه مورد", note: "یادداشت",
-  amenities: "امکانات", features: "ویژگی‌ها", propertyAge: "سن بنا",
-  buildingAge: "سن بنا", parking: "پارکینگ", elevator: "آسانسور",
-  storage: "انباری", balcony: "بالکن", unit: "واحد",
-  adminPermissions: "مجوزهای دسترسی",
+  firstName: "نام",
+  lastName: "نام خانوادگی",
+  mobile: "شماره موبایل",
+  ownerFirstName: "نام مالک",
+  ownerLastName: "نام خانوادگی مالک",
+  ownerMobile: "شماره تماس مالک",
+  agencyName: "نام آژانس",
+  address: "نشانی ملک",
+  city: "شهر / روستا",
+  district: "محله / منطقه",
+  postalCode: "کد پستی",
+  propertyType: "نوع ملک",
+  transactionType: "نوع معامله",
+  description: "توضیحات",
+  reason: "دلیل",
+  area: "متراژ",
+  rooms: "تعداد اتاق",
+  floor: "طبقه",
+  latitude: "عرض جغرافیایی",
+  longitude: "طول جغرافیایی",
+  latitudeExact: "عرض جغرافیایی",
+  longitudeExact: "طول جغرافیایی",
+  salePrice: "قیمت فروش (تومان)",
+  depositAmount: "مبلغ رهن (تومان)",
+  rentAmount: "مبلغ اجاره (تومان)",
+  budget: "بودجه",
+  minBudget: "حداقل بودجه",
+  maxBudget: "حداکثر بودجه",
+  minArea: "حداقل متراژ",
+  maxArea: "حداکثر متراژ",
+  minRooms: "حداقل اتاق",
+  maxRooms: "حداکثر اتاق",
+  amenities: "امکانات",
+  features: "ویژگی‌ها",
+  propertyAge: "سن بنا",
+  buildingAge: "سن بنا",
+  yearBuilt: "سال ساخت",
+  renovationStatus: "وضعیت بازسازی",
+  renovationYear: "سال بازسازی",
+  occupancyStatus: "وضعیت سکونت",
+  parking: "پارکینگ",
+  parkingCount: "تعداد پارکینگ",
+  parkingType: "نوع پارکینگ",
+  parkingNumber: "شماره پارکینگ",
+  elevator: "آسانسور",
+  hasElevator: "آسانسور",
+  storage: "انباری",
+  hasStorage: "انباری",
+  balcony: "بالکن",
+  hasBalcony: "بالکن",
+  hasYard: "حیاط",
+  heatingSystem: "سیستم گرمایش",
+  coolingSystem: "سیستم سرمایش",
+  unit: "واحد",
+  unitNumber: "شماره واحد",
+  totalUnits: "تعداد کل واحدها",
+  documentType: "نوع سند",
+  ownershipType: "نوع مالکیت",
+  landTenure: "نوع زمین / عرصه",
+  share: "سهم مالکیت",
+  isPrimary: "مالک اصلی",
+  hashtiVerified: "تأیید هشتی",
 };
 
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
-const hiddenField = /(password|passwordhash|token|secret|authorization|cookie|credential)/i;
+const hiddenField = /^(id|.*Id|createdAt|updatedAt|deletedAt|createdBy.*|updatedBy.*|registrationSource|internalNote|privateNote|password.*|.*token|.*secret|authorization|cookie|credential)$/i;
 
-function formatScalar(value: string | number | boolean, label: string): string {
+function formatScalar(value: string | number | boolean): string {
   if (typeof value === "boolean") return value ? "بله" : "خیر";
   if (typeof value === "number") return value.toLocaleString("fa-IR");
   return value;
@@ -59,14 +101,47 @@ function FormField({ label, value }: { label: string; value: unknown }) {
     if (!values.length) return null;
     return <div className="min-w-0 rounded-lg bg-slate-50 p-3 sm:col-span-2">
       <dt className="text-xs font-semibold text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm text-slate-800">{values.map((item) => formatScalar(item, label)).join("، ")}</dd>
+      <dd className="mt-1 break-words text-sm text-slate-800">{values.map(formatScalar).join("، ")}</dd>
     </div>;
   }
   if (typeof value === "object") return null;
   return <div className="min-w-0 rounded-lg bg-slate-50 p-3">
     <dt className="text-xs font-semibold text-slate-500">{label}</dt>
-    <dd className="mt-1 break-words text-sm text-slate-800">{formatScalar(value as string | number | boolean, label)}</dd>
+    <dd className="mt-1 break-words text-sm text-slate-800">{formatScalar(value as string | number | boolean)}</dd>
   </div>;
+}
+
+type DisplayField = { key: string; value: unknown };
+
+function collectFormFields(record: Record<string, unknown>): DisplayField[] {
+  const fields: DisplayField[] = [];
+  const append = (source: Record<string, unknown>) => {
+    for (const [key, value] of Object.entries(source)) {
+      if (formFieldKeys.has(key) && !hiddenField.test(key)) {
+        fields.push({ key, value });
+      }
+    }
+  };
+
+  append(record);
+
+  // Management APIs may wrap a property in a relation object. Only traverse
+  // these known, non-identity containers; never recursively expose arbitrary
+  // user/session/audit relations in a shared component.
+  for (const container of ["property", "listing"] as const) {
+    const nested = record[container];
+    if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+      append(nested as Record<string, unknown>);
+      if (container === "property") {
+        const listing = (nested as Record<string, unknown>).listing;
+        if (listing && typeof listing === "object" && !Array.isArray(listing)) {
+          append(listing as Record<string, unknown>);
+        }
+      }
+    }
+  }
+
+  return fields;
 }
 
 function findCoordinates(value: unknown, depth = 0): { latitude: number; longitude: number } | null {
@@ -94,9 +169,9 @@ function FormDetails({ record }: { record: unknown }) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm">اطلاعات فرم برای نمایش وجود ندارد.</p>;
   }
 
-  const coordinates = findCoordinates(record);
-  const fields = Object.entries(record as Record<string, unknown>)
-    .filter(([key]) => formFieldKeys.has(key) && !hiddenField.test(key));
+  const data = record as Record<string, unknown>;
+  const coordinates = findCoordinates(data);
+  const fields = collectFormFields(data);
 
   if (!fields.length) {
     return <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">فیلد ثبت‌شده‌ای از فرم ایجاد این مورد برای نمایش وجود ندارد.</p>;
@@ -105,12 +180,12 @@ function FormDetails({ record }: { record: unknown }) {
   return <div className="space-y-4">
     {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label="موقعیت رکورد" />}
     <dl className="grid gap-3 sm:grid-cols-2">
-      {fields.map(([key, value]) => <FormField key={key} label={formFieldLabels[key] ?? key} value={value} />)}
+      {fields.map(({ key, value }, index) => <FormField key={key + "-" + index} label={formFieldLabels[key]} value={value} />)}
     </dl>
   </div>;
 }
 
-/** ردیف قابل کلیک جدول؛ مدال فقط فیلدهای ورودی فرم همان رکورد را نشان می‌دهد. */
+/** ردیف قابل کلیک جدول؛ فقط فیلدهای شناخته‌شده فرم از داده مجاز همان پنل نمایش داده می‌شوند. */
 export function RecordDetailsRow({ record, title = "رکورد", className = "", children }: RecordDetailsRowProps) {
   const [open, setOpen] = useState(false);
   const mounted = useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
@@ -137,7 +212,7 @@ export function RecordDetailsRow({ record, title = "رکورد", className = "",
       {children}
     </tr>
     {mounted && open && createPortal(
-      <Modal open title={`جزئیات ${title}`} description="فقط اطلاعات واردشده در فرم ایجاد این مورد" onClose={() => setOpen(false)} size="full">
+      <Modal open title={`جزئیات ${title}`} description="اطلاعات فرم ثبت و ویرایش موجود برای این رکورد" onClose={() => setOpen(false)} size="full">
         <FormDetails record={record} />
       </Modal>,
       document.body
