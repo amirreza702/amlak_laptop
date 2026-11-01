@@ -122,7 +122,8 @@ export async function getPropertyByIdController(
       ? property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null
       : null;
 
-    const visibleApprovedAgent = (user.role === "OWNER" && ownOwner) || isApprovedAgent
+    const visibleApprovedAgent = property.registrationSource === "OWNER" &&
+      ((user.role === "OWNER" && Boolean(ownOwner)) || isApprovedAgent)
       ? approvedAgent?.agent ?? null
       : null;
     const registrant = property.registrationSource === "AGENT" ? createdByUser?.agent ?? null : null;
