@@ -186,6 +186,8 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
         const profile = owner as Record<string, unknown>;
         if (profile.firstName) fields.push({ key: "ownerFirstName", value: profile.firstName });
         if (profile.lastName) fields.push({ key: "ownerLastName", value: profile.lastName });
+        const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
+        if (mobile) fields.push({ key: "ownerMobile", value: mobile });
       }
     }
     const agents = source.agents;
