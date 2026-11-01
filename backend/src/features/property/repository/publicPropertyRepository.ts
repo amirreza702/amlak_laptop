@@ -24,6 +24,10 @@ export async function findPublishedPublicPropertyById(id: string) {
     select: {
       id: true,
       registrationSource: true,
+      createdByUserId: true,
+      ownerFirstName: true,
+      ownerLastName: true,
+      ownerMobile: true,
       propertyType: true,
       city: true,
       district: true,
@@ -64,12 +68,13 @@ export async function findPublishedPublicPropertyById(id: string) {
         },
       },
       owners: {
-        where: { verificationStatus: "VERIFIED" },
-        orderBy: { isPrimary: "desc" },
+        orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
         take: 1,
         select: {
+          verificationStatus: true,
           owner: {
             select: {
+              userId: true,
               firstName: true,
               lastName: true,
               user: { select: { mobile: true } },
@@ -90,6 +95,7 @@ export async function findPublishedPublicPropertyById(id: string) {
           approvedByOwner: true,
           agent: {
             select: {
+              userId: true,
               firstName: true,
               lastName: true,
               user: { select: { mobile: true } },
