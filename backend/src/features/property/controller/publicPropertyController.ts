@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import { getPublishedPublicPropertyById } from "../service/publicPropertyService";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 /**
  * GET /properties/:id/public
@@ -13,7 +14,11 @@ export async function getPublicPropertyByIdController(
   res: Response
 ) {
   try {
-    const property = await getPublishedPublicPropertyById(req.params.id);
+    const user = (req as AuthenticatedRequest).user;
+    const property = await getPublishedPublicPropertyById(
+      req.params.id,
+      user ? { id: user.id, role: user.role } : undefined
+    );
     const apiBase = (process.env.PUBLIC_API_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
     return res.status(200).json({
       ...property,
