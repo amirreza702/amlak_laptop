@@ -84,35 +84,55 @@ export async function getPropertyByIdController(
   try {
     const property = await getPropertyById(req.params.id);
     const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
 
-    // جزئیات دقیق برای نقش مشتری پنهان است؛ سایر نقش‌های احراز هویت‌شده آن را می‌بینند.
-    if (user?.role === "CUSTOMER") {
-      const {
-        latitudeExact: _latitudeExact,
-        longitudeExact: _longitudeExact,
-        creatorMobile: _creatorMobile,
-        ownerMobile: _ownerMobile,
-        ownerFirstName: _ownerFirstName,
-        ownerLastName: _ownerLastName,
-        ...customerVisibleProperty
-      } = property;
-      return res.status(200).json(customerVisibleProperty);
-    }
+    // استثنای مدیریتی هشتی حفظ می‌شود.
+    if (user.role === "HASHTI") return res.status(200).json(property);
 
-    // شماره ثبت‌کننده فقط برای هشتی و شماره مالک فقط برای مالک مرتبط/هشتی قابل مشاهده است.
-    if (user?.role === "HASHTI") return res.status(200).json(property);
-    if (user?.role === "AGENT" && property.createdByUserId === user.id) {
-      const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ...agentOwnerVisibleProperty } = property;
-      return res.status(200).json(agentOwnerVisibleProperty);
-    }
-    if (user?.role === "OWNER") {
-      const { creatorMobile: _creatorMobile, ...ownerVisibleProperty } = property;
-      return res.status(200).json(ownerVisibleProperty);
-    }
-    const { creatorMobile: _creatorMobile, ownerMobile: _ownerMobile, ownerFirstName: _ownerFirstName, ownerLastName: _ownerLastName, ...visibleProperty } = property;
-    return res.status(200).json(visibleProperty);
+    const { owners, agents, createdByUser, ...baseProperty } = property;
+    const ownOwner = owners.find((relation) => relation.owner.userId === user.id) ?? null;
+    const approvedAgent = agents.find(
+      (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
+    ) ?? null;
+    const isAgentCreator = property.registrationSource === "AGENT" &&
+      property.createdByRole === "AGENT" && property.createdByUserId === user.id;
+    const isApprovedAgent = user.role === "AGENT" &&
+      approvedAgent?.agent.userId === user.id;
+    const canViewOwner = (user.role === "OWNER" && Boolean(ownOwner)) ||
+      (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
+
+    const visibleOwner = user.role === "OWNER"
+      ? ownOwner
+      : owners.find((relation) => relation.isPrimary) ?? owners[0] ?? null;
+    const ownerFirstName = canViewOwner
+      ? property.ownerFirstName ?? visibleOwner?.owner.firstName ?? null
+      : null;
+    const ownerLastName = canViewOwner
+      ? property.ownerLastName ?? visibleOwner?.owner.lastName ?? null
+      : null;
+    const ownerMobile = canViewOwner
+      ? property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null
+      : null;
+
+    const visibleApprovedAgent = (user.role === "OWNER" && ownOwner) || isApprovedAgent
+      ? approvedAgent?.agent ?? null
+      : null;
+    const registrant = property.registrationSource === "AGENT" ? createdByUser?.agent ?? null : null;
+
+    return res.status(200).json({
+      ...baseProperty,
+      ownerFirstName,
+      ownerLastName,
+      ownerMobile,
+      registrantFirstName: registrant?.firstName ?? null,
+      registrantLastName: registrant?.lastName ?? null,
+      registrantMobile: property.registrationSource === "AGENT" ? property.creatorMobile : null,
+      approvedAgentFirstName: visibleApprovedAgent?.firstName ?? null,
+      approvedAgentLastName: visibleApprovedAgent?.lastName ?? null,
+      approvedAgentMobile: visibleApprovedAgent?.user.mobile ?? null,
+    });
   } catch (error: any) {
-    res.status(404).json({
+    return res.status(404).json({
       message: error.message || "ملک مورد نظر پیدا نشد.",
     });
   }
