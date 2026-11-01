@@ -11,7 +11,8 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     ...result,
     properties: result.properties.map((record) => {
       const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
-      const isApprovedAgent = record.status === "ACTIVE" && record.approvedByOwner;
+      const isApprovedAgent = record.property.registrationSource === "OWNER" &&
+        record.status === "ACTIVE" && record.approvedByOwner;
       const { createdByUser, ...propertyData } = record.property;
       return {
         ...record,
