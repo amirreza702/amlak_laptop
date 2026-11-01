@@ -22,6 +22,11 @@ const formFieldLabels: Record<string, string> = {
   firstName: "نام",
   lastName: "نام خانوادگی",
   mobile: "شماره موبایل",
+  contactName: "نام ثبت‌کننده درخواست",
+  contactMobile: "شماره تماس ثبت‌کننده",
+  requesterFirstName: "نام درخواست‌کننده",
+  requesterLastName: "نام خانوادگی درخواست‌کننده",
+  requesterMobile: "شماره تماس درخواست‌کننده",
   ownerFirstName: "نام مالک",
   ownerLastName: "نام خانوادگی مالک",
   ownerMobile: "شماره تماس مالک",
@@ -81,6 +86,7 @@ const formFieldLabels: Record<string, string> = {
   share: "سهم مالکیت",
   isPrimary: "مالک اصلی",
   hashtiVerified: "تأیید هشتی",
+  adminPermissions: "مجوزهای دسترسی",
 };
 
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
