@@ -116,6 +116,9 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         createdByUserId: true,
         createdByRole: true,
         creatorMobile: true,
+        ownerFirstName: true,
+        ownerLastName: true,
+        ownerMobile: true,
         createdByUser: {
           select: {
             mobile: true,
@@ -147,7 +150,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             share: true,
             isPrimary: true,
             verificationStatus: true,
-            owner: { select: { firstName: true, lastName: true } },
+            owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         verificationCases: {
