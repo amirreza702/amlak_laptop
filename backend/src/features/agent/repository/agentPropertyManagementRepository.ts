@@ -116,6 +116,12 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         createdByUserId: true,
         createdByRole: true,
         creatorMobile: true,
+        createdByUser: {
+          select: {
+            mobile: true,
+            agent: { select: { firstName: true, lastName: true } },
+          },
+        },
         registrationSource: true,
         propertyType: true,
         city: true,
