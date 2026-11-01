@@ -22,6 +22,10 @@ const formFieldLabels: Record<string, string> = {
   firstName: "نام",
   lastName: "نام خانوادگی",
   mobile: "شماره موبایل",
+  role: "نقش حساب",
+  isActive: "وضعیت حساب",
+  isSuperAdmin: "مدیر ارشد",
+  verificationStatus: "وضعیت تأیید مشاور",
   contactName: "نام ثبت‌کننده درخواست",
   contactMobile: "شماره تماس ثبت‌کننده",
   requesterFirstName: "نام درخواست‌کننده",
@@ -39,6 +43,8 @@ const formFieldLabels: Record<string, string> = {
   transactionType: "نوع معامله",
   description: "توضیحات",
   reason: "دلیل",
+  note: "یادداشت خصوصی",
+  entityType: "نوع مورد مرتبط",
   area: "متراژ",
   rooms: "تعداد اتاق",
   floor: "طبقه",
@@ -87,6 +93,7 @@ const formFieldLabels: Record<string, string> = {
   isPrimary: "مالک اصلی",
   hashtiVerified: "تأیید هشتی",
   adminPermissions: "مجوزهای دسترسی",
+  adminPermissions: "مجوزهای دسترسی",
 };
 
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
@@ -100,6 +107,9 @@ const enumLabels: Record<string, Record<string, string>> = {
   landTenure: { FREEHOLD: "ملکی", ENDOWMENT: "اوقافی" },
   renovationStatus: { NO_RENOVATION: "بدون بازسازی", PARTIAL: "بازسازی جزئی", FULL: "بازسازی کامل" },
   occupancyStatus: { VACANT: "خالی", OWNER_OCCUPIED: "مالک ساکن است", TENANT_OCCUPIED: "مستأجر دارد" },
+  role: { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" },
+  verificationStatus: { PENDING: "در انتظار بررسی", VERIFIED: "تأییدشده", REJECTED: "ردشده" },
+  entityType: { property: "ملک", owner: "مالک", request: "درخواست", customer: "مشتری" },
 };
 
 function formatScalar(value: string | number | boolean, fieldKey: string): string {
@@ -144,7 +154,7 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   // Management APIs may wrap a property in a relation object. Only traverse
   // these known, non-identity containers; never recursively expose arbitrary
   // user/session/audit relations in a shared component.
-  for (const container of ["property", "listing"] as const) {
+  for (const container of ["property", "listing", "agent", "owner", "customer"] as const) {
     const nested = record[container];
     if (nested && typeof nested === "object" && !Array.isArray(nested)) {
       append(nested as Record<string, unknown>);
