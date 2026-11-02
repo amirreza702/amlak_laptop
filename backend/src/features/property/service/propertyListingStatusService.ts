@@ -90,6 +90,45 @@ function calculateConfirmUntil(
   return confirmUntil;
 }
 
+/**
+ * بازگرداندن آگهی به صف بررسی هشتی پس از هر تغییر محتوای منتشرشده.
+ * این تابع در تراکنش فراخوان قابل استفاده است و در نبود Listing کاری انجام نمی‌دهد.
+ */
+export async function queuePropertyListingForHashtiReview(
+  propertyId: string,
+  transaction?: Prisma.TransactionClient
+) {
+  const apply = async (tx: Prisma.TransactionClient) => {
+    const listing = await findPropertyListingByPropertyId(propertyId, tx);
+    if (!listing || listing.status === ListingStatus.PENDING_HASHTI_VERIFICATION) {
+      return { queued: false, listing };
+    }
+
+    const updatedListing = await updatePropertyListing(
+      listing.id,
+      {
+        status: ListingStatus.PENDING_HASHTI_VERIFICATION,
+        publishedAt: null,
+      },
+      tx
+    );
+    await createPropertyHistory(
+      {
+        propertyId,
+        action: PropertyHistoryAction.LISTING_CHANGED,
+        field: "listing.status",
+        oldValue: listing.status,
+        newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
+        reason: "تغییر اطلاعات آگهی؛ نیازمند بررسی مجدد هشتی پیش از انتشار",
+      },
+      tx
+    );
+    return { queued: true, listing: updatedListing };
+  };
+
+  return transaction ? apply(transaction) : prisma.$transaction(apply);
+}
+
 export async function updatePropertyListingStatus(
   propertyId: string,
   data: UpdatePropertyListingStatusInput
