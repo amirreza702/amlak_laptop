@@ -33,6 +33,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS "evaluations_evaluatorUserId_propertyId_key"
 ON "evaluations"("evaluatorUserId", "propertyId");
 
 
+-- Backfill the original publication timestamp for legacy published rows.
+UPDATE "property_listings"
+SET "publishedAt" = "createdAt"
+WHERE "status" = 'PUBLISHED' AND "publishedAt" IS NULL;
+
 -- Normalize existing published listings to the single 31-day publication window.
 -- This also backfills legacy rows whose confirmUntil was never populated.
 UPDATE "properties" AS property
