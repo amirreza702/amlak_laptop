@@ -19,7 +19,6 @@ import type {
   DuplicateMatch,
   DuplicateReview,
   ExactLocationLog,
-  ContactAccessAuditLog,
   ManagedAgent,
 } from "@/features/hashti/types/hashti";
 
@@ -37,11 +36,6 @@ export async function getHashtiAdminAuditLogs(
   return requestJson("/hashti/admin-audit-logs?" + params.toString());
 }
 
-export async function getHashtiContactAccessLogs(
-  params: URLSearchParams
-): Promise<{ logs: ContactAccessAuditLog[] }> {
-  return requestJson("/hashti/contact-access-logs?" + params.toString());
-}
 
 
 export async function reviewHashtiAgent(agentId: string, payload: { verificationStatus: "PENDING" | "VERIFIED" | "REJECTED"; notes: string | null }): Promise<{ agent: ManagedAgent }> {

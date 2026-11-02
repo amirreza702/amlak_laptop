@@ -4,7 +4,6 @@ import { UserRole } from "@prisma/client";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import {
-  getHashtiContactAccessLogsController,
   getManagedAgentsController,
   setAgentVerificationController,
 } from "../controller/agentManagementController";
@@ -32,12 +31,6 @@ router.patch(
 );
 
 // گزارش دسترسی به اطلاعات تماس مشتریان؛ اطلاعات شخصی فقط در اختیار هشتی است.
-router.get(
-  "/hashti/contact-access-logs",
-  authMiddleware,
-  requireRole(UserRole.HASHTI),
-  getHashtiContactAccessLogsController
-);
 
 // گزارش عمومی رویدادهای مدیریتی ثبت‌شده؛ فقط برای کارکنان هشتی.
 router.get(

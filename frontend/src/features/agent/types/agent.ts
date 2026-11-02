@@ -4,7 +4,6 @@ export interface AgentProfile {
   lastName: string;
   agencyName: string | null;
   address: string | null;
-  isVerified: boolean;
   verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
   verificationReviewedAt: string | null;
   verificationNotes: string | null;

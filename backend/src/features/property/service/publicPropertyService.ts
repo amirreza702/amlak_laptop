@@ -19,6 +19,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     ownerFirstName,
     ownerLastName,
     ownerMobile,
+    confirmUntil,
     ...publicProperty
   } = property;
 
@@ -47,7 +48,6 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
   const isApprovedAgent = viewer?.role === "AGENT" &&
-    registrationSource === "OWNER" &&
     approvedAgent?.userId === viewer.id &&
     Boolean(approvedOwnerRelation);
   const isAgentCreator = viewer?.role === "AGENT" &&
@@ -61,6 +61,11 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   const mayViewOwnerDetails = Boolean(
     viewerIsAuthorizedOwner || isApprovedAgent || isAgentCreator || viewer?.role === "HASHTI"
   );
+
+  const isExpired = publicProperty.listing?.status === "EXPIRED" || Boolean(confirmUntil && confirmUntil <= new Date());
+  if (isExpired && !(viewer?.role === "HASHTI" || Boolean(viewerOwnerRelation) || isApprovedAgent)) {
+    throw new Error("آگهی عمومی موردنظر پیدا نشد.");
+  }
 
   let contact: {
     type: "OWNER" | "AGENT";

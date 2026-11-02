@@ -58,7 +58,7 @@ export function useAgentDashboard(user: UserPublic) {
         setAgencyName(profile.agencyName ?? "");
         setAddress(profile.address ?? "");
         setProfileReviewNotes(profile.verificationNotes ?? null);
-        if (profile.verificationStatus === "VERIFIED" && profile.isVerified) {
+        if (profile.verificationStatus === "VERIFIED") {
           setProfileState("verified");
         } else if (profile.verificationStatus === "REJECTED") {
           setProfileState("rejected");

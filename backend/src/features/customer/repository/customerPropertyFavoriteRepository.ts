@@ -28,11 +28,10 @@ export const createCustomerPropertyFavorite = async (
   customerId: string,
   propertyId: string
 ) => {
-  return prisma.customerPropertyFavorite.create({
-    data: {
-      customerId,
-      propertyId,
-    },
+  return prisma.customerPropertyFavorite.upsert({
+    where: { customerId_propertyId: { customerId, propertyId } },
+    update: {},
+    create: { customerId, propertyId },
   });
 };
 

@@ -9,6 +9,7 @@ import { updatePropertyPriceController } from "../controller/propertyPriceContro
 import { updatePropertyListingStatusController } from "../controller/propertyListingStatusController";
 import { checkPropertyConfirmationController } from "../controller/propertyConfirmationController";
 import { expirePropertyListingController } from "../controller/expirePropertyListingController";
+import { renewPropertyListingController } from "../controller/renewPropertyListingController";
 import { addPropertyOwnerController } from "../controller/propertyOwnerController";
 import { verifyPropertyOwnerController } from "../controller/propertyOwnerVerificationController";
 import { approvePropertyAgentByOwnerController } from "../controller/propertyAgentApprovalController";
@@ -128,6 +129,16 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.OWNER),
   reactivateOwnPropertyController
+);
+
+// تمدید آگهی منقضی‌شده فقط برای مالک مرتبط یا مشاور دارای تأیید نهایی مالک.
+router.patch(
+  "/properties/:id/renew",
+  authMiddleware,
+  requireRole(UserRole.OWNER, UserRole.AGENT),
+  requireVerifiedAgent,
+  requirePropertyAccess("id", false, true, true),
+  renewPropertyListingController
 );
 
 router.patch(

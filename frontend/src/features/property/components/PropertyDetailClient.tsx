@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CustomerFavoriteButton } from "@/features/customer/components/CustomerFavoriteButton";
+import { PropertyEvaluationForm } from "./PropertyEvaluationForm";
 import { usePropertyDetail, type PropertyListing } from "../hooks/usePropertyDetail";
 
 /**
@@ -559,6 +560,8 @@ export default function PropertyDetailClient() {
                   "جزئیات تکمیلی برای نمایش عمومی در دسترس نیست."}
               </p>
             </div>
+
+            <PropertyEvaluationForm propertyId={property.id} listingStatus={property.listing?.status} />
 
             {/* ==================================================
                 دکمه‌های اقدام

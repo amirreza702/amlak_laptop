@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole, VerificationStatus } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export const ADMIN_PERMISSIONS = [
@@ -17,7 +17,7 @@ const userSelect = {
   adminPermissions: true, createdAt: true, updatedAt: true,
   customer: { select: { id: true, firstName: true, lastName: true } },
   owner: { select: { id: true, firstName: true, lastName: true } },
-  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, address: true, isVerified: true } },
+  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, address: true, verificationStatus: true } },
 } satisfies Prisma.UserSelect;
 
 export async function createInitialSuperAdmin(data: { mobile: string; passwordHash: string }) {
@@ -38,7 +38,11 @@ export async function createInitialSuperAdmin(data: { mobile: string; passwordHa
 }
 
 export async function getAdminUser(userId: string) {
-  return prisma.user.findUnique({ where: { id: userId }, select: userSelect });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: userSelect });
+  return user ? {
+    ...user,
+    agent: user.agent ? { ...user.agent, isVerified: user.agent.verificationStatus === VerificationStatus.VERIFIED } : null,
+  } : null;
 }
 
 export async function listAdminUsers(data: { search?: string; role?: UserRole; isActive?: boolean; page: number; limit: number }) {
@@ -58,7 +62,13 @@ export async function listAdminUsers(data: { search?: string; role?: UserRole; i
     prisma.user.findMany({ where, select: userSelect, orderBy: { createdAt: "desc" }, skip: (data.page - 1) * data.limit, take: data.limit }),
     prisma.user.count({ where }),
   ]);
-  return { items, total };
+  return {
+    items: items.map((user) => ({
+      ...user,
+      agent: user.agent ? { ...user.agent, isVerified: user.agent.verificationStatus === VerificationStatus.VERIFIED } : null,
+    })),
+    total,
+  };
 }
 
 export async function listOwners(data: { search?: string; isActive?: boolean; page: number; limit: number }) {
@@ -86,7 +96,7 @@ export async function getOwner(ownerId: string) {
 export async function listAgents(data: { search?: string; isActive?: boolean; isVerified?: boolean; page: number; limit: number }) {
   const where: Prisma.AgentWhereInput = {};
   if (typeof data.isActive === "boolean") where.user = { is: { isActive: data.isActive } };
-  if (typeof data.isVerified === "boolean") where.isVerified = data.isVerified;
+  if (typeof data.isVerified === "boolean") where.verificationStatus = data.isVerified ? VerificationStatus.VERIFIED : { not: VerificationStatus.VERIFIED };
   if (data.search?.trim()) {
     const q = data.search.trim();
     where.OR = [
@@ -98,11 +108,21 @@ export async function listAgents(data: { search?: string; isActive?: boolean; is
     prisma.agent.findMany({ where, include: { user: { select: { id: true, mobile: true, isActive: true, createdAt: true } }, _count: { select: { propertyAgents: true, evaluations: true } } }, orderBy: { user: { createdAt: "desc" } }, skip: (data.page - 1) * data.limit, take: data.limit }),
     prisma.agent.count({ where }),
   ]);
-  return { items, total };
+  return {
+    items: items.map((agent) => ({ ...agent, isVerified: agent.verificationStatus === VerificationStatus.VERIFIED })),
+    total,
+  };
 }
 
 export async function getAgent(agentId: string) {
-  return prisma.agent.findUnique({ where: { id: agentId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, _count: { select: { propertyAgents: true, evaluations: true, contactAccessLogs: true } } } });
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    include: {
+      user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } },
+      _count: { select: { propertyAgents: true, evaluations: true } },
+    },
+  });
+  return agent ? { ...agent, isVerified: agent.verificationStatus === VerificationStatus.VERIFIED } : null;
 }
 
 async function writeAudit(tx: Prisma.TransactionClient, data: {
@@ -136,11 +156,33 @@ export async function setUserStatus(data: { actorUserId: string; userId: string;
 
 export async function setAgentVerification(data: { actorUserId: string; agentId: string; isVerified: boolean; reason: string }) {
   return prisma.$transaction(async (tx) => {
-    const before = await tx.agent.findUnique({ where: { id: data.agentId }, include: { user: { select: { id: true, mobile: true, isActive: true } } } });
+    const before = await tx.agent.findUnique({
+      where: { id: data.agentId },
+      include: { user: { select: { id: true, mobile: true, isActive: true } } },
+    });
     if (!before) throw new Error("AGENT_NOT_FOUND");
-    const after = await tx.agent.update({ where: { id: data.agentId }, data: { isVerified: data.isVerified }, include: { user: { select: { id: true, mobile: true, isActive: true } } } });
-    await writeAudit(tx, { actorUserId: data.actorUserId, targetUserId: before.userId, targetType: "AGENT", targetId: data.agentId, operation: "SET_AGENT_VERIFICATION", reason: data.reason, before: { isVerified: before.isVerified }, after: { isVerified: after.isVerified } });
-    return after;
+    const nextStatus = data.isVerified ? VerificationStatus.VERIFIED : VerificationStatus.PENDING;
+    const after = await tx.agent.update({
+      where: { id: data.agentId },
+      data: {
+        verificationStatus: nextStatus,
+        verificationReviewedAt: new Date(),
+        verificationReviewedBy: data.actorUserId,
+        verificationNotes: data.reason,
+      },
+      include: { user: { select: { id: true, mobile: true, isActive: true } } },
+    });
+    await writeAudit(tx, {
+      actorUserId: data.actorUserId,
+      targetUserId: before.userId,
+      targetType: "AGENT",
+      targetId: data.agentId,
+      operation: "SET_AGENT_VERIFICATION",
+      reason: data.reason,
+      before: { verificationStatus: before.verificationStatus },
+      after: { verificationStatus: after.verificationStatus },
+    });
+    return { ...after, isVerified: after.verificationStatus === VerificationStatus.VERIFIED };
   });
 }
 

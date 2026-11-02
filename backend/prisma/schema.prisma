@@ -103,23 +103,7 @@ enum PropertyAgentStatus {
 }
 
 // وضعیت درخواست بازدید
-enum ViewingRequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  CANCELLED
-  COMPLETED
-}
-
 // وضعیت گفتگو
-enum ConversationStatus {
-  OPEN
-  IN_PROGRESS
-  VIEWING_SCHEDULED
-  VIEWING_COMPLETED
-  CLOSED
-}
-
 // وضعیت رسانه
 enum MediaType {
   MAIN_IMAGE
@@ -182,6 +166,7 @@ enum EvaluationType {
   OWNER_TO_CUSTOMER
   AGENT_TO_PROPERTY
   HASHTI_TO_AGENT
+  OWNER_TO_PROPERTY
 }
 
 // وضعیت ارزیابی
@@ -218,7 +203,6 @@ model User {
   createdCustomers Customer[] @relation("CustomerCreator")
 
   notifications Notification[]
-  messages      Message[]
   sessions Session[]
 
   // رابطه‌های افزوده‌شده برای ردیابی بررسی مشاوران و رویدادهای مدیریتی.
@@ -264,7 +248,6 @@ model Customer {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdByUser User? @relation("CustomerCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
-  viewingRequests ViewingRequest[]
   evaluations     Evaluation[]
   favorites       CustomerPropertyFavorite[]
 
@@ -382,9 +365,6 @@ model Agent {
   lastName   String
   agencyName String?
   address    String?
-  isVerified Boolean @default(false)
-
-  // وضعیت دقیق بررسی افزوده می‌شود؛ isVerified برای سازگاری قبلی حذف نمی‌شود.
   verificationStatus     VerificationStatus @default(PENDING)
   verificationReviewedAt DateTime?
   verificationReviewedBy String?
@@ -430,23 +410,6 @@ model AgentPrivateNote {
   @@map("agent_private_notes")
 }
 
-
-// ============================================================
-// HASHTI STAFF
-// ============================================================
-
-model HashtiStaff {
-  id        String  @id @default(uuid())
-  firstName String
-  lastName  String
-  mobile    String  @unique
-  isActive  Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("hashti_staff")
-}
 
 // ============================================================
 // PROPERTY
@@ -574,8 +537,6 @@ model Property {
 
   duplicateReviewsAsPrimary   DuplicateReview[] @relation("PrimaryProperty")
   duplicateReviewsAsCandidate DuplicateReview[] @relation("CandidateProperty")
-
-  viewingRequests ViewingRequest[]
 
   virtualTours VirtualTour360[]
 
@@ -939,74 +900,6 @@ model Payment {
 }
 
 // ============================================================
-// VIEWING REQUEST
-// ============================================================
-
-model ViewingRequest {
-  id         String @id @default(uuid())
-  propertyId String
-  customerId String
-
-  proposedAt DateTime
-
-  message String?
-
-  status ViewingRequestStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  conversation Conversation?
-
-  @@index([propertyId, status])
-  @@index([customerId, status])
-  @@map("viewing_requests")
-}
-
-// ============================================================
-// CONVERSATION
-// ============================================================
-
-model Conversation {
-  id               String @id @default(uuid())
-  viewingRequestId String @unique
-
-  status ConversationStatus @default(OPEN)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  viewingRequest ViewingRequest @relation(fields: [viewingRequestId], references: [id], onDelete: Cascade)
-
-  messages Message[]
-
-  @@map("conversations")
-}
-
-// ============================================================
-// MESSAGE
-// ============================================================
-
-model Message {
-  id             String @id @default(uuid())
-  conversationId String
-  senderId       String
-
-  body String
-
-  createdAt DateTime @default(now())
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId, createdAt])
-  @@map("messages")
-}
-
-// ============================================================
 // NOTIFICATION
 // ============================================================
 
@@ -1046,7 +939,7 @@ model Evaluation {
   propertyId String?
 
   // Raw evaluation input
-  score   Int?
+  score   Float?
   comment String?
 
   status EvaluationStatus @default(SUBMITTED)
@@ -1064,6 +957,7 @@ model Evaluation {
   @@index([type])
   @@index([agentId])
   @@index([propertyId])
+  @@unique([evaluatorUserId, propertyId])
   @@map("evaluations")
 }
 

@@ -44,14 +44,6 @@ export interface ManagedAgent {
   user: { id: string; mobile: string; isActive: boolean; createdAt: string };
 }
 
-export interface ContactAccessAuditLog {
-  id: string;
-  accessedAt: string;
-  agent: { id: string; firstName: string; lastName: string; agencyName: string | null; user: { mobile: string } };
-  customer: { id: string; firstName: string; lastName: string; user: { mobile: string } };
-  searchRequest: { id: string; city: string; transactionType: string; propertyType: string; status: string };
-}
-
 export interface AdminAuditLog {
   id: string;
   actorUserId: string | null;

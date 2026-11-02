@@ -30,9 +30,14 @@ export const createEvaluation = async (
     typeof prisma.evaluation.create
   >[0]["data"]
 ) => {
-  return prisma.evaluation.create({
-    data,
-  });
+  try {
+    return await prisma.evaluation.create({ data });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      throw new Error("User has already evaluated this property");
+    }
+    throw error;
+  }
 };
 
 /**
@@ -206,12 +211,11 @@ export const findPropertyById = async (
   propertyId: string
 ) => {
   return prisma.property.findUnique({
-    where: {
-      id: propertyId,
-    },
-
+    where: { id: propertyId },
     select: {
       id: true,
+      confirmUntil: true,
+      listing: { select: { status: true } },
     },
   });
 };

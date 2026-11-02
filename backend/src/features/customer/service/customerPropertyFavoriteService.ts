@@ -87,14 +87,12 @@ export const addPropertyToFavorite = async (
     );
 
   if (existingFavorite) {
-    throw new Error(
-      "Property is already in favorites"
-    );
+    return existingFavorite;
   }
 
   /**
    * ----------------------------------------------------------
-   * 5. ایجاد علاقه‌مندی
+   * 5. ایجاد یا بازیابی علاقه‌مندی یکتا
    * ----------------------------------------------------------
    */
   return createCustomerPropertyFavorite(

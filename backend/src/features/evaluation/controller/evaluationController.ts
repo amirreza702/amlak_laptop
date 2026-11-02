@@ -56,11 +56,19 @@ export async function createEvaluationController(
       error.message ===
         "Property is required for this evaluation" ||
       error.message ===
-        "Score must be an integer between 1 and 5"
+        "Score must be a number between 0 and 5 with up to 2 decimal places"
     ) {
       return res.status(400).json({
         message: error.message,
       });
+    }
+
+    if (error.message === "Property is not currently published") {
+      return res.status(409).json({ message: error.message });
+    }
+
+    if (error.message === "User has already evaluated this property") {
+      return res.status(409).json({ message: error.message });
     }
 
     if (

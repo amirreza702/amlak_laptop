@@ -8,17 +8,13 @@ import { prisma } from "../../../lib/prisma";
  * روابط تماس فقط برای ساخت contact عمومی در Service انتخاب می‌شوند.
  */
 export async function findPublishedPublicPropertyById(id: string) {
-  const now = new Date();
-
   return prisma.property.findFirst({
     where: {
       id,
       isActive: true,
-      confirmUntil: {
-        gte: now,
-      },
+      confirmUntil: true,
       listing: {
-        status: "PUBLISHED",
+        status: { in: ["PUBLISHED", "EXPIRED"] },
       },
     },
     select: {

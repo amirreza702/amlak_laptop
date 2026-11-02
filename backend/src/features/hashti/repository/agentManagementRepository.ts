@@ -9,13 +9,6 @@ export interface AgentManagementQuery {
   offset: number;
 }
 
-export interface ContactAccessLogQuery {
-  agentId?: string;
-  from?: Date;
-  to?: Date;
-  limit: number;
-  offset: number;
-}
 
 /**
  * فهرست مدیریتی مشاوران برای بررسی و تأیید هشتی.
@@ -40,14 +33,13 @@ export async function findManagedAgents(query: AgentManagementQuery) {
       where,
       skip: query.offset,
       take: query.limit,
-      orderBy: [{ isVerified: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
+      orderBy: [{ verificationStatus: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
       select: {
         id: true,
         firstName: true,
         lastName: true,
         agencyName: true,
         address: true,
-        isVerified: true,
         verificationStatus: true,
         verificationReviewedAt: true,
         verificationReviewedBy: true,
@@ -69,7 +61,6 @@ export async function findManagedAgents(query: AgentManagementQuery) {
 
 /**
  * تغییر وضعیت تأیید همراه با ثبت ردپای مدیریتی در یک Transaction.
- * isVerified برای سازگاری با کد قدیمی هم‌زمان حفظ و به‌روزرسانی می‌شود.
  */
 export async function updateAgentVerification(input: {
   agentId: string;
@@ -81,7 +72,7 @@ export async function updateAgentVerification(input: {
   return prisma.$transaction(async (tx) => {
     const existing = await tx.agent.findUnique({
       where: { id: input.agentId },
-      select: { id: true, verificationStatus: true, isVerified: true },
+      select: { id: true, verificationStatus: true },
     });
 
     if (!existing) return null;
@@ -90,7 +81,6 @@ export async function updateAgentVerification(input: {
       where: { id: input.agentId },
       data: {
         verificationStatus: input.verificationStatus,
-        isVerified: input.verificationStatus === VerificationStatus.VERIFIED,
         verificationReviewedAt: new Date(),
         verificationReviewedBy: input.reviewerUserId,
         verificationNotes: input.notes?.trim() || null,
@@ -100,7 +90,6 @@ export async function updateAgentVerification(input: {
         firstName: true,
         lastName: true,
         agencyName: true,
-        isVerified: true,
         verificationStatus: true,
         verificationReviewedAt: true,
         verificationNotes: true,
@@ -120,7 +109,6 @@ export async function updateAgentVerification(input: {
         targetId: input.agentId,
         details: {
           previousStatus: existing.verificationStatus,
-          previousIsVerified: existing.isVerified,
           newStatus: input.verificationStatus,
           notes: input.notes?.trim() || null,
         },
@@ -129,12 +117,4 @@ export async function updateAgentVerification(input: {
 
     return updated;
   });
-}
-
-/**
- * جدول contact_access_logs در مهاجرت 20261031100000 عمداً حذف شده است.
- * این تابع برای حفظ سازگاری پاسخ API باقی می‌ماند و نتیجه خالی برمی‌گرداند.
- */
-export async function findContactAccessLogs(_query: ContactAccessLogQuery) {
-  return { logs: [], total: 0 };
 }

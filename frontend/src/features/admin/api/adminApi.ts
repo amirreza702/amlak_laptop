@@ -72,7 +72,7 @@ export type AdminOwnerDetails = AdminOwner & {
 };
 export type AdminAgentDetails = AdminAgent & {
   address: string | null;
-  _count: { propertyAgents: number; evaluations: number; contactAccessLogs: number };
+  _count: { propertyAgents: number; evaluations: number };
 };
 export const getAdminOwnerDetails = (ownerId: string) =>
   request<{ item: AdminOwnerDetails }>(`/admin/owners/${encodeURIComponent(ownerId)}`);
@@ -94,3 +94,35 @@ export const updateAdminManagedProfile = (
 
 export const setAdminAgentStatus = (agentId: string, isActive: boolean, reason: string) =>
   request<{ item: { id: string; isActive: boolean } }>(`/admin/agents/${encodeURIComponent(agentId)}/status`, { method: "PATCH", body: JSON.stringify({ isActive, reason }) });
+
+
+export interface AdminPropertyMonitoringRecord {
+  id: string;
+  propertyType: string;
+  city: string;
+  district: string;
+  address: string;
+  favoriteCount: number;
+  evaluationCount: number;
+  averageScore: number | null;
+  evaluations: Array<{
+    id: string;
+    type: string;
+    score: number | null;
+    comment: string | null;
+    createdAt: string;
+  }>;
+  favorites: Array<{
+    createdAt: string;
+    customer: {
+      firstName: string;
+      lastName: string;
+      user: { mobile: string };
+    };
+  }>;
+}
+export const getAdminPropertyMonitoring = (filters: { limit?: number; offset?: number } = {}) =>
+  request<{
+    properties: AdminPropertyMonitoringRecord[];
+    pagination: { total: number; limit: number; offset: number };
+  }>(`/admin/property-monitoring?${query(filters)}`);

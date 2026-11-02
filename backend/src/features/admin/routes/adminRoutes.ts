@@ -3,6 +3,8 @@ import { UserRole } from "@prisma/client";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireAdminPermission } from "../middleware/requireAdminPermission";
+import { requireSuperAdmin } from "../../auth/middleware/requireSuperAdmin";
+import { getPropertyMonitoringController } from "../controller/propertyMonitoringController";
 import { getAllAgentPrivateNotesController, upsertAgentPrivateNoteAsAdminController } from "../../agent/controller/agentPrivateNotesController";
 import {
   bootstrapSuperAdminController, listUsersController, userDetailsController, setUserStatusController,
@@ -12,6 +14,9 @@ import {
 } from "../controller/adminController";
 
 const router = Router();
+
+// امتیازها و علاقه‌مندی‌ها داده نظارتی محرمانه و فقط برای مدیر ارشد هستند.
+router.get("/admin/property-monitoring", authMiddleware, requireSuperAdmin, getPropertyMonitoringController);
 
 // راه‌اندازی فقط با secret یک‌باره و فقط تا زمانی که حساب ارشد وجود ندارد.
 router.post("/auth/admin/bootstrap", bootstrapSuperAdminController);

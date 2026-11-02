@@ -74,7 +74,7 @@ const allowedTransitions: Record<
 /**
  * مدت اعتبار تأیید ملک
  */
-const PROPERTY_CONFIRMATION_DAYS = 30;
+const PROPERTY_CONFIRMATION_DAYS = 31;
 
 /**
  * محاسبه تاریخ پایان مهلت تأیید
@@ -211,7 +211,7 @@ export async function updatePropertyListingStatus(
 
       /**
        * انتشار Listing باعث می‌شود
-       * اعتبار Property برای ۳۰ روز تنظیم شود.
+       * اعتبار Property برای ۳۱ روز تنظیم شود.
        */
       if (
         data.status === ListingStatus.PUBLISHED

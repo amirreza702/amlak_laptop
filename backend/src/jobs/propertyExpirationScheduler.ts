@@ -42,6 +42,11 @@ export function startPropertyExpirationScheduler() {
     "[Property Expiration Scheduler] فعال شد."
   );
 
+  // یک اجرای فوری هنگام بالا آمدن Backend؛ سپس بررسی ساعتی.
+  void expirePropertiesJob().catch((error) => {
+    console.error("[Property Expiration Scheduler] خطا در اجرای اولیه:", error);
+  });
+
   /**
    * اجرای دوره‌ای Job
    */

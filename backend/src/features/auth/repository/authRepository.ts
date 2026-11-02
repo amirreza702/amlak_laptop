@@ -264,7 +264,7 @@ export async function listAdminUsers(data: {
             firstName: true,
             lastName: true,
             agencyName: true,
-            isVerified: true,
+            verificationStatus: true,
           },
         },
       },
@@ -272,5 +272,11 @@ export async function listAdminUsers(data: {
     prisma.user.count({ where }),
   ]);
 
-  return { items, total };
+  return {
+    items: items.map((user) => ({
+      ...user,
+      agent: user.agent ? { ...user.agent, isVerified: user.agent.verificationStatus === "VERIFIED" } : null,
+    })),
+    total,
+  };
 }

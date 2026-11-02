@@ -142,6 +142,18 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
     finally { setSavingProperty(false); }
   }
 
+  async function renewListing(propertyId: string) {
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await agentApiRequest("/properties/" + encodeURIComponent(propertyId) + "/renew", { method: "PATCH" });
+      setActionMessage("انتشار ملک برای ۳۱ روز تمدید شد.");
+      await load(pagination.offset);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "تمدید انتشار ملک ناموفق بود.");
+    }
+  }
+
   async function deleteOwnerProperty() {
     if (!deletingPropertyId) return;
     setActionError(null); setActionMessage(null);
@@ -217,7 +229,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     {record.hasAgentRelation && <><p className="mt-1 text-xs text-slate-600">{record.approvedByOwner ? "تأیید مالک دارد" : "در انتظار تأیید مالک"}</p><p className="mt-1 text-xs text-slate-500">ثبت ارتباط: {dateLabel(record.registeredAt)}</p>{record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}</>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
-                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:property.latitudeExact !== null && property.longitudeExact !== null ? {latitude:property.latitudeExact,longitude:property.longitudeExact} : null,transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
+                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{(record.canManage || record.approvedByOwner) && property.listing?.status === "EXPIRED" && <button type="button" onClick={() => void renewListing(property.id)} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">تمدید انتشار ۳۱ روزه</button>}{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:property.latitudeExact !== null && property.longitudeExact !== null ? {latitude:property.latitudeExact,longitude:property.longitudeExact} : null,transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
                 </RecordDetailsRow>
               );
             })}</tbody>

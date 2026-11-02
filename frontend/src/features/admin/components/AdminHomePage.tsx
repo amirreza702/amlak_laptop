@@ -8,8 +8,9 @@ import AdminOwnersPage from "@/features/admin/components/AdminOwnersPage";
 import AdminStaffPage from "@/features/admin/components/AdminStaffPage";
 import AdminUsersPage from "@/features/admin/components/AdminUsersPage";
 import AdminAgentPrivateNotesPage from "@/features/admin/components/AdminAgentPrivateNotesPage";
+import AdminPropertyMonitoringPage from "@/features/admin/components/AdminPropertyMonitoringPage";
 
-type AdminTool = "overview" | "users" | "owners" | "agents" | "staff" | "audit" | "agent-notes";
+type AdminTool = "overview" | "users" | "owners" | "agents" | "staff" | "audit" | "agent-notes" | "property-monitoring";
 
 const tools: { id: AdminTool; title: string; description: string }[] = [
   { id: "overview", title: "نمای کلی", description: "نمایش ابزارهای پنل مدیریت" },
@@ -19,6 +20,7 @@ const tools: { id: AdminTool; title: string; description: string }[] = [
   { id: "staff", title: "کارکنان و دسترسی‌ها", description: "ساخت حساب کارکنان و تنظیم مجوزها" },
   { id: "audit", title: "سوابق مدیریتی", description: "مشاهده تغییرات و جزئیات عملیات مدیریتی" },
   { id: "agent-notes", title: "یادداشت‌های مشاوران", description: "مشاهده یادداشت‌های شخصی همه مشاوران" },
+  { id: "property-monitoring", title: "ارزیابی و علاقه‌مندی املاک", description: "شاخص‌های محرمانه نظارتی و فهرست علاقه‌مندی‌ها؛ فقط مدیر ارشد" },
 ];
 
 export default function AdminHomePage() {
@@ -75,6 +77,7 @@ export default function AdminHomePage() {
             : selectedTool === "agents" ? <AdminAgentsPage />
             : selectedTool === "staff" ? <AdminStaffPage />
             : selectedTool === "agent-notes" ? <AdminAgentPrivateNotesPage />
+            : selectedTool === "property-monitoring" ? <AdminPropertyMonitoringPage />
             : <AdminAuditPage />}
         </section>
       </div>

@@ -36,7 +36,6 @@ export const findAgentProfileByUserId = async (userId: string) => {
       lastName: true,
       agencyName: true,
       address: true,
-      isVerified: true,
       verificationStatus: true,
       verificationReviewedAt: true,
       verificationNotes: true,
@@ -59,7 +58,6 @@ export const findAgentProfileById = async (id: string) => {
       lastName: true,
       agencyName: true,
       address: true,
-      isVerified: true,
       verificationStatus: true,
       verificationReviewedAt: true,
       verificationNotes: true,
@@ -75,7 +73,7 @@ export const findAgentProfileById = async (id: string) => {
 /**
  * ویرایش پروفایل.
  *
- * userId و isVerified از طریق این تابع قابل تغییر نیستند.
+ * userId و وضعیت تأیید از طریق این تابع قابل تغییر نیستند.
  * پاسخ نیز فقط فیلدهای مجاز پروفایل را برمی‌گرداند.
  */
 export const updateAgentProfile = async (
@@ -96,7 +94,6 @@ export const updateAgentProfile = async (
       lastName: true,
       agencyName: true,
       address: true,
-      isVerified: true,
       verificationStatus: true,
       verificationReviewedAt: true,
       verificationNotes: true,

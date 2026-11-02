@@ -344,25 +344,23 @@ export const updateProperty = async (
  * برای پیدا کردن ملک‌های منقضی‌شده استفاده می‌شود.
  */
 export const findExpiredProperties = async (
-  now: Date = new Date()
-): Promise<PropertyWithListing[]> => {
+  now: Date = new Date(),
+  propertyId?: string,
+  force = false
+) => {
   return prisma.property.findMany({
     where: {
-      confirmUntil: {
-        lte: now,
-      },
-
-      listing: {
-        status: "PUBLISHED",
-      },
+      ...(propertyId ? { id: propertyId } : {}),
+      ...(force ? {} : { confirmUntil: { lte: now } }),
+      listing: { status: "PUBLISHED" },
     },
-
     include: {
       listing: true,
+      agents: {
+        where: { status: "ACTIVE", approvedByOwner: true },
+        select: { agent: { select: { userId: true } } },
+      },
     },
-
-    orderBy: {
-      confirmUntil: "asc",
-    },
+    orderBy: { confirmUntil: "asc" },
   });
 };

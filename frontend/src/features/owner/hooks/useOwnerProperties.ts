@@ -88,6 +88,17 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     setReload((value) => value + 1);
   }
 
+  async function renewProperty(propertyId: string) {
+    setActionMessage(null); setActionError(null);
+    try {
+      await ownerApiRequest("/properties/" + encodeURIComponent(propertyId) + "/renew", { method: "PATCH" });
+      setActionMessage("انتشار ملک برای ۳۱ روز تمدید شد.");
+      setReload((value) => value + 1);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "تمدید انتشار ملک ناموفق بود.");
+    }
+  }
+
   async function reactivateProperty(propertyId: string) {
     setActionMessage(null); setActionError(null);
     try {
@@ -137,6 +148,6 @@ export function useOwnerProperties(userMobile: string, mode: "properties" | "age
     cityFilter, setCityFilter, districtFilter, setDistrictFilter, transactionFilter, setTransactionFilter,
     propertyTypeFilter, setPropertyTypeFilter, minPrice, setMinPrice, maxPrice, setMaxPrice,
     minArea, setMinArea, maxArea, setMaxArea, minRooms, setMinRooms, occupancyFilter, setOccupancyFilter,
-    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty, reactivateProperty,
+    listingFilter, setListingFilter, busyAgent, actionMessage, actionError, visibleProperties, updateAgentAccess, saveProperty, deleteProperty, reactivateProperty, renewProperty,
   };
 }

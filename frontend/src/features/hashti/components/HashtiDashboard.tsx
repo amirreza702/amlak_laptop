@@ -48,7 +48,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
   // تا پیش از انتخاب ابزار، فضای اصلی پنل خالی می‌ماند.
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [agentSearch, setAgentSearch] = useState("");
-  const [contactAuditSearch, setContactAuditSearch] = useState("");
   const [candidateSearch, setCandidateSearch] = useState("");
   const [duplicateReviewSearch, setDuplicateReviewSearch] = useState("");
   const [locationAuditSearch, setLocationAuditSearch] = useState("");
@@ -68,13 +67,11 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
     managedAgents, agentsBusy, agentsError, agentsMessage, busyAgentId, loadManagedAgents, reviewAgent,
   } = useHashtiAgentManagement();
   const {
-    auditLogs, auditAgentId, setAuditAgentId, auditFrom, setAuditFrom, auditTo, setAuditTo,
-    auditBusy, auditError, adminAuditAction, setAdminAuditAction, adminAuditTargetId, setAdminAuditTargetId,
-    adminAuditLogs, adminAuditBusy, adminAuditError, loadAdminAuditLogs, loadContactAuditLogs,
+    adminAuditAction, setAdminAuditAction, adminAuditTargetId, setAdminAuditTargetId,
+    adminAuditLogs, adminAuditBusy, adminAuditError, loadAdminAuditLogs,
   } = useHashtiAuditLogs();
 
   const visibleManagedAgents = managedAgents.filter((item) => matchesSearchFields(item, agentSearch));
-  const visibleContactAuditLogs = auditLogs.filter((item) => matchesSearchFields(item, contactAuditSearch));
   const visibleCandidateMatches = candidateMatches.filter((item) => matchesSearchFields(item, candidateSearch));
   const visibleDuplicateReviews = reviews.filter((item) => matchesSearchFields(item, duplicateReviewSearch));
   const visibleLocationAuditLogs = accessLogs.filter((item) => matchesSearchFields(item, locationAuditSearch));
@@ -168,36 +165,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             </table>
           </div>
         )}
-      </section>
-
-      <section id="contact-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-lg font-bold">گزارش دسترسی مشاوران به اطلاعات تماس</h2>
-        <p className="mt-2 text-sm leading-7 text-slate-600">این گزارش، دسترسی‌های ثبت‌شده برای مشاهده شمارهٔ مشتری را نشان می‌دهد؛ گزارش عمومی تمام رویدادهای مدیریتی در مدل فعلی دیتابیس وجود ندارد.</p>
-        <form onSubmit={(event) => void loadContactAuditLogs(event)} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="space-y-1 text-sm">شناسه مشاور (اختیاری)<input value={auditAgentId} onChange={(event) => setAuditAgentId(event.target.value)} dir="ltr" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-          <PersianDatePicker label="از زمان" mode="datetime" value={auditFrom} onChange={setAuditFrom} />
-          <PersianDatePicker label="تا زمان" mode="datetime" value={auditTo} onChange={setAuditTo} />
-          <div className="flex items-end"><button type="submit" disabled={auditBusy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#043873] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{auditBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} دریافت گزارش</button></div>
-        </form>
-        {auditError && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{auditError}</p>}
-        {visibleContactAuditLogs.length > 0 && (
-          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
-            <input value={contactAuditSearch} onChange={(event) => setContactAuditSearch(event.target.value)} aria-label="جست‌وجو در سوابق تماس" placeholder="جست‌وجو در همه اطلاعات نمایش‌داده‌شده..." className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <table className="w-full min-w-[1000px] text-right text-sm">
-              <thead className="bg-slate-100"><tr><th className="p-3">رکورد دسترسی</th><th className="p-3">مشاور</th><th className="p-3">مشتری</th><th className="p-3">درخواست</th><th className="p-3">زمان</th></tr></thead>
-              <tbody>{visibleContactAuditLogs.map((log) => (
-                <RecordDetailsRow key={log.id} record={log} title="رکورد" className="border-t border-slate-200 align-top">
-                  <td className="p-3"><p className="break-all font-mono text-xs" dir="ltr">{idText(log.id)}</p></td>
-                  <td className="p-3"><p className="font-semibold">{log.agent.firstName} {log.agent.lastName}</p><p className="mt-1" dir="ltr">{log.agent.user.mobile}</p></td>
-                  <td className="p-3"><p>{log.customer.firstName} {log.customer.lastName}</p><p className="mt-1" dir="ltr">{log.customer.user.mobile}</p></td>
-                  <td className="p-3">{log.searchRequest.city} · {log.searchRequest.transactionType} · {log.searchRequest.propertyType}</td>
-                  <td className="whitespace-nowrap p-3">{formatPersianDateTime(log.accessedAt)}</td>
-                </RecordDetailsRow>
-              ))}</tbody>
-            </table>
-          </div>
-        )}
-        {!auditBusy && auditLogs.length === 0 && !auditError && <p className="mt-3 text-sm text-slate-500">برای مشاهده، فیلترها را تنظیم و «دریافت گزارش» را انتخاب کنید.</p>}
       </section>
 
       <section id="duplicate-management" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

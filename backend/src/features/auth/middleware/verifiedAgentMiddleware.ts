@@ -33,7 +33,6 @@ export async function requireVerifiedAgent(
       where: { userId: user.id },
       select: {
         id: true,
-        isVerified: true,
         verificationStatus: true,
       },
     });
@@ -45,8 +44,7 @@ export async function requireVerifiedAgent(
       });
     }
 
-    // هر دو فیلد هم‌زمان حفظ شده‌اند؛ Boolean قدیمی نباید وضعیت ردشده را دور بزند.
-    if (!agent.isVerified || agent.verificationStatus !== "VERIFIED") {
+    if (agent.verificationStatus !== "VERIFIED") {
       return res.status(403).json({
         code: "AGENT_NOT_VERIFIED",
         message: "Your agent account must be verified by Hashti before using this feature",

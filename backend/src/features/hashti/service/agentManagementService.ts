@@ -1,9 +1,7 @@
 import {
-  findContactAccessLogs,
   findManagedAgents,
   updateAgentVerification as updateAgentVerificationRepository,
   type AgentManagementQuery,
-  type ContactAccessLogQuery,
 } from "../repository/agentManagementRepository";
 
 export const getManagedAgentsService = async (
@@ -17,7 +15,3 @@ export const setAgentVerificationService = async (input: {
   reviewerMobile: string;
   notes: string | null;
 }) => updateAgentVerificationRepository(input);
-
-export const getHashtiContactAccessLogsService = async (
-  query: ContactAccessLogQuery
-) => findContactAccessLogs(query);

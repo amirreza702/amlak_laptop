@@ -47,6 +47,7 @@ type EvaluationType =
   | "CUSTOMER_TO_OWNER"
   | "OWNER_TO_CUSTOMER"
   | "AGENT_TO_PROPERTY"
+  | "OWNER_TO_PROPERTY"
   | "HASHTI_TO_AGENT";
 
 /**
@@ -105,12 +106,13 @@ export const createEvaluationService = async (
 
   if (
   data.score !== undefined &&
-  (!Number.isInteger(data.score) ||
-    data.score < 1 ||
-    data.score > 5)
+  (!Number.isFinite(data.score) ||
+    data.score < 0 ||
+    data.score > 5 ||
+    Math.round(data.score * 100) !== data.score * 100)
 ) {
   throw new Error(
-    "Score must be an integer between 1 and 5"
+    "Score must be a number between 0 and 5 with up to 2 decimal places"
   );
 }
 
@@ -359,6 +361,35 @@ export const createEvaluationService = async (
 
     /**
      * ========================================================
+     * Owner → Property
+     * ========================================================
+     */
+    case "OWNER_TO_PROPERTY": {
+      if (evaluator.role !== "OWNER") {
+        throw new Error("Evaluator role is not allowed for this evaluation type");
+      }
+      if (!data.propertyId) {
+        throw new Error("Property is required for this evaluation");
+      }
+      const owner = await findOwnerByUserId(data.evaluatorUserId);
+      if (!owner) throw new Error("Evaluator owner not found");
+      const property = await findPropertyById(data.propertyId);
+      if (!property) throw new Error("Evaluation target not found");
+      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
+        throw new Error("Property is not currently published");
+      }
+      return createEvaluation({
+        type: data.type,
+        evaluatorUserId: data.evaluatorUserId,
+        ownerId: owner.id,
+        propertyId: property.id,
+        score: data.score,
+        comment: normalizeComment(data.comment),
+      });
+    }
+
+    /**
+     * ========================================================
      * Customer → Property
      * ========================================================
      */
@@ -396,6 +427,9 @@ export const createEvaluationService = async (
         throw new Error(
           "Evaluation target not found"
         );
+      }
+      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
+        throw new Error("Property is not currently published");
       }
 
       return createEvaluation({
@@ -567,6 +601,9 @@ export const createEvaluationService = async (
         throw new Error(
           "Evaluation target not found"
         );
+      }
+      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
+        throw new Error("Property is not currently published");
       }
 
       return createEvaluation({
