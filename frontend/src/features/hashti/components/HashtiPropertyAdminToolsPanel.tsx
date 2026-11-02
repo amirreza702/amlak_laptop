@@ -5,6 +5,9 @@ import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, Search, TimerReset, UserPlus, ClipboardCheck } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
+import dynamic from "next/dynamic";
+
+const RecordLocationMap = dynamic(() => import("@/shared/components/RecordLocationMap"), { ssr: false });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -319,6 +322,12 @@ export function HashtiPropertyAdminToolsPanel() {
             ["وضعیت سکونت", p.occupancyStatus], ["توضیحات", p.description],
             ["نوع معامله", p.listing?.transactionType],
             ["قیمت فروش (تومان)", p.listing?.salePrice], ["مبلغ رهن (تومان)", p.listing?.depositAmount], ["مبلغ اجاره (تومان)", p.listing?.rentAmount],
+            ...p.owners.flatMap((owner, index) => [
+              [`مالک مرتبط ${index + 1}`, owner.owner.firstName + " " + owner.owner.lastName] as [string, unknown],
+              [`شماره مالک مرتبط ${index + 1}`, owner.owner.user.mobile] as [string, unknown],
+              [`سهم مالک مرتبط ${index + 1}`, owner.share + " دانگ"] as [string, unknown],
+              [`وضعیت تأیید مالک مرتبط ${index + 1}`, owner.verificationStatus] as [string, unknown],
+            ]),
           ].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
           return (
             <div className="space-y-4">
@@ -329,10 +338,11 @@ export function HashtiPropertyAdminToolsPanel() {
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-slate-900">{valueText(value)}</p>
                 </div>)}
               </div>
+              <RecordLocationMap latitude={p.latitudeExact} longitude={p.longitudeExact} label="موقعیت دقیق ملک" />
               <div className="rounded-lg border border-slate-200 p-3">
-                <p className="font-bold text-sm">موقعیت روی نقشه</p>
+                <p className="font-bold text-sm">مختصات موقعیت ملک</p>
                 <p className="mt-1 text-xs text-slate-600" dir="ltr">{p.latitudeExact}, {p.longitudeExact}</p>
-                <a className="mt-2 inline-block text-sm font-semibold text-blue-700 underline" href={"https://www.google.com/maps?q=" + p.latitudeExact + "," + p.longitudeExact} target="_blank" rel="noreferrer">مشاهده موقعیت روی نقشه</a>
+                <a className="mt-2 inline-block text-sm font-semibold text-blue-700 underline" href={"https://www.google.com/maps?q=" + p.latitudeExact + "," + p.longitudeExact} target="_blank" rel="noreferrer">بازکردن در نقشه گوگل</a>
               </div>
               {p.media.length > 0 && <div className="rounded-lg border border-slate-200 p-3">
                 <p className="mb-2 font-bold text-sm">تصاویر ثبت‌شده ({p.media.length})</p>
