@@ -170,19 +170,24 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           },
         },
         agents: {
-          where: { agentId: input.agentId },
+          where: {
+            OR: [
+              { agentId: input.agentId },
+              { status: "ACTIVE", approvedByOwner: true },
+            ],
+          },
           select: {
             agentId: true, status: true, approvedByOwner: true, approvedAt: true,
             registeredAt: true, isFirstRegistrant: true,
+            agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
-          take: 1,
         },
       },
     }),
   ]);
 
   const records = properties.map((property) => {
-    const relation = property.agents[0] ?? null;
+    const relation = property.agents.find((item) => item.agentId === input.agentId) ?? null;
     const hasUsableRelation = relation?.status === "ACTIVE";
     const { agents: _agents, ...propertyData } = property;
     return {
