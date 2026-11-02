@@ -14,8 +14,6 @@ import { addPropertyOwnerController } from "../controller/propertyOwnerControlle
 import { verifyPropertyOwnerController } from "../controller/propertyOwnerVerificationController";
 import { approvePropertyAgentByOwnerController } from "../controller/propertyAgentApprovalController";
 import { revokePropertyAgentController } from "../controller/propertyAgentRevocationController";
-import { createVerificationCaseController, reviewVerificationCaseController } from "../controller/verificationCaseController";
-import { createVerificationDocumentController, getVerificationDocumentsController } from "../controller/verificationDocumentController";
 import { createPropertyMediaController, getPropertyMediaController, getPublicPropertyMediaContentController, getPrivatePropertyMediaContentController, deletePropertyMediaController, reorderPropertyMediaController } from "../controller/propertyMediaController";
 import { createDuplicateReviewController, getDuplicateReviewsController, reviewDuplicateController } from "../controller/duplicateReviewController";
 import { archivePropertyController, getPropertyArchiveController, restorePropertyController } from "../controller/propertyArchiveController";
@@ -32,7 +30,6 @@ import {
   requirePropertyAccess,
   requirePropertyCreator,
   requirePropertyCreatorOrAccess,
-  requireVerificationCaseAccess,
 } from "../../auth/middleware/authorizationMiddleware";
 
 const router = Router();
@@ -137,7 +134,7 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT),
   requireVerifiedAgent,
-  requirePropertyAccess("id", false, true, true),
+  requirePropertyAccess("id", false, true, false),
   renewPropertyListingController
 );
 
@@ -187,34 +184,6 @@ router.post(
   "/properties/:id/media",
   authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
   createPropertyMediaController
-);
-
-// پرونده تأیید و مدارک آن: فقط طرف مرتبط با ملک یا کارکنان هشتی.
-router.post(
-  "/properties/:id/verification",
-  authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent, requirePropertyAccess("id", false),
-  createVerificationCaseController
-);
-router.post(
-  "/verification-cases/:id/documents",
-  authMiddleware,
-  requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
-  requireVerifiedAgent,
-  requireVerificationCaseAccess(),
-  createVerificationDocumentController
-);
-router.get(
-  "/verification-cases/:id/documents",
-  authMiddleware,
-  requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
-  requireVerifiedAgent,
-  requireVerificationCaseAccess(),
-  getVerificationDocumentsController
-);
-router.patch(
-  "/verification-cases/:id/review",
-  authMiddleware, requireRole(UserRole.HASHTI),
-  reviewVerificationCaseController
 );
 
 // بررسی‌های Duplicate و تصمیم نهایی محرمانه و در اختیار هشتی است.

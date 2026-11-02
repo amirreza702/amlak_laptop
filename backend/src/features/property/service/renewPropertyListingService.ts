@@ -8,7 +8,6 @@ export async function renewExpiredPropertyListing(propertyId: string, actor: { i
     where: { id: propertyId },
     select: {
       id: true,
-      createdByUserId: true,
       isActive: true,
       listing: { select: { id: true, status: true } },
       owners: {
@@ -27,7 +26,7 @@ export async function renewExpiredPropertyListing(propertyId: string, actor: { i
   if (!property?.listing) throw new Error("PROPERTY_OR_LISTING_NOT_FOUND");
   const authorized =
     (actor.role === UserRole.OWNER && property.owners.length > 0) ||
-    (actor.role === UserRole.AGENT && (property.createdByUserId === actor.id || property.agents.length > 0));
+    (actor.role === UserRole.AGENT && property.agents.length > 0);
   if (!authorized) throw new Error("PROPERTY_RENEWAL_FORBIDDEN");
   if (!property.isActive) throw new Error("INACTIVE_PROPERTY_CANNOT_BE_RENEWED");
   if (property.listing.status !== ListingStatus.EXPIRED) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");

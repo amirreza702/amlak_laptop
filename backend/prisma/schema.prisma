@@ -533,7 +533,6 @@ model Property {
 
   history PropertyHistory[]
 
-  verificationCases VerificationCase[]
 
   duplicateReviewsAsPrimary   DuplicateReview[] @relation("PrimaryProperty")
   duplicateReviewsAsCandidate DuplicateReview[] @relation("CandidateProperty")
@@ -762,49 +761,6 @@ model PropertyHistory {
 
   @@index([propertyId, createdAt])
   @@map("property_history")
-}
-
-// ============================================================
-// VERIFICATION CASE
-// ============================================================
-
-model VerificationCase {
-  id         String @id @default(uuid())
-  propertyId String
-
-  status VerificationStatus @default(PENDING)
-
-  reviewedBy String?
-  reviewedAt DateTime?
-
-  notes String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  property  Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  documents VerificationDocument[]
-
-  @@index([propertyId, status])
-  @@map("verification_cases")
-}
-
-// ============================================================
-// PRIVATE VERIFICATION DOCUMENT
-// ============================================================
-
-model VerificationDocument {
-  id                 String @id @default(uuid())
-  verificationCaseId String
-
-  documentType String
-  fileUrl      String
-
-  createdAt DateTime @default(now())
-
-  verificationCase VerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
-
-  @@map("verification_documents")
 }
 
 // ============================================================

@@ -70,7 +70,9 @@ export async function getPropertyMediaService(propertyId: string): Promise<Prope
 export async function getPropertyMediaFileService(mediaId: string, propertyId?: string, publicOnly = false) {
   const media = await findPropertyMediaById(mediaId);
   if (!media || !media.isActive || (propertyId && media.propertyId !== propertyId)) throw new Error("تصویر مورد نظر پیدا نشد.");
-  if (publicOnly && media.property.listing?.status !== "PUBLISHED") throw new Error("تصویر هنوز عمومی نشده است.");
+  if (publicOnly && (media.property.listing?.status !== "PUBLISHED" || !media.property.confirmUntil || media.property.confirmUntil <= new Date())) {
+    throw new Error("تصویر هنوز عمومی نیست یا مهلت انتشار ملک به پایان رسیده است.");
+  }
   return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
 }
 

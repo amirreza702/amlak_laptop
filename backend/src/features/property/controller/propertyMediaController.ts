@@ -94,7 +94,7 @@ export async function getPublicPropertyMediaContentController(req: Request<{ med
   try {
     const file = await getPropertyMediaFileService(req.params.mediaId, undefined, true);
     res.setHeader("Content-Type", file.contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+    res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
     res.end(file.bytes);
   } catch {
     res.status(404).json({ message: "تصویر عمومی پیدا نشد." });
