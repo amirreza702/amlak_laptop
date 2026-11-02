@@ -63,12 +63,14 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   const [editingRequesterFirstName, setEditingRequesterFirstName] = useState("");
   const [editingRequesterLastName, setEditingRequesterLastName] = useState("");
   const [editingRequesterMobile, setEditingRequesterMobile] = useState("");
+  const [editingRegistrantName, setEditingRegistrantName] = useState("");
+  const [editingRegistrantMobile, setEditingRegistrantMobile] = useState("");
   const [editingRequestBudget, setEditingRequestBudget] = useState("");
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
   const [recordActionError, setRecordActionError] = useState<string | null>(null);
   const [recordActionMessage, setRecordActionMessage] = useState<string | null>(null);
 
-  const openRequestEditor = (request: { id: string; city: string; transactionType: string; propertyType: string; description: string | null; budget: string | number | null; requesterFirstName?: string | null; requesterLastName?: string | null; requesterMobile?: string | null }) => {
+  const openRequestEditor = (request: { id: string; city: string; transactionType: string; propertyType: string; description: string | null; budget: string | number | null; requesterFirstName?: string | null; requesterLastName?: string | null; requesterMobile?: string | null; registrantFirstName?: string | null; registrantLastName?: string | null; registrantMobile?: string | null }) => {
     setEditingRequestId(request.id);
     setEditingRequestCity(request.city);
     setEditingRequestTransaction(request.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT");
@@ -77,6 +79,8 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
     setEditingRequesterFirstName(request.requesterFirstName ?? "");
     setEditingRequesterLastName(request.requesterLastName ?? "");
     setEditingRequesterMobile(request.requesterMobile ?? "");
+    setEditingRegistrantName([request.registrantFirstName, request.registrantLastName].filter(Boolean).join(" "));
+    setEditingRegistrantMobile(request.registrantMobile ?? "");
     setEditingRequestBudget(request.budget == null ? "" : String(request.budget));
     setRecordActionError(null);
     setRecordActionMessage(null);
@@ -239,12 +243,12 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
             ) : visibleRequests.length === 0 ? (
               <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">درخواستی با این جست‌وجو و فیلتر پیدا نشد.</p>
             ) : (
-              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده و شناسه</th><th className="p-3">اطلاعات تماس</th><th className="p-3">یادداشت خصوصی</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
+              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[1050px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">نیاز ملکی</th><th className="p-3">بودجه / توضیحات</th><th className="p-3">ثبت‌کننده</th><th className="p-3">مشتری</th><th className="p-3">یادداشت خصوصی</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleRequests.map((request) => (
                   <RecordDetailsRow key={request.id} record={request} title="رکورد" className="border-t border-slate-200 align-top">
                     <td className="p-3"><p className="font-bold">{transactionName(request.transactionType)} {propertyName(request.propertyType)} در {request.city}</p></td>
                     <td className="p-3"><p>{displayMoney(request.budget)}</p>{request.description && <p className="mt-2 max-w-sm whitespace-pre-wrap leading-6 text-slate-600">{request.description}</p>}</td>
-                    <td className="p-3"><p>{request.createdByRole === "AGENT" ? (request.isCreatedByMe ? "درخواست ثبت‌شده توسط شما" : "مشاور ثبت‌کننده") : "خود مشتری"}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></td>
-                    <td className="p-3"><div className="min-w-[180px]"><p className="font-bold">{request.contactName}</p>{request.contactMobile ? <a href={`tel:${request.contactMobile}`} dir="ltr" className="mt-1 inline-block text-[#043873] hover:underline">{request.contactMobile}</a> : <p className="mt-1 text-xs text-slate-500">شماره تماس ثبت نشده است.</p>}</div></td>
+                    <td className="p-3"><div className="min-w-[180px]"><p className="text-xs text-slate-500">{request.createdByRole === "AGENT" ? "مشاور ثبت‌کننده" : "مشتری ثبت‌کننده"}</p><p className="mt-1 font-bold">{[request.registrantFirstName, request.registrantLastName].filter(Boolean).join(" ") || (request.createdByRole === "AGENT" ? "مشاور ثبت‌کننده" : request.contactName || "مشتری")}</p>{request.registrantMobile && <a href={`tel:${request.registrantMobile}`} dir="ltr" className="mt-1 inline-block text-[#043873] hover:underline">{request.registrantMobile}</a>}<p className="mt-2 break-all font-mono text-xs text-slate-500" dir="ltr">{request.id}</p></div></td>
+                    <td className="p-3"><div className="min-w-[180px]">{request.createdByRole === "AGENT" && !request.isCreatedByMe ? <p className="text-xs leading-6 text-slate-500">مشخصات مشتری فقط برای مشاور ثبت‌کننده قابل مشاهده است.</p> : request.createdByRole === "CUSTOMER" ? <p className="text-xs leading-6 text-slate-500">مشتری همان ثبت‌کننده درخواست است.</p> : <><p className="font-bold">{[request.requesterFirstName, request.requesterLastName].filter(Boolean).join(" ") || request.contactName || "مشتری"}</p>{request.requesterMobile && <a href={`tel:${request.requesterMobile}`} dir="ltr" className="mt-1 inline-block text-[#043873] hover:underline">{request.requesterMobile}</a>}</>}</div></td>
                     <td className="p-3">{request.isCreatedByMe ? <AgentPrivateNoteEditor entityType="request" entityId={request.id} notes={privateNotes} saving={savingNoteKey === `request:${request.id}`} onSave={saveNote} /> : request.customerId ? <AgentPrivateNoteEditor entityType="customer" entityId={request.customerId} notes={privateNotes} saving={savingNoteKey === `customer:${request.customerId}`} onSave={saveNote} /> : <p className="max-w-[220px] text-xs leading-6 text-slate-500">این درخواست به حساب مشتری ثبت‌شده متصل نیست.</p>}</td>
                     <td className="p-3"><div className="flex flex-col items-start gap-2">{request.isCreatedByMe && <><button type="button" onClick={() => openRequestEditor(request)} className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">ویرایش درخواست من</button><button type="button" onClick={() => { setDeletingRequestId(request.id); setRecordActionError(null); }} className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">حذف درخواست من</button></>}</div></td>
                   </RecordDetailsRow>
@@ -266,6 +270,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       {recordActionMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{recordActionMessage}</p>}
       <Modal open={Boolean(editingRequestId)} title="ویرایش درخواست مشتری" description="اطلاعات درخواست را اصلاح کنید." onClose={() => setEditingRequestId(null)}>
         <form onSubmit={saveRequestEdit} className="space-y-4">
+          <section className="rounded-lg border border-slate-200 bg-slate-50 p-3"><p className="text-xs text-slate-500">مشاور ثبت‌کننده درخواست</p><p className="mt-1 font-bold">{editingRegistrantName || "مشاور ثبت‌کننده"}</p>{editingRegistrantMobile && <p dir="ltr" className="mt-1 text-sm text-slate-600">{editingRegistrantMobile}</p>}</section>
           <label className="block space-y-1.5 text-sm font-semibold">نام مشتری<input maxLength={80} value={editingRequesterFirstName} onChange={(event) => setEditingRequesterFirstName(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
           <label className="block space-y-1.5 text-sm font-semibold">نام خانوادگی مشتری *<input required maxLength={100} value={editingRequesterLastName} onChange={(event) => setEditingRequesterLastName(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
           <label className="block space-y-1.5 text-sm font-semibold">شماره تماس مشتری *<input required type="tel" inputMode="tel" value={editingRequesterMobile} onChange={(event) => setEditingRequesterMobile(event.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
