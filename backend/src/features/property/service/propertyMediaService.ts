@@ -11,6 +11,7 @@ import {
   updatePropertyMediaOrder,
 } from "../repository/propertyMediaRepository";
 import { findPropertyById } from "../repository/propertyRepository";
+import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
 const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
@@ -50,7 +51,9 @@ export async function createPropertyMediaService(data: {
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, bytes, { flag: "wx", mode: 0o640 });
   try {
-    return await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
+    const media = await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
+    await queuePropertyListingForHashtiReview(data.propertyId);
+    return media;
   } catch (error) {
     await unlink(destination).catch(() => undefined);
     throw error;
@@ -74,6 +77,7 @@ export async function deletePropertyMediaService(propertyId: string, mediaId: st
   const media = await findPropertyMediaById(mediaId);
   if (!media || media.propertyId !== propertyId || !media.isActive) throw new Error("تصویر مورد نظر پیدا نشد.");
   await deactivatePropertyMedia(mediaId, propertyId);
+  await queuePropertyListingForHashtiReview(propertyId);
   await unlink(storedFilePath(mediaId)).catch(() => undefined);
 }
 
@@ -85,5 +89,6 @@ export async function reorderPropertyMediaService(propertyId: string, orderedIds
     throw new Error("ترتیب تصاویر باید شامل تمام تصاویر فعال همین ملک باشد.");
   }
   await updatePropertyMediaOrder(propertyId, orderedIds);
+  await queuePropertyListingForHashtiReview(propertyId);
   return findPropertyMedia(propertyId);
 }
