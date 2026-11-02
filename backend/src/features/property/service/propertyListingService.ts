@@ -200,6 +200,7 @@ export async function createPropertyListingWithInitialPrice(
           propertyType: true,
           city: true,
           district: true,
+          address: true,
           createdByRole: true,
           createdByUser: {
             select: {
@@ -223,13 +224,13 @@ export async function createPropertyListingWithInitialPrice(
             data: recipients.map((recipient) => ({
               userId: recipient.id,
               title: "ملک جدید در انتظار تأیید انتشار",
-              message: `${actorName} با شماره ${actor.mobile} یک ملک جدید در ${property.city}، ${property.district} ثبت کرده است؛ لطفاً اطلاعات و انتشار آن را بررسی کنید.`,
+              message: `${actorName} با شماره ${actor.mobile} یک ملک جدید در ${property.city}، ${property.district}، ${property.address} ثبت کرده است؛ لطفاً اطلاعات و انتشار آن را بررسی کنید.`,
               details: {
                 actorName,
                 actorMobile: actor.mobile,
                 actorRole: property.createdByRole ?? "UNKNOWN",
                 action: "ثبت ملک برای بررسی و تأیید انتشار",
-                subject: `${property.propertyType} در ${property.city}، ${property.district}`,
+                subject: `${property.propertyType} در ${property.city}، ${property.district}، ${property.address}`,
                 subjectType: "ملک",
                 occurredAt: new Date().toISOString(),
               },
