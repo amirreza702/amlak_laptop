@@ -137,7 +137,8 @@ export function requirePropertyAccess(paramName = "id", requireVerifiedOwner = t
 
       const allowed = Boolean(
         property &&
-        ((user.role === "OWNER" && property.owners.length > 0) ||
+        (property.createdByUserId === user.id ||
+         (user.role === "OWNER" && property.owners.length > 0) ||
          (user.role === "AGENT" && (
            property.agents.length > 0 ||
            (allowAgentCreator && property.registrationSource === "AGENT" && property.createdByUserId === user.id)
@@ -150,6 +151,36 @@ export function requirePropertyAccess(paramName = "id", requireVerifiedOwner = t
       return next();
     } catch (error) {
       console.error("Property authorization failed:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+}
+
+/**
+ * ویرایش و مدیریت رسانه فقط برای ایجادکننده ملک و کارکنان هشتی مجاز است.
+ * تأیید همکاری مشاور با مالک، مجوز ویرایش ملک ایجاد نمی‌کند.
+ */
+export function requirePropertyCreator(paramName = "id") {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = currentUser(req, res);
+    if (!user) return;
+    if (user.role === "HASHTI") return next();
+
+    const propertyId = req.params[paramName];
+    if (typeof propertyId !== "string" || !propertyId.trim()) {
+      return res.status(400).json({ message: "Invalid property ID" });
+    }
+    try {
+      const property = await prisma.property.findUnique({
+        where: { id: propertyId },
+        select: { createdByUserId: true },
+      });
+      if (!property || property.createdByUserId !== user.id) {
+        return res.status(403).json({ message: "Only the property creator can edit or delete this property" });
+      }
+      return next();
+    } catch (error) {
+      console.error("Property creator authorization failed:", error);
       return res.status(500).json({ message: "Internal server error" });
     }
   };
@@ -231,7 +262,7 @@ export function requireOwnSearchRequest() {
         where: {
           id: requestId,
           customerId,
-          customer: { is: { userId: user.id } },
+          createdByUserId: user.id,
         },
         select: { id: true },
       });
