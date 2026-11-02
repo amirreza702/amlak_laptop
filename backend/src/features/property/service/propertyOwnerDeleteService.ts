@@ -11,8 +11,8 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
     where: { id: propertyId },
     select: { id: true, isActive: true, createdByUserId: true },
   });
-  if (!property || property.createdByUserId !== userId) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  if (property.createdByUserId !== userId) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
   if (!property.isActive) throw new Error("PROPERTY_ALREADY_DELETED");
 
   return prisma.$transaction(async (tx) => {
