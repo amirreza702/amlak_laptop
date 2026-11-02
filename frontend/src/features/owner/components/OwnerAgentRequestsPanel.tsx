@@ -29,6 +29,7 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [pendingCloseRequestId, setPendingCloseRequestId] = useState<string | null>(null);
+  const [pendingAgentRevocation, setPendingAgentRevocation] = useState<{ propertyId: string; agentId: string; agentName: string } | null>(null);
   const [agentSelectionModalOpen, setAgentSelectionModalOpen] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
   const [modalError, setModalError] = useState<string | null>(null);
@@ -186,7 +187,7 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
                       <td className="p-3">{approved ? <span className="font-bold text-emerald-700">تأییدشده</span> : relation?.status === "REVOKED" ? <span className="font-semibold text-red-700">لغوشده</span> : request.status !== "ACTIVE" ? <span className="text-slate-500">درخواست همکاری بسته شده</span> : <span className="text-amber-700">در انتظار تأیید مالک</span>}</td>
                       <td className="p-3">
                         {approved ? (
-                          <button type="button" disabled={busy} onClick={() => void setAgentApproval(request.propertyId, agent.id, "revoke")} className="whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busy ? "در حال ثبت..." : "لغو همکاری"}</button>
+                          <button type="button" disabled={busy} onClick={() => setPendingAgentRevocation({ propertyId: request.propertyId, agentId: agent.id, agentName: agent.firstName + " " + agent.lastName })} className="whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">{busy ? "در حال ثبت..." : "لغو همکاری"}</button>
                         ) : (
                           <button type="button" disabled={busy || !canApprove} onClick={() => void setAgentApproval(request.propertyId, agent.id, "approval")} className="whitespace-nowrap rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{busy ? "در حال ثبت..." : "تأیید همکاری"}</button>
                         )}
@@ -205,6 +206,12 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
     </Modal>
     <Modal open={Boolean(pendingCloseRequestId)} title="بستن درخواست همکاری" description="پس از بستن، درخواست برای مشاوران جدید قابل پاسخ‌گویی نخواهد بود." onClose={() => { if (!busy) setPendingCloseRequestId(null); }}>
       <div className="flex justify-end gap-2" dir="rtl"><button type="button" disabled={busy} onClick={() => setPendingCloseRequestId(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={busy} onClick={() => { if (pendingCloseRequestId) { const id = pendingCloseRequestId; setPendingCloseRequestId(null); void closeRequest(id); } }} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">بستن درخواست</button></div>
+    </Modal>
+    <Modal open={Boolean(pendingAgentRevocation)} title="تأیید لغو همکاری مشاور" description={pendingAgentRevocation ? `آیا از لغو همکاری مشاور ${pendingAgentRevocation.agentName} با این ملک مطمئن هستید؟` : undefined} onClose={() => { if (!busy) setPendingAgentRevocation(null); }}>
+      <div className="flex justify-end gap-2" dir="rtl">
+        <button type="button" disabled={busy} onClick={() => setPendingAgentRevocation(null)} className="rounded-lg border px-4 py-2.5">انصراف</button>
+        <button type="button" disabled={busy} onClick={() => { if (pendingAgentRevocation) { const pending = pendingAgentRevocation; setPendingAgentRevocation(null); void setAgentApproval(pending.propertyId, pending.agentId, "revoke"); } }} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">{busy ? "در حال لغو..." : "تأیید لغو همکاری"}</button>
+      </div>
     </Modal>
   </section>;
 }
