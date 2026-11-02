@@ -32,6 +32,7 @@ export interface OwnerProperty {
       agentId: string;
       status: string;
       approvedByOwner: boolean;
+      isFirstRegistrant: boolean;
       agent: { firstName: string; lastName: string; agencyName: string | null; user: { mobile: string } };
     }>;
   };
