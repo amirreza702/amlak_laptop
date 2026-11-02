@@ -78,7 +78,7 @@ export function CustomerDashboard() {
   const [favoritesSearch, setFavoritesSearch] = useState("");
   const [notificationsSearch, setNotificationsSearch] = useState("");
   const {
-    user, profile, setProfile, requests, favorites, notifications,
+    user, profile, setProfile, requests, favorites, notifications, setNotifications,
     loading, pageError, actionMessage, setActionMessage,
     actionError, setActionError, busyId, setBusyId, editingId, setEditingId,
     editValues, setEditValues, firstName, setFirstName, lastName, setLastName, refreshData,
@@ -100,6 +100,17 @@ export function CustomerDashboard() {
   const unreadCount = useMemo(() => notifications.filter((notification) => !notification.isRead).length, [notifications]);
   const visibleFavorites = useMemo(() => favorites.filter((item) => JSON.stringify(item).toLocaleLowerCase().includes(favoritesSearch.trim().toLocaleLowerCase())), [favorites, favoritesSearch]);
   const visibleNotifications = useMemo(() => notifications.filter((item) => JSON.stringify(item).toLocaleLowerCase().includes(notificationsSearch.trim().toLocaleLowerCase())), [notifications, notificationsSearch]);
+
+  const markNotificationRead = async (notificationId: string) => {
+    const current = notifications.find((item) => item.id === notificationId);
+    if (!current || current.isRead) return;
+    try {
+      const updated = await markUserNotificationAsRead(notificationId);
+      setNotifications((items) => items.map((item) => item.id === notificationId ? updated : item));
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "خوانده‌شدن اعلان ثبت نشد.");
+    }
+  };
 
   const runAction = async (id: string, action: () => Promise<void>): Promise<boolean> => {
     setBusyId(id);
@@ -170,7 +181,7 @@ export function CustomerDashboard() {
       <aside aria-label="ابزارهای پنل مشتری" className="h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
-          {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span></button>; })}
+          {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span>{item.id === "notifications" && item.count > 0 && <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{item.count.toLocaleString("fa-IR")}</span>}</button>; })}
         </nav>
       </aside>
       <div className="min-w-0 space-y-5">
@@ -259,7 +270,7 @@ export function CustomerDashboard() {
             )}
 
             {tab === "notifications" && (
-              <div className="space-y-3"><input value={notificationsSearch} onChange={(event) => setNotificationsSearch(event.target.value)} aria-label="جست‌وجو در اعلان‌ها" placeholder="جست‌وجو در عنوان، پیام، زمان و وضعیت اعلان..." className={inputClass} /><div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">{notifications.length === 0 ? <div className="p-6"><EmptyState text="در حال حاضر اعلانی برای نمایش وجود ندارد." /></div> : <table className="w-full min-w-[850px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">عنوان</th><th className="p-3">پیام</th><th className="p-3">زمان</th><th className="p-3">وضعیت</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleNotifications.map((notification) => <RecordDetailsRow key={notification.id} record={notification} title="رکورد" className={`border-t border-slate-200 align-top ${notification.isRead ? "" : "bg-blue-50/30"}`}><td className="p-3 font-semibold">{notification.title}</td><td className="max-w-lg whitespace-pre-wrap p-3 leading-6 text-slate-600">{notification.message}</td><td className="whitespace-nowrap p-3">{prettyDate(notification.createdAt)}</td><td className="p-3">{notification.isRead ? "خوانده‌شده" : "خوانده‌نشده"}</td><td className="p-3">{!notification.isRead && <button type="button" disabled={busyId === notification.id} onClick={() => void runAction(notification.id, async () => { await markUserNotificationAsRead(notification.id); setActionMessage("اعلان خوانده‌شده علامت خورد."); })} className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"><Check className="h-4 w-4" /> خوانده شد</button>}</td></RecordDetailsRow>)}</tbody></table>}</div></div>
+              <div className="space-y-3"><input value={notificationsSearch} onChange={(event) => setNotificationsSearch(event.target.value)} aria-label="جست‌وجو در اعلان‌ها" placeholder="جست‌وجو در عنوان، پیام، زمان و وضعیت اعلان..." className={inputClass} /><div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">{notifications.length === 0 ? <div className="p-6"><EmptyState text="در حال حاضر اعلانی برای نمایش وجود ندارد." /></div> : <table className="w-full min-w-[850px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">عنوان</th><th className="p-3">پیام</th><th className="p-3">زمان</th><th className="p-3">وضعیت</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleNotifications.map((notification) => <RecordDetailsRow key={notification.id} record={notification} title="اعلان" onOpen={() => { void markNotificationRead(notification.id); }} className={`border-t border-slate-200 align-top ${notification.isRead ? "" : "bg-blue-50/30"}`}><td className="p-3 font-semibold">{notification.title}</td><td className="max-w-lg whitespace-pre-wrap p-3 leading-6 text-slate-600">{notification.message}</td><td className="whitespace-nowrap p-3">{prettyDate(notification.createdAt)}</td><td className="p-3">{notification.isRead ? "خوانده‌شده" : "خوانده‌نشده"}</td><td className="p-3">{!notification.isRead && <button type="button" disabled={busyId === notification.id} onClick={() => void runAction(notification.id, async () => { await markUserNotificationAsRead(notification.id); setActionMessage("اعلان خوانده‌شده علامت خورد."); })} className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"><Check className="h-4 w-4" /> خوانده شد</button>}</td></RecordDetailsRow>)}</tbody></table>}</div></div>
             )}
 
             {tab === "profile" && profile && (
