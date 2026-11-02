@@ -50,6 +50,7 @@ import type { UpdatePropertyPriceInput } from "../types/updatePropertyPrice";
 import { prisma } from "../../../lib/prisma";
 
 import { createPropertyHistory } from "../repository/propertyHistoryRepository";
+import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 /**
  * ============================================================
@@ -261,6 +262,7 @@ export async function updatePropertyPrice(
       tx
     );
 
+    await queuePropertyListingForHashtiReview(propertyId, tx);
 
     /**
      * ------------------------------------------------------
