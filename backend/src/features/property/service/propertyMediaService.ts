@@ -50,14 +50,15 @@ export async function createPropertyMediaService(data: {
   const destination = storedFilePath(id);
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, bytes, { flag: "wx", mode: 0o640 });
+  let media: PropertyMedia;
   try {
-    const media = await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
-    await queuePropertyListingForHashtiReview(data.propertyId);
-    return media;
+    media = await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
   } catch (error) {
     await unlink(destination).catch(() => undefined);
     throw error;
   }
+  await queuePropertyListingForHashtiReview(data.propertyId);
+  return media;
 }
 
 export async function getPropertyMediaService(propertyId: string): Promise<PropertyMedia[]> {
