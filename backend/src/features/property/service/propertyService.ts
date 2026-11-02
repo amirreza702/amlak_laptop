@@ -26,7 +26,6 @@
  */
 
 import {
-  ListingStatus,
   PropertyHistoryAction,
   RegistrationSource,
 } from "@prisma/client";
@@ -56,7 +55,7 @@ import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 import type { UpdatePropertyInput } from "../types/updateProperty";
 
 import { prisma } from "../../../lib/prisma";
-import { findPropertyListingByPropertyId, updatePropertyListing } from "../repository/propertyListingRepository";
+import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 /**
  * ============================================================
@@ -438,27 +437,8 @@ export async function updatePropertyService(
       tx
     );
 
-    // هر ویرایش اطلاعات ملک، انتشار قبلی را تا بررسی مجدد هشتی متوقف می‌کند.
-    // وضعیت مالکیت و ارتباط مشاور مستقل می‌ماند و دست‌کاری نمی‌شود.
-    const existingListing = await findPropertyListingByPropertyId(propertyId, tx);
-    if (existingListing && existingListing.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
-      await updatePropertyListing(
-        existingListing.id,
-        { status: ListingStatus.PENDING_HASHTI_VERIFICATION },
-        tx
-      );
-      await createPropertyHistory(
-        {
-          propertyId,
-          action: PropertyHistoryAction.LISTING_CHANGED,
-          field: "listing.status",
-          oldValue: existingListing.status,
-          newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
-          reason: "ویرایش ملک؛ نیازمند بررسی مجدد هشتی پیش از انتشار",
-        },
-        tx
-      );
-    }
+    // انتشار قبلی تا بررسی مجدد هشتی متوقف می‌شود؛ تأیید مالک/مشاور مستقل باقی می‌ماند.
+    await queuePropertyListingForHashtiReview(propertyId, tx);
 
     /**
      * ----------------------------------------------------------
