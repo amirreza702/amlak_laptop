@@ -8,6 +8,15 @@ export interface UserNotification {
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+  details?: {
+    actorName?: string | null;
+    actorMobile?: string | null;
+    actorRole?: string | null;
+    action?: string | null;
+    subject?: string | null;
+    subjectType?: string | null;
+    occurredAt?: string | null;
+  } | null;
 }
 
 async function readError(response: Response, fallback: string): Promise<string> {
