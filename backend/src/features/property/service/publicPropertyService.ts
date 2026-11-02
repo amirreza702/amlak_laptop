@@ -40,7 +40,9 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     : null;
   const primaryOwnerRelation = owners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
-  const verifiedPrimaryOwner = owners.find((relation) => relation.verificationStatus === "VERIFIED")?.owner ?? null;
+  const verifiedPrimaryOwner = primaryOwnerRelation?.verificationStatus === "VERIFIED"
+    ? primaryOwnerRelation.owner
+    : null;
   const viewerOwnerRelation = viewer?.role === "OWNER"
     ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
