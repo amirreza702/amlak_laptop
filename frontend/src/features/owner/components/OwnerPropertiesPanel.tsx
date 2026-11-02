@@ -59,7 +59,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
         : !error && visibleProperties.length === 0 ? <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{properties.length === 0 ? "هنوز ملکی به این پروفایل مالک متصل نشده است." : "موردی با این جست‌وجو و فیلتر پیدا نشد."}</p>
         : <div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[980px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">مالکیت / آگهی</th><th className="p-3">مشاوران مرتبط</th></tr></thead><tbody>{visibleProperties.map((item) => {
           const visibleAgents = item.property.registrationSource === "AGENT"
-            ? item.property.agents.filter((relation) => relation.isFirstRegistrant)
+            ? item.property.agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
             : item.property.agents;
           return (
           <RecordDetailsRow key={item.propertyId} record={item.property} title="رکورد" className="border-t border-slate-200 align-top">
@@ -68,7 +68,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
             <td className="p-3"><p>{({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.verificationStatus]}</p><p className="mt-1">{item.share.toLocaleString("fa-IR")} دانگ</p></td>
             <td className="p-3"><div className="space-y-3">{visibleAgents.length ? visibleAgents.map((relation) => (
               <div key={relation.agentId} className="rounded-lg bg-slate-50 p-3">
-                <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.status === "ACTIVE" && relation.approvedByOwner ? "مشاور تأییدشده" : "مشاور تأییدنشده"}</p>{(item.property.registrationSource === "AGENT" ? relation.isFirstRegistrant : relation.status === "ACTIVE" && relation.approvedByOwner) && <p dir="ltr" className="mt-1 text-xs font-semibold text-slate-700">{relation.agent.user.mobile}</p>}<p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
+                <p className="font-semibold">{relation.agent.firstName} {relation.agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{relation.agent.agencyName || "بدون نام آژانس"} · {relation.status} · {relation.status === "ACTIVE" && relation.approvedByOwner ? "مشاور تأییدشده" : "مشاور تأییدنشده"}</p>{(item.property.registrationSource === "AGENT" ? relation.isFirstRegistrant && relation.status === "ACTIVE" : relation.status === "ACTIVE" && relation.approvedByOwner) && <p dir="ltr" className="mt-1 text-xs font-semibold text-slate-700">{relation.agent.user.mobile}</p>}<p dir="ltr" className="mt-1 break-all text-xs text-slate-500">{relation.agentId}</p>
                 
               </div>
             )) : <span className="text-slate-500">مشاوری متصل نیست.</span>}</div></td>
