@@ -306,27 +306,28 @@ export function HashtiPropertyAdminToolsPanel() {
             if (typeof value === "string") return enumLabels[value] ?? value;
             return String(value ?? "");
           };
+          const reviewRow = (label: string, value: unknown): [string, unknown] => [label, value];
           const rows: [string, unknown][] = [
-            ["نوع ملک", p.propertyType], ["منبع ثبت", p.registrationSource],
-            ["نام مالک", p.ownerFirstName], ["نام خانوادگی مالک", p.ownerLastName], ["شماره همراه مالک", p.ownerMobile],
-            ["شهر / روستا", p.city], ["محله / منطقه", p.district], ["نشانی", p.address], ["کد پستی", p.postalCode],
-            ["عرض جغرافیایی دقیق", p.latitudeExact], ["طول جغرافیایی دقیق", p.longitudeExact],
-            ["عرض جغرافیایی عمومی", p.latitudePublic], ["طول جغرافیایی عمومی", p.longitudePublic],
-            ["متراژ (مترمربع)", p.area], ["تعداد اتاق", p.rooms], ["طبقه", p.floor], ["سال ساخت", p.yearBuilt],
-            ["شماره واحد", p.unitNumber], ["تعداد کل واحدها", p.totalUnits],
-            ["تعداد پارکینگ", p.parkingCount], ["نوع پارکینگ", p.parkingType], ["شماره پارکینگ", p.parkingNumber],
-            ["آسانسور", p.hasElevator], ["انباری", p.hasStorage], ["بالکن", p.hasBalcony], ["حیاط", p.hasYard],
-            ["سیستم گرمایش", p.heatingSystem], ["سیستم سرمایش", p.coolingSystem],
-            ["نوع سند", p.documentType], ["نوع مالکیت", p.ownershipType], ["وضعیت عرصه", p.landTenure],
-            ["وضعیت بازسازی", p.renovationStatus], ["سال بازسازی", p.renovationYear],
-            ["وضعیت سکونت", p.occupancyStatus], ["توضیحات", p.description],
-            ["نوع معامله", p.listing?.transactionType],
-            ["قیمت فروش (تومان)", p.listing?.salePrice], ["مبلغ رهن (تومان)", p.listing?.depositAmount], ["مبلغ اجاره (تومان)", p.listing?.rentAmount],
+            reviewRow("نوع ملک", p.propertyType), reviewRow("منبع ثبت", p.registrationSource),
+            reviewRow("نام مالک", p.ownerFirstName), reviewRow("نام خانوادگی مالک", p.ownerLastName), reviewRow("شماره همراه مالک", p.ownerMobile),
+            reviewRow("شهر / روستا", p.city), reviewRow("محله / منطقه", p.district), reviewRow("نشانی", p.address), reviewRow("کد پستی", p.postalCode),
+            reviewRow("عرض جغرافیایی دقیق", p.latitudeExact), reviewRow("طول جغرافیایی دقیق", p.longitudeExact),
+            reviewRow("عرض جغرافیایی عمومی", p.latitudePublic), reviewRow("طول جغرافیایی عمومی", p.longitudePublic),
+            reviewRow("متراژ (مترمربع)", p.area), reviewRow("تعداد اتاق", p.rooms), reviewRow("طبقه", p.floor), reviewRow("سال ساخت", p.yearBuilt),
+            reviewRow("شماره واحد", p.unitNumber), reviewRow("تعداد کل واحدها", p.totalUnits),
+            reviewRow("تعداد پارکینگ", p.parkingCount), reviewRow("نوع پارکینگ", p.parkingType), reviewRow("شماره پارکینگ", p.parkingNumber),
+            reviewRow("آسانسور", p.hasElevator), reviewRow("انباری", p.hasStorage), reviewRow("بالکن", p.hasBalcony), reviewRow("حیاط", p.hasYard),
+            reviewRow("سیستم گرمایش", p.heatingSystem), reviewRow("سیستم سرمایش", p.coolingSystem),
+            reviewRow("نوع سند", p.documentType), reviewRow("نوع مالکیت", p.ownershipType), reviewRow("وضعیت عرصه", p.landTenure),
+            reviewRow("وضعیت بازسازی", p.renovationStatus), reviewRow("سال بازسازی", p.renovationYear),
+            reviewRow("وضعیت سکونت", p.occupancyStatus), reviewRow("توضیحات", p.description),
+            reviewRow("نوع معامله", p.listing?.transactionType),
+            reviewRow("قیمت فروش (تومان)", p.listing?.salePrice), reviewRow("مبلغ رهن (تومان)", p.listing?.depositAmount), reviewRow("مبلغ اجاره (تومان)", p.listing?.rentAmount),
             ...p.owners.flatMap((owner, index) => [
-              [`مالک مرتبط ${index + 1}`, owner.owner.firstName + " " + owner.owner.lastName] as [string, unknown],
-              [`شماره مالک مرتبط ${index + 1}`, owner.owner.user.mobile] as [string, unknown],
-              [`سهم مالک مرتبط ${index + 1}`, owner.share + " دانگ"] as [string, unknown],
-              [`وضعیت تأیید مالک مرتبط ${index + 1}`, owner.verificationStatus] as [string, unknown],
+              reviewRow(`مالک مرتبط ${index + 1}`, owner.owner.firstName + " " + owner.owner.lastName),
+              reviewRow(`شماره مالک مرتبط ${index + 1}`, owner.owner.user.mobile),
+              reviewRow(`سهم مالک مرتبط ${index + 1}`, owner.share + " دانگ"),
+              reviewRow(`وضعیت تأیید مالک مرتبط ${index + 1}`, owner.verificationStatus),
             ]),
           ].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
           return (
