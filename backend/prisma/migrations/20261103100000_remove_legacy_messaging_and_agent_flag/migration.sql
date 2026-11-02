@@ -34,14 +34,18 @@ ON "evaluations"("evaluatorUserId", "propertyId");
 
 
 -- Backfill the original publication timestamp for legacy published rows.
-UPDATE "property_listings"
-SET "publishedAt" = "createdAt"
-WHERE "status" = 'PUBLISHED' AND "publishedAt" IS NULL;
+-- PropertyListing has no createdAt column; the parent Property does.
+UPDATE "property_listings" AS listing
+SET "publishedAt" = property."createdAt"
+FROM "properties" AS property
+WHERE listing."propertyId" = property."id"
+  AND listing."status" = 'PUBLISHED'
+  AND listing."publishedAt" IS NULL;
 
 -- Normalize existing published listings to the single 31-day publication window.
 -- This also backfills legacy rows whose confirmUntil was never populated.
 UPDATE "properties" AS property
-SET "confirmUntil" = COALESCE(listing."publishedAt", listing."createdAt") + INTERVAL '31 days'
+SET "confirmUntil" = COALESCE(listing."publishedAt", property."createdAt") + INTERVAL '31 days'
 FROM "property_listings" AS listing
 WHERE listing."propertyId" = property."id"
   AND listing."status" = 'PUBLISHED';
