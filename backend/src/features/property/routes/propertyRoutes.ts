@@ -91,7 +91,7 @@ router.put(
 );
 router.put(
   "/properties/:id/status",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
   updatePropertyListingStatusController
 );
 router.get(
