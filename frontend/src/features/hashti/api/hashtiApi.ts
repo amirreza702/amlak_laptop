@@ -62,10 +62,6 @@ export async function resetHashtiUserPassword(userId: string, newPassword: strin
   return requestJson("/auth/admin/users/" + encodeURIComponent(userId) + "/reset-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newPassword }) });
 }
 
-export async function reviewHashtiVerificationCase(caseId: string, payload: { status: "VERIFIED" | "REJECTED"; notes: string | null }): Promise<unknown> {
-  return requestJson("/verification-cases/" + encodeURIComponent(caseId) + "/review", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-}
-
 export async function getHashtiExactLocationAccessLogs(propertyId: string): Promise<{ accessLogs: ExactLocationLog[] }> {
   return requestJson("/properties/" + encodeURIComponent(propertyId) + "/exact-location-access-logs");
 }

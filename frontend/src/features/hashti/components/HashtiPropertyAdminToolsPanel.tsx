@@ -69,7 +69,6 @@ type HashtiPropertyRecord = {
   media: { id: string; type: string; url: string; sortOrder: number }[];
   owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string; user: { mobile: string } } }[];
   agents: { agentId: string; status: string; approvedByOwner: boolean; approvedAt: string | null; isFirstRegistrant: boolean; agent: { firstName: string; lastName: string; user: { mobile: string } } }[];
-  verificationCases: { id: string; status: string; notes: string | null; createdAt: string; reviewedAt: string | null }[];
 };
 type Pagination = { total: number; limit: number; offset: number };
 
@@ -231,10 +230,9 @@ export function HashtiPropertyAdminToolsPanel() {
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full min-w-[1450px] text-right text-sm">
-            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">آگهی و وضعیت</th><th className="p-3">رکوردهای مالکیت</th><th className="p-3">رکوردهای مشاور</th><th className="p-3">پرونده تأیید</th><th className="p-3">عملیات رکورد</th></tr></thead>
-            <tbody>{loading && properties.length === 0 ? <tr><td colSpan={6} className="p-5 text-center text-sm text-slate-500"><span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردهای املاک...</span></td></tr> : properties.length === 0 ? <tr><td colSpan={6} className="p-5 text-center text-sm text-slate-600">در این وضعیت، رکورد ملکی برای نمایش وجود ندارد.</td></tr> : properties.map((property) => {
-              const latestCase = property.verificationCases[0];
+          <table className="w-full min-w-[1300px] text-right text-sm">
+            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">آگهی و وضعیت</th><th className="p-3">رکوردهای مالکیت</th><th className="p-3">رکوردهای مشاور</th><th className="p-3">عملیات رکورد</th></tr></thead>
+            <tbody>{loading && properties.length === 0 ? <tr><td colSpan={5} className="p-5 text-center text-sm text-slate-500"><span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردهای املاک...</span></td></tr> : properties.length === 0 ? <tr><td colSpan={5} className="p-5 text-center text-sm text-slate-600">در این وضعیت، رکورد ملکی برای نمایش وجود ندارد.</td></tr> : properties.map((property) => {
               return (
                 <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
                   <td className="p-3">
@@ -258,9 +256,6 @@ export function HashtiPropertyAdminToolsPanel() {
                   </td>
                   <td className="p-3">
                     {property.agents.length ? <div className="min-w-[200px] space-y-3">{property.agents.map((agent) => <div key={agent.agentId} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0"><p className="font-semibold">{agent.agent.firstName} {agent.agent.lastName}</p><p className="mt-1 text-xs text-slate-600">شماره مشاور: <span dir="ltr" className="font-mono">{agent.agent.user.mobile}</span></p><p className="mt-1 text-xs text-slate-600">{agent.status === "ACTIVE" ? "ارتباط فعال" : "ارتباط خاتمه‌یافته"} · {agent.approvedByOwner ? "تأیید مالک" : "بدون تأیید مالک"}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{agent.agentId}</p></div>)}</div> : <span className="text-slate-500">مشاور مرتبط ثبت نشده</span>}
-                  </td>
-                  <td className="p-3">
-                    {latestCase ? <div className="min-w-[190px]"><p className="font-semibold">{verificationLabels[latestCase.status] ?? latestCase.status}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{latestCase.id}</p><p className="mt-1 text-xs text-slate-500">ثبت: {dateLabel(latestCase.createdAt)} · بررسی: {dateLabel(latestCase.reviewedAt)}</p>{latestCase.notes && <p className="mt-2 whitespace-pre-wrap text-xs leading-6 text-slate-600">{latestCase.notes}</p>}</div> : <span className="text-slate-500">پرونده‌ای ثبت نشده</span>}
                   </td>
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">

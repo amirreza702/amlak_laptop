@@ -58,8 +58,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
     reviewNotes, setReviewNotes, busyReviewId, loadDuplicateWork, createReview, decideReview,
   } = useHashtiDuplicateReview();
   const {
-    verificationCaseId, setVerificationCaseId, verificationNotes, setVerificationNotes, verificationBusy,
-    verificationError, verificationMessage, reviewVerificationCase,
     logPropertyId, setLogPropertyId, accessLogs, logsBusy, logsError, loadAccessLogs,
   } = useHashtiSecurityOperations();
   const {
@@ -220,24 +218,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           </div>
         )}
       </section>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-
-        <section id="verification-case" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-bold">بررسی پروندهٔ تأیید ملک</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">شناسهٔ پروندهٔ تأیید را وارد کنید تا وضعیت آن ثبت شود. API فهرست پرونده‌های در انتظار بررسی در بک‌اند فعلی وجود ندارد.</p>
-          <div className="mt-4 space-y-3">
-            <label className="block space-y-1 text-sm font-medium">شناسهٔ پرونده<input value={verificationCaseId} onChange={(e) => setVerificationCaseId(e.target.value)} dir="ltr" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-            <label className="block space-y-1 text-sm font-medium">یادداشت<textarea rows={2} value={verificationNotes} onChange={(e) => setVerificationNotes(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" /></label>
-            {verificationError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{verificationError}</p>}
-            {verificationMessage && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{verificationMessage}</p>}
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setPendingAction({ title: "تأیید پرونده ملک", description: "یادداشت تصمیم واردشده همراه با تأیید پرونده ثبت خواهد شد. ادامه می‌دهید؟", run: () => { void reviewVerificationCase("VERIFIED"); } })} disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"><CheckCircle2 className="h-4 w-4" /> تأیید پرونده</button>
-              <button type="button" onClick={() => setPendingAction({ title: "رد پرونده ملک", description: "یادداشت واردشده به‌عنوان دلیل رد ثبت خواهد شد. ادامه می‌دهید؟", run: () => { void reviewVerificationCase("REJECTED"); } })} disabled={verificationBusy} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-60"><XCircle className="h-4 w-4" /> رد پرونده</button>
-            </div>
-          </div>
-        </section>
-      </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section id="location-audit" hidden={selectedTool !== "reports"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
