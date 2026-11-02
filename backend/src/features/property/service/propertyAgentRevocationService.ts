@@ -181,3 +181,69 @@ export async function revokePropertyAgent(
     return updatedPropertyAgent;
   });
 }
+
+/**
+ * لغو رابطه همکاری توسط خود مشاور از پنل مدیریت مالک.
+ * این عمل تأیید نهایی را نیز باطل و مالک مرتبط را مطلع می‌کند.
+ */
+export async function revokePropertyAgentByAgent(propertyId: string, userId: string) {
+  const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
+  if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
+
+  const relation = await prisma.propertyAgent.findUnique({
+    where: { propertyId_agentId: { propertyId, agentId: agent.id } },
+    select: {
+      status: true,
+      approvedByOwner: true,
+      property: {
+        select: {
+          owners: {
+            select: {
+              owner: { select: { userId: true, firstName: true, lastName: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!relation || relation.status !== PropertyAgentStatus.ACTIVE || !relation.approvedByOwner) {
+    throw new Error("APPROVED_AGENT_RELATION_NOT_FOUND");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.propertyAgent.update({
+      where: { propertyId_agentId: { propertyId, agentId: agent.id } },
+      data: {
+        status: PropertyAgentStatus.REVOKED,
+        approvedByOwner: false,
+        approvedAt: null,
+      },
+    });
+
+    await createPropertyHistory(
+      {
+        propertyId,
+        action: PropertyHistoryAction.LISTING_CHANGED,
+        field: "propertyAgent.status",
+        oldValue: PropertyAgentStatus.ACTIVE,
+        newValue: PropertyAgentStatus.REVOKED,
+        performedBy: userId,
+        reason: "مشاور، رابطه همکاری تأییدشده را لغو کرد.",
+      },
+      tx
+    );
+
+    const ownerUserIds = [...new Set(relation.property.owners.map((item) => item.owner.userId))];
+    if (ownerUserIds.length) {
+      await tx.notification.createMany({
+        data: ownerUserIds.map((ownerUserId) => ({
+          userId: ownerUserId,
+          title: "لغو همکاری مشاور",
+          message: "مشاور، همکاری تأییدشده خود را برای این ملک لغو کرد.",
+        })),
+      });
+    }
+
+    return updated;
+  });
+}
