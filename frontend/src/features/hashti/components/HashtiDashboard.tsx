@@ -273,7 +273,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
 
         <section hidden={selectedTool !== "agent-management"} className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h2 className="font-bold text-amber-950">وضعیت ثبت و تاریخچه تأیید مشاور</h2>
-          <p className="mt-3 text-sm leading-7 text-amber-900">برای سازگاری با کد قدیمی، isVerified حفظ شده و وضعیت دقیق بررسی با verificationStatus نگهداری می‌شود. تغییر وضعیت مشاور، دلیل تصمیم و رویدادهای مدیریتی در تاریخچه ثبت می‌شوند.</p>
+          <p className="mt-3 text-sm leading-7 text-amber-900">وضعیت تأیید مشاور فقط در فیلد verificationStatus نگهداری می‌شود؛ تغییر وضعیت، دلیل تصمیم و رویدادهای مدیریتی در تاریخچه ثبت می‌شوند.</p>
         </section>
       </div>
 
