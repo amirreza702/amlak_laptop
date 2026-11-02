@@ -20,7 +20,12 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined;
   const dateRange = validDate ? { gte: new Date(validDate.getFullYear(), validDate.getMonth(), validDate.getDate()), lt: new Date(validDate.getFullYear(), validDate.getMonth(), validDate.getDate() + 1) } : undefined;
   const where: Prisma.PropertyWhereInput = {
-    ...(input.status ? { listing: { is: { status: input.status } } } : {}),
+    ...(input.status
+      ? input.status === ListingStatus.PENDING_HASHTI_VERIFICATION
+        // آگهی‌های قدیمی که پیش‌تر منتظر تأیید مالک بوده‌اند نیز باید در صف بررسی هشتی دیده شوند.
+        ? { listing: { is: { status: { in: [ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PENDING_OWNER_APPROVAL] } } } }
+        : { listing: { is: { status: input.status } } }
+      : {}),
     ...(search ? {
       OR: [
         { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
