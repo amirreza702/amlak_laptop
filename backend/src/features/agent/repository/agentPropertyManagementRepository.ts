@@ -15,6 +15,7 @@ export interface AgentPropertyQuery {
  */
 export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const search = input.query?.trim();
+  const now = new Date();
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const numericSearch = search && Number.isFinite(Number(search)) ? Number(search) : undefined;
   const normalizedSearch = search?.toLocaleLowerCase();
@@ -55,6 +56,15 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   if (input.totalUnits !== undefined) fieldConditions.push({ totalUnits: input.totalUnits });
   // املاک غیرفعال‌شده توسط مالک/سامانه در پنل مشاور نمایش داده نمی‌شوند.
   fieldConditions.push({ isActive: true });
+  // آگهی منقضی فقط برای مشاوری در فهرست می‌ماند که تأیید نهایی فعال مالک را دارد.
+  fieldConditions.push({
+    OR: [
+      { listing: { is: null } },
+      { listing: { is: { status: { notIn: [ListingStatus.PUBLISHED, ListingStatus.EXPIRED] } } } },
+      { listing: { is: { status: ListingStatus.PUBLISHED } }, confirmUntil: { gt: now } },
+      { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true } } },
+    ],
+  });
   if (input.areaMin !== undefined || input.areaMax !== undefined) {
     fieldConditions.push({ area: {
       ...(input.areaMin !== undefined ? { gte: input.areaMin } : {}),
@@ -81,7 +91,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     ...(exactTransactionType ? [{ listing: { is: { transactionType: exactTransactionType } } }] : []),
     ...(exactVerificationStatus ? [
       { owners: { some: { verificationStatus: exactVerificationStatus } } },
-      { verificationCases: { some: { status: exactVerificationStatus } } },
     ] : []),
     ...(numericSearch !== undefined ? [{ owners: { some: { share: numericSearch } } }] : []),
     ...(boolSearch !== undefined ? [{ owners: { some: { isPrimary: boolSearch } } }] : []),
@@ -153,11 +162,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             verificationStatus: true,
             owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
-        },
-        verificationCases: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { status: true, createdAt: true, reviewedAt: true },
         },
         ownerAgentRequests: {
           where: { status: "ACTIVE" },
