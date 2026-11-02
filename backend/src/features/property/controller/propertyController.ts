@@ -119,7 +119,7 @@ export async function getPropertyByIdController(
       property.registrationSource === "OWNER" &&
       approvedAgent?.agent.userId === user.id &&
       Boolean(approvedOwnerRelation);
-    const canViewOwner = (user.role === "OWNER" && Boolean(ownOwner) && (!approvedAgent || ownerIsApprover)) ||
+    const canViewOwner = (user.role === "OWNER" && property.registrationSource === "OWNER" && Boolean(ownOwner) && (!approvedAgent || ownerIsApprover)) ||
       (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
 
     const primaryOwner = owners.find((relation) => relation.isPrimary) ?? owners[0] ?? null;
