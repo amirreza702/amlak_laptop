@@ -4,7 +4,7 @@ import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware"
 import { getAdminAuditLogsService } from "../service/adminAuditLogService";
 import type { AdminAuditLogQuery } from "../repository/adminAuditLogRepository";
 import {
-  createManagedHashtiUserService, getManagedUsersService, getSuperAdminAccessService,
+  getManagedUsersService, getSuperAdminAccessService,
   setManagedUserStatusService, updateManagedProfileService,
 } from "../service/userManagementService";
 import type { ManagedProfileType } from "../repository/userManagementRepository";
@@ -90,36 +90,11 @@ export async function setManagedUserStatusController(req: Request, res: Response
   }
 }
 
-export async function createManagedHashtiUserController(req: Request, res: Response) {
-  const actor = getActor(req);
-  if (!actor) return res.status(401).json({ message: "Authentication required" });
-  const { mobile, firstName, lastName, password } = req.body ?? {};
-  if (
-    typeof mobile !== "string" || !/^09\d{9}$/.test(mobile.trim()) ||
-    typeof firstName !== "string" || !firstName.trim() || firstName.trim().length > 120 ||
-    typeof lastName !== "string" || !lastName.trim() || lastName.trim().length > 120 ||
-    typeof password !== "string" || password.length < 12 || password.length > 200
-  ) return res.status(400).json({ message: "Provide valid mobile, names, and a password between 12 and 200 characters" });
-
-  try {
-    const result = await createManagedHashtiUserService({
-      mobile: mobile.trim(), firstName: firstName.trim(), lastName: lastName.trim(), password,
-      actorUserId: actor.id, actorMobile: actor.mobile,
-    });
-    return res.status(201).json(result);
-  } catch (error) {
-    if (error instanceof Error && error.message === "SUPER_ADMIN_PERMISSION_REQUIRED") return res.status(403).json({ message: "Super-admin permission required" });
-    if (error instanceof Error && error.message === "USER_ALREADY_EXISTS") return res.status(409).json({ message: "This mobile number already belongs to a user" });
-    console.error("Failed to create Hashti staff account:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
 export async function updateManagedProfileController(req: Request, res: Response) {
   const actor = getActor(req);
   if (!actor) return res.status(401).json({ message: "Authentication required" });
   const profileType = routeParam(req, "profileType");
-  if (!["customer", "owner", "agent", "hashti"].includes(profileType)) return res.status(400).json({ message: "profileType must be customer, owner, agent, or hashti" });
+  if (!["customer", "owner", "agent"].includes(profileType)) return res.status(400).json({ message: "profileType must be customer, owner, or agent" });
 
   const { firstName, lastName, agencyName, address } = req.body ?? {};
   const reason = readReason(req.body?.reason);

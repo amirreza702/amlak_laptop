@@ -1,4 +1,4 @@
-import { UserRole, type Prisma } from "@prisma/client";
+import { UserRole, VerificationStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface ManagedUserQuery {
@@ -8,7 +8,7 @@ export interface ManagedUserQuery {
   limit: number;
   offset: number;
 }
-export type ManagedProfileType = "customer" | "owner" | "agent" | "hashti";
+export type ManagedProfileType = "customer" | "owner" | "agent";
 export interface ManagedProfileUpdate {
   profileType: ManagedProfileType;
   profileId: string;
@@ -33,13 +33,6 @@ export async function getSuperAdminAccess(userId: string) {
 export async function findManagedUsers(query: ManagedUserQuery) {
   const search = query.query?.trim();
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
-  const staffMatches = search
-    ? await prisma.hashtiStaff.findMany({
-        where: { OR: [{ id: contains(search) }, { firstName: contains(search) }, { lastName: contains(search) }] },
-        select: { mobile: true },
-      })
-    : [];
-
   const numericSearch = search !== undefined && search.trim() !== "" && Number.isFinite(Number(search)) ? Number(search) : undefined;
   const lower = search?.toLocaleLowerCase();
   const boolSearch = lower === undefined ? undefined : ["true", "yes", "بله", "فعال", "تأییدشده"].includes(lower) ? true : ["false", "no", "خیر", "غیرفعال", "ردشده"].includes(lower) ? false : undefined;
@@ -66,9 +59,8 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         { agent: { is: { agencyName: contains(search) } } },
         { agent: { is: { address: contains(search) } } },
         { agent: { is: { verificationNotes: contains(search) } } },
-        ...(staffMatches.length ? [{ mobile: { in: staffMatches.map((staff) => staff.mobile) } }] : []),
-        ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
-        ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { isVerified: boolSearch } } }] : []),
+                ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
+        ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { verificationStatus: boolSearch ? VerificationStatus.VERIFIED : { not: VerificationStatus.VERIFIED } } } }] : []),
         ...(dateRange ? [{ createdAt: dateRange }, { updatedAt: dateRange }, { agent: { is: { verificationReviewedAt: dateRange } } }] : []),
         ...(exactRole && ["PENDING", "VERIFIED", "REJECTED"].includes(exactRole) ? [{ agent: { is: { verificationStatus: exactRole as any } } }] : []),
       ],
@@ -88,21 +80,13 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         owner: { select: { id: true, firstName: true, lastName: true } },
         agent: { select: {
           id: true, firstName: true, lastName: true, agencyName: true, address: true,
-          isVerified: true, verificationStatus: true, verificationReviewedAt: true, verificationNotes: true,
+          verificationStatus: true, verificationReviewedAt: true, verificationNotes: true,
         } },
       },
     }),
   ]);
 
-  const staffMobiles = rows.filter((row) => row.role === UserRole.HASHTI).map((row) => row.mobile);
-  const staffRows = staffMobiles.length
-    ? await prisma.hashtiStaff.findMany({
-        where: { mobile: { in: staffMobiles } },
-        select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-      })
-    : [];
-  const staffByMobile = new Map(staffRows.map((staff) => [staff.mobile, staff]));
-  return { users: rows.map((row) => ({ ...row, staffProfile: staffByMobile.get(row.mobile) ?? null })), total };
+  return { users: rows, total };
 }
 
 export async function updateManagedUserStatus(input: {
@@ -140,10 +124,6 @@ export async function updateManagedUserStatus(input: {
       data: { isActive: input.isActive },
       select: { id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true, updatedAt: true },
     });
-    if (current.role === UserRole.HASHTI) {
-      await tx.hashtiStaff.updateMany({ where: { mobile: current.mobile }, data: { isActive: input.isActive } });
-    }
-
     await tx.adminAuditLog.create({
       data: {
         actorUserId: input.actorUserId, actorMobile: input.actorMobile, actorRole: UserRole.HASHTI,
@@ -158,50 +138,6 @@ export async function updateManagedUserStatus(input: {
   });
 }
 
-export async function createManagedHashtiUser(input: {
-  mobile: string; firstName: string; lastName: string; passwordHash: string; actorUserId: string; actorMobile: string;
-}) {
-  return prisma.$transaction(async (tx) => {
-    const actor = await tx.user.findUnique({
-      where: { id: input.actorUserId },
-      select: { role: true, isActive: true, isSuperAdmin: true },
-    });
-    if (!actor || actor.role !== UserRole.HASHTI || !actor.isActive || !actor.isSuperAdmin) {
-      throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
-    }
-    const existingUser = await tx.user.findUnique({ where: { mobile_role: { mobile: input.mobile, role: UserRole.HASHTI } }, select: { id: true } });
-    if (existingUser) throw new Error("USER_ALREADY_EXISTS");
-    const existingStaff = await tx.hashtiStaff.findUnique({
-      where: { mobile: input.mobile },
-      select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-    });
-
-    const user = await tx.user.create({
-      data: { mobile: input.mobile, passwordHash: input.passwordHash, role: UserRole.HASHTI, isActive: true, isSuperAdmin: false },
-      select: { id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true, createdAt: true },
-    });
-    const staffProfile = existingStaff
-      ? await tx.hashtiStaff.update({
-          where: { mobile: input.mobile },
-          data: { firstName: input.firstName, lastName: input.lastName, isActive: true },
-          select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-        })
-      : await tx.hashtiStaff.create({
-          data: { mobile: input.mobile, firstName: input.firstName, lastName: input.lastName, isActive: true },
-          select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-        });
-
-    await tx.adminAuditLog.create({
-      data: {
-        actorUserId: input.actorUserId, actorMobile: input.actorMobile, actorRole: UserRole.HASHTI,
-        action: "HASHTI_STAFF_CREATED", targetType: "USER", targetId: user.id,
-        details: { targetMobile: user.mobile, firstName: staffProfile.firstName, lastName: staffProfile.lastName, role: UserRole.HASHTI, isSuperAdmin: false },
-      },
-    });
-    return { user, staffProfile };
-  });
-}
-
 export async function updateManagedProfile(input: ManagedProfileUpdate) {
   return prisma.$transaction(async (tx) => {
     const actor = await tx.user.findUnique({
@@ -211,10 +147,6 @@ export async function updateManagedProfile(input: ManagedProfileUpdate) {
     if (!actor || actor.role !== UserRole.HASHTI || !actor.isActive) {
       throw new Error("HASHTI_PERMISSION_REQUIRED");
     }
-    if (input.profileType === "hashti" && !actor.isSuperAdmin) {
-      throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
-    }
-
     if (input.profileType === "customer") {
       const current = await tx.customer.findUnique({ where: { id: input.profileId }, select: { id: true, firstName: true, lastName: true } });
       if (!current) throw new Error("PROFILE_NOT_FOUND");
@@ -249,39 +181,6 @@ export async function updateManagedProfile(input: ManagedProfileUpdate) {
           details: { reason: input.reason, before: { firstName: current.firstName, lastName: current.lastName }, after: { firstName: updated.firstName, lastName: updated.lastName } },
         },
       });
-      return { profileType: input.profileType, ...updated };
-    }
-
-    if (input.profileType === "hashti") {
-      const current = await tx.hashtiStaff.findUnique({
-        where: { id: input.profileId },
-        select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-      });
-      if (!current) throw new Error("PROFILE_NOT_FOUND");
-
-      const updated = await tx.hashtiStaff.update({
-        where: { id: input.profileId },
-        data: { firstName: input.firstName, lastName: input.lastName },
-        select: { id: true, mobile: true, firstName: true, lastName: true, isActive: true },
-      });
-
-      await tx.adminAuditLog.create({
-        data: {
-          actorUserId: input.actorUserId,
-          actorMobile: input.actorMobile,
-          actorRole: UserRole.HASHTI,
-          action: "HASHTI_STAFF_PROFILE_UPDATED_BY_SUPER_ADMIN",
-          targetType: "HASHTI_STAFF_PROFILE",
-          targetId: current.id,
-          details: {
-            reason: input.reason,
-            targetMobile: current.mobile,
-            before: { firstName: current.firstName, lastName: current.lastName, isActive: current.isActive },
-            after: { firstName: updated.firstName, lastName: updated.lastName, isActive: updated.isActive },
-          },
-        },
-      });
-
       return { profileType: input.profileType, ...updated };
     }
 

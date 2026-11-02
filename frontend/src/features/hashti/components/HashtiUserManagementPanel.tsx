@@ -16,14 +16,13 @@ import type {
 } from "../types/hashtiUserManagement";
 
 function displayName(user: ManagedUser) {
-  const profile = user.agent ?? user.owner ?? user.customer ?? user.staffProfile;
+  const profile = user.agent ?? user.owner ?? user.customer;
   return profile ? `${profile.firstName} ${profile.lastName}` : "نام ثبت نشده";
 }
 function profileOf(user: ManagedUser): { type: ProfileType; id: string; firstName: string; lastName: string; agencyName?: string | null; address?: string | null } | null {
   if (user.agent) return { type: "agent", id: user.agent.id, firstName: user.agent.firstName, lastName: user.agent.lastName, agencyName: user.agent.agencyName, address: user.agent.address };
   if (user.owner) return { type: "owner", id: user.owner.id, firstName: user.owner.firstName, lastName: user.owner.lastName };
   if (user.customer) return { type: "customer", id: user.customer.id, firstName: user.customer.firstName, lastName: user.customer.lastName };
-  if (user.staffProfile) return { type: "hashti", id: user.staffProfile.id, firstName: user.staffProfile.firstName, lastName: user.staffProfile.lastName };
   return null;
 }
 
@@ -44,12 +43,6 @@ export function HashtiUserManagementPanel() {
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [statusUser, setStatusUser] = useState<ManagedUser | null>(null);
   const [statusReason, setStatusReason] = useState("");
-  const [creatingStaff, setCreatingStaff] = useState(false);
-  const [createStaffModalOpen, setCreateStaffModalOpen] = useState(false);
-  const [staffMobile, setStaffMobile] = useState("");
-  const [staffFirstName, setStaffFirstName] = useState("");
-  const [staffLastName, setStaffLastName] = useState("");
-  const [staffPassword, setStaffPassword] = useState("");
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
@@ -192,37 +185,12 @@ export function HashtiUserManagementPanel() {
     } catch (err) { setHistoryError(err instanceof Error ? err.message : "دریافت تاریخچه ناموفق بود."); }
     finally { setHistoryLoading(false); }
   };
-  const createStaff = async (event: FormEvent) => {
-    event.preventDefault(); setCreatingStaff(true); setError(null); setMessage(null);
-    try {
-      await requestJson("/hashti/management/staff", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile: staffMobile.trim(), firstName: staffFirstName.trim(), lastName: staffLastName.trim(), password: staffPassword }),
-      });
-      setStaffMobile(""); setStaffFirstName(""); setStaffLastName(""); setStaffPassword("");
-      setMessage("حساب همکار هشتی ایجاد شد؛ این حساب مدیر ارشد نیست."); setCreateStaffModalOpen(false); setOffset(0); await loadUsers(0);
-    } catch (err) { setError(err instanceof Error ? err.message : "ایجاد حساب همکار ناموفق بود."); }
-    finally { setCreatingStaff(false); }
-  };
-
   if (accessLoading) return <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><p className="flex items-center gap-2 text-sm text-slate-600"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال بررسی دسترسی مدیریت کاربران...</p></section>;
   if (!isSuperAdmin && accessError) return <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><h2 className="flex items-center gap-2 text-lg font-bold"><ShieldCheck className="h-5 w-5 text-[#043873]" /> مدیریت کاربران و سوابق</h2><p className="mt-2 text-sm leading-7 text-slate-600">{accessError}</p></section>;
 
   return (
     <section className="space-y-5 rounded-2xl border border-blue-200 bg-slate-50 p-4 sm:p-6" dir="rtl">
       <div><h2 className="flex items-center gap-2 text-xl font-bold text-slate-900"><UserRoundCog className="h-6 w-6 text-[#043873]" /> مدیریت کاربران، مالکان و مشاوران</h2><p className="mt-2 text-sm leading-7 text-slate-600">در این بخش فقط حساب‌های مشتریان، مالکان و مشاوران نمایش داده می‌شود. حساب‌های داخلی هشتی و مدیران در فهرست کاربران عمومی قرار نمی‌گیرند.</p></div>
-      {isSuperAdmin && <div className="flex justify-end"><button type="button" onClick={() => setCreateStaffModalOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white"><UserRoundCog className="h-4 w-4" /> ایجاد همکار هشتی</button></div>}
-      <Modal open={createStaffModalOpen} title="ایجاد حساب همکار هشتی" description="حساب همکار ایجاد می‌شود و به‌صورت خودکار مدیر ارشد نخواهد بود." onClose={() => setCreateStaffModalOpen(false)}>
-        <form onSubmit={createStaff} className="grid gap-3 sm:grid-cols-2">
-          <label className="space-y-1 text-sm">شماره موبایل<input required inputMode="numeric" pattern="09[0-9]{9}" maxLength={11} value={staffMobile} onChange={(event) => setStaffMobile(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
-          <label className="space-y-1 text-sm">نام<input required maxLength={120} value={staffFirstName} onChange={(event) => setStaffFirstName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-          <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={staffLastName} onChange={(event) => setStaffLastName(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-          <label className="space-y-1 text-sm">رمز اولیه (حداقل ۱۲ کاراکتر)<input required type="password" autoComplete="new-password" minLength={12} maxLength={200} value={staffPassword} onChange={(event) => setStaffPassword(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" dir="ltr" /></label>
-          {error && <p role="alert" className="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-          <div className="flex items-end"><button type="submit" disabled={creatingStaff} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#043873] px-3 py-2.5 text-sm font-bold text-white disabled:opacity-60">{creatingStaff ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ایجاد همکار</button></div>
-        </form>
-      </Modal>
-
       <form onSubmit={submitSearch} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1 text-sm">جست‌وجو با شماره، نام یا نام خانوادگی<input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="مثلاً شماره موبایل یا نام" /></label>
         <label className="space-y-1 text-sm">نوع حساب<select value={role} onChange={(event) => { setRole(event.target.value as typeof role); setOffset(0); }} className="w-full rounded-lg border border-slate-300 px-3 py-2"><option value="ALL">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option></select></label>
@@ -267,7 +235,7 @@ export function HashtiUserManagementPanel() {
                       <td className="p-3">
                         <div className="flex min-w-[180px] flex-wrap gap-2">
                           <button type="button" hidden={item.role === "HASHTI" && !isSuperAdmin} onClick={() => void changeStatus(item)} disabled={savingUserId === item.id} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold disabled:opacity-50">{savingUserId === item.id ? "در حال ثبت..." : item.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button>
-                          {profile && <button type="button" hidden={profile.type === "hashti" && !isSuperAdmin} onClick={() => beginEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">ویرایش پروفایل</button>}
+                          {profile && <button type="button" onClick={() => beginEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">ویرایش پروفایل</button>}
                           <button type="button" onClick={() => void toggleHistory(item)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold"><Clock3 className="h-4 w-4" />{historyUser === item.id ? "بستن سوابق" : "تاریخچه"}</button>
                           <button type="button" hidden={!isSuperAdmin} onClick={() => beginPasswordReset(item)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">بازنشانی رمز</button>
                         </div>
@@ -287,7 +255,7 @@ export function HashtiUserManagementPanel() {
                             )}
                             {editUser?.id === item.id && profile && (
                               <Modal open={editUser?.id === item.id && Boolean(profile)} title={"ویرایش پروفایل " + displayName(item)} description="تغییرات پروفایل و دلیل آن را وارد کنید." onClose={() => setEditUser(null)}><form onSubmit={saveProfile} className="grid gap-3 sm:grid-cols-2">
-                                <h4 className="font-bold sm:col-span-2">ویرایش پروفایل {profile.type === "agent" ? "مشاور" : profile.type === "owner" ? "مالک" : profile.type === "hashti" ? "کارمند هشتی" : "مشتری"}</h4>
+                                <h4 className="font-bold sm:col-span-2">ویرایش پروفایل {profile.type === "agent" ? "مشاور" : profile.type === "owner" ? "مالک" : "مشتری"}</h4>
                                 <label className="space-y-1 text-sm">نام<input required maxLength={120} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                                 <label className="space-y-1 text-sm">نام خانوادگی<input required maxLength={120} value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
                                 {profile.type === "agent" && <><label className="space-y-1 text-sm">نام آژانس<input maxLength={200} value={editAgencyName} onChange={(e) => setEditAgencyName(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label><label className="space-y-1 text-sm">نشانی<input maxLength={500} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label></>}

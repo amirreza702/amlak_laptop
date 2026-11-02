@@ -12,7 +12,6 @@ export async function findPublishedPublicPropertyById(id: string) {
     where: {
       id,
       isActive: true,
-      confirmUntil: true,
       listing: {
         status: { in: ["PUBLISHED", "EXPIRED"] },
       },
@@ -51,6 +50,7 @@ export async function findPublishedPublicPropertyById(id: string) {
       latitudePublic: true,
       longitudePublic: true,
       isActive: true,
+      confirmUntil: true,
       listing: {
         select: {
           id: true,

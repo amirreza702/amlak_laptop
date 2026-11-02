@@ -1,5 +1,5 @@
 export type HashtiManagedRole = "CUSTOMER" | "OWNER" | "AGENT" | "HASHTI";
-export type HashtiManagedProfileType = "customer" | "owner" | "agent" | "hashti";
+export type HashtiManagedProfileType = "customer" | "owner" | "agent";
 
 export interface HashtiProfileName {
   id: string;
@@ -20,18 +20,10 @@ export interface HashtiManagedUser {
   agent: (HashtiProfileName & {
     agencyName: string | null;
     address: string | null;
-    isVerified: boolean;
     verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
     verificationReviewedAt: string | null;
     verificationNotes: string | null;
   }) | null;
-  staffProfile: {
-    id: string;
-    mobile: string;
-    firstName: string;
-    lastName: string;
-    isActive: boolean;
-  } | null;
 }
 
 export interface HashtiAuditLog {
