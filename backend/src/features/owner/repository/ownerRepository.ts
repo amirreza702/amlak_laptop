@@ -132,6 +132,15 @@ export const findOwnerPropertiesByOwnerId = async (ownerId: string) =>
               agent: { select: { firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
             },
           },
+          ownerAgentRequests: {
+            where: { ownerId, status: "ACTIVE" },
+            select: {
+              responses: {
+                where: { status: "ACCEPTED" },
+                select: { agentId: true },
+              },
+            },
+          },
         },
       },
     },
