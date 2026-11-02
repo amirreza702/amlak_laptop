@@ -1,4 +1,4 @@
-import type { OwnerVerificationQueueResponse, VerificationStatus } from "../types/hashtiVerificationQueue";
+import type { OwnerVerificationQueueProperty, OwnerVerificationQueueResponse, VerificationStatus } from "../types/hashtiVerificationQueue";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { credentials: "include", cache: "no-store", ...init });
