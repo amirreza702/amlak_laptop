@@ -106,16 +106,27 @@ export async function approvePropertyAgentByOwnerService(
         tx
       );
 
-      const [agent, owner] = await Promise.all([
+      const [agent, owner, propertyDetails] = await Promise.all([
         tx.agent.findUnique({ where: { id: data.agentId }, select: { userId: true } }),
-        tx.owner.findUnique({ where: { id: data.ownerId }, select: { firstName: true, lastName: true } }),
+        tx.owner.findUnique({ where: { id: data.ownerId }, select: { firstName: true, lastName: true, user: { select: { mobile: true } } } }),
+        tx.property.findUnique({ where: { id: data.propertyId }, select: { propertyType: true, city: true, district: true } }),
       ]);
       if (agent?.userId) {
+        const actorName = owner ? owner.firstName + " " + owner.lastName : "مالک";
         await tx.notification.create({
           data: {
             userId: agent.userId,
             title: "تأیید نهایی همکاری",
-            message: `مالک ${owner ? owner.firstName + " " + owner.lastName : ""} همکاری شما را برای این ملک تأیید نهایی کرد.`.trim(),
+            message: `مالک ${actorName} با شماره ${owner?.user.mobile ?? "ثبت‌نشده"} همکاری شما را برای این ملک تأیید نهایی کرد.`,
+            details: {
+              actorName,
+              actorMobile: owner?.user.mobile ?? null,
+              actorRole: "OWNER",
+              action: "تأیید نهایی همکاری مشاور",
+              subject: propertyDetails ? `${propertyDetails.propertyType} در ${propertyDetails.city}، ${propertyDetails.district}` : "ملک",
+              subjectType: "ملک",
+              occurredAt: new Date().toISOString(),
+            },
           },
         });
       }
