@@ -101,9 +101,9 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     (isAgentCreator || viewer?.role === "HASHTI" ? primaryOwner : null);
   const ownerDetails = mayViewOwnerDetails
     ? {
-        firstName: isAgentCreator ? ownerFirstName ?? ownerForViewer?.firstName ?? null : ownerForViewer?.firstName ?? null,
-        lastName: isAgentCreator ? ownerLastName ?? ownerForViewer?.lastName ?? null : ownerForViewer?.lastName ?? null,
-        mobile: isAgentCreator ? ownerMobile ?? ownerForViewer?.user.mobile ?? null : ownerForViewer?.user.mobile ?? null,
+        firstName: isAgentCreator || viewer?.role === "HASHTI" ? ownerFirstName ?? ownerForViewer?.firstName ?? null : ownerForViewer?.firstName ?? null,
+        lastName: isAgentCreator || viewer?.role === "HASHTI" ? ownerLastName ?? ownerForViewer?.lastName ?? null : ownerForViewer?.lastName ?? null,
+        mobile: isAgentCreator || viewer?.role === "HASHTI" ? ownerMobile ?? ownerForViewer?.user.mobile ?? null : ownerForViewer?.user.mobile ?? null,
       }
     : null;
 
