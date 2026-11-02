@@ -24,7 +24,6 @@
 
 import {
   PropertyAgentStatus,
-  VerificationStatus,
   PropertyHistoryAction,
 } from "@prisma/client";
 
@@ -93,23 +92,10 @@ export async function revokePropertyAgent(
 
   /**
    * ----------------------------------------------------------
-   * 3. مالک باید VERIFIED باشد
+   * 3. بررسی ارتباط مشاور با ملک
    * ----------------------------------------------------------
-   */
-
-  if (
-    propertyOwner.verificationStatus !==
-    VerificationStatus.VERIFIED
-  ) {
-    throw new Error(
-      "مالک هنوز توسط هشتی تأیید نشده است."
-    );
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * 4. بررسی ارتباط مشاور با ملک
-   * ----------------------------------------------------------
+   *
+   * تأیید هشتی برای مالک شرط لغو همکاری نیست.
    */
 
   const propertyAgent =
