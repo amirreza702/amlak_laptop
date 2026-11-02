@@ -33,7 +33,6 @@ const allowedTransitions: Record<
   // ثبت آگهی مستقیماً به صف بررسی هشتی می‌رود؛ تأیید مالک شرط انتشار نیست.
   [ListingStatus.DRAFT]: [
     ListingStatus.PENDING_HASHTI_VERIFICATION,
-    ListingStatus.PENDING_OWNER_APPROVAL, // سازگاری با گردش‌کار قدیمی
   ],
 
   // وضعیت قدیمی حفظ می‌شود، اما آگهی می‌تواند بدون تأیید مالک به بررسی هشتی منتقل شود.
