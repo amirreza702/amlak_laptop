@@ -11,7 +11,7 @@ import {
 import { getAdminAuditLogsController } from "../controller/adminAuditLogController";
 import userManagementRoutes from "./userManagementRoutes";
 import { getVerificationQueueController } from "../controller/verificationQueueController";
-import { getHashtiPropertyRecordsController } from "../controller/propertyManagementController";
+import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController } from "../controller/propertyManagementController";
 
 const router = Router();
 
@@ -53,6 +53,14 @@ router.get(
   authMiddleware,
   requireRole(UserRole.HASHTI),
   getHashtiPropertyRecordsController
+);
+
+// تأیید نهایی انتشار فقط توسط نقش هشتی انجام می‌شود.
+router.patch(
+  "/hashti/properties/:id/publish",
+  authMiddleware,
+  requireRole(UserRole.HASHTI),
+  approveHashtiPropertyPublicationController
 );
 
 router.get(
