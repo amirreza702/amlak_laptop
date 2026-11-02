@@ -178,6 +178,31 @@ export async function revokePropertyAgent(
       tx
     );
 
+    const [agent, owner, propertyDetails] = await Promise.all([
+      tx.agent.findUnique({ where: { id: data.agentId }, select: { userId: true } }),
+      tx.owner.findUnique({ where: { id: data.ownerId }, select: { firstName: true, lastName: true, user: { select: { mobile: true } } } }),
+      tx.property.findUnique({ where: { id: data.propertyId }, select: { propertyType: true, city: true, district: true } }),
+    ]);
+    if (agent?.userId) {
+      const actorName = owner ? owner.firstName + " " + owner.lastName : "مالک";
+      await tx.notification.create({
+        data: {
+          userId: agent.userId,
+          title: "لغو همکاری توسط مالک",
+          message: `مالک ${actorName} با شماره ${owner?.user.mobile ?? "ثبت‌نشده"} همکاری شما را برای این ملک لغو کرد.`,
+          details: {
+            actorName,
+            actorMobile: owner?.user.mobile ?? null,
+            actorRole: "OWNER",
+            action: "لغو همکاری مشاور",
+            subject: propertyDetails ? `${propertyDetails.propertyType} در ${propertyDetails.city}، ${propertyDetails.district}` : "ملک",
+            subjectType: "ملک",
+            occurredAt: new Date().toISOString(),
+          },
+        },
+      });
+    }
+
     return updatedPropertyAgent;
   });
 }
@@ -233,13 +258,30 @@ export async function revokePropertyAgentByAgent(propertyId: string, userId: str
       tx
     );
 
-    const ownerUserIds = [...new Set(relation.property.owners.map((item) => item.owner.userId))];
+    const [ownerUserIds, propertyDetails] = await Promise.all([
+      Promise.resolve([...new Set(relation.property.owners.map((item) => item.owner.userId))]),
+      tx.property.findUnique({ where: { id: propertyId }, select: { propertyType: true, city: true, district: true } }),
+    ]);
+    const actorProfile = await tx.agent.findUnique({
+      where: { id: agent.id },
+      select: { firstName: true, lastName: true, user: { select: { mobile: true } } },
+    });
     if (ownerUserIds.length) {
+      const actorName = [actorProfile?.firstName, actorProfile?.lastName].filter(Boolean).join(" ") || "مشاور";
       await tx.notification.createMany({
         data: ownerUserIds.map((ownerUserId) => ({
           userId: ownerUserId,
           title: "لغو همکاری مشاور",
-          message: "مشاور، همکاری تأییدشده خود را برای این ملک لغو کرد.",
+          message: `مشاور ${actorName} با شماره ${actorProfile?.user.mobile ?? "ثبت‌نشده"} همکاری تأییدشده خود را برای این ملک لغو کرد.`,
+          details: {
+            actorName,
+            actorMobile: actorProfile?.user.mobile ?? null,
+            actorRole: "AGENT",
+            action: "لغو همکاری تأییدشده",
+            subject: propertyDetails ? `${propertyDetails.propertyType} در ${propertyDetails.city}، ${propertyDetails.district}` : "ملک",
+            subjectType: "ملک",
+            occurredAt: new Date().toISOString(),
+          },
         })),
       });
     }
