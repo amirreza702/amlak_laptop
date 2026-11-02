@@ -112,36 +112,36 @@ export async function getPropertyByIdController(
     const approvedOwnerRelation = approvedOwnerIds.length === 1
       ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
       : null;
+    const ownerIsApprover = Boolean(ownOwner && approvedOwnerIds.includes(ownOwner.ownerId));
     const isAgentCreator = property.registrationSource === "AGENT" &&
       property.createdByRole === "AGENT" && property.createdByUserId === user.id;
     const isApprovedAgent = user.role === "AGENT" &&
       property.registrationSource === "OWNER" &&
       approvedAgent?.agent.userId === user.id &&
       Boolean(approvedOwnerRelation);
-    const canViewOwner = (user.role === "OWNER" && Boolean(ownOwner)) ||
+    const canViewOwner = (user.role === "OWNER" && Boolean(ownOwner) && (!approvedAgent || ownerIsApprover)) ||
       (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
 
     const primaryOwner = owners.find((relation) => relation.isPrimary) ?? owners[0] ?? null;
     const visibleOwner = user.role === "OWNER"
-      ? ownOwner
+      ? (canViewOwner ? ownOwner : null)
       : isApprovedAgent ? approvedOwnerRelation : primaryOwner;
     const ownerFirstName = user.role === "OWNER"
-      ? ownOwner?.owner.firstName ?? null
+      ? (canViewOwner ? ownOwner?.owner.firstName ?? null : null)
       : isApprovedAgent
         ? approvedOwnerRelation?.owner.firstName ?? null
         : canViewOwner ? property.ownerFirstName ?? visibleOwner?.owner.firstName ?? null : null;
     const ownerLastName = user.role === "OWNER"
-      ? ownOwner?.owner.lastName ?? null
+      ? (canViewOwner ? ownOwner?.owner.lastName ?? null : null)
       : isApprovedAgent
         ? approvedOwnerRelation?.owner.lastName ?? null
         : canViewOwner ? property.ownerLastName ?? visibleOwner?.owner.lastName ?? null : null;
     const ownerMobile = user.role === "OWNER"
-      ? ownOwner?.owner.user.mobile ?? null
+      ? (canViewOwner ? ownOwner?.owner.user.mobile ?? null : null)
       : isApprovedAgent
         ? approvedOwnerRelation?.owner.user.mobile ?? null
         : canViewOwner ? property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null : null;
 
-    const ownerIsApprover = Boolean(ownOwner && approvedOwnerRelation?.ownerId === ownOwner.ownerId);
     const visibleApprovedAgent = property.registrationSource === "OWNER" &&
       (ownerIsApprover || isApprovedAgent)
       ? approvedAgent?.agent ?? null
