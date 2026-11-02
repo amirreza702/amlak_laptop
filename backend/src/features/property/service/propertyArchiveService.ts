@@ -23,8 +23,7 @@ import { PropertyHistoryAction } from "@prisma/client";
  *   ↓
  * حذف اطلاعات مصرفی:
  *   ├── PropertyListing
- *   ├── PropertyMedia
- *   └── VirtualTour360
+ *   └── PropertyMedia
  *   ↓
  * غیرفعال کردن Property
  *   ↓
@@ -39,8 +38,6 @@ import { PropertyHistoryAction } from "@prisma/client";
  * - PropertyAgent
  * - PropertyHistory
  * - PriceHistory
- * - VerificationCase
- * - VerificationDocument
  * - DuplicateReview
  * - ExactLocationAccessLog
  * - PropertyArchive
@@ -128,21 +125,7 @@ export const archivePropertyService = async (
       },
     });
 
-    /**
-     * --------------------------------------------------------
-     * 4. حذف تورهای 360 درجه
-     * --------------------------------------------------------
-     *
-     * VirtualTour360 اطلاعات مصرفی/حجیم است.
-     *
-     * با حذف VirtualTour360، رکوردهای TourOrder وابسته
-     * نیز به دلیل onDelete: Cascade حذف خواهند شد.
-     */
-    await tx.virtualTour360.deleteMany({
-      where: {
-        propertyId: property.id,
-      },
-    });
+    // تورهای ۳۶۰ و سفارش‌های وابسته برای استفاده و بازیابی آینده حفظ می‌شوند.
 
     /**
      * --------------------------------------------------------
