@@ -104,8 +104,8 @@ export async function getPropertyByIdController(
           .filter((request) => request.responses.some((response) => response.agentId === approvedAgent.agentId))
           .map((request) => request.ownerId)))
       : [];
-    // اگر چند مالک متفاوت برای همان مشاور درخواست پذیرفته‌شده داشته باشند،
-    // مالک تأییدکننده از داده‌های موجود قابل تشخیص قطعی نیست؛ پس اطلاعات هیچ‌کدام افشا نمی‌شود.
+    // اگر چند مالک برای همان مشاور درخواست پذیرفته‌شده داشته باشند، مشاور به یک مالک یکتا
+    // متصل نمی‌شود؛ اما هر مالک فقط در صورت حضور شناسه خودش در این فهرست، اطلاعات خودش را می‌بیند.
     const approvedOwnerRelation = approvedOwnerIds.length === 1
       ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
       : null;
