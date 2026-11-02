@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { ListingStatus } from "@prisma/client";
 import { getHashtiPropertyRecords } from "../service/propertyManagementService";
+import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
 
 function parseIntegerQuery(value: unknown, fallback: number, min: number, max: number): number | null {
   if (value === undefined) return fallback;
@@ -40,5 +41,25 @@ export async function getHashtiPropertyRecordsController(req: Request, res: Resp
   } catch (error) {
     console.error("Could not load Hashti property records:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+
+/** PATCH /hashti/properties/:id/publish — تأیید نهایی انتشار پس از بررسی جزئیات */
+export async function approveHashtiPropertyPublicationController(req: Request, res: Response) {
+  const propertyId = typeof req.params.id === "string" ? req.params.id : "";
+  if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
+
+  try {
+    const result = await updatePropertyListingStatus(propertyId, {
+      status: ListingStatus.PUBLISHED,
+    });
+    return res.status(200).json({
+      message: "ملک با موفقیت تأیید و منتشر شد.",
+      ...result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "تأیید انتشار ملک ناموفق بود.";
+    return res.status(400).json({ message });
   }
 }
