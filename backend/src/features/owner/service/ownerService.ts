@@ -138,9 +138,10 @@ export const getCurrentOwnerPropertiesService = async (authenticatedUserId: stri
     ...record,
     property: {
       ...record.property,
-      ownerFirstName: owner.firstName,
-      ownerLastName: owner.lastName,
-      ownerMobile: owner.user.mobile,
+      // در ملک ثبت‌شده توسط مشاور، فقط همان مشاور ثبت‌کننده مجاز به مشاهده مشخصات مالک است.
+      ownerFirstName: record.property.registrationSource === "AGENT" ? null : owner.firstName,
+      ownerLastName: record.property.registrationSource === "AGENT" ? null : owner.lastName,
+      ownerMobile: record.property.registrationSource === "AGENT" ? null : owner.user.mobile,
     },
   }));
 };
