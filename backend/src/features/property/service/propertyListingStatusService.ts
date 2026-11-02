@@ -48,7 +48,6 @@ const allowedTransitions: Record<
 
   [ListingStatus.PUBLISHED]: [
     ListingStatus.PAUSED,
-    ListingStatus.EXPIRED,
     ListingStatus.SOLD,
     ListingStatus.RENTED,
   ],
@@ -63,7 +62,6 @@ const allowedTransitions: Record<
 
   [ListingStatus.PAUSED]: [
     ListingStatus.PUBLISHED,
-    ListingStatus.EXPIRED,
   ],
 
   [ListingStatus.SOLD]: [],
