@@ -7,16 +7,11 @@ import { restorePropertyService } from "./propertyArchiveService";
  * Related records and audit history are preserved.
  */
 export async function deleteOwnPropertyService(propertyId: string, userId: string) {
-  const ownership = await prisma.propertyOwner.findFirst({
-    where: { propertyId, owner: { userId } },
-    select: { propertyId: true, ownerId: true },
-  });
-  if (!ownership) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
-
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
-    select: { id: true, isActive: true },
+    select: { id: true, isActive: true, createdByUserId: true },
   });
+  if (!property || property.createdByUserId !== userId) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
   if (!property.isActive) throw new Error("PROPERTY_ALREADY_DELETED");
 
