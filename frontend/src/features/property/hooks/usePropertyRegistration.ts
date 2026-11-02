@@ -71,7 +71,7 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
 
       if (mode === "agent" && !ownerFirstName.trim()) throw new Error("نام مالک را وارد کنید.");
       if (mode === "agent" && !ownerLastName.trim()) throw new Error("نام خانوادگی مالک را وارد کنید.");
-      if (mode === "agent" && !/^09\\d{9}$/.test(ownerMobile.trim())) {
+      if (mode === "agent" && !/^09\d{9}$/.test(ownerMobile.trim())) {
         throw new Error("شماره همراه مالک باید یک شماره معتبر ۱۱ رقمی ایران باشد.");
       }
 
