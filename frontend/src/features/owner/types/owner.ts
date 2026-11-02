@@ -5,6 +5,7 @@ export interface OwnerProperty {
   verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
   property: {
     id: string;
+    registrationSource: "OWNER" | "AGENT";
     propertyType: string;
     city: string;
     district: string;
