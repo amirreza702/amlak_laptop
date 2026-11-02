@@ -10,9 +10,12 @@ import { useOwnerProfile } from "../hooks/useOwnerProfile";
 import { OwnerProfilePanel } from "./OwnerProfilePanel";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { Modal } from "@/shared/components/Modal";
+import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
 
 
 export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
+  const { items: notificationItems } = useUserNotifications(user.id);
+  const unreadNotificationCount = notificationItems.filter((item) => !item.isRead).length;
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
   const {
@@ -25,7 +28,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مالک</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مالک">
           {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["agents", "مدیریت مشاوران"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
-            <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}</button>
+            <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}{target === "notifications" && unreadNotificationCount > 0 && <span className="mr-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadNotificationCount.toLocaleString("fa-IR")}</span>}</button>
           ))}
         </nav>
       </aside>
