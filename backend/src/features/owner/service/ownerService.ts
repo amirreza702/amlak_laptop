@@ -134,24 +134,34 @@ export const getCurrentOwnerPropertiesService = async (authenticatedUserId: stri
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
   const records = await findOwnerPropertiesByOwnerId(owner.id);
-  return records.map((record) => ({
-    ...record,
-    property: {
-      ...record.property,
-      // در ملک ثبت‌شده توسط مشاور، مالک فقط برای مشاور ثبت‌کننده قابل مشاهده است.
-      ownerFirstName: record.property.registrationSource === "AGENT" ? null : owner.firstName,
-      ownerLastName: record.property.registrationSource === "AGENT" ? null : owner.lastName,
-      ownerMobile: record.property.registrationSource === "AGENT" ? null : owner.user.mobile,
-      // برای ملک مشاورمحور، فقط هویت مشاور ثبت‌کننده به این پنل ارسال می‌شود.
-      agents: record.property.registrationSource === "AGENT"
-        ? record.property.agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
-        : record.property.agents.map((relation) => ({
-            ...relation,
-            agent: {
-              ...relation.agent,
-              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner ? relation.agent.user.mobile : "" },
-            },
-          })),
-    },
-  }));
+  return records.map((record) => {
+    const { agents, ownerAgentRequests, ...propertyData } = record.property;
+    const approvedAgent = agents.find((relation) => relation.status === "ACTIVE" && relation.approvedByOwner) ?? null;
+    const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
+      request.responses.some((response) => response.agentId === approvedAgent.agentId)
+    ));
+    const canViewOwnerDetails = record.property.registrationSource === "OWNER" &&
+      (!approvedAgent || ownerApprovedThisAgent);
+
+    return {
+      ...record,
+      property: {
+        ...propertyData,
+        // اگر مشاور تأیید نهایی شده باشد، فقط همان مالکِ تأییدکننده و همان مشاور اطلاعات مالک را می‌بینند.
+        ownerFirstName: canViewOwnerDetails ? owner.firstName : null,
+        ownerLastName: canViewOwnerDetails ? owner.lastName : null,
+        ownerMobile: canViewOwnerDetails ? owner.user.mobile : null,
+        // برای ملک مشاورمحور، فقط هویت مشاور ثبت‌کننده به این پنل ارسال می‌شود.
+        agents: record.property.registrationSource === "AGENT"
+          ? agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
+          : agents.map((relation) => ({
+              ...relation,
+              agent: {
+                ...relation.agent,
+                user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner ? relation.agent.user.mobile : "" },
+              },
+            })),
+      },
+    };
+  });
 };
