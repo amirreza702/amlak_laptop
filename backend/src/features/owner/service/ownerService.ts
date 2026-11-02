@@ -144,7 +144,7 @@ export const getCurrentOwnerPropertiesService = async (authenticatedUserId: stri
       ownerMobile: record.property.registrationSource === "AGENT" ? null : owner.user.mobile,
       // برای ملک مشاورمحور، فقط هویت مشاور ثبت‌کننده به این پنل ارسال می‌شود.
       agents: record.property.registrationSource === "AGENT"
-        ? record.property.agents.filter((relation) => relation.isFirstRegistrant)
+        ? record.property.agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
         : record.property.agents.map((relation) => ({
             ...relation,
             agent: {
