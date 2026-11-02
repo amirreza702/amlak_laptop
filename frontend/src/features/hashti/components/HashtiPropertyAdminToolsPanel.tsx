@@ -3,7 +3,7 @@
 
 import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, Search, TimerReset, UserPlus } from "lucide-react";
+import { CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, Search, TimerReset, UserPlus, ClipboardCheck } from "lucide-react";
 import { Modal } from "@/shared/components/Modal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -26,16 +26,44 @@ type HashtiPropertyRecord = {
   id: string;
   propertyType: string;
   registrationSource: string;
+  ownerFirstName: string | null;
+  ownerLastName: string | null;
+  ownerMobile: string | null;
   city: string;
   district: string;
   address: string;
   postalCode: string | null;
+  latitudeExact: number;
+  longitudeExact: number;
+  latitudePublic: number | null;
+  longitudePublic: number | null;
   area: number | null;
   rooms: number | null;
+  floor: number | null;
+  yearBuilt: number | null;
+  unitNumber: string | null;
+  totalUnits: number | null;
+  parkingCount: number | null;
+  parkingType: string | null;
+  parkingNumber: string | null;
+  hasElevator: boolean | null;
+  hasStorage: boolean | null;
+  hasBalcony: boolean | null;
+  hasYard: boolean | null;
+  heatingSystem: string | null;
+  coolingSystem: string | null;
+  documentType: string | null;
+  ownershipType: string | null;
+  landTenure: string | null;
+  description: string | null;
+  renovationStatus: string | null;
+  renovationYear: number | null;
+  occupancyStatus: string;
   isActive: boolean;
   createdAt: string;
   confirmUntil: string | null;
-  listing: { status: string; transactionType: string; publishedAt: string | null; expiredAt: string | null } | null;
+  listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null; expiredAt: string | null } | null;
+  media: { id: string; type: string; url: string; sortOrder: number }[];
   owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string; user: { mobile: string } } }[];
   agents: { agentId: string; status: string; approvedByOwner: boolean; approvedAt: string | null; isFirstRegistrant: boolean; agent: { firstName: string; lastName: string; user: { mobile: string } } }[];
   verificationCases: { id: string; status: string; notes: string | null; createdAt: string; reviewedAt: string | null }[];
@@ -66,7 +94,7 @@ export function HashtiPropertyAdminToolsPanel() {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, limit: 25, offset: 0 });
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
-  const [listingStatus, setListingStatus] = useState("ALL");
+  const [listingStatus, setListingStatus] = useState("PENDING_HASHTI_VERIFICATION");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -77,6 +105,9 @@ export function HashtiPropertyAdminToolsPanel() {
   const [isPrimary, setIsPrimary] = useState(false);
   const [busyOwnerPropertyId, setBusyOwnerPropertyId] = useState<string | null>(null);
   const [busyExpireId, setBusyExpireId] = useState<string | null>(null);
+  const [reviewProperty, setReviewProperty] = useState<HashtiPropertyRecord | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
 
   const load = useCallback(async (offset = 0) => {
     setLoading(true);
@@ -133,6 +164,25 @@ export function HashtiPropertyAdminToolsPanel() {
       setError(cause instanceof Error ? cause.message : "ثبت رابطه مالکیت ناموفق بود.");
     } finally {
       setBusyOwnerPropertyId(null);
+    }
+  }
+
+  async function approvePublication(propertyId: string) {
+    setBusyReviewId(propertyId);
+    setReviewError(null);
+    setError(null);
+    setMessage(null);
+    try {
+      await requestJson("/hashti/properties/" + encodeURIComponent(propertyId) + "/publish", {
+        method: "PATCH",
+      });
+      setMessage("ملک پس از تأیید نهایی هشتی منتشر شد.");
+      setReviewProperty(null);
+      await load(pagination.offset);
+    } catch (cause) {
+      setReviewError(cause instanceof Error ? cause.message : "تأیید انتشار ملک ناموفق بود.");
+    } finally {
+      setBusyReviewId(null);
     }
   }
 
@@ -213,6 +263,7 @@ export function HashtiPropertyAdminToolsPanel() {
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">
                       <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> افزودن مالک به این ملک <ChevronDown className="h-3 w-3" /></button>
+                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> بررسی و تأیید انتشار</button>}
                       {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => setExpireConfirmFor(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
                       {ownerFormFor === property.id && <Modal open={ownerFormFor === property.id} title="افزودن مالک به ملک" description={"شناسه ملک: " + property.id} onClose={() => setOwnerFormFor(null)}><form onSubmit={(event) => void addOwner(event, property.id)} className="space-y-4">
                         <label className="block space-y-1 text-xs"><span>شناسه پروفایل مالک</span><input required maxLength={200} value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
@@ -228,6 +279,75 @@ export function HashtiPropertyAdminToolsPanel() {
           </table>
         </div>
       )}
+
+      <Modal
+        open={Boolean(reviewProperty)}
+        title="بررسی نهایی و تأیید انتشار ملک"
+        description="تمام اطلاعات ثبت‌شده و جزئیات اختیاری را پیش از انتشار بررسی کنید."
+        onClose={() => { if (!busyReviewId) { setReviewProperty(null); setReviewError(null); } }}
+      >
+        {reviewProperty && (() => {
+          const p = reviewProperty;
+          const enumLabels: Record<string, string> = {
+            APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ",
+            SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره",
+            SINGLE_SHEET: "سند تک‌برگ", OLD_DEED: "سند دفترچه‌ای", OFFICIAL_CONTRACT: "قرارداد رسمی", ORDINARY_CONTRACT: "قولنامه عادی",
+            SIX_DANG: "شش‌دانگ", SHARED: "مشاع", FREEHOLD: "ملکی", ENDOWMENT: "اوقافی",
+            NO_RENOVATION: "بدون بازسازی", PARTIAL: "بازسازی جزئی", FULL: "بازسازی کامل",
+            VACANT: "خالی", OWNER_OCCUPIED: "مالک‌نشین", TENANT_OCCUPIED: "مستأجرنشین",
+            OWNER: "مالک", AGENT: "مشاور", HASHTI: "هشتی",
+          };
+          const valueText = (value: unknown): string => {
+            if (typeof value === "boolean") return value ? "بله" : "خیر";
+            if (typeof value === "number") return value.toLocaleString("fa-IR");
+            if (typeof value === "string") return enumLabels[value] ?? value;
+            return String(value ?? "");
+          };
+          const rows: [string, unknown][] = [
+            ["نوع ملک", p.propertyType], ["منبع ثبت", p.registrationSource],
+            ["نام مالک", p.ownerFirstName], ["نام خانوادگی مالک", p.ownerLastName], ["شماره همراه مالک", p.ownerMobile],
+            ["شهر / روستا", p.city], ["محله / منطقه", p.district], ["نشانی", p.address], ["کد پستی", p.postalCode],
+            ["عرض جغرافیایی دقیق", p.latitudeExact], ["طول جغرافیایی دقیق", p.longitudeExact],
+            ["عرض جغرافیایی عمومی", p.latitudePublic], ["طول جغرافیایی عمومی", p.longitudePublic],
+            ["متراژ (مترمربع)", p.area], ["تعداد اتاق", p.rooms], ["طبقه", p.floor], ["سال ساخت", p.yearBuilt],
+            ["شماره واحد", p.unitNumber], ["تعداد کل واحدها", p.totalUnits],
+            ["تعداد پارکینگ", p.parkingCount], ["نوع پارکینگ", p.parkingType], ["شماره پارکینگ", p.parkingNumber],
+            ["آسانسور", p.hasElevator], ["انباری", p.hasStorage], ["بالکن", p.hasBalcony], ["حیاط", p.hasYard],
+            ["سیستم گرمایش", p.heatingSystem], ["سیستم سرمایش", p.coolingSystem],
+            ["نوع سند", p.documentType], ["نوع مالکیت", p.ownershipType], ["وضعیت عرصه", p.landTenure],
+            ["وضعیت بازسازی", p.renovationStatus], ["سال بازسازی", p.renovationYear],
+            ["وضعیت سکونت", p.occupancyStatus], ["توضیحات", p.description],
+            ["نوع معامله", p.listing?.transactionType],
+            ["قیمت فروش (تومان)", p.listing?.salePrice], ["مبلغ رهن (تومان)", p.listing?.depositAmount], ["مبلغ اجاره (تومان)", p.listing?.rentAmount],
+          ].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
+          return (
+            <div className="space-y-4">
+              {reviewError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{reviewError}</p>}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {rows.map(([label, value]) => <div key={label} className="rounded-lg border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">{label}</p>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-slate-900">{valueText(value)}</p>
+                </div>)}
+              </div>
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="font-bold text-sm">موقعیت روی نقشه</p>
+                <p className="mt-1 text-xs text-slate-600" dir="ltr">{p.latitudeExact}, {p.longitudeExact}</p>
+                <a className="mt-2 inline-block text-sm font-semibold text-blue-700 underline" href={"https://www.google.com/maps?q=" + p.latitudeExact + "," + p.longitudeExact} target="_blank" rel="noreferrer">مشاهده موقعیت روی نقشه</a>
+              </div>
+              {p.media.length > 0 && <div className="rounded-lg border border-slate-200 p-3">
+                <p className="mb-2 font-bold text-sm">تصاویر ثبت‌شده ({p.media.length})</p>
+                <div className="flex flex-wrap gap-2">{p.media.map((media) => <a key={media.id} href={media.url} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-blue-700 underline">{media.type === "MAIN_IMAGE" ? "تصویر اصلی" : media.type === "FLOOR_PLAN" ? "نقشه" : "تصویر"} {media.sortOrder + 1}</a>)}</div>
+              </div>}
+              <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
+                <button type="button" disabled={Boolean(busyReviewId)} onClick={() => { setReviewProperty(null); setReviewError(null); }} className="rounded-lg border px-4 py-2.5 text-sm">بازگشت</button>
+                <button type="button" disabled={busyReviewId === p.id || p.listing?.status !== "PENDING_HASHTI_VERIFICATION"} onClick={() => void approvePublication(p.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                  {busyReviewId === p.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} تأیید نهایی و انتشار
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
 
       <Modal open={Boolean(expireConfirmFor)} title="بررسی انقضای آگهی" description="این عملیات وضعیت آگهی را بر اساس مهلت تأیید بررسی می‌کند. در صورت لزوم وضعیت به منقضی تغییر می‌کند." onClose={() => setExpireConfirmFor(null)}>
         {error && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
