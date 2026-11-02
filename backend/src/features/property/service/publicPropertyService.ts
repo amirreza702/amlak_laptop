@@ -54,7 +54,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   // پس از تأیید مشاور، فقط مالکی که همان مشاور را تأیید کرده است، به همراه آن مشاور،
   // به اطلاعات مالک دسترسی دارد. پیش از تأیید، مالکِ واردشده فقط اطلاعات خودش را می‌بیند.
   const viewerIsAuthorizedOwner = Boolean(
-    viewerOwnerRelation && (!approvedAgent || approvedOwnerIds.includes(viewerOwnerRelation.ownerId))
+    registrationSource === "OWNER" && viewerOwnerRelation && (!approvedAgent || approvedOwnerIds.includes(viewerOwnerRelation.ownerId))
   );
   const mayViewOwnerDetails = Boolean(
     viewerIsAuthorizedOwner || isApprovedAgent || isAgentCreator || viewer?.role === "HASHTI"
