@@ -44,3 +44,12 @@ export function updateAgentProfile(agentId: string, data: AgentProfileUpdate): P
     }
   );
 }
+
+
+/** مشاور می‌تواند رابطه همکاری تأییدشده خود با مالک/ملک را لغو کند. */
+export function revokeApprovedOwnerRelationship(propertyId: string): Promise<{ propertyAgent: unknown; message: string }> {
+  return agentApiRequest<{ propertyAgent: unknown; message: string }>(
+    `/agents/me/properties/${encodeURIComponent(propertyId)}/relationship/revoke`,
+    { method: "PATCH" }
+  );
+}
