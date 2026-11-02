@@ -346,7 +346,10 @@ export function HashtiPropertyAdminToolsPanel() {
               </div>
               {p.media.length > 0 && <div className="rounded-lg border border-slate-200 p-3">
                 <p className="mb-2 font-bold text-sm">تصاویر ثبت‌شده ({p.media.length})</p>
-                <div className="flex flex-wrap gap-2">{p.media.map((media) => <a key={media.id} href={media.url} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-blue-700 underline">{media.type === "MAIN_IMAGE" ? "تصویر اصلی" : media.type === "FLOOR_PLAN" ? "نقشه" : "تصویر"} {media.sortOrder + 1}</a>)}</div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{p.media.map((media) => <a key={media.id} href={API_URL + "/properties/" + encodeURIComponent(p.id) + "/media/" + encodeURIComponent(media.id) + "/content"} target="_blank" rel="noreferrer" className="overflow-hidden rounded-lg border border-slate-200">
+                  <img src={API_URL + "/properties/" + encodeURIComponent(p.id) + "/media/" + encodeURIComponent(media.id) + "/content"} crossOrigin="use-credentials" loading="lazy" alt={media.type === "MAIN_IMAGE" ? "تصویر اصلی ملک" : "تصویر ملک"} className="h-28 w-full object-cover" />
+                  <span className="block p-2 text-xs font-semibold text-slate-700">{media.type === "MAIN_IMAGE" ? "تصویر اصلی" : media.type === "FLOOR_PLAN" ? "نقشه" : "تصویر"} {media.sortOrder + 1}</span>
+                </a>)}</div>
               </div>}
               <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
                 <button type="button" disabled={Boolean(busyReviewId)} onClick={() => { setReviewProperty(null); setReviewError(null); }} className="rounded-lg border px-4 py-2.5 text-sm">بازگشت</button>
