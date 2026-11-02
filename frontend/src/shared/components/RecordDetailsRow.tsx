@@ -16,6 +16,7 @@ type RecordDetailsRowProps = {
   title?: string;
   className?: string;
   children: ReactNode;
+  onOpen?: () => void;
 };
 
 const formFieldLabels: Record<string, string> = {
@@ -99,6 +100,13 @@ const formFieldLabels: Record<string, string> = {
   isPrimary: "مالک اصلی",
   hashtiVerified: "تأیید هشتی",
   adminPermissions: "مجوزهای دسترسی",
+  actorName: "نام اقدام‌کننده",
+  actorMobile: "شماره تماس اقدام‌کننده",
+  actorRole: "نقش اقدام‌کننده",
+  action: "شرح اقدام",
+  subject: "موضوع مرتبط",
+  subjectType: "نوع موضوع",
+  occurredAt: "زمان انجام اقدام",
 };
 
 const formFieldKeys = new Set(Object.keys(formFieldLabels));
@@ -113,6 +121,7 @@ const enumLabels: Record<string, Record<string, string>> = {
   renovationStatus: { NO_RENOVATION: "بدون بازسازی", PARTIAL: "بازسازی جزئی", FULL: "بازسازی کامل" },
   occupancyStatus: { VACANT: "خالی", OWNER_OCCUPIED: "مالک ساکن است", TENANT_OCCUPIED: "مستأجر دارد" },
   role: { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" },
+  actorRole: { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی", UNKNOWN: "نامشخص" },
   verificationStatus: { PENDING: "در انتظار بررسی", VERIFIED: "تأییدشده", REJECTED: "ردشده" },
   entityType: { property: "ملک", owner: "مالک", request: "درخواست", customer: "مشتری" },
 };
@@ -170,7 +179,7 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   // Management APIs may wrap a property in a relation object. Only traverse
   // these known, non-identity containers; never recursively expose arbitrary
   // user/session/audit relations in a shared component.
-  for (const container of ["property", "listing", "agent", "owner", "customer"] as const) {
+  for (const container of ["property", "listing", "agent", "owner", "customer", "details"] as const) {
     const nested = record[container];
     if (nested && typeof nested === "object" && !Array.isArray(nested)) {
       append(nested as Record<string, unknown>);
@@ -287,13 +296,14 @@ function FormDetails({ record }: { record: unknown }) {
 }
 
 /** ردیف قابل کلیک جدول؛ فقط فیلدهای شناخته‌شده فرم از داده مجاز همان پنل نمایش داده می‌شوند. */
-export function RecordDetailsRow({ record, title = "رکورد", className = "", children }: RecordDetailsRowProps) {
+export function RecordDetailsRow({ record, title = "رکورد", className = "", children, onOpen }: RecordDetailsRowProps) {
   const [open, setOpen] = useState(false);
   const mounted = useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
 
   const openFromRow = (event: MouseEvent<HTMLTableRowElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest("button,a,input,select,textarea,[role='button'],[data-record-details-ignore='true']")) return;
+    onOpen?.();
     setOpen(true);
   };
 
@@ -304,6 +314,7 @@ export function RecordDetailsRow({ record, title = "رکورد", className = "",
       onKeyDown={(event) => {
         if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
+          onOpen?.();
           setOpen(true);
         }
       }}
