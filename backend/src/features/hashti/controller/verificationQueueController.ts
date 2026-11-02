@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { VerificationStatus } from "@prisma/client";
-import { getVerificationQueueService } from "../service/verificationQueueService";
+import { getOwnerVerificationQueueService } from "../service/verificationQueueService";
 
 function parseIntegerQuery(value: unknown, fallback: number, min: number, max: number): number | null {
   if (value === undefined) return fallback;
@@ -9,11 +9,12 @@ function parseIntegerQuery(value: unknown, fallback: number, min: number, max: n
   return Number.isSafeInteger(parsed) && parsed >= min && parsed <= max ? parsed : null;
 }
 
-export async function getVerificationQueueController(req: Request, res: Response) {
-  const rawStatus = typeof req.query.status === "string" ? req.query.status.trim().toUpperCase() : "";
+/** GET /hashti/owner-verification-queue — صف مستقل بررسی وضعیت مالکیت. */
+export async function getOwnerVerificationQueueController(req: Request, res: Response) {
+  const rawStatus = typeof req.query.status === "string" ? req.query.status.trim().toUpperCase() : "PENDING";
   const statuses = Object.values(VerificationStatus) as string[];
-  if (rawStatus && rawStatus !== "ALL" && !statuses.includes(rawStatus)) {
-    return res.status(400).json({ message: "Invalid verification status filter" });
+  if (rawStatus !== "ALL" && !statuses.includes(rawStatus)) {
+    return res.status(400).json({ message: "Invalid owner verification status filter" });
   }
   if (req.query.query !== undefined && (typeof req.query.query !== "string" || req.query.query.length > 200)) {
     return res.status(400).json({ message: "query must be a string up to 200 characters" });
@@ -23,14 +24,18 @@ export async function getVerificationQueueController(req: Request, res: Response
   if (limit === null || offset === null) return res.status(400).json({ message: "Invalid pagination parameters" });
 
   try {
-    const result = await getVerificationQueueService({
-      status: rawStatus && rawStatus !== "ALL" ? rawStatus as VerificationStatus : undefined,
+    const result = await getOwnerVerificationQueueService({
+      status: rawStatus === "ALL" ? undefined : rawStatus as VerificationStatus,
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
-      limit, offset,
+      limit,
+      offset,
     });
-    return res.status(200).json({ cases: result.cases, pagination: { total: result.total, limit, offset } });
+    return res.status(200).json({
+      properties: result.properties,
+      pagination: { total: result.total, limit, offset },
+    });
   } catch (error) {
-    console.error("Failed to load verification queue:", error);
+    console.error("Failed to load owner verification queue:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

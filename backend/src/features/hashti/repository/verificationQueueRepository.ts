@@ -1,70 +1,95 @@
 import { VerificationStatus, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
-export interface VerificationQueueQuery {
+export interface OwnerVerificationQueueQuery {
   status?: VerificationStatus;
   query?: string;
   limit: number;
   offset: number;
 }
 
-export async function findVerificationQueueCases(input: VerificationQueueQuery) {
+/**
+ * صف تأیید مالکیت مستقیماً از PropertyOwner خوانده می‌شود.
+ * این جریان به پرونده‌ها و مدارک قدیمی ملک وابستگی ندارد.
+ */
+export async function findOwnerVerificationQueueProperties(input: OwnerVerificationQueueQuery) {
   const search = input.query?.trim();
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
-  const numericSearch = search !== undefined && search.trim() !== "" && Number.isFinite(Number(search)) ? Number(search) : undefined;
-  const exact = search?.trim().toUpperCase();
+  const numericSearch = search && Number.isFinite(Number(search)) ? Number(search) : undefined;
+  const exact = search?.toUpperCase();
   const parsedDate = search ? new Date(search) : null;
   const dateRange = parsedDate && !Number.isNaN(parsedDate.getTime())
-    ? { gte: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()), lt: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1) }
+    ? {
+        gte: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()),
+        lt: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1),
+      }
     : undefined;
-  const where: Prisma.VerificationCaseWhereInput = {
-    ...(input.status ? { status: input.status } : {}),
+
+  const ownerStatusFilter: Prisma.PropertyOwnerWhereInput = input.status
+    ? { verificationStatus: input.status }
+    : {};
+
+  const where: Prisma.PropertyWhereInput = {
+    owners: { some: ownerStatusFilter },
     ...(search ? {
       OR: [
-        { id: contains(search) }, { propertyId: contains(search) }, { notes: contains(search) },
-        { reviewedBy: contains(search) },
-        { property: { is: { id: contains(search) } } },
-        { property: { is: { city: contains(search) } } },
-        { property: { is: { district: contains(search) } } },
-        { property: { is: { address: contains(search) } } },
-        { property: { is: { postalCode: contains(search) } } },
-        { property: { is: { owners: { some: { ownerId: contains(search) } } } } },
-        { property: { is: { owners: { some: { owner: { is: { firstName: contains(search) } } } } } } },
-        { property: { is: { owners: { some: { owner: { is: { lastName: contains(search) } } } } } } },
-        ...(exact ? [
-          { status: exact as any },
-          { property: { is: { propertyType: exact as any } } },
-          { property: { is: { owners: { some: { verificationStatus: exact as any } } } } },
-        ] : []),
-        ...(numericSearch !== undefined ? [
-          { property: { is: { area: numericSearch } } },
-          { property: { is: { rooms: numericSearch } } },
-          { property: { is: { owners: { some: { share: numericSearch } } } } },
-        ] : []),
-        ...(dateRange ? [
-          { createdAt: dateRange }, { updatedAt: dateRange }, { reviewedAt: dateRange },
-        ] : []),
+        { id: contains(search) },
+        { city: contains(search) },
+        { district: contains(search) },
+        { address: contains(search) },
+        { postalCode: contains(search) },
+        { owners: { some: { ownerId: contains(search) } } },
+        { owners: { some: { owner: { is: { firstName: contains(search) } } } } },
+        { owners: { some: { owner: { is: { lastName: contains(search) } } } } },
+        ...(exact && Object.values(VerificationStatus).includes(exact as VerificationStatus)
+          ? [{ owners: { some: { verificationStatus: exact as VerificationStatus } } }]
+          : []),
+        ...(numericSearch !== undefined
+          ? [
+              { area: numericSearch },
+              { rooms: numericSearch },
+              { owners: { some: { share: numericSearch } } },
+            ]
+          : []),
+        ...(dateRange
+          ? [
+              { createdAt: dateRange },
+              { confirmUntil: dateRange },
+              { owners: { some: { verifiedAt: dateRange } } },
+            ]
+          : []),
       ],
     } : {}),
   };
 
-  const [total, cases] = await Promise.all([
-    prisma.verificationCase.count({ where }),
-    prisma.verificationCase.findMany({
+  const [total, properties] = await Promise.all([
+    prisma.property.count({ where }),
+    prisma.property.findMany({
       where,
       skip: input.offset,
       take: input.limit,
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, propertyId: true, status: true, reviewedBy: true, reviewedAt: true,
-        notes: true, createdAt: true, updatedAt: true,
-        property: {
+        id: true,
+        propertyType: true,
+        city: true,
+        district: true,
+        address: true,
+        createdAt: true,
+        owners: {
+          where: ownerStatusFilter,
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
           select: {
-            id: true, propertyType: true, city: true, district: true, address: true,
-            owners: {
+            ownerId: true,
+            share: true,
+            isPrimary: true,
+            verificationStatus: true,
+            verifiedAt: true,
+            owner: {
               select: {
-                ownerId: true, share: true, verificationStatus: true,
-                owner: { select: { firstName: true, lastName: true } },
+                firstName: true,
+                lastName: true,
+                user: { select: { mobile: true } },
               },
             },
           },
@@ -72,5 +97,6 @@ export async function findVerificationQueueCases(input: VerificationQueueQuery) 
       },
     }),
   ]);
-  return { cases, total };
+
+  return { properties, total };
 }

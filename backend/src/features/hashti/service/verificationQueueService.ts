@@ -1,4 +1,5 @@
-import { findVerificationQueueCases, type VerificationQueueQuery } from "../repository/verificationQueueRepository";
+import { findOwnerVerificationQueueProperties, type OwnerVerificationQueueQuery } from "../repository/verificationQueueRepository";
 
-export const getVerificationQueueService = async (query: VerificationQueueQuery) =>
-  findVerificationQueueCases(query);
+export async function getOwnerVerificationQueueService(query: OwnerVerificationQueueQuery) {
+  return findOwnerVerificationQueueProperties(query);
+}
