@@ -214,8 +214,8 @@ export function HashtiPropertyAdminToolsPanel() {
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">مدیریت املاک</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">هر ردیف یک رکورد ملک است؛ وضعیت آگهی، مالکیت، مشاوران و پرونده تأیید در همان ردیف نمایش داده می‌شوند. عملیات مالکیت و انقضا به همان شناسه ملک متصل‌اند.</p>
+          <h2 className="text-xl font-bold text-slate-900">صف انتشار ملک و مدیریت املاک</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">در حالت پیش‌فرض، جدول زیر املاک در انتظار تأیید انتشار هشتی را نشان می‌دهد. با انتخاب وضعیت‌های دیگر می‌توانید سایر رکوردها را نیز بررسی کنید.</p>
         </div>
         <button type="button" onClick={() => void load(pagination.offset)} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50">
           {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} تازه‌سازی
@@ -230,11 +230,10 @@ export function HashtiPropertyAdminToolsPanel() {
 
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
-      {loading && properties.length === 0 ? <p className="flex items-center gap-2 py-4 text-sm text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردهای املاک...</p> : properties.length === 0 ? <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">رکورد ملکی با این فیلترها پیدا نشد.</p> : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full min-w-[1450px] text-right text-sm">
             <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">آگهی و وضعیت</th><th className="p-3">رکوردهای مالکیت</th><th className="p-3">رکوردهای مشاور</th><th className="p-3">پرونده تأیید</th><th className="p-3">عملیات رکورد</th></tr></thead>
-            <tbody>{properties.map((property) => {
+            <tbody>{loading && properties.length === 0 ? <tr><td colSpan={6} className="p-5 text-center text-sm text-slate-500"><span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردهای املاک...</span></td></tr> : properties.length === 0 ? <tr><td colSpan={6} className="p-5 text-center text-sm text-slate-600">در این وضعیت، رکورد ملکی برای نمایش وجود ندارد.</td></tr> : properties.map((property) => {
               const latestCase = property.verificationCases[0];
               return (
                 <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
@@ -281,7 +280,6 @@ export function HashtiPropertyAdminToolsPanel() {
             })}</tbody>
           </table>
         </div>
-      )}
 
       <Modal
         open={Boolean(reviewProperty)}
