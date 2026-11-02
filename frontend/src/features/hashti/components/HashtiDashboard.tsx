@@ -27,6 +27,7 @@ import { HashtiPropertyAdminToolsPanel } from "./HashtiPropertyAdminToolsPanel";
 import { PersianDatePicker } from "@/shared/components/PersianDatePicker";
 import { formatPersianDateTime } from "@/shared/utils/date";
 import { Modal } from "@/shared/components/Modal";
+import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
 
 
 
@@ -42,6 +43,8 @@ function matchesSearchFields(value: unknown, query: string) {
 }
 
 export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
+  const { items: notificationItems } = useUserNotifications(user.id);
+  const unreadNotificationCount = notificationItems.filter((item) => !item.isRead).length;
   // تا پیش از انتخاب ابزار، فضای اصلی پنل خالی می‌ماند.
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [agentSearch, setAgentSearch] = useState("");
@@ -91,7 +94,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             ["profile", "پروفایل"],
             ["notifications", "اعلان‌ها"],
           ].map(([target, label]) => (
-            <button key={target} type="button" aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} title={label} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}</button>
+            <button key={target} type="button" aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} title={label} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}{target === "notifications" && unreadNotificationCount > 0 && <span className="mr-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadNotificationCount.toLocaleString("fa-IR")}</span>}</button>
           ))}
         </nav>
       </aside>
