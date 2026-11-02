@@ -1,31 +1,22 @@
 export type VerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
-
-export interface VerificationQueueOwner {
+export interface OwnerVerificationQueueOwner {
   ownerId: string;
   share: number;
+  isPrimary: boolean;
   verificationStatus: VerificationStatus;
-  owner: { firstName: string; lastName: string };
+  verifiedAt: string | null;
+  owner: { firstName: string; lastName: string; user: { mobile: string } };
 }
-
-export interface VerificationCaseRow {
+export interface OwnerVerificationQueueProperty {
   id: string;
-  propertyId: string;
-  status: VerificationStatus;
-  reviewedBy: string | null;
-  reviewedAt: string | null;
-  notes: string | null;
+  propertyType: string;
+  city: string;
+  district: string;
+  address: string;
   createdAt: string;
-  property: {
-    id: string;
-    propertyType: string;
-    city: string;
-    district: string;
-    address: string;
-    owners: VerificationQueueOwner[];
-  };
+  owners: OwnerVerificationQueueOwner[];
 }
-
-export interface VerificationQueueResponse {
-  cases: VerificationCaseRow[];
+export interface OwnerVerificationQueueResponse {
+  properties: OwnerVerificationQueueProperty[];
   pagination: { total: number; limit: number; offset: number };
 }
