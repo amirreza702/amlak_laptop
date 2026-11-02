@@ -34,6 +34,7 @@
  */
 
 import {
+  ListingStatus,
   PriceChangeType,
   TransactionType,
   Prisma,
@@ -170,6 +171,7 @@ export async function createPropertyListingWithInitialPrice(
         {
           propertyId,
           transactionType: data.transactionType,
+          status: ListingStatus.PENDING_HASHTI_VERIFICATION,
           salePrice,
           depositAmount,
           rentAmount,
