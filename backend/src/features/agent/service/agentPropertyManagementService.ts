@@ -17,11 +17,14 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
       const approvedOwnerRelation = approvedOwnerIds.length === 1
         ? record.property.owners.find((owner) => owner.ownerId === approvedOwnerIds[0]) ?? null
         : null;
-      const isApprovedAgent = record.property.registrationSource === "OWNER" &&
-        record.status === "ACTIVE" &&
-        record.approvedByOwner &&
-        Boolean(approvedOwnerRelation);
-      const { createdByUser, ownerAgentRequests: _ownerAgentRequests, ...propertyData } = record.property;
+      const approvedAgentRelation = record.property.registrationSource === "OWNER"
+        ? record.property.agents.find((item) => item.status === "ACTIVE" && item.approvedByOwner) ?? null
+        : null;
+      const isApprovedAgent = Boolean(
+        approvedAgentRelation && approvedAgentRelation.agentId === agent.id &&
+        record.status === "ACTIVE" && record.approvedByOwner && approvedOwnerRelation
+      );
+      const { createdByUser, ownerAgentRequests: _ownerAgentRequests, agents: _agents, ...propertyData } = record.property;
       const primaryOwner = record.property.owners[0] ?? null;
       const visibleOwner = isApprovedAgent ? approvedOwnerRelation : isCreator ? primaryOwner : null;
       return {
@@ -41,9 +44,9 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
           ownerMobile: isApprovedAgent
             ? approvedOwnerRelation?.owner.user.mobile ?? null
             : isCreator ? record.property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null : null,
-          approvedAgentFirstName: isApprovedAgent ? agent.firstName : null,
-          approvedAgentLastName: isApprovedAgent ? agent.lastName : null,
-          approvedAgentMobile: isApprovedAgent ? agent.user.mobile : null,
+          approvedAgentFirstName: approvedAgentRelation?.agent.firstName ?? null,
+          approvedAgentLastName: approvedAgentRelation?.agent.lastName ?? null,
+          approvedAgentMobile: approvedAgentRelation?.agent.user.mobile ?? null,
           registrantFirstName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
           registrantLastName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
           creatorMobile: record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
