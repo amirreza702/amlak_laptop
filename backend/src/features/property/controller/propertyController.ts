@@ -142,8 +142,9 @@ export async function getPropertyByIdController(
         ? approvedOwnerRelation?.owner.user.mobile ?? null
         : canViewOwner ? property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null : null;
 
-    const visibleApprovedAgent = property.registrationSource === "OWNER" &&
-      (ownerIsApprover || isApprovedAgent)
+    // هویت مشاور تأییدشده، مانند شماره تماس عمومی آگهی، برای همه نقش‌های مجاز قابل نمایش است؛
+    // اما مشخصات مالک همچنان فقط برای همان مالک و همان مشاور باقی می‌ماند.
+    const visibleApprovedAgent = property.registrationSource === "OWNER"
       ? approvedAgent?.agent ?? null
       : null;
     const registrant = property.registrationSource === "AGENT" ? createdByUser?.agent ?? null : null;
