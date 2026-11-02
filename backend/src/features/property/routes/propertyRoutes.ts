@@ -59,6 +59,16 @@ router.get(
   getPropertyMediaController
 );
 
+// پیش‌نمایش خصوصی تصاویر برای مالک/مشاور مجاز و هشتی؛ مستقل از انتشار عمومی.
+router.get(
+  "/properties/:id/media/:mediaId/content",
+  authMiddleware,
+  requireRole(...propertyManagers),
+  requireVerifiedAgent,
+  requirePropertyCreatorOrAccess("id"),
+  getPrivatePropertyMediaContentController
+);
+
 // ثبت ملک توسط مالک یا مشاور؛ شناسه پروفایل از نشست استخراج می‌شود.
 router.post(
   "/properties",
