@@ -28,9 +28,9 @@ const formFieldLabels: Record<string, string> = {
   verificationStatus: "وضعیت تأیید مشاور",
   contactName: "نام مخاطب مجاز",
   contactMobile: "شماره تماس مخاطب مجاز",
-  requesterFirstName: "نام درخواست‌کننده",
-  requesterLastName: "نام خانوادگی درخواست‌کننده",
-  requesterMobile: "شماره تماس درخواست‌کننده",
+  requesterFirstName: "نام مشتری",
+  requesterLastName: "نام خانوادگی مشتری",
+  requesterMobile: "شماره تماس مشتری",
   registrantFirstName: "نام مشاور ثبت‌کننده",
   registrantLastName: "نام خانوادگی مشاور ثبت‌کننده",
   registrantMobile: "شماره تماس مشاور ثبت‌کننده",
@@ -142,14 +142,22 @@ function FormField({ fieldKey, label, value }: { fieldKey: string; label: string
   </div>;
 }
 
-type DisplayField = { key: string; value: unknown };
+type DisplayField = { key: string; label: string; value: unknown };
 
 function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   const fields: DisplayField[] = [];
   const append = (source: Record<string, unknown>) => {
     for (const [key, value] of Object.entries(source)) {
       if (formFieldKeys.has(key) && !hiddenField.test(key)) {
-        fields.push({ key, value });
+        const customerRegistrantLabels: Record<string, string> = {
+          registrantFirstName: "نام مشتری ثبت‌کننده",
+          registrantLastName: "نام خانوادگی مشتری ثبت‌کننده",
+          registrantMobile: "شماره تماس مشتری ثبت‌کننده",
+        };
+        const label = record.createdByRole === "CUSTOMER"
+          ? customerRegistrantLabels[key] ?? formFieldLabels[key]
+          : formFieldLabels[key];
+        fields.push({ key, label, value });
       }
     }
   };
@@ -172,6 +180,12 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
     }
   }
 
+  // شماره ثبت‌کننده ملک‌های مشاورمحور در API مدیریت مشاور با نام creatorMobile برمی‌گردد.
+  if (record.registrationSource === "AGENT" && record.creatorMobile &&
+      !fields.some((field) => field.key === "registrantMobile")) {
+    fields.push({ key: "registrantMobile", label: formFieldLabels.registrantMobile, value: record.creatorMobile });
+  }
+
   // روابط مالک و مشاور فقط پس از پالایش دسترسی در API به این بخش می‌رسند.
   const sources = [record, record.property].filter(
     (item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item))
@@ -184,10 +198,10 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
         const owner = (relation as Record<string, unknown>).owner;
         if (!owner || typeof owner !== "object") continue;
         const profile = owner as Record<string, unknown>;
-        if (profile.firstName && !fields.some((field) => field.key === "ownerFirstName" && field.value)) fields.push({ key: "ownerFirstName", value: profile.firstName });
-        if (profile.lastName && !fields.some((field) => field.key === "ownerLastName" && field.value)) fields.push({ key: "ownerLastName", value: profile.lastName });
+        if (profile.firstName && !fields.some((field) => field.key === "ownerFirstName" && field.value)) fields.push({ key: "ownerFirstName", label: formFieldLabels.ownerFirstName, value: profile.firstName });
+        if (profile.lastName && !fields.some((field) => field.key === "ownerLastName" && field.value)) fields.push({ key: "ownerLastName", label: formFieldLabels.ownerLastName, value: profile.lastName });
         const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
-        if (mobile && !fields.some((field) => field.key === "ownerMobile" && field.value)) fields.push({ key: "ownerMobile", value: mobile });
+        if (mobile && !fields.some((field) => field.key === "ownerMobile" && field.value)) fields.push({ key: "ownerMobile", label: formFieldLabels.ownerMobile, value: mobile });
       }
     }
     const agents = source.agents;
@@ -199,10 +213,10 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
         const agent = item.agent;
         if (!agent || typeof agent !== "object") continue;
         const profile = agent as Record<string, unknown>;
-        if (profile.firstName) fields.push({ key: "approvedAgentFirstName", value: profile.firstName });
-        if (profile.lastName) fields.push({ key: "approvedAgentLastName", value: profile.lastName });
+        if (profile.firstName) fields.push({ key: "approvedAgentFirstName", label: formFieldLabels.approvedAgentFirstName, value: profile.firstName });
+        if (profile.lastName) fields.push({ key: "approvedAgentLastName", label: formFieldLabels.approvedAgentLastName, value: profile.lastName });
         const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
-        if (mobile) fields.push({ key: "approvedAgentMobile", value: mobile });
+        if (mobile) fields.push({ key: "approvedAgentMobile", label: formFieldLabels.approvedAgentMobile, value: mobile });
         break;
       }
     }
@@ -247,7 +261,7 @@ function FormDetails({ record }: { record: unknown }) {
   return <div className="space-y-4">
     {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label="موقعیت رکورد" />}
     <dl className="grid gap-3 sm:grid-cols-2">
-      {fields.map(({ key, value }, index) => <FormField key={key + "-" + index} fieldKey={key} label={formFieldLabels[key]} value={value} />)}
+      {fields.map(({ key, label, value }, index) => <FormField key={key + "-" + index} fieldKey={key} label={label} value={value} />)}
     </dl>
   </div>;
 }
