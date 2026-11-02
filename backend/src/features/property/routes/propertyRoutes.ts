@@ -29,7 +29,7 @@ import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddlew
 import {
   bindOwnProfileIdToBody,
   requirePropertyAccess,
-  requireAgentOwnRegisteredProperty,
+  requirePropertyCreator,
   requireVerificationCaseAccess,
 } from "../../auth/middleware/authorizationMiddleware";
 
@@ -81,12 +81,12 @@ router.post(
 router.post(
   "/properties/:id/listing",
   authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent,
-  requirePropertyAccess("id", false, false, true),
+  requirePropertyCreator(),
   createPropertyListingController
 );
 router.put(
   "/properties/:id/price",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), requireAgentOwnRegisteredProperty(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
   updatePropertyPriceController
 );
 router.put(
@@ -121,7 +121,7 @@ router.patch(
 
 router.patch(
   "/properties/:id",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess("id", false, true, true), requireAgentOwnRegisteredProperty(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
   updatePropertyController
 );
 
@@ -155,13 +155,13 @@ router.patch(
   revokePropertyAgentController
 );
 
-router.delete("/properties/:id/media/:mediaId", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(), deletePropertyMediaController);
-router.patch("/properties/:id/media/order", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(), reorderPropertyMediaController);
+router.delete("/properties/:id/media/:mediaId", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(), deletePropertyMediaController);
+router.patch("/properties/:id/media/order", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(), reorderPropertyMediaController);
 
 // رسانه فقط توسط مالک/مشاور مرتبط یا کارکنان هشتی قابل افزودن است.
 router.post(
   "/properties/:id/media",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
   createPropertyMediaController
 );
 
