@@ -189,7 +189,9 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const records = properties.map((property) => {
     const relation = property.agents.find((item) => item.agentId === input.agentId) ?? null;
     const hasUsableRelation = relation?.status === "ACTIVE";
-    const { agents: _agents, ...propertyData } = property;
+    // Keep the scoped relation rows for the service to derive approved-agent identity;
+    // the service removes the relation array before returning the API response.
+    const propertyData = property;
     return {
       propertyId: property.id,
       agentId: input.agentId,
