@@ -1016,6 +1016,7 @@ model Notification {
 
   title   String
   message String
+  details Json?
 
   isRead Boolean @default(false)
   readAt DateTime?
