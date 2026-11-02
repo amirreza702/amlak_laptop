@@ -98,12 +98,49 @@ export const updateOwnerProfileService = async (
 };
 
 /**
+ * Shape owner property records with the same per-owner contact privacy rules
+ * for both profile-scoped and session-scoped endpoints.
+ */
+const shapeOwnerPropertyRecords = (
+  owner: { firstName: string; lastName: string; user: { mobile: string } },
+  records: Awaited<ReturnType<typeof findOwnerPropertiesByOwnerId>>
+) => records.map((record) => {
+  const { agents, ownerAgentRequests, ...propertyData } = record.property;
+  const approvedAgent = agents.find((relation) => relation.status === "ACTIVE" && relation.approvedByOwner) ?? null;
+  const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
+    request.responses.some((response) => response.agentId === approvedAgent.agentId)
+  ));
+  const canViewOwnerDetails = record.property.registrationSource === "OWNER" &&
+    (!approvedAgent || ownerApprovedThisAgent);
+
+  return {
+    ...record,
+    property: {
+      ...propertyData,
+      ownerFirstName: canViewOwnerDetails ? owner.firstName : null,
+      ownerLastName: canViewOwnerDetails ? owner.lastName : null,
+      ownerMobile: canViewOwnerDetails ? owner.user.mobile : null,
+      agents: record.property.registrationSource === "AGENT"
+        ? agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
+        : agents.map((relation) => ({
+            ...relation,
+            agent: {
+              ...relation.agent,
+              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner ? relation.agent.user.mobile : "" },
+            },
+          })),
+    },
+  };
+});
+
+/**
  * Lists properties connected to an existing owner profile.
  */
 export const getOwnerPropertiesService = async (ownerId: string) => {
   const owner = await findOwnerProfileById(ownerId);
   if (!owner) throw new Error("Owner not found");
-  return findOwnerPropertiesByOwnerId(ownerId);
+  const records = await findOwnerPropertiesByOwnerId(ownerId);
+  return shapeOwnerPropertyRecords(owner, records);
 };
 
 /**
@@ -134,34 +171,5 @@ export const getCurrentOwnerPropertiesService = async (authenticatedUserId: stri
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
   const records = await findOwnerPropertiesByOwnerId(owner.id);
-  return records.map((record) => {
-    const { agents, ownerAgentRequests, ...propertyData } = record.property;
-    const approvedAgent = agents.find((relation) => relation.status === "ACTIVE" && relation.approvedByOwner) ?? null;
-    const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
-      request.responses.some((response) => response.agentId === approvedAgent.agentId)
-    ));
-    const canViewOwnerDetails = record.property.registrationSource === "OWNER" &&
-      (!approvedAgent || ownerApprovedThisAgent);
-
-    return {
-      ...record,
-      property: {
-        ...propertyData,
-        // اگر مشاور تأیید نهایی شده باشد، فقط همان مالکِ تأییدکننده و همان مشاور اطلاعات مالک را می‌بینند.
-        ownerFirstName: canViewOwnerDetails ? owner.firstName : null,
-        ownerLastName: canViewOwnerDetails ? owner.lastName : null,
-        ownerMobile: canViewOwnerDetails ? owner.user.mobile : null,
-        // برای ملک مشاورمحور، فقط هویت مشاور ثبت‌کننده به این پنل ارسال می‌شود.
-        agents: record.property.registrationSource === "AGENT"
-          ? agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
-          : agents.map((relation) => ({
-              ...relation,
-              agent: {
-                ...relation.agent,
-                user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner ? relation.agent.user.mobile : "" },
-              },
-            })),
-      },
-    };
-  });
+  return shapeOwnerPropertyRecords(owner, records);
 };
