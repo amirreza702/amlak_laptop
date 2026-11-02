@@ -62,7 +62,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     viewerIsAuthorizedOwner || isApprovedAgent || isAgentCreator || viewer?.role === "HASHTI"
   );
 
-  const isExpired = publicProperty.listing?.status === "EXPIRED" || Boolean(confirmUntil && confirmUntil <= new Date());
+  const isExpired = publicProperty.listing?.status === "EXPIRED" || (publicProperty.listing?.status === "PUBLISHED" && (!confirmUntil || confirmUntil <= new Date()));
   if (isExpired && !(viewer?.role === "HASHTI" || Boolean(viewerOwnerRelation) || isApprovedAgent)) {
     throw new Error("آگهی عمومی موردنظر پیدا نشد.");
   }
