@@ -30,10 +30,13 @@ const allowedTransitions: Record<
   ListingStatus,
   ListingStatus[]
 > = {
+  // ثبت آگهی مستقیماً به صف بررسی هشتی می‌رود؛ تأیید مالک شرط انتشار نیست.
   [ListingStatus.DRAFT]: [
-    ListingStatus.PENDING_OWNER_APPROVAL,
+    ListingStatus.PENDING_HASHTI_VERIFICATION,
+    ListingStatus.PENDING_OWNER_APPROVAL, // سازگاری با گردش‌کار قدیمی
   ],
 
+  // وضعیت قدیمی حفظ می‌شود، اما آگهی می‌تواند بدون تأیید مالک به بررسی هشتی منتقل شود.
   [ListingStatus.PENDING_OWNER_APPROVAL]: [
     ListingStatus.PENDING_HASHTI_VERIFICATION,
     ListingStatus.REJECTED,
@@ -131,7 +134,8 @@ export async function queuePropertyListingForHashtiReview(
 
 export async function updatePropertyListingStatus(
   propertyId: string,
-  data: UpdatePropertyListingStatusInput
+  data: UpdatePropertyListingStatusInput,
+  options: { allowHashtiPublicationFromLegacyOwnerApproval?: boolean } = {}
 ) {
   const listing =
     await findPropertyListingByPropertyId(propertyId);
@@ -158,8 +162,12 @@ export async function updatePropertyListingStatus(
    */
   const allowedStatuses =
     allowedTransitions[listing.status];
+  const hashtiLegacyPublication =
+    options.allowHashtiPublicationFromLegacyOwnerApproval === true &&
+    listing.status === ListingStatus.PENDING_OWNER_APPROVAL &&
+    data.status === ListingStatus.PUBLISHED;
 
-  if (!allowedStatuses.includes(data.status)) {
+  if (!allowedStatuses.includes(data.status) && !hashtiLegacyPublication) {
     throw new Error(
       `تغییر وضعیت از ${listing.status} به ${data.status} مجاز نیست.`
     );
