@@ -193,6 +193,51 @@ export async function createPropertyListingWithInitialPrice(
         tx
       );
 
+      // پس از ثبت کامل ملک و اطلاعات معامله، پرونده برای بررسی انتشار به هشتی ارجاع می‌شود.
+      const property = await tx.property.findUnique({
+        where: { id: propertyId },
+        select: {
+          propertyType: true,
+          city: true,
+          district: true,
+          createdByRole: true,
+          createdByUser: {
+            select: {
+              mobile: true,
+              agent: { select: { firstName: true, lastName: true } },
+              owner: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+      });
+      if (property?.createdByUser) {
+        const actor = property.createdByUser;
+        const actorProfile = actor.agent ?? actor.owner;
+        const actorName = [actorProfile?.firstName, actorProfile?.lastName].filter(Boolean).join(" ") || "کاربر";
+        const recipients = await tx.user.findMany({
+          where: { role: "HASHTI", isActive: true },
+          select: { id: true },
+        });
+        if (recipients.length) {
+          await tx.notification.createMany({
+            data: recipients.map((recipient) => ({
+              userId: recipient.id,
+              title: "ملک جدید در انتظار تأیید انتشار",
+              message: `${actorName} با شماره ${actor.mobile} یک ملک جدید در ${property.city}، ${property.district} ثبت کرده است؛ لطفاً اطلاعات و انتشار آن را بررسی کنید.`,
+              details: {
+                actorName,
+                actorMobile: actor.mobile,
+                actorRole: property.createdByRole ?? "UNKNOWN",
+                action: "ثبت ملک برای بررسی و تأیید انتشار",
+                subject: `${property.propertyType} در ${property.city}، ${property.district}`,
+                subjectType: "ملک",
+                occurredAt: new Date().toISOString(),
+              },
+            })),
+          });
+        }
+      }
+
       /**
        * ------------------------------------------------------
        * نتیجه Transaction
