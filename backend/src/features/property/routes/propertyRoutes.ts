@@ -30,6 +30,7 @@ import {
   bindOwnProfileIdToBody,
   requirePropertyAccess,
   requirePropertyCreator,
+  requirePropertyCreatorOrAccess,
   requireVerificationCaseAccess,
 } from "../../auth/middleware/authorizationMiddleware";
 
@@ -46,7 +47,7 @@ router.get(
   authMiddleware,
   requireRole(...propertyManagers),
   requireVerifiedAgent,
-  requirePropertyAccess("id", false),
+  requirePropertyCreatorOrAccess("id"),
   getPropertyByIdController
 );
 router.get(
@@ -54,7 +55,7 @@ router.get(
   authMiddleware,
   requireRole(...propertyManagers),
   requireVerifiedAgent,
-  requirePropertyAccess("id", false),
+  requirePropertyCreatorOrAccess("id"),
   getPropertyMediaController
 );
 
