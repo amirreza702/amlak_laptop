@@ -106,6 +106,20 @@ export async function approvePropertyAgentByOwnerService(
         tx
       );
 
+      const [agent, owner] = await Promise.all([
+        tx.agent.findUnique({ where: { id: data.agentId }, select: { userId: true } }),
+        tx.owner.findUnique({ where: { id: data.ownerId }, select: { firstName: true, lastName: true } }),
+      ]);
+      if (agent?.userId) {
+        await tx.notification.create({
+          data: {
+            userId: agent.userId,
+            title: "تأیید نهایی همکاری",
+            message: `مالک ${owner ? owner.firstName + " " + owner.lastName : ""} همکاری شما را برای این ملک تأیید نهایی کرد.`.trim(),
+          },
+        });
+      }
+
       return updatedPropertyAgent;
     },
     {
