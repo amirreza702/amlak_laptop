@@ -60,12 +60,8 @@ export async function updatePropertyController(
     /**
      * پاسخ موفق
      */
-    if (user?.role === "AGENT") {
-      const { ownerMobile: _ownerMobile, ...agentVisibleProperty } = updatedProperty;
-      res.status(200).json({ property: agentVisibleProperty });
-      return;
-    }
-
+    // مسیر ویرایش مشاور فقط برای ثبت‌کننده همان ملک مجاز است؛
+    // مشخصات مالک در پاسخ نیز فقط به همان مشاور بازگردانده می‌شود.
     res.status(200).json({ property: updatedProperty });
   } catch (error) {
     /**
