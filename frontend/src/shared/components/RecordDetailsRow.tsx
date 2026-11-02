@@ -146,9 +146,12 @@ type DisplayField = { key: string; label: string; value: unknown };
 
 function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   const fields: DisplayField[] = [];
+  const isSearchRequest = "requesterFirstName" in record || "requesterLastName" in record || "requesterMobile" in record;
   const append = (source: Record<string, unknown>) => {
     for (const [key, value] of Object.entries(source)) {
-      if (formFieldKeys.has(key) && !hiddenField.test(key)) {
+      const isDerivedRequestContact = isSearchRequest && (key === "contactName" || key === "contactMobile");
+      const isDuplicateCustomerRegistrant = record.createdByRole === "CUSTOMER" && key.startsWith("requester");
+      if (formFieldKeys.has(key) && !hiddenField.test(key) && !isDerivedRequestContact && !isDuplicateCustomerRegistrant) {
         const customerRegistrantLabels: Record<string, string> = {
           registrantFirstName: "نام مشتری ثبت‌کننده",
           registrantLastName: "نام خانوادگی مشتری ثبت‌کننده",
