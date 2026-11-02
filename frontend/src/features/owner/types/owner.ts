@@ -31,7 +31,7 @@ export interface OwnerProperty {
       agentId: string;
       status: string;
       approvedByOwner: boolean;
-      agent: { firstName: string; lastName: string; agencyName: string | null };
+      agent: { firstName: string; lastName: string; agencyName: string | null; user: { mobile: string } };
     }>;
   };
 }
