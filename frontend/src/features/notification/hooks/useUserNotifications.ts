@@ -9,21 +9,23 @@ export function useUserNotifications(userId: string) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       setItems(await getUserNotifications(userId));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "دریافت اعلان‌ها انجام نشد.");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [userId]);
 
   useEffect(() => {
     void Promise.resolve().then(() => load());
-    const refresh = () => { void load(); };
+    // به‌روزرسانی پس‌زمینه نباید جدول را از DOM خارج کند؛
+    // در غیر این صورت مدال جزئیاتِ بازشده با کلیک روی اعلان بسته می‌شود.
+    const refresh = () => { void load(false); };
     window.addEventListener("focus", refresh);
     window.addEventListener("hashti:notifications-updated", refresh);
     return () => {
