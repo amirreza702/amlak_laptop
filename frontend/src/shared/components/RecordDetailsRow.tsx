@@ -205,7 +205,24 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
       }
     }
     const agents = source.agents;
-    if (Array.isArray(agents) && !fields.some((field) => field.key === "approvedAgentFirstName" && field.value !== null && field.value !== undefined && field.value !== "")) {
+    if (Array.isArray(agents) && source.registrationSource === "AGENT" &&
+        !fields.some((field) => field.key === "registrantFirstName" && field.value)) {
+      for (const relation of agents) {
+        if (!relation || typeof relation !== "object") continue;
+        const item = relation as Record<string, unknown>;
+        if (item.status !== "ACTIVE" || item.isFirstRegistrant !== true) continue;
+        const agent = item.agent;
+        if (!agent || typeof agent !== "object") continue;
+        const profile = agent as Record<string, unknown>;
+        if (profile.firstName) fields.push({ key: "registrantFirstName", label: formFieldLabels.registrantFirstName, value: profile.firstName });
+        if (profile.lastName) fields.push({ key: "registrantLastName", label: formFieldLabels.registrantLastName, value: profile.lastName });
+        const mobile = profile.mobile ?? (profile.user && typeof profile.user === "object" ? (profile.user as Record<string, unknown>).mobile : null);
+        if (mobile) fields.push({ key: "registrantMobile", label: formFieldLabels.registrantMobile, value: mobile });
+        break;
+      }
+    }
+    if (Array.isArray(agents) && source.registrationSource !== "AGENT" &&
+        !fields.some((field) => field.key === "approvedAgentFirstName" && field.value !== null && field.value !== undefined && field.value !== "")) {
       for (const relation of agents) {
         if (!relation || typeof relation !== "object") continue;
         const item = relation as Record<string, unknown>;
