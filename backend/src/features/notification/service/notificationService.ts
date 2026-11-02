@@ -18,6 +18,8 @@
  * ============================================================
  */
 
+import type { Prisma } from "@prisma/client";
+
 import {
   createNotification,
   findNotificationsByUserId,
@@ -28,6 +30,7 @@ export interface CreateNotificationInput {
   userId: string;
   title: string;
   message: string;
+  details?: Prisma.InputJsonValue;
 }
 
 /**
@@ -56,6 +59,7 @@ export async function createNotificationService(
     },
     title: data.title.trim(),
     message: data.message.trim(),
+    ...(data.details ? { details: data.details } : {}),
   });
 }
 
