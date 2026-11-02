@@ -152,8 +152,8 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.OWNER),
   bindOwnProfileIdToBody("owner", "ownerId"),
-  // مانند مسیر تأیید، وجود رابطه مالکیت در middleware بررسی می‌شود؛
-  // وضعیت VERIFIED مالک در خود سرویس لغو همکاری کنترل می‌شود.
+  // فقط وجود رابطه مالکیت در middleware بررسی می‌شود؛
+  // تأیید هشتی برای مالک شرط لغو همکاری نیست.
   requirePropertyAccess("id", false),
   revokePropertyAgentController
 );
