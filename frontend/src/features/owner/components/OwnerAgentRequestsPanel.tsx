@@ -127,11 +127,13 @@ export function OwnerAgentRequestsPanel({ ownerId }: { ownerId?: string }) {
   // اگر برای یک ملک چند درخواست همکاری ثبت شده باشد، دکمه فقط در اولین رکورد
   // دارای پاسخ پذیرفته‌شده نمایش داده می‌شود؛ نه به تعداد پاسخ‌ها یا درخواست‌ها.
   const agentSelectionButtonRequestIds = new Set<string>();
+  const propertiesWithAgentSelectionButton = new Set<string>();
   for (const request of requests) {
-    if (request.responses.some((response) => response.status === "ACCEPTED") &&
-      !requests.some((earlier) => earlier.propertyId === request.propertyId &&
-        earlier.responses.some((response) => response.status === "ACCEPTED") &&
-        requests.indexOf(earlier) < requests.indexOf(request))) {
+    if (
+      !propertiesWithAgentSelectionButton.has(request.propertyId) &&
+      request.responses.some((response) => response.status === "ACCEPTED")
+    ) {
+      propertiesWithAgentSelectionButton.add(request.propertyId);
       agentSelectionButtonRequestIds.add(request.id);
     }
   }
