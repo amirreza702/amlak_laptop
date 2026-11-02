@@ -11,6 +11,7 @@ import { requireOwnProfile } from "../../auth/middleware/authorizationMiddleware
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
 import { getMyPrivateNotesController, upsertMyPrivateNoteController } from "../controller/agentPrivateNotesController";
 import { getMyAgentPropertyRecordsController } from "../controller/agentPropertyManagementController";
+import { revokePropertyAgentByAgentController } from "../../property/controller/propertyAgentRevocationController";
 import { getAllAgentSearchRequestsController, updateOwnAgentSearchRequestController, deleteOwnAgentSearchRequestController } from "../controller/agentSearchRequestManagementController";
 import {
   accessOwnerRequestContactController,
@@ -24,6 +25,7 @@ const router = Router();
 router.get("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), getMyPrivateNotesController);
 router.put("/agents/me/private-notes", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, upsertMyPrivateNoteController);
 router.get("/agents/me/properties", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, getMyAgentPropertyRecordsController);
+router.patch("/agents/me/properties/:id/relationship/revoke", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, revokePropertyAgentByAgentController);
 router.get("/agents/me/search-requests", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, getAllAgentSearchRequestsController);
 router.put("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, updateOwnAgentSearchRequestController);
 router.delete("/agents/me/search-requests/:requestId", authMiddleware, requireRole(UserRole.AGENT), requireVerifiedAgent, deleteOwnAgentSearchRequestController);
