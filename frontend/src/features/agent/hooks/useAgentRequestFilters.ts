@@ -9,6 +9,12 @@ export interface FilterableAgentRequest {
   customerId?: string | null;
   contactName: string;
   contactMobile: string | null;
+  registrantFirstName?: string | null;
+  registrantLastName?: string | null;
+  registrantMobile?: string | null;
+  requesterFirstName?: string | null;
+  requesterLastName?: string | null;
+  requesterMobile?: string | null;
   transactionType: string;
   propertyType: string;
   city: string;
