@@ -330,9 +330,9 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         </section>
       </div>
 
-      <div id="property-tools" hidden={selectedTool !== "property-management"} className="scroll-mt-5"><HashtiPropertyAdminToolsPanel /></div>
-      <div id="user-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5"><HashtiUserManagementPanel /></div>
-      <div id="verification-queue" hidden={selectedTool !== "property-management"} className="scroll-mt-5"><HashtiVerificationQueuePanel /></div>
+      <div id="property-tools" hidden={selectedTool !== "property-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiPropertyAdminToolsPanel /></div>
+      <div id="user-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiUserManagementPanel /></div>
+      <div id="verification-queue" hidden={selectedTool !== "property-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiVerificationQueuePanel /></div>
       <section hidden={selectedTool !== "profile"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold">پروفایل</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">اطلاعات حساب فعال کارکنان هشتی</p>
