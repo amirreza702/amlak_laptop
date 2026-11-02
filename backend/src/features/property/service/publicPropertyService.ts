@@ -51,7 +51,14 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   const isAgentCreator = viewer?.role === "AGENT" &&
     registrationSource === "AGENT" &&
     createdByUserId === viewer.id;
-  const mayViewOwnerDetails = Boolean(viewerOwnerRelation || isApprovedAgent || isAgentCreator);
+  // پس از تأیید مشاور، فقط مالکی که همان مشاور را تأیید کرده است، به همراه آن مشاور،
+  // به اطلاعات مالک دسترسی دارد. پیش از تأیید، مالکِ واردشده فقط اطلاعات خودش را می‌بیند.
+  const viewerIsAuthorizedOwner = Boolean(
+    viewerOwnerRelation && (!approvedAgent || approvedOwnerIds.includes(viewerOwnerRelation.ownerId))
+  );
+  const mayViewOwnerDetails = Boolean(
+    viewerIsAuthorizedOwner || isApprovedAgent || isAgentCreator || viewer?.role === "HASHTI"
+  );
 
   let contact: {
     type: "OWNER" | "AGENT";
@@ -89,9 +96,9 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     };
   }
 
-  const ownerForViewer = viewerOwnerRelation?.owner ??
+  const ownerForViewer = (viewerIsAuthorizedOwner ? viewerOwnerRelation?.owner : null) ??
     (isApprovedAgent ? approvedOwnerRelation?.owner : null) ??
-    (isAgentCreator ? primaryOwner : null);
+    (isAgentCreator || viewer?.role === "HASHTI" ? primaryOwner : null);
   const ownerDetails = mayViewOwnerDetails
     ? {
         firstName: isAgentCreator ? ownerFirstName ?? ownerForViewer?.firstName ?? null : ownerForViewer?.firstName ?? null,
