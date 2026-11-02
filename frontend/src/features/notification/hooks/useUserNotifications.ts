@@ -21,7 +21,16 @@ export function useUserNotifications(userId: string) {
     }
   }, [userId]);
 
-  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
+  useEffect(() => {
+    void Promise.resolve().then(() => load());
+    const refresh = () => { void load(); };
+    window.addEventListener("focus", refresh);
+    window.addEventListener("hashti:notifications-updated", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("hashti:notifications-updated", refresh);
+    };
+  }, [load]);
 
   const markRead = useCallback(async (id: string) => {
     setBusyId(id);
@@ -29,6 +38,7 @@ export function useUserNotifications(userId: string) {
     try {
       const updated = await markUserNotificationAsRead(id);
       setItems((current) => current.map((item) => item.id === id ? updated : item));
+      window.dispatchEvent(new Event("hashti:notifications-updated"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "ثبت وضعیت اعلان انجام نشد.");
     } finally {
