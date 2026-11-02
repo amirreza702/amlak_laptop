@@ -48,8 +48,9 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
   const isApprovedAgent = viewer?.role === "AGENT" &&
-    approvedAgent?.userId === viewer.id &&
-    Boolean(approvedOwnerRelation);
+    approvedAgent?.userId === viewer.id;
+  // نمایش جزئیات هویتی مالک علاوه بر تأیید مشاور، به اتصال همان مالک به درخواست تأییدشده نیاز دارد.
+  const isApprovedAgentForOwnerDetails = isApprovedAgent && Boolean(approvedOwnerRelation);
   const isAgentCreator = viewer?.role === "AGENT" &&
     registrationSource === "AGENT" &&
     createdByUserId === viewer.id;
@@ -59,7 +60,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     registrationSource === "OWNER" && viewerOwnerRelation && (!approvedAgent || approvedOwnerIds.includes(viewerOwnerRelation.ownerId))
   );
   const mayViewOwnerDetails = Boolean(
-    viewerIsAuthorizedOwner || isApprovedAgent || isAgentCreator || viewer?.role === "HASHTI"
+    viewerIsAuthorizedOwner || isApprovedAgentForOwnerDetails || isAgentCreator || viewer?.role === "HASHTI"
   );
 
   const isExpired = publicProperty.listing?.status === "EXPIRED" || (publicProperty.listing?.status === "PUBLISHED" && (!confirmUntil || confirmUntil <= new Date()));
@@ -104,7 +105,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   }
 
   const ownerForViewer = (viewerIsAuthorizedOwner ? viewerOwnerRelation?.owner : null) ??
-    (isApprovedAgent ? approvedOwnerRelation?.owner : null) ??
+    (isApprovedAgentForOwnerDetails ? approvedOwnerRelation?.owner : null) ??
     (isAgentCreator || viewer?.role === "HASHTI" ? primaryOwner : null);
   const ownerDetails = mayViewOwnerDetails
     ? {
