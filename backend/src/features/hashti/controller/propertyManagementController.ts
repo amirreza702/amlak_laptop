@@ -51,9 +51,11 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
   if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
 
   try {
-    const result = await updatePropertyListingStatus(propertyId, {
-      status: ListingStatus.PUBLISHED,
-    });
+    const result = await updatePropertyListingStatus(
+      propertyId,
+      { status: ListingStatus.PUBLISHED },
+      { allowHashtiPublicationFromLegacyOwnerApproval: true }
+    );
     return res.status(200).json({
       message: "ملک با موفقیت تأیید و منتشر شد.",
       ...result,
