@@ -273,26 +273,33 @@ export default function PropertyDetailClient() {
           {/* ==================================================
               بخش تصویر
              ================================================== */}
-          <div
-            className="
-              flex
-              min-h-[240px]
-              items-center
-              justify-center
-              bg-slate-100
-              sm:min-h-[360px]
-            "
-          >
-            <div className="text-center text-slate-400">
-              <div className="text-sm font-medium">
-                تصاویر ملک
+          <section aria-label="تصاویر آگهی" className="bg-slate-100 p-2 sm:p-3">
+            {property.media?.length ? (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {property.media.map((media, index) => (
+                  <a
+                    key={media.id}
+                    href={media.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={index === 0 ? "col-span-2 row-span-2 overflow-hidden bg-white sm:col-span-2" : "overflow-hidden bg-white"}
+                    aria-label={`نمایش تصویر شماره ${index + 1} ملک`}
+                  >
+                    <img
+                      src={media.url}
+                      alt={`تصویر ${index + 1} ملک ${property.city} ${property.district}`}
+                      className={index === 0 ? "h-64 w-full object-cover sm:h-[420px]" : "h-32 w-full object-cover sm:h-48"}
+                      loading={index === 0 ? "eager" : "lazy"}
+                    />
+                  </a>
+                ))}
               </div>
-
-              <div className="mt-1 text-xs">
-                در مرحله بعد اضافه می‌شود
+            ) : (
+              <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-400 sm:min-h-[360px]">
+                تصویری برای این آگهی ثبت نشده است
               </div>
-            </div>
-          </div>
+            )}
+          </section>
 
           {/* ==================================================
               اطلاعات ملک
