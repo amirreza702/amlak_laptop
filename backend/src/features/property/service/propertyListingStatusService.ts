@@ -1,3 +1,6 @@
+import { unlink } from "node:fs/promises";
+import path from "node:path";
+
 import {
   ListingStatus,
   Prisma,
@@ -41,6 +44,8 @@ const allowedTransitions: Record<ListingStatus, ListingStatus[]> = {
  * مدت اعتبار تأیید ملک
  */
 const PROPERTY_CONFIRMATION_DAYS = 31;
+const mediaStorageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
+const mediaFilePath = (id: string) => path.join(mediaStorageRoot(), "properties", id + ".webp");
 
 /**
  * محاسبه تاریخ پایان مهلت تأیید
@@ -131,7 +136,7 @@ export async function updatePropertyListingStatus(
   if (data.status === ListingStatus.REJECTED) updateData.rejectedAt = new Date();
   if (data.status !== ListingStatus.PUBLISHED) updateData.publishedAt = null;
 
-  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const mediaToRemove = [ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)
       ? await tx.propertyMedia.findMany({ where: { propertyId, isActive: true }, select: { id: true } })
       : [];
@@ -162,8 +167,13 @@ export async function updatePropertyListingStatus(
     return {
       listing: updatedListing,
       statusChanged: true,
-      removedMediaCount: mediaToRemove.length,
+      removedMediaIds: mediaToRemove.map((item) => item.id),
       ...(confirmUntil ? { confirmUntil } : {}),
     };
   });
+  for (const mediaId of result.removedMediaIds) {
+    await unlink(mediaFilePath(mediaId)).catch(() => undefined);
+  }
+  const { removedMediaIds, ...response } = result;
+  return { ...response, removedMediaCount: removedMediaIds.length };
 }
