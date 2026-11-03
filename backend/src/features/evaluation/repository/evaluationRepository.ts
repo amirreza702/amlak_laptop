@@ -354,3 +354,17 @@ export const updateEvaluationStatus = async (
     },
   });
 };
+
+export const findEvaluationByEvaluatorAndTarget = async (
+  evaluatorUserId: string,
+  type: import("@prisma/client").EvaluationType,
+  target: { agentId?: string; propertyId?: string },
+) => prisma.evaluation.findFirst({
+  where: {
+    evaluatorUserId,
+    type,
+    ...(target.agentId ? { agentId: target.agentId } : {}),
+    ...(target.propertyId ? { propertyId: target.propertyId } : {}),
+  },
+  select: { id: true, score: true, comment: true, createdAt: true },
+});

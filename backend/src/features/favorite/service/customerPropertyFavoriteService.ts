@@ -160,31 +160,3 @@ export async function getCustomerFavoritesService(
 
   return findCustomerPropertyFavorites(customerId);
 }
-
-/** افزودن مشاور به علاقه‌مندی مشتری */
-export async function addAgentToFavoritesService(customerId: string, agentId: string) {
-  if (!customerId || !agentId) throw new Error("شناسه مشتری و مشاور الزامی است.");
-  const customer = await findCustomerById(customerId);
-  if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
-  const { findAgentById } = await import("../../agent/repository/agentRepository");
-  const agent = await findAgentById(agentId);
-  if (!agent) throw new Error("مشاور مورد نظر پیدا نشد.");
-  if (agent.userId === customer.userId) throw new Error("امکان افزودن حساب خودتان به علاقه‌مندی وجود ندارد.");
-  if (await findCustomerAgentFavorite(customerId, agentId)) throw new Error("این مشاور قبلاً به علاقه‌مندی‌ها اضافه شده است.");
-  return createCustomerAgentFavorite(customerId, agentId);
-}
-
-/** حذف مشاور از علاقه‌مندی مشتری */
-export async function removeAgentFromFavoritesService(customerId: string, agentId: string) {
-  if (!customerId || !agentId) throw new Error("شناسه مشتری و مشاور الزامی است.");
-  const favorite = await findCustomerAgentFavorite(customerId, agentId);
-  if (!favorite) throw new Error("این مشاور در علاقه‌مندی‌های مشتری وجود ندارد.");
-  return deleteCustomerAgentFavorite(customerId, agentId);
-}
-
-/** دریافت مشاوران علاقه‌مندی‌شده مشتری */
-export async function getCustomerFavoriteAgentsService(customerId: string) {
-  const customer = await findCustomerById(customerId);
-  if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
-  return findCustomerAgentFavorites(customerId);
-}

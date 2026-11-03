@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import type { EvaluationType } from "@prisma/client";
 
 import {
   createEvaluationService,
+  getEvaluationStatusService,
 } from "../service/evaluationService";
 
 /**
@@ -117,5 +120,22 @@ export async function createEvaluationController(
     return res.status(500).json({
       message: "Internal server error",
     });
+  }
+}
+
+export async function getEvaluationStatusController(req: Request, res: Response) {
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) return res.status(401).json({ message: "Authentication required" });
+  const type = typeof req.query.type === "string" ? req.query.type as EvaluationType : null;
+  const agentId = typeof req.query.agentId === "string" ? req.query.agentId : undefined;
+  const propertyId = typeof req.query.propertyId === "string" ? req.query.propertyId : undefined;
+  if (!type || (!agentId && !propertyId)) {
+    return res.status(400).json({ message: "Evaluation type and target are required" });
+  }
+  try {
+    const evaluation = await getEvaluationStatusService(user.id, type, { agentId, propertyId });
+    return res.status(200).json({ evaluated: Boolean(evaluation), evaluation });
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "Could not read evaluation status" });
   }
 }

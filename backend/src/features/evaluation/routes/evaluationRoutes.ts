@@ -1,12 +1,19 @@
 import { Router } from "express";
 import { UserRole } from "@prisma/client";
-import { createEvaluationController } from "../controller/evaluationController";
+import { createEvaluationController, getEvaluationStatusController } from "../controller/evaluationController";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 const router = Router();
+
+router.get(
+  "/evaluations/me",
+  authMiddleware,
+  requireRole(UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
+  getEvaluationStatusController
+);
 
 // evaluatorUserId از نشست استخراج می‌شود؛ Client اجازه جعل ارزیاب را ندارد.
 router.post(
