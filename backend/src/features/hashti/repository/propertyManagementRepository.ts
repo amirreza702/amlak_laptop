@@ -47,7 +47,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
           { agents: { some: { isFirstRegistrant: boolSearch } } },
         ] : []),
         ...(dateRange ? [
-          { createdAt: dateRange }, { confirmUntil: dateRange },
+          { createdAt: dateRange }, { listing: { is: { confirmUntil: dateRange } } },
           { listing: { is: { publishedAt: dateRange } } },
           { listing: { is: { expiredAt: dateRange } } },
           { agents: { some: { approvedAt: dateRange } } },
@@ -104,7 +104,6 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
         occupancyStatus: true,
         isActive: true,
         createdAt: true,
-        confirmUntil: true,
         _count: { select: { duplicateReviewsAsPrimary: true } },
         listing: {
           select: {
@@ -115,6 +114,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             rentAmount: true,
             publishedAt: true,
             expiredAt: true,
+            confirmUntil: true,
           },
         },
         owners: {

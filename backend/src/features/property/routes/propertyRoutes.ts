@@ -204,10 +204,10 @@ router.get(
   findDuplicateMatchesController
 );
 
-// آرشیو و بازیابی فقط برای مالک مرتبط یا کارکنان هشتی.
+// آرشیو دستی فقط در اختیار هشتی است؛ مالک فقط امکان حذف عملیاتی ملک را دارد.
 router.patch(
   "/properties/:id/archive",
-  authMiddleware, requireRole(UserRole.OWNER, UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.HASHTI), requirePropertyAccess(),
   archivePropertyController
 );
 router.get(

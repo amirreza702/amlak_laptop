@@ -53,8 +53,7 @@ type PropertyRecord = {
     floor: number | null;
     isActive: boolean;
     createdAt: string;
-    confirmUntil: string | null;
-    listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null } | null;
+    listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null; confirmUntil: string | null } | null;
     owners: { ownerId: string; share: number; isPrimary: boolean; owner: { firstName: string; lastName: string; user?: { mobile: string } } }[];
   };
 };
@@ -237,7 +236,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                   <td className="p-3">
                     <p>{property.listing ? (listingLabels[property.listing.status] ?? property.listing.status) : "آگهی ثبت نشده"}</p>
                     {property.listing && <p className="mt-1 text-xs text-slate-600">{transactionLabels[property.listing.transactionType] ?? property.listing.transactionType}</p>}
-                    <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.confirmUntil)}</p>
+                    <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.listing?.confirmUntil ?? null)}</p>
                   </td>
                   <td className="p-3">
                     {property.owners.length ? <div className="min-w-[190px] space-y-2">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-2 last:border-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p>{owner.owner.user?.mobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{owner.owner.user.mobile}</p>}<p className="mt-1 text-xs text-slate-600">سهم {owner.share} دانگ</p></div>)}</div> : property.ownerFirstName || property.ownerLastName || property.ownerMobile ? <div><p className="font-semibold">{property.ownerFirstName} {property.ownerLastName}</p>{property.ownerMobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{property.ownerMobile}</p>}</div> : <span className="text-slate-500">اطلاعات مالک برای این مشاور قابل نمایش نیست</span>}

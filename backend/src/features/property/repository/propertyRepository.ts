@@ -347,8 +347,12 @@ export const findExpiredProperties = async (
       ...(propertyId ? { id: propertyId } : {}),
       isActive: true,
       deletedAt: null,
-      ...(force ? {} : { confirmUntil: { lte: now } }),
-      listing: { status: "PUBLISHED" },
+      listing: {
+        is: {
+          status: "PUBLISHED",
+          ...(force ? {} : { confirmUntil: { lte: now } }),
+        },
+      },
     },
     include: {
       listing: true,
@@ -357,6 +361,6 @@ export const findExpiredProperties = async (
         select: { agent: { select: { userId: true } } },
       },
     },
-    orderBy: { confirmUntil: "asc" },
+    orderBy: { listing: { confirmUntil: "asc" } },
   });
 };

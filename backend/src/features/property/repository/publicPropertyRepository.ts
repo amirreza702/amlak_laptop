@@ -50,7 +50,6 @@ export async function findPublishedPublicPropertyById(id: string) {
       latitudePublic: true,
       longitudePublic: true,
       isActive: true,
-      confirmUntil: true,
       listing: {
         select: {
           id: true,
@@ -61,6 +60,7 @@ export async function findPublishedPublicPropertyById(id: string) {
           rentAmount: true,
           status: true,
           publishedAt: true,
+          confirmUntil: true,
         },
       },
       owners: {

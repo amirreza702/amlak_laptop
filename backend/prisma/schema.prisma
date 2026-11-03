@@ -511,10 +511,8 @@ model Property {
   // Current listing / activity
   // ----------------------------
 
-  isActive       Boolean   @default(true)
-  deletedAt      DateTime?
-  lastConfirmedAt DateTime?
-  confirmUntil   DateTime?
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -553,7 +551,6 @@ model Property {
   @@index([createdByUserId])
   @@index([createdByRole])
   @@index([occupancyStatus])
-  @@index([confirmUntil])
   @@index([deletedAt])
   @@map("properties")
 }
@@ -575,14 +572,18 @@ model PropertyListing {
 
   status ListingStatus @default(DRAFT)
 
-  publishedAt DateTime?
-  rejectedAt  DateTime?
-  expiredAt   DateTime?
+  publishedAt     DateTime?
+  rejectedAt      DateTime?
+  expiredAt       DateTime?
+  lastConfirmedAt DateTime?
+  confirmUntil    DateTime?
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@index([transactionType])
   @@index([status])
+  @@index([confirmUntil])
+  @@index([status, expiredAt])
   @@index([salePrice])
   @@index([depositAmount])
   @@index([rentAmount])

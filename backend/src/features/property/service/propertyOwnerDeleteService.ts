@@ -20,10 +20,10 @@ async function removePropertyFromOperationalUse(propertyId: string, userId: stri
     const deletedAt = new Date();
     const updated = await tx.property.update({
       where: { id: propertyId },
-      data: { isActive: false, deletedAt, confirmUntil: null },
+      data: { isActive: false, deletedAt },
     });
 
-    await tx.propertyListing.updateMany({ where: { propertyId }, data: { status: ListingStatus.DELETED } });
+    await tx.propertyListing.updateMany({ where: { propertyId }, data: { status: ListingStatus.DELETED, confirmUntil: null } });
     // همکاری خاتمه می‌یابد، اما مشخصات و زمان تأیید مالک برای حسابرسی حفظ می‌شود.
     await tx.propertyAgent.updateMany({ where: { propertyId, status: "ACTIVE" }, data: { status: "REVOKED" } });
     await tx.ownerAgentRequest.updateMany({ where: { propertyId, status: "ACTIVE" }, data: { status: "DELETED" } });

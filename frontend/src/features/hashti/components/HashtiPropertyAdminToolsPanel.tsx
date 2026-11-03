@@ -66,8 +66,7 @@ type HashtiPropertyRecord = {
   occupancyStatus: string;
   isActive: boolean;
   createdAt: string;
-  confirmUntil: string | null;
-  listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null; expiredAt: string | null } | null;
+  listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null; expiredAt: string | null; confirmUntil: string | null } | null;
   media: { id: string; type: string; url: string; sortOrder: number }[];
   owners: { ownerId: string; share: number; isPrimary: boolean; owner: { firstName: string; lastName: string; user: { mobile: string } } }[];
   agents: { agentId: string; status: string; approvedByOwner: boolean; approvedAt: string | null; isFirstRegistrant: boolean; agent: { firstName: string; lastName: string; user: { mobile: string } } }[];
@@ -260,7 +259,7 @@ export function HashtiPropertyAdminToolsPanel() {
                   <td className="p-3">
                     <p className="font-semibold">{property.listing ? listingLabels[property.listing.status] ?? property.listing.status : "آگهی ندارد"}</p>
                     {property.listing && <p className="mt-1 text-xs text-slate-600">{transactionLabels[property.listing.transactionType] ?? property.listing.transactionType}</p>}
-                    <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.confirmUntil)}</p>
+                    <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.listing?.confirmUntil ?? null)}</p>
                     <p className="mt-1 text-xs text-slate-500">انتشار: {dateLabel(property.listing?.publishedAt ?? null)}</p>
                     {property.listing?.expiredAt && <p className="mt-1 text-xs text-slate-500">انقضا: {dateLabel(property.listing.expiredAt)}</p>}
                   </td>

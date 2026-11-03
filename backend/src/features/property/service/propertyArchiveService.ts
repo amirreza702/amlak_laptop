@@ -1,255 +1,105 @@
+import { unlink } from "node:fs/promises";
+import path from "node:path";
+import { PropertyHistoryAction, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
-
-import {
-  findPropertyArchive,
-} from "../repository/propertyArchiveRepository";
-
-import { findPropertyById } from "../repository/propertyRepository";
-
+import { findPropertyArchive } from "../repository/propertyArchiveRepository";
 import type { PropertyArchive } from "../types/propertyArchive";
 
-import { PropertyHistoryAction } from "@prisma/client";
+const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
+const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
 
-/**
- * ============================================================
- * Archive Property Service
- * ============================================================
- *
- * جریان آرشیو:
- *
- * Property
- *   ↓
- * ایجاد PropertyArchive
- *   ↓
- * حذف اطلاعات مصرفی:
- *   ├── PropertyListing
- *   └── PropertyMedia
- *   ↓
- * غیرفعال کردن Property
- *   ↓
- * ثبت PropertyHistory با action = ARCHIVED
- *
- * تمام عملیات داخل یک Transaction انجام می‌شوند.
- *
- * نکته:
- * اطلاعات تاریخی و آماری ملک حذف نمی‌شوند:
- *
- * - PropertyOwner
- * - PropertyAgent
- * - PropertyHistory
- * - PriceHistory
- * - DuplicateReview
- * - ExactLocationAccessLog
- * - PropertyArchive
- *
- * فقط اطلاعات مصرفی و حجیم حذف می‌شوند.
- */
+/** هسته مشترک آرشیو؛ برای اتمیک بودن تغییر وضعیت SOLD/RENTED در تراکنش فراخواننده اجرا می‌شود. */
+export async function archivePropertyInTransaction(
+  tx: Prisma.TransactionClient,
+  propertyId: string,
+  archivedReason?: string | null,
+): Promise<{ archive: PropertyArchive; mediaIds: string[] } | null> {
+  const property = await tx.property.findUnique({
+    where: { id: propertyId },
+    include: { listing: true },
+  });
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
+  if (property.deletedAt) throw new Error("ملک حذف‌شده قابل آرشیو یا بازیابی نیست.");
+
+  const existingArchive = await tx.propertyArchive.findUnique({ where: { propertyId } });
+  if (existingArchive) return null;
+
+  const media = await tx.propertyMedia.findMany({ where: { propertyId }, select: { id: true } });
+  const archive = await tx.propertyArchive.create({
+    data: {
+      propertyId: property.id,
+      propertyType: property.propertyType,
+      city: property.city,
+      district: property.district,
+      transactionType: property.listing?.transactionType ?? null,
+      archivedReason: archivedReason ?? null,
+    },
+  });
+
+  await tx.propertyListing.deleteMany({ where: { propertyId } });
+  await tx.propertyMedia.deleteMany({ where: { propertyId } });
+  await tx.property.update({ where: { id: propertyId }, data: { isActive: false } });
+  await tx.propertyHistory.create({
+    data: {
+      propertyId,
+      action: PropertyHistoryAction.ARCHIVED,
+      field: "isActive",
+      oldValue: "true",
+      newValue: "false",
+      reason: archivedReason ?? "آرشیو ملک",
+    },
+  });
+
+  return { archive, mediaIds: media.map((item) => item.id) };
+}
+
+export async function removeArchivedPropertyMediaFiles(mediaIds: string[]) {
+  await Promise.all(mediaIds.map((id) => unlink(storedFilePath(id)).catch(() => undefined)));
+}
+
 export interface ArchivePropertyInput {
   propertyId: string;
   archivedReason?: string | null;
 }
 
-export const archivePropertyService = async (
-  data: ArchivePropertyInput
-): Promise<PropertyArchive> => {
-  /**
-   * ابتدا وجود ملک را بررسی می‌کنیم.
-   */
-  const property = await findPropertyById(data.propertyId);
-
-  if (!property) {
-    throw new Error("ملک مورد نظر پیدا نشد.");
-  }
-  if (property.deletedAt) throw new Error("ملک حذف‌شده قابل آرشیو یا بازیابی نیست.");
-
-  /**
-   * اگر قبلاً آرشیو شده باشد، دوباره آرشیو نمی‌کنیم.
-   */
-  const existingArchive = await findPropertyArchive(
-    data.propertyId
+export const archivePropertyService = async (data: ArchivePropertyInput): Promise<PropertyArchive> => {
+  const result = await prisma.$transaction((tx) =>
+    archivePropertyInTransaction(tx, data.propertyId, data.archivedReason),
   );
+  if (!result) throw new Error("این ملک قبلاً آرشیو شده است.");
+  await removeArchivedPropertyMediaFiles(result.mediaIds);
+  return result.archive;
+};
 
-  if (existingArchive) {
-    throw new Error("این ملک قبلاً آرشیو شده است.");
-  }
+export const getPropertyArchiveService = async (propertyId: string): Promise<PropertyArchive> => {
+  const archive = await findPropertyArchive(propertyId);
+  if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
+  return archive;
+};
 
-  /**
-   * آرشیو، حذف اطلاعات مصرفی، غیرفعال‌سازی ملک
-   * و ثبت تاریخچه باید یک عملیات اتمیک باشند.
-   */
-  const archive = await prisma.$transaction(async (tx) => {
-    /**
-     * --------------------------------------------------------
-     * 1. ایجاد Snapshot آرشیو
-     * --------------------------------------------------------
-     */
-    const createdArchive = await tx.propertyArchive.create({
-      data: {
-        propertyId: property.id,
-        propertyType: property.propertyType,
-        city: property.city,
-        district: property.district,
-        transactionType:
-          property.listing?.transactionType ?? null,
-        archivedReason:
-          data.archivedReason ?? null,
-      },
-    });
+export const restorePropertyService = async (propertyId: string): Promise<PropertyArchive> => {
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+    select: { deletedAt: true },
+  });
+  if (property?.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
 
-    /**
-     * --------------------------------------------------------
-     * 2. حذف اطلاعات آگهی فعلی
-     * --------------------------------------------------------
-     *
-     * PropertyListing اطلاعات وضعیت فعلی آگهی است.
-     * سابقه تغییرات مهم آن در PropertyHistory باقی می‌ماند.
-     */
-    await tx.propertyListing.deleteMany({
-      where: {
-        propertyId: property.id,
-      },
-    });
+  const archive = await findPropertyArchive(propertyId);
+  if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
 
-  
-
-    /**
-     * --------------------------------------------------------
-     * 3. حذف رسانه‌های ملک
-     * --------------------------------------------------------
-     *
-     * تصاویر و Floor Plan ارزش تاریخی مستقلی ندارند
-     * و برای آزادسازی فضای ذخیره‌سازی حذف می‌شوند.
-     */
-    await tx.propertyMedia.deleteMany({
-      where: {
-        propertyId: property.id,
-      },
-    });
-
-    // تورهای ۳۶۰ و سفارش‌های وابسته برای استفاده و بازیابی آینده حفظ می‌شوند.
-
-    /**
-     * --------------------------------------------------------
-     * 5. غیرفعال کردن ملک
-     * --------------------------------------------------------
-     */
-    await tx.property.update({
-      where: {
-        id: property.id,
-      },
-      data: {
-        isActive: false,
-      },
-    });
-
-    /**
-     * --------------------------------------------------------
-     * 6. ثبت رویداد آرشیو
-     * --------------------------------------------------------
-     */
+  return prisma.$transaction(async (tx) => {
+    await tx.property.update({ where: { id: propertyId }, data: { isActive: true } });
     await tx.propertyHistory.create({
       data: {
-        propertyId: property.id,
-        action: PropertyHistoryAction.ARCHIVED,
+        propertyId,
+        action: PropertyHistoryAction.RESTORED,
         field: "isActive",
-        oldValue: "true",
-        newValue: "false",
-        reason:
-          data.archivedReason ??
-          "آرشیو ملک",
+        oldValue: "false",
+        newValue: "true",
+        reason: "بازگردانی ملک از آرشیو",
       },
     });
-
-    return createdArchive;
+    await tx.propertyArchive.delete({ where: { propertyId } });
+    return archive;
   });
-
-  return archive;
-};
-
-/**
- * ============================================================
- * Get Property Archive
- * ============================================================
- */
-export const getPropertyArchiveService = async (
-  propertyId: string
-): Promise<PropertyArchive> => {
-  const archive = await findPropertyArchive(propertyId);
-
-  if (!archive) {
-    throw new Error("آرشیو این ملک پیدا نشد.");
-  }
-
-  return archive;
-};
-
-/**
- * ============================================================
- * Restore Property
- * ============================================================
- *
- * نکته مهم:
- *
- * هنگام Restore:
- *
- * - Property دوباره فعال می‌شود.
- * - PropertyArchive حذف می‌شود.
- * - History ثبت می‌شود.
- *
- * اطلاعات مصرفی حذف‌شده هنگام Archive
- * برنمی‌گردند و باید در صورت نیاز دوباره ایجاد شوند.
- */
-export const restorePropertyService = async (
-  propertyId: string
-): Promise<PropertyArchive> => {
-  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
-  if (property?.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
-  const archive = await findPropertyArchive(propertyId);
-
-  if (!archive) {
-    throw new Error("آرشیو این ملک پیدا نشد.");
-  }
-
-  const restoredArchive = await prisma.$transaction(
-    async (tx) => {
-      /**
-       * فعال کردن مجدد ملک
-       */
-      await tx.property.update({
-        where: {
-          id: propertyId,
-        },
-        data: {
-          isActive: true,
-        },
-      });
-
-      /**
-       * ثبت تاریخچه بازگردانی
-       */
-      await tx.propertyHistory.create({
-        data: {
-          propertyId,
-          action: PropertyHistoryAction.RESTORED,
-          field: "isActive",
-          oldValue: "false",
-          newValue: "true",
-          reason: "بازگردانی ملک از آرشیو",
-        },
-      });
-
-      /**
-       * حذف رکورد آرشیو
-       */
-      await tx.propertyArchive.delete({
-        where: {
-          propertyId,
-        },
-      });
-
-      return archive;
-    }
-  );
-
-  return restoredArchive;
 };

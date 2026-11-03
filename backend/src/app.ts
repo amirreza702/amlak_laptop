@@ -16,6 +16,7 @@ import customerRoutes from "./features/customer/routes/customerRoutes";
 import {
   startPropertyExpirationScheduler,
 } from "./jobs/propertyExpirationScheduler";
+import { startPropertyArchivalScheduler } from "./jobs/propertyArchivalScheduler";
 
 import evaluationRoutes from "./features/evaluation/routes/evaluationRoutes";
 
@@ -101,6 +102,7 @@ app.use(adminRoutes);
  * فقط Job مربوطه را در بازه زمانی مشخص اجرا می‌کند.
  */
 startPropertyExpirationScheduler();
+startPropertyArchivalScheduler();
 
 /**
  * ============================================================

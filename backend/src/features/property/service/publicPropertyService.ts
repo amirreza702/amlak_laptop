@@ -18,7 +18,6 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     ownerFirstName,
     ownerLastName,
     ownerMobile,
-    confirmUntil,
     ...publicProperty
   } = property;
 
@@ -54,6 +53,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     viewerIsAuthorizedOwner || isApprovedAgentForOwnerDetails || isAgentCreator || viewer?.role === "HASHTI"
   );
 
+  const confirmUntil = publicProperty.listing?.confirmUntil ?? null;
   const isExpired = publicProperty.listing?.status === "EXPIRED" || (publicProperty.listing?.status === "PUBLISHED" && (!confirmUntil || confirmUntil <= new Date()));
   if (isExpired && !(viewer?.role === "HASHTI" || Boolean(viewerOwnerRelation) || isApprovedAgent)) {
     throw new Error("آگهی عمومی موردنظر پیدا نشد.");

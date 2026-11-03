@@ -60,7 +60,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     OR: [
       { listing: { is: null } },
       { listing: { is: { status: { notIn: [ListingStatus.PUBLISHED, ListingStatus.EXPIRED] } } } },
-      { listing: { is: { status: ListingStatus.PUBLISHED } }, confirmUntil: { gt: now } },
+      { listing: { is: { status: ListingStatus.PUBLISHED, confirmUntil: { gt: now } } } },
       // مشاورِ ایجادکننده، حتی پس از انقضای آگهی، برای مشاهده وضعیت و تمدید باید رکورد را ببیند.
       { registrationSource: "AGENT", createdByUserId: input.userId },
       { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true } } },
@@ -88,7 +88,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     ...(exactOccupancyStatus ? [{ occupancyStatus: exactOccupancyStatus }] : []),
     ...(numericSearch !== undefined ? [{ area: numericSearch }, { rooms: numericSearch }, { floor: numericSearch }] : []),
     ...(boolSearch !== undefined ? [{ isActive: boolSearch }] : []),
-    ...(validDate ? [{ createdAt: { gte: dayStart, lt: dayEnd } }, { confirmUntil: { gte: dayStart, lt: dayEnd } }] : []),
+    ...(validDate ? [{ createdAt: { gte: dayStart, lt: dayEnd } }, { listing: { is: { confirmUntil: { gte: dayStart, lt: dayEnd } } } }] : []),
     ...(exactListingStatus ? [{ listing: { is: { status: exactListingStatus } } }] : []),
     ...(exactTransactionType ? [{ listing: { is: { transactionType: exactTransactionType } } }] : []),
     ...(numericSearch !== undefined ? [{ owners: { some: { share: numericSearch } } }] : []),
@@ -148,9 +148,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         floor: true,
         isActive: true,
         createdAt: true,
-        confirmUntil: true,
         listing: {
-          select: { status: true, transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, publishedAt: true },
+          select: { status: true, transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, publishedAt: true, confirmUntil: true },
         },
         owners: {
           orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],

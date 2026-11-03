@@ -14,9 +14,7 @@ import {
   updatePropertyListing,
 } from "../repository/propertyListingRepository";
 
-import {
-  updateProperty,
-} from "../repository/propertyRepository";
+import { archivePropertyInTransaction } from "./propertyArchiveService";
 
 import {
   createPropertyHistory,
@@ -147,18 +145,19 @@ export async function updatePropertyListingStatus(
   if (data.status !== ListingStatus.PUBLISHED) updateData.publishedAt = null;
 
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const mediaToRemove = [ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)
+    const archiveImmediately = data.status === ListingStatus.SOLD || data.status === ListingStatus.RENTED;
+    const mediaToRemove = !archiveImmediately && [ListingStatus.DRAFT, ListingStatus.PAUSED].includes(data.status)
       ? await tx.propertyMedia.findMany({ where: { propertyId, isActive: true }, select: { id: true } })
       : [];
 
-    const updatedListing = await updatePropertyListing(listing.id, updateData, tx);
     let confirmUntil: Date | undefined;
     if (approvalPublishedAt) {
       confirmUntil = calculateConfirmUntil(approvalPublishedAt);
-      await updateProperty(propertyId, { confirmUntil }, tx);
+      updateData.confirmUntil = confirmUntil;
     } else if ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)) {
-      await updateProperty(propertyId, { confirmUntil: null }, tx);
+      updateData.confirmUntil = null;
     }
+    const updatedListing = await updatePropertyListing(listing.id, updateData, tx);
 
     if (mediaToRemove.length) {
       await tx.propertyMedia.deleteMany({ where: { id: { in: mediaToRemove.map((item) => item.id) } } });
@@ -174,10 +173,24 @@ export async function updatePropertyListingStatus(
       reason: "تغییر وضعیت آگهی",
     }, tx);
 
+    const archived = archiveImmediately
+      ? await archivePropertyInTransaction(
+          tx,
+          propertyId,
+          data.status === ListingStatus.SOLD
+            ? "آرشیو فوری پس از ثبت وضعیت فروخته‌شده"
+            : "آرشیو فوری پس از ثبت وضعیت اجاره‌رفته",
+        )
+      : null;
+
     return {
       listing: updatedListing,
       statusChanged: true,
-      removedMediaIds: mediaToRemove.map((item) => item.id),
+      removedMediaIds: [
+        ...mediaToRemove.map((item) => item.id),
+        ...(archived?.mediaIds ?? []),
+      ],
+      archived: Boolean(archived),
       ...(confirmUntil ? { confirmUntil } : {}),
     };
   });
