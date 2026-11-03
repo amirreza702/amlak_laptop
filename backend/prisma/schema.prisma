@@ -52,6 +52,7 @@ enum ListingStatus {
   PAUSED
   SOLD
   RENTED
+  DELETED
 }
 
 // وضعیت سکونت
@@ -135,6 +136,7 @@ enum PropertyHistoryAction {
   ARCHIVED
   RESTORED
   OTHER
+  DELETED
 }
 
 // نتیجه بررسی تشابه
@@ -510,6 +512,7 @@ model Property {
   // ----------------------------
 
   isActive       Boolean   @default(true)
+  deletedAt      DateTime?
   lastConfirmedAt DateTime?
   confirmUntil   DateTime?
 
@@ -551,6 +554,7 @@ model Property {
   @@index([createdByRole])
   @@index([occupancyStatus])
   @@index([confirmUntil])
+  @@index([deletedAt])
   @@map("properties")
 }
 
