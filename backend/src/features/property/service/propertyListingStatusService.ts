@@ -36,8 +36,8 @@ const allowedTransitions: Record<ListingStatus, ListingStatus[]> = {
   [ListingStatus.REJECTED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
   [ListingStatus.EXPIRED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
   [ListingStatus.PAUSED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.SOLD, ListingStatus.RENTED],
-  [ListingStatus.SOLD]: [],
-  [ListingStatus.RENTED]: [],
+  [ListingStatus.SOLD]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.RENTED],
+  [ListingStatus.RENTED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD],
 };
 
 /**
