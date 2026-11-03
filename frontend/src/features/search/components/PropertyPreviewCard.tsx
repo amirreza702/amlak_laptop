@@ -76,6 +76,12 @@ export function PropertyPreviewCard({
         ring-slate-200/80
       "
     >
+      {property.mainImage ? (
+        <img src={property.mainImage} alt={property.title} className="h-44 w-full bg-slate-100 object-cover" loading="lazy" />
+      ) : (
+        <div className="flex h-32 w-full items-center justify-center bg-slate-100 text-sm text-slate-400">تصویری برای این آگهی ثبت نشده است</div>
+      )}
+
       {/* ---------------------------------------------------
           Header
       --------------------------------------------------- */}
