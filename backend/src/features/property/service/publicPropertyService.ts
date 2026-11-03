@@ -41,9 +41,6 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     : null;
   const primaryOwnerRelation = owners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
-  const verifiedPrimaryOwner = primaryOwnerRelation?.verificationStatus === "VERIFIED"
-    ? primaryOwnerRelation.owner
-    : null;
   const viewerOwnerRelation = viewer?.role === "OWNER"
     ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
@@ -94,13 +91,13 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
       lastName: approvedAgent.lastName,
       mobile: approvedAgent.user.mobile,
     };
-  } else if (verifiedPrimaryOwner) {
+  } else if (primaryOwner) {
     contact = {
       type: "OWNER",
       label: "مالک",
-      firstName: verifiedPrimaryOwner.firstName,
-      lastName: verifiedPrimaryOwner.lastName,
-      mobile: verifiedPrimaryOwner.user.mobile,
+      firstName: primaryOwner.firstName,
+      lastName: primaryOwner.lastName,
+      mobile: primaryOwner.user.mobile,
     };
   }
 
