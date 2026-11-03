@@ -109,7 +109,7 @@ export const updateOwnerProfile = async (
  */
 export const findOwnerPropertiesByOwnerId = async (ownerId: string) =>
   prisma.propertyOwner.findMany({
-    where: { ownerId },
+    where: { ownerId, property: { is: { deletedAt: null } } },
     orderBy: { createdAt: "desc" },
     select: {
       propertyId: true,
