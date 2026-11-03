@@ -334,7 +334,7 @@ export function CustomerDashboard() {
                     )}
                   </div>
                 </div>
-                <Modal open={agentSearchOpen} title="افزودن مشاور به علاقه‌مندی‌ها" description="فقط مشاوران تأییدشده نمایش داده می‌شوند." onClose={() => { if (!agentSearchBusy) setAgentSearchOpen(false); }} size="lg">
+                <Modal open={agentSearchOpen} title="افزودن مشاور به علاقه‌مندی‌ها" description="فقط مشاوران تأییدشده نمایش داده می‌شوند." onClose={() => { if (!agentSearchBusy) setAgentSearchOpen(false); }} size="xl">
                   <div className="space-y-3" dir="rtl">
                     <input autoFocus value={agentSearchQuery} onChange={(event) => void searchFavoriteAgents(event.target.value)} placeholder="نام یا نام خانوادگی مشاور یا آژانس (حداقل دو حرف)" className={inputClass} />
                     {agentSearchBusy && <p className="text-sm text-slate-500">در حال پردازش...</p>}
