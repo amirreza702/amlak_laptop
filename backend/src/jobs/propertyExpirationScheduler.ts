@@ -24,13 +24,9 @@ import {
 } from "../features/property/job/expirePropertiesJob";
 
 /**
- * فاصله اجرای Scheduler
+ * فاصله اجرای Scheduler:
  *
- * فعلاً هر ۱ ساعت:
- *
- * 60 دقیقه
- * × 60 ثانیه
- * × 1000 میلی‌ثانیه
+ * 24 ساعت × 60 دقیقه × 60 ثانیه × 1000 میلی‌ثانیه
  */
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
