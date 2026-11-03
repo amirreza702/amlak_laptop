@@ -19,6 +19,10 @@ import {
   removePropertyFromFavoritesService,
   isPropertyFavoriteService,
   getCustomerFavoritesService,
+  addAgentToFavoritesService,
+  removeAgentFromFavoritesService,
+  getCustomerFavoriteAgentsService,
+  searchAgentsForCustomerFavoritesService,
 } from "../service/customerPropertyFavoriteService";
 
 /**
@@ -181,5 +185,36 @@ export async function searchAgentsForCustomerFavoritesController(req: Request, r
     return res.status(200).json(await searchAgentsForCustomerFavoritesService(customerId, query));
   } catch (error) {
     return res.status(400).json({ message: error instanceof Error ? error.message : "جست‌وجوی مشاور ناموفق بود." });
+  }
+}
+
+
+export async function addAgentToFavoritesController(req: Request, res: Response) {
+  try {
+    const { customerId, agentId } = req.params;
+    if (!customerId || Array.isArray(customerId) || !agentId || Array.isArray(agentId)) return res.status(400).json({ message: "شناسه مشتری یا مشاور نامعتبر است." });
+    return res.status(201).json(await addAgentToFavoritesService(customerId, agentId));
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "افزودن مشاور به علاقه‌مندی ناموفق بود." });
+  }
+}
+
+export async function removeAgentFromFavoritesController(req: Request, res: Response) {
+  try {
+    const { customerId, agentId } = req.params;
+    if (!customerId || Array.isArray(customerId) || !agentId || Array.isArray(agentId)) return res.status(400).json({ message: "شناسه مشتری یا مشاور نامعتبر است." });
+    return res.status(200).json(await removeAgentFromFavoritesService(customerId, agentId));
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "حذف مشاور از علاقه‌مندی ناموفق بود." });
+  }
+}
+
+export async function getCustomerFavoriteAgentsController(req: Request, res: Response) {
+  try {
+    const customerId = req.params.customerId;
+    if (!customerId || Array.isArray(customerId)) return res.status(400).json({ message: "شناسه مشتری نامعتبر است." });
+    return res.status(200).json(await getCustomerFavoriteAgentsService(customerId));
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "دریافت مشاوران علاقه‌مندی‌شده ناموفق بود." });
   }
 }

@@ -5,12 +5,22 @@ import {
   removePropertyFromFavoritesController,
   isPropertyFavoriteController,
   getCustomerFavoritesController,
+  addAgentToFavoritesController,
+  removeAgentFromFavoritesController,
+  getCustomerFavoriteAgentsController,
+  searchAgentsForCustomerFavoritesController,
 } from "../controller/customerPropertyFavoriteController";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireOwnProfile } from "../../auth/middleware/authorizationMiddleware";
 
 const router = Router();
+
+router.post("/customers/:customerId/favorite-agents/:agentId", authMiddleware, requireRole(UserRole.CUSTOMER), requireOwnProfile("customer", "customerId"), addAgentToFavoritesController);
+router.delete("/customers/:customerId/favorite-agents/:agentId", authMiddleware, requireRole(UserRole.CUSTOMER), requireOwnProfile("customer", "customerId"), removeAgentFromFavoritesController);
+router.get("/customers/:customerId/favorite-agents/search", authMiddleware, requireRole(UserRole.CUSTOMER), requireOwnProfile("customer", "customerId"), searchAgentsForCustomerFavoritesController);
+router.get("/customers/:customerId/favorite-agents", authMiddleware, requireRole(UserRole.CUSTOMER), requireOwnProfile("customer", "customerId"), getCustomerFavoriteAgentsController);
+
 
 router.post(
   "/customers/:customerId/favorites/:propertyId",

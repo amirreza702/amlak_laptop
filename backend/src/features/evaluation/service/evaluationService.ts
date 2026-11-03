@@ -689,5 +689,6 @@ export async function getEvaluationStatusService(
   target: { agentId?: string; propertyId?: string },
 ) {
   if (!target.agentId && !target.propertyId) throw new Error("Evaluation target is required");
-  return findEvaluationByEvaluatorAndTarget(evaluatorUserId, type, target);
+  const lookupTarget = type === "OWNER_TO_AGENT" ? { agentId: target.agentId } : target;
+  return findEvaluationByEvaluatorAndTarget(evaluatorUserId, type, lookupTarget);
 }
