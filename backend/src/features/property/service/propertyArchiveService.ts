@@ -60,6 +60,7 @@ export const archivePropertyService = async (
   if (!property) {
     throw new Error("ملک مورد نظر پیدا نشد.");
   }
+  if (property.deletedAt) throw new Error("ملک حذف‌شده قابل آرشیو یا بازیابی نیست.");
 
   /**
    * اگر قبلاً آرشیو شده باشد، دوباره آرشیو نمی‌کنیم.
@@ -201,6 +202,8 @@ export const getPropertyArchiveService = async (
 export const restorePropertyService = async (
   propertyId: string
 ): Promise<PropertyArchive> => {
+  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
+  if (property?.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
   const archive = await findPropertyArchive(propertyId);
 
   if (!archive) {
