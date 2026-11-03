@@ -34,7 +34,7 @@ export const createEvaluation = async (
     return await prisma.evaluation.create({ data });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      throw new Error("User has already evaluated this property");
+      throw new Error("You have already evaluated this target");
     }
     throw error;
   }
@@ -207,6 +207,53 @@ export const findAgentByUserId = async (
  * بررسی وجود Property
  * ============================================================
  */
+export const findCustomerAgentFavorite = async (customerId: string, agentId: string) =>
+  prisma.customerAgentFavorite.findUnique({
+    where: { customerId_agentId: { customerId, agentId } },
+    select: { id: true },
+  });
+
+export const findCustomerPropertyFavorite = async (customerId: string, propertyId: string) =>
+  prisma.customerPropertyFavorite.findUnique({
+    where: { customerId_propertyId: { customerId, propertyId } },
+    select: { id: true },
+  });
+
+export const findApprovedAgentForOwnerProperty = async (ownerId: string, propertyId: string, agentId: string) =>
+  prisma.propertyAgent.findFirst({
+    where: {
+      propertyId, agentId, status: "ACTIVE", approvedByOwner: true,
+      approvedByOwnerId: ownerId,
+      property: { owners: { some: { ownerId } } },
+    },
+    select: { propertyId: true, agentId: true },
+  });
+
+export const findAgentPropertyEligibility = async (userId: string, agentId: string, propertyId: string) =>
+  prisma.property.findFirst({
+    where: {
+      id: propertyId,
+      OR: [
+        { registrationSource: "AGENT", createdByUserId: userId },
+        { agents: { some: { agentId, status: "ACTIVE", approvedByOwner: true } } },
+      ],
+    },
+    select: { id: true },
+  });
+
+export const findEvaluationByEvaluatorAndTarget = async (
+  evaluatorUserId: string,
+  type: import("@prisma/client").EvaluationType,
+  target: { agentId?: string; propertyId?: string },
+) => prisma.evaluation.findFirst({
+  where: {
+    evaluatorUserId, type,
+    ...(target.agentId ? { agentId: target.agentId } : {}),
+    ...(target.propertyId ? { propertyId: target.propertyId } : {}),
+  },
+  select: { id: true, score: true, comment: true, createdAt: true },
+});
+
 export const findPropertyById = async (
   propertyId: string
 ) => {
@@ -214,8 +261,7 @@ export const findPropertyById = async (
     where: { id: propertyId },
     select: {
       id: true,
-      confirmUntil: true,
-      listing: { select: { status: true } },
+      listing: { select: { status: true, confirmUntil: true } },
     },
   });
 };

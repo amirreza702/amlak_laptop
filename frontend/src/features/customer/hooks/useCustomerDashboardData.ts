@@ -10,9 +10,11 @@ import type {
 } from "../types/customerSearchRequest";
 import {
   getCustomerFavorites,
+  getCustomerFavoriteAgents,
   getCustomerSearchRequests,
   getPublicProperty,
   type CustomerFavoriteRecord,
+  type CustomerAgentFavoriteRecord,
   type CustomerSearchRequestRecord,
   type PublicPropertyRecord,
 } from "../api/customerDashboardApi";
@@ -24,6 +26,7 @@ export function useCustomerDashboardData() {
   const [profile, setProfile] = useState<CustomerProfileForRequest | null>(null);
   const [requests, setRequests] = useState<CustomerSearchRequestRecord[]>([]);
   const [favorites, setFavorites] = useState<Array<CustomerFavoriteRecord & { property: PublicPropertyRecord | null }>>([]);
+  const [agentFavorites, setAgentFavorites] = useState<CustomerAgentFavoriteRecord[]>([]);
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -35,9 +38,10 @@ export function useCustomerDashboardData() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const refreshData = useCallback(async (customer: CustomerProfileForRequest, authenticatedUser: UserPublic) => {
-    const [requestsResult, favoritesResult, notificationsResult] = await Promise.allSettled([
+    const [requestsResult, favoritesResult, agentFavoritesResult, notificationsResult] = await Promise.allSettled([
       getCustomerSearchRequests(customer.id),
       getCustomerFavorites(customer.id),
+      getCustomerFavoriteAgents(customer.id),
       getUserNotifications(authenticatedUser.id),
     ]);
 
@@ -58,6 +62,8 @@ export function useCustomerDashboardData() {
       setActionError(favoritesResult.reason instanceof Error ? favoritesResult.reason.message : "دریافت علاقه‌مندی‌ها انجام نشد.");
     }
 
+    if (agentFavoritesResult.status === "fulfilled") setAgentFavorites(agentFavoritesResult.value);
+    else setActionError(agentFavoritesResult.reason instanceof Error ? agentFavoritesResult.reason.message : "دریافت مشاوران علاقه‌مندی‌شده انجام نشد.");
     if (notificationsResult.status === "fulfilled") setNotifications(notificationsResult.value);
     else setNotifications([]);
   }, []);
@@ -110,6 +116,7 @@ export function useCustomerDashboardData() {
         setProfile(null);
         setRequests([]);
         setFavorites([]);
+        setAgentFavorites([]);
         setNotifications([]);
         setEditingId(null);
         setPageError("برای مشاهدهٔ پنل، با حساب مشتری وارد شوید.");
@@ -126,7 +133,7 @@ export function useCustomerDashboardData() {
 
 
   return {
-    user, setUser, profile, setProfile, requests, setRequests, favorites, setFavorites,
+    user, setUser, profile, setProfile, requests, setRequests, favorites, setFavorites, agentFavorites, setAgentFavorites,
     notifications, setNotifications, loading, setLoading, pageError, setPageError,
     actionMessage, setActionMessage, actionError, setActionError, busyId, setBusyId,
     editingId, setEditingId, editValues, setEditValues, firstName, setFirstName,

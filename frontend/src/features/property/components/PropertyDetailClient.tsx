@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { CustomerFavoriteButton } from "@/features/customer/components/CustomerFavoriteButton";
-import { PropertyEvaluationForm } from "./PropertyEvaluationForm";
 import { usePropertyDetail, type PropertyListing } from "../hooks/usePropertyDetail";
 
 /**
@@ -568,7 +567,6 @@ export default function PropertyDetailClient() {
               </p>
             </div>
 
-            <PropertyEvaluationForm propertyId={property.id} listingStatus={property.listing?.status} />
 
             {/* ==================================================
                 اقدام‌های مشتری
