@@ -35,28 +35,12 @@ export async function renewExpiredPropertyListing(propertyId: string, actor: { i
   if (property.listing.status !== ListingStatus.EXPIRED) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
 
   return prisma.$transaction(async (tx) => {
+    // تمدید فقط درخواست بررسی مجدد ایجاد می‌کند؛ انتشار و شروع مهلت ۳۱روزه
+    // منحصراً هنگام تأیید هشتی در updatePropertyListingStatus انجام می‌شود.
     const queued = await queuePropertyListingForHashtiReview(propertyId, tx, actor.id);
     if (!queued.queued || !queued.listing) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
 
-    const recipients = await tx.user.findMany({
-      where: { role: UserRole.HASHTI, isActive: true },
-      select: { id: true },
-    });
-    if (recipients.length) {
-      await tx.notification.createMany({
-        data: recipients.map((recipient) => ({
-          userId: recipient.id,
-          title: "تمدید آگهی در انتظار تأیید هشتی",
-          message: "یک آگهی منقضی‌شده برای بررسی و تأیید مجدد انتشار به صف هشتی بازگشته است.",
-          details: {
-            propertyId,
-            action: "RENEWAL_PENDING_HASHTI_APPROVAL",
-            occurredAt: new Date().toISOString(),
-          },
-        })),
-      });
-    }
-
+    // ابزار اعلان پنل هشتی/ادمین حفظ می‌شود، اما برای این رویداد پیامی تولید نمی‌کنیم.
     return { listing: queued.listing, requiresHashtiApproval: true };
   });
 }
