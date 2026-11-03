@@ -207,6 +207,50 @@ export const findAgentByUserId = async (
  * بررسی وجود Property
  * ============================================================
  */
+export const findCustomerAgentFavorite = async (customerId: string, agentId: string) => {
+  return prisma.customerAgentFavorite.findUnique({
+    where: { customerId_agentId: { customerId, agentId } },
+    select: { id: true },
+  });
+};
+
+export const findCustomerPropertyFavorite = async (customerId: string, propertyId: string) => {
+  return prisma.customerPropertyFavorite.findUnique({
+    where: { customerId_propertyId: { customerId, propertyId } },
+    select: { id: true },
+  });
+};
+
+export const findOwnerApprovedAgentForProperty = async (ownerId: string, propertyId: string, agentId: string) => {
+  return prisma.propertyAgent.findFirst({
+    where: { ownerAgentRequest: undefined } as never,
+  });
+};
+
+export const findApprovedAgentForOwnerProperty = async (ownerId: string, propertyId: string, agentId: string) => {
+  return prisma.propertyAgent.findFirst({
+    where: {
+      propertyId, agentId, status: "ACTIVE", approvedByOwner: true,
+      approvedByOwnerId: ownerId,
+      property: { owners: { some: { ownerId } } },
+    },
+    select: { propertyId: true, agentId: true },
+  });
+};
+
+export const findAgentPropertyEligibility = async (userId: string, agentId: string, propertyId: string) => {
+  return prisma.property.findFirst({
+    where: {
+      id: propertyId,
+      OR: [
+        { registrationSource: "AGENT", createdByUserId: userId },
+        { agents: { some: { agentId, status: "ACTIVE", approvedByOwner: true } } },
+      ],
+    },
+    select: { id: true },
+  });
+};
+
 export const findPropertyById = async (
   propertyId: string
 ) => {
@@ -214,8 +258,7 @@ export const findPropertyById = async (
     where: { id: propertyId },
     select: {
       id: true,
-      confirmUntil: true,
-      listing: { select: { status: true } },
+      listing: { select: { status: true, confirmUntil: true } },
     },
   });
 };

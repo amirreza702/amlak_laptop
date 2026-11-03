@@ -30,6 +30,10 @@ import {
   findCustomerByUserId,
   findOwnerByUserId,
   findAgentByUserId,
+  findCustomerAgentFavorite,
+  findCustomerPropertyFavorite,
+  findApprovedAgentForOwnerProperty,
+  findAgentPropertyEligibility,
 } from "../repository/evaluationRepository";
 
 /**
@@ -157,18 +161,13 @@ export const createEvaluationService = async (
         await findAgentById(data.agentId);
 
       if (!agent) {
-        throw new Error(
-          "Evaluation target not found"
-        );
+        throw new Error("Evaluation target not found");
       }
-
-      if (
-        agent.userId ===
-        data.evaluatorUserId
-      ) {
-        throw new Error(
-          "User cannot evaluate themselves"
-        );
+      if (agent.userId === data.evaluatorUserId) {
+        throw new Error("User cannot evaluate themselves");
+      }
+      if (!(await findCustomerAgentFavorite(customer.id, agent.id))) {
+        throw new Error("Agent must be in customer favorites before evaluation");
       }
 
       return createEvaluation({
@@ -195,9 +194,10 @@ export const createEvaluationService = async (
       }
 
       if (!data.agentId) {
-        throw new Error(
-          "Agent is required for this evaluation"
-        );
+        throw new Error("Agent is required for this evaluation");
+      }
+      if (!data.propertyId) {
+        throw new Error("Property is required for this evaluation");
       }
 
       const owner =
@@ -220,13 +220,11 @@ export const createEvaluationService = async (
         );
       }
 
-      if (
-        agent.userId ===
-        data.evaluatorUserId
-      ) {
-        throw new Error(
-          "User cannot evaluate themselves"
-        );
+      if (agent.userId === data.evaluatorUserId) {
+        throw new Error("User cannot evaluate themselves");
+      }
+      if (!(await findApprovedAgentForOwnerProperty(owner.id, data.propertyId, agent.id))) {
+        throw new Error("Agent is not the owner-approved agent for this property");
       }
 
       return createEvaluation({
@@ -234,6 +232,7 @@ export const createEvaluationService = async (
         evaluatorUserId: data.evaluatorUserId,
         ownerId: owner.id,
         agentId: agent.id,
+        propertyId: data.propertyId,
         score: data.score,
         comment: normalizeComment(data.comment),
       });
@@ -428,8 +427,8 @@ export const createEvaluationService = async (
           "Evaluation target not found"
         );
       }
-      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
-        throw new Error("Property is not currently published");
+      if (!(await findCustomerPropertyFavorite(customer.id, property.id))) {
+        throw new Error("Property must be in customer favorites before evaluation");
       }
 
       return createEvaluation({
@@ -602,8 +601,8 @@ export const createEvaluationService = async (
           "Evaluation target not found"
         );
       }
-      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
-        throw new Error("Property is not currently published");
+      if (!(await findAgentPropertyEligibility(data.evaluatorUserId, agent.id, property.id))) {
+        throw new Error("Agent can evaluate only properties they registered or were approved to represent");
       }
 
       return createEvaluation({
