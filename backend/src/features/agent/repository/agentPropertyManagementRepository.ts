@@ -158,16 +158,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
-        ownerAgentRequests: {
-          where: { status: "ACTIVE" },
-          select: {
-            ownerId: true,
-            responses: {
-              where: { agentId: input.agentId, status: "ACCEPTED" },
-              select: { agentId: true },
-            },
-          },
-        },
         agents: {
           where: {
             OR: [
@@ -176,7 +166,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             ],
           },
           select: {
-            agentId: true, status: true, approvedByOwner: true, approvedAt: true,
+            agentId: true, status: true, approvedByOwner: true, approvedByOwnerId: true, approvedAt: true,
             registeredAt: true, isFirstRegistrant: true,
             agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },

@@ -77,16 +77,6 @@ export async function findPublishedPublicPropertyById(id: string) {
           },
         },
       },
-      ownerAgentRequests: {
-        where: { status: "ACTIVE" },
-        select: {
-          ownerId: true,
-          responses: {
-            where: { status: "ACCEPTED" },
-            select: { agentId: true },
-          },
-        },
-      },
       agents: {
         // رابطه ثبت‌کننده نخست حتی در صورت لغو ارتباط خوانده می‌شود؛
         // در سرویس هرگز به مشاور دیگری به‌عنوان جایگزین او fallback نمی‌کنیم.
