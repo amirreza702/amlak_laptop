@@ -13,7 +13,7 @@ export async function renewPropertyListingController(
       id: user.id,
       role: user.role,
     });
-    return res.status(200).json({ message: "انتشار ملک برای ۳۱ روز تمدید شد.", ...result });
+    return res.status(200).json({ message: "درخواست تمدید ثبت شد و آگهی پس از تأیید هشتی دوباره منتشر می‌شود.", ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const known: Record<string, [number, string]> = {
