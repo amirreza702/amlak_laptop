@@ -23,6 +23,7 @@
  */
 
 import { findCustomerById } from "../../customer/repository/customerRepository";
+import { findAgentById } from "../../agent/repository/agentRepository";
 import { findPropertyById } from "../../property/repository/propertyRepository";
 
 import {
@@ -159,4 +160,14 @@ export async function getCustomerFavoritesService(
   }
 
   return findCustomerPropertyFavorites(customerId);
+}
+
+/** جست‌وجوی مشاوران قابل افزودن به علاقه‌مندی مشتری */
+export async function searchAgentsForCustomerFavoritesService(customerId: string, rawQuery: string) {
+  if (!customerId) throw new Error("شناسه مشتری الزامی است.");
+  const customer = await findCustomerById(customerId);
+  if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
+  const query = rawQuery.trim();
+  if (query.length < 2) throw new Error("برای جست‌وجوی مشاور حداقل دو نویسه وارد کنید.");
+  return searchAgentsForCustomerFavorites(customerId, query);
 }

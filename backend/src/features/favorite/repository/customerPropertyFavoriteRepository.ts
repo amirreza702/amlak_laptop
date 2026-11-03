@@ -87,3 +87,21 @@ export const findCustomerPropertyFavorites = async (
     },
   });
 };
+
+/** جست‌وجوی مشاوران تأییدشده‌ای که هنوز در علاقه‌مندی این مشتری نیستند. */
+export const searchAgentsForCustomerFavorites = (customerId: string, query: string) =>
+  prisma.agent.findMany({
+    where: {
+      verificationStatus: "VERIFIED",
+      user: { isActive: true },
+      customerFavorites: { none: { customerId } },
+      OR: [
+        { firstName: { contains: query, mode: "insensitive" } },
+        { lastName: { contains: query, mode: "insensitive" } },
+        { agencyName: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    take: 20,
+    orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    select: { id: true, firstName: true, lastName: true, agencyName: true },
+  });

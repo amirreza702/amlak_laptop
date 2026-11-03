@@ -172,3 +172,14 @@ export async function getCustomerFavoritesController(
     });
   }
 }
+
+export async function searchAgentsForCustomerFavoritesController(req: Request, res: Response) {
+  try {
+    const customerId = req.params.customerId;
+    const query = typeof req.query.q === "string" ? req.query.q : "";
+    if (!customerId || Array.isArray(customerId)) return res.status(400).json({ message: "شناسه مشتری نامعتبر است." });
+    return res.status(200).json(await searchAgentsForCustomerFavoritesService(customerId, query));
+  } catch (error) {
+    return res.status(400).json({ message: error instanceof Error ? error.message : "جست‌وجوی مشاور ناموفق بود." });
+  }
+}
