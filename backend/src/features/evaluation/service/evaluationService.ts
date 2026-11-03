@@ -225,7 +225,6 @@ export const createEvaluationService = async (
         evaluatorUserId: data.evaluatorUserId,
         ownerId: owner.id,
         agentId: agent.id,
-        propertyId: data.propertyId,
         score: data.score,
         comment: normalizeComment(data.comment),
       });
@@ -367,7 +366,7 @@ export const createEvaluationService = async (
       if (!owner) throw new Error("Evaluator owner not found");
       const property = await findPropertyById(data.propertyId);
       if (!property) throw new Error("Evaluation target not found");
-      if (property.listing?.status !== "PUBLISHED" || !property.confirmUntil || property.confirmUntil <= new Date()) {
+      if (property.listing?.status !== "PUBLISHED" || !property.listing.confirmUntil || property.listing.confirmUntil <= new Date()) {
         throw new Error("Property is not currently published");
       }
       return createEvaluation({

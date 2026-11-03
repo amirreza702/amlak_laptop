@@ -84,6 +84,7 @@ export function CustomerDashboard() {
   const [agentSearchQuery, setAgentSearchQuery] = useState("");
   const [agentSearchResults, setAgentSearchResults] = useState<Array<{ id: string; firstName: string; lastName: string; agencyName: string | null }>>([]);
   const [agentSearchBusy, setAgentSearchBusy] = useState(false);
+  const [agentSearchError, setAgentSearchError] = useState<string | null>(null);
   const [notificationsSearch, setNotificationsSearch] = useState("");
   const {
     user, profile, setProfile, requests, favorites, agentFavorites, notifications, setNotifications,
@@ -140,18 +141,25 @@ export function CustomerDashboard() {
   const searchFavoriteAgents = async (query: string) => {
     setAgentSearchQuery(query);
     if (!profile || query.trim().length < 2) { setAgentSearchResults([]); return; }
-    setAgentSearchBusy(true); setActionError(null);
+    setAgentSearchBusy(true); setAgentSearchError(null);
     try { setAgentSearchResults(await searchAgentsForFavorites(profile.id, query.trim())); }
-    catch (error) { setActionError(error instanceof Error ? error.message : "جست‌وجوی مشاوران انجام نشد."); }
+    catch (error) { setAgentSearchError(error instanceof Error ? error.message : "جست‌وجوی مشاوران انجام نشد."); }
     finally { setAgentSearchBusy(false); }
   };
   const addAgentFavorite = async (agentId: string) => {
-    if (!profile) return;
-    await runAction(agentId, async () => {
+    if (!profile || agentSearchBusy) return;
+    setAgentSearchBusy(true);
+    setAgentSearchError(null);
+    try {
       await addCustomerAgentFavorite(profile.id, agentId);
       setAgentSearchResults((items) => items.filter((item) => item.id !== agentId));
+      await refreshData(profile, user!);
       setActionMessage("مشاور به علاقه‌مندی‌ها اضافه شد.");
-    });
+    } catch (error) {
+      setAgentSearchError(error instanceof Error ? error.message : "افزودن مشاور ناموفق بود.");
+    } finally {
+      setAgentSearchBusy(false);
+    }
   };
 
   const startEdit = (request: CustomerSearchRequestRecord) => {
@@ -312,7 +320,7 @@ export function CustomerDashboard() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-base font-bold">مشاوران علاقه‌مندی‌شده</h2><button type="button" onClick={() => { setAgentSearchOpen(true); setAgentSearchQuery(""); setAgentSearchResults([]); setActionError(null); }} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">افزودن مشاور</button></div>
+                  <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-base font-bold">مشاوران علاقه‌مندی‌شده</h2><button type="button" onClick={() => { setAgentSearchOpen(true); setAgentSearchQuery(""); setAgentSearchResults([]); setAgentSearchError(null); }} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white">افزودن مشاور</button></div>
                   <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                     {agentFavorites.length === 0 ? <p className="p-5 text-sm text-slate-500">هنوز مشاوری به فهرست علاقه‌مندی‌ها اضافه نشده است.</p> : (
                       <table className="w-full min-w-[760px] text-right text-sm">
@@ -329,7 +337,8 @@ export function CustomerDashboard() {
                 <Modal open={agentSearchOpen} title="افزودن مشاور به علاقه‌مندی‌ها" description="فقط مشاوران تأییدشده نمایش داده می‌شوند." onClose={() => { if (!agentSearchBusy) setAgentSearchOpen(false); }} size="lg">
                   <div className="space-y-3" dir="rtl">
                     <input autoFocus value={agentSearchQuery} onChange={(event) => void searchFavoriteAgents(event.target.value)} placeholder="نام یا نام خانوادگی مشاور یا آژانس (حداقل دو حرف)" className={inputClass} />
-                    {agentSearchBusy && <p className="text-sm text-slate-500">در حال جست‌وجو...</p>}
+                    {agentSearchBusy && <p className="text-sm text-slate-500">در حال پردازش...</p>}
+                    {agentSearchError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{agentSearchError}</p>}
                     {!agentSearchBusy && agentSearchQuery.trim().length >= 2 && agentSearchResults.length === 0 && <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">مشاور تأییدشده‌ای با این مشخصات پیدا نشد.</p>}
                     <div className="space-y-2">{agentSearchResults.map((agent) => <div key={agent.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold">{agent.firstName} {agent.lastName}</p><p className="mt-1 text-xs text-slate-500">{agent.agencyName || "بدون نام آژانس"}</p></div><button type="button" disabled={busyId === agent.id} onClick={() => void addAgentFavorite(agent.id)} className="rounded-lg bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">افزودن</button></div>)}</div>
                     <div className="flex justify-end"><button type="button" onClick={() => setAgentSearchOpen(false)} className="rounded-lg border px-4 py-2 text-sm">بستن</button></div>

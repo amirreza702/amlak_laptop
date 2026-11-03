@@ -23,7 +23,7 @@
  */
 
 import { findCustomerById } from "../../customer/repository/customerRepository";
-import { findAgentById } from "../../agent/repository/agentRepository";
+import { findAgentProfileById } from "../../agent/repository/agentRepository";
 import { findPropertyById } from "../../property/repository/propertyRepository";
 
 import {
@@ -183,8 +183,9 @@ export async function addAgentToFavoritesService(customerId: string, agentId: st
   if (!customerId || !agentId) throw new Error("شناسه مشتری و مشاور الزامی است.");
   const customer = await findCustomerById(customerId);
   if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
-  const agent = await findAgentById(agentId);
+  const agent = await findAgentProfileById(agentId);
   if (!agent) throw new Error("مشاور مورد نظر پیدا نشد.");
+  if (agent.verificationStatus !== "VERIFIED") throw new Error("فقط مشاور تأییدشده را می‌توان به علاقه‌مندی اضافه کرد.");
   if (agent.userId === customer.userId) throw new Error("امکان افزودن حساب خودتان به علاقه‌مندی وجود ندارد.");
   if (await findCustomerAgentFavorite(customerId, agentId)) throw new Error("این مشاور قبلاً به علاقه‌مندی‌ها اضافه شده است.");
   return createCustomerAgentFavorite(customerId, agentId);
