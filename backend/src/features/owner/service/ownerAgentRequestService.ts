@@ -50,7 +50,7 @@ export async function respondToOwnerAgentRequestService(agentId: string, request
       if (relation?.status === "REVOKED") {
         await tx.propertyAgent.update({
           where: { propertyId_agentId: { propertyId: request.propertyId, agentId } },
-          data: { status: "ACTIVE", approvedByOwner: false, approvedAt: null },
+          data: { status: "ACTIVE", approvedByOwner: false, approvedByOwnerId: null, approvedAt: null },
         });
       } else if (!relation) {
         const hasAgents = (await tx.propertyAgent.count({ where: { propertyId: request.propertyId } })) > 0;
@@ -61,7 +61,7 @@ export async function respondToOwnerAgentRequestService(agentId: string, request
     } else if (relation && relation.status === "ACTIVE") {
       await tx.propertyAgent.update({
         where: { propertyId_agentId: { propertyId: request.propertyId, agentId } },
-        data: { status: "REVOKED", approvedByOwner: false, approvedAt: null },
+        data: { status: "REVOKED", approvedByOwner: false, approvedByOwnerId: null, approvedAt: null },
       });
     }
 

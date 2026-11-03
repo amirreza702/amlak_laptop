@@ -2,7 +2,7 @@ import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
-  agentId: string; query?: string; city?: string; district?: string; address?: string;
+  agentId: string; userId: string; query?: string; city?: string; district?: string; address?: string;
   propertyType?: PropertyType; transactionType?: TransactionType;
   documentType?: DocumentType; ownershipType?: OwnershipType; landTenure?: LandTenure;
   areaMin?: number; areaMax?: number; roomsMin?: number; roomsMax?: number; floor?: number; totalUnits?: number; limit: number; offset: number;
@@ -187,7 +187,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
 
   const records = properties.map((property) => {
     const relation = property.agents.find((item) => item.agentId === input.agentId) ?? null;
-    const hasUsableRelation = relation?.status === "ACTIVE";
+    const isCreator = property.registrationSource === "AGENT" && property.createdByUserId === input.userId;
+    const hasUsableRelation = relation?.status === "ACTIVE" && (relation.approvedByOwner || isCreator);
     // Keep the scoped relation rows for the service to derive approved-agent identity;
     // the service removes the relation array before returning the API response.
     const propertyData = property;

@@ -303,6 +303,7 @@ export async function registerProperty(
           data: {
             status: "ACTIVE",
             approvedByOwner: false,
+            approvedByOwnerId: null,
             approvedAt: null,
           },
         });

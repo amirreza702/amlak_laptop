@@ -75,6 +75,7 @@ export async function approvePropertyAgentByOwnerService(
         },
         data: {
           approvedByOwner: false,
+          approvedByOwnerId: null,
           approvedAt: null,
         },
       });
@@ -89,6 +90,7 @@ export async function approvePropertyAgentByOwnerService(
         data: {
           status: "ACTIVE",
           approvedByOwner: true,
+          approvedByOwnerId: data.ownerId,
           approvedAt: new Date(),
         },
       });

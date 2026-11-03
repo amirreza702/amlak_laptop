@@ -677,8 +677,9 @@ model PropertyAgent {
 
   status PropertyAgentStatus @default(ACTIVE)
 
-  approvedByOwner Boolean   @default(false)
-  approvedAt      DateTime?
+  approvedByOwner   Boolean   @default(false)
+  approvedByOwnerId String?
+  approvedAt        DateTime?
 
   registeredAt      DateTime @default(now())
   isFirstRegistrant Boolean  @default(false)
@@ -688,6 +689,7 @@ model PropertyAgent {
 
   @@id([propertyId, agentId])
   @@index([agentId])
+  @@index([approvedByOwnerId])
   @@map("property_agents")
 }
 

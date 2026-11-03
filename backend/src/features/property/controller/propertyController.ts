@@ -89,7 +89,6 @@ export async function getPropertyByIdController(
     const {
       owners,
       agents,
-      ownerAgentRequests,
       createdByUser,
       creatorMobile: _creatorMobile,
       createdByUserId: _createdByUserId,
@@ -99,17 +98,12 @@ export async function getPropertyByIdController(
     const approvedAgent = agents.find(
       (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
     ) ?? null;
-    const approvedOwnerIds = approvedAgent
-      ? Array.from(new Set(ownerAgentRequests
-          .filter((request) => request.responses.some((response) => response.agentId === approvedAgent.agentId))
-          .map((request) => request.ownerId)))
-      : [];
-    // اگر چند مالک برای همان مشاور درخواست پذیرفته‌شده داشته باشند، مشاور به یک مالک یکتا
-    // متصل نمی‌شود؛ اما هر مالک فقط در صورت حضور شناسه خودش در این فهرست، اطلاعات خودش را می‌بیند.
-    const approvedOwnerRelation = approvedOwnerIds.length === 1
-      ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
+    // شناسه مالک تأییدکننده روی خود رابطه PropertyAgent ذخیره می‌شود؛
+    // بنابراین بستن درخواست همکاری، مجوزهای مشاور منتخب را از بین نمی‌برد.
+    const approvedOwnerRelation = approvedAgent?.approvedByOwnerId
+      ? owners.find((relation) => relation.ownerId === approvedAgent.approvedByOwnerId) ?? null
       : null;
-    const ownerIsApprover = Boolean(ownOwner && approvedOwnerIds.includes(ownOwner.ownerId));
+    const ownerIsApprover = Boolean(ownOwner && approvedAgent?.approvedByOwnerId === ownOwner.ownerId);
     const isAgentCreator = property.registrationSource === "AGENT" &&
       property.createdByRole === "AGENT" && property.createdByUserId === user.id;
     const isApprovedAgent = user.role === "AGENT" &&

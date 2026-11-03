@@ -13,7 +13,6 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   const {
     owners,
     agents,
-    ownerAgentRequests,
     registrationSource,
     createdByUserId,
     ownerFirstName,
@@ -31,13 +30,8 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
-  const approvedOwnerIds = approvedAgent
-    ? Array.from(new Set(ownerAgentRequests
-        .filter((request) => request.responses.some((response) => response.agentId === approvedAgent.id))
-        .map((request) => request.ownerId)))
-    : [];
-  const approvedOwnerRelation = approvedOwnerIds.length === 1
-    ? owners.find((relation) => relation.ownerId === approvedOwnerIds[0]) ?? null
+  const approvedOwnerRelation = approvedAgentRelation?.approvedByOwnerId
+    ? owners.find((relation) => relation.ownerId === approvedAgentRelation.approvedByOwnerId) ?? null
     : null;
   const primaryOwnerRelation = owners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
@@ -54,7 +48,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   // پس از تأیید مشاور، فقط مالکی که همان مشاور را تأیید کرده است، به همراه آن مشاور،
   // به اطلاعات مالک دسترسی دارد. پیش از تأیید، مالکِ واردشده فقط اطلاعات خودش را می‌بیند.
   const viewerIsAuthorizedOwner = Boolean(
-    registrationSource === "OWNER" && viewerOwnerRelation && (!approvedAgent || approvedOwnerIds.includes(viewerOwnerRelation.ownerId))
+    registrationSource === "OWNER" && viewerOwnerRelation && (!approvedAgent || approvedAgentRelation?.approvedByOwnerId === viewerOwnerRelation.ownerId)
   );
   const mayViewOwnerDetails = Boolean(
     viewerIsAuthorizedOwner || isApprovedAgentForOwnerDetails || isAgentCreator || viewer?.role === "HASHTI"

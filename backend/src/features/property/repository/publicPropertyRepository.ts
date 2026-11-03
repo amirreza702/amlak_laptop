@@ -98,6 +98,7 @@ export async function findPublishedPublicPropertyById(id: string) {
           status: true,
           isFirstRegistrant: true,
           approvedByOwner: true,
+          approvedByOwnerId: true,
           agent: {
             select: {
               id: true,

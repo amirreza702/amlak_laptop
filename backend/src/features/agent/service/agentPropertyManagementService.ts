@@ -6,25 +6,23 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
-  const result = await findAgentPropertyRecords({ agentId: agent.id, ...query });
+  const result = await findAgentPropertyRecords({ agentId: agent.id, userId, ...query });
   return {
     ...result,
     properties: result.properties.map((record) => {
       const isCreator = record.property.registrationSource === "AGENT" && record.property.createdByUserId === userId;
-      const approvedOwnerIds = Array.from(new Set(record.property.ownerAgentRequests
-        .filter((request) => request.responses.some((response) => response.agentId === agent.id))
-        .map((request) => request.ownerId)));
-      const approvedOwnerRelation = approvedOwnerIds.length === 1
-        ? record.property.owners.find((owner) => owner.ownerId === approvedOwnerIds[0]) ?? null
-        : null;
-      const approvedAgentRelation = record.property.registrationSource === "OWNER"
-        ? record.property.agents.find((item) => item.status === "ACTIVE" && item.approvedByOwner) ?? null
+      const approvedAgentRelation = record.property.agents.find(
+        (item) => item.status === "ACTIVE" && item.approvedByOwner
+      ) ?? null;
+      const selectedAgentRelation = approvedAgentRelation?.agentId === agent.id ? approvedAgentRelation : null;
+      const approvedOwnerRelation = selectedAgentRelation?.approvedByOwnerId
+        ? record.property.owners.find((owner) => owner.ownerId === selectedAgentRelation.approvedByOwnerId) ?? null
         : null;
       const isApprovedAgent = Boolean(
-        approvedAgentRelation && approvedAgentRelation.agentId === agent.id &&
+        selectedAgentRelation &&
         record.status === "ACTIVE" && record.approvedByOwner && approvedOwnerRelation
       );
-      const { createdByUser, ownerAgentRequests: _ownerAgentRequests, agents: _agents, ...propertyData } = record.property;
+      const { createdByUser, agents: _agents, ...propertyData } = record.property;
       const primaryOwner = record.property.owners[0] ?? null;
       const visibleOwner = isApprovedAgent ? approvedOwnerRelation : isCreator ? primaryOwner : null;
       return {

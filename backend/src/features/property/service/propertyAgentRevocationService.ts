@@ -145,6 +145,7 @@ export async function revokePropertyAgent(
         data: {
           status: PropertyAgentStatus.REVOKED,
           approvedByOwner: false,
+          approvedByOwnerId: null,
           approvedAt: null,
         },
       });
@@ -202,6 +203,7 @@ export async function revokePropertyAgentByAgent(propertyId: string, userId: str
       data: {
         status: PropertyAgentStatus.REVOKED,
         approvedByOwner: false,
+        approvedByOwnerId: null,
         approvedAt: null,
       },
     });

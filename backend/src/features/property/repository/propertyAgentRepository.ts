@@ -156,6 +156,7 @@ export const reactivatePropertyAgent = async (
     data: {
       status: "ACTIVE",
       approvedByOwner: false,
+      approvedByOwnerId: null,
       approvedAt: null,
     },
   });

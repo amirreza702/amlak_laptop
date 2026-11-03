@@ -88,22 +88,13 @@ export const findPropertyByIdWithContacts = async (id: string) => {
           },
         },
       },
-      ownerAgentRequests: {
-        where: { status: "ACTIVE" },
-        select: {
-          ownerId: true,
-          responses: {
-            where: { status: "ACCEPTED" },
-            select: { agentId: true },
-          },
-        },
-      },
       agents: {
         where: { status: "ACTIVE" },
         select: {
           agentId: true,
           status: true,
           approvedByOwner: true,
+          approvedByOwnerId: true,
           isFirstRegistrant: true,
           agent: {
             select: {
