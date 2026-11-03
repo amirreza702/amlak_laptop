@@ -25,6 +25,7 @@
  */
 
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   updatePropertyListingStatus,
@@ -61,7 +62,8 @@ export async function updatePropertyListingStatusController(
     const result =
       await updatePropertyListingStatus(
         propertyId,
-        req.body
+        req.body,
+        { id: (req as AuthenticatedRequest).user!.id, role: (req as AuthenticatedRequest).user!.role }
       );
 
     /**
