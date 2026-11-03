@@ -145,7 +145,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
     setActionMessage(null);
     try {
       await agentApiRequest("/properties/" + encodeURIComponent(propertyId) + "/renew", { method: "PATCH" });
-      setActionMessage("انتشار ملک برای ۳۱ روز تمدید شد.");
+      setActionMessage("درخواست تمدید ثبت شد؛ آگهی پس از تأیید هشتی دوباره منتشر می‌شود.");
       await load(pagination.offset);
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : "تمدید انتشار ملک ناموفق بود.");
