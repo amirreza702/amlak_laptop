@@ -7,6 +7,7 @@ import {
   createDuplicateReviewService,
   getDuplicateReviewsService,
   reviewDuplicateService,
+  getHashtiDuplicateReviewQueueService,
 } from "../service/duplicateReviewService";
 
 /**
@@ -122,6 +123,22 @@ export async function reviewDuplicateController(
         error instanceof Error
           ? error.message
           : "خطایی در بررسی تکراری بودن ملک رخ داد.",
+    });
+  }
+}
+
+/** GET /hashti/duplicate-review-queue — صف بررسی تشابه گروه‌بندی‌شده بر اساس ملک اصلی. */
+export async function getHashtiDuplicateReviewQueueController(
+  _req: Request,
+  res: Response
+) {
+  try {
+    const properties = await getHashtiDuplicateReviewQueueService();
+    return res.status(200).json({ properties });
+  } catch (error) {
+    console.error("Could not load Hashti duplicate review queue:", error);
+    return res.status(500).json({
+      message: error instanceof Error ? error.message : "دریافت صف بررسی مشابهت ناموفق بود.",
     });
   }
 }

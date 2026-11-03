@@ -81,3 +81,81 @@ export const reviewDuplicate = async (
     },
   });
 };
+
+/** تمام پرونده‌های یک ملک در نقش ملک اصلی، جدیدترین ابتدا. */
+export const findDuplicateReviewsForPrimaryProperty = async (propertyId: string) => {
+  return prisma.duplicateReview.findMany({
+    where: { primaryPropertyId: propertyId },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+/** ایجاد پرونده‌های باز برای کاندیداهای معتبر؛ از ایجاد پرونده باز تکراری جلوگیری می‌شود. */
+export const createPendingDuplicateReviewsForProperty = async (
+  primaryPropertyId: string,
+  matches: Array<{ property: { id: string }; similarityScore: number }>
+) => {
+  if (matches.length === 0) return;
+
+  await prisma.$transaction(async (tx) => {
+    const pending = await tx.duplicateReview.findMany({
+      where: { primaryPropertyId, decision: null },
+      select: { candidatePropertyId: true },
+    });
+    const pendingIds = new Set(pending.map((item) => item.candidatePropertyId));
+    const newMatches = matches.filter((item) => !pendingIds.has(item.property.id));
+
+    if (newMatches.length > 0) {
+      await tx.duplicateReview.createMany({
+        data: newMatches.map((item) => ({
+          primaryPropertyId,
+          candidatePropertyId: item.property.id,
+          similarityScore: item.similarityScore,
+        })),
+      });
+    }
+  });
+};
+
+/** صف بررسی مشابهت هشتی؛ فقط ملک‌هایی که هنوز در انتظار انتشار هستند. */
+export const findHashtiDuplicateReviewQueue = async () => {
+  return prisma.property.findMany({
+    where: {
+      listing: { is: { status: "PENDING_HASHTI_VERIFICATION" } },
+      duplicateReviewsAsPrimary: { some: {} },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      propertyType: true,
+      city: true,
+      district: true,
+      area: true,
+      rooms: true,
+      listing: { select: { status: true } },
+      duplicateReviewsAsPrimary: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          primaryPropertyId: true,
+          candidatePropertyId: true,
+          similarityScore: true,
+          decision: true,
+          notes: true,
+          createdAt: true,
+          reviewedAt: true,
+          candidateProperty: {
+            select: {
+              id: true,
+              propertyType: true,
+              city: true,
+              district: true,
+              area: true,
+              rooms: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};

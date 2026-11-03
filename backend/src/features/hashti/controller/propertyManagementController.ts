@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { ListingStatus } from "@prisma/client";
-import { getHashtiPropertyRecords } from "../service/propertyManagementService";
-import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
+import { getHashtiPropertyRecords, requestHashtiPropertyPublicationApproval } from "../service/propertyManagementService";
+import { publishPropertyAfterDuplicateReviewService } from "../../property/service/duplicateReviewService";
 
 function parseIntegerQuery(value: unknown, fallback: number, min: number, max: number): number | null {
   if (value === undefined) return fallback;
@@ -51,16 +51,30 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
   if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
 
   try {
-    const result = await updatePropertyListingStatus(
-      propertyId,
-      { status: ListingStatus.PUBLISHED }
-    );
-    return res.status(200).json({
-      message: "ملک با موفقیت تأیید و منتشر شد.",
-      ...result,
-    });
+    const result = await requestHashtiPropertyPublicationApproval(propertyId);
+    if (result.requiresDuplicateReview) {
+      return res.status(200).json({
+        ...result,
+        message: "بیشترین تشابه از آستانه مجاز عبور کرده است؛ ملک به صف بررسی مشابهت منتقل شد.",
+      });
+    }
+    return res.status(200).json({ ...result, message: "ملک با موفقیت تأیید و منتشر شد." });
   } catch (error) {
     const message = error instanceof Error ? error.message : "تأیید انتشار ملک ناموفق بود.";
+    return res.status(400).json({ message });
+  }
+}
+
+
+/** PATCH /hashti/properties/:id/publish-after-duplicate-review */
+export async function publishHashtiPropertyAfterDuplicateReviewController(req: Request, res: Response) {
+  const propertyId = typeof req.params.id === "string" ? req.params.id : "";
+  if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
+  try {
+    const result = await publishPropertyAfterDuplicateReviewService(propertyId);
+    return res.status(200).json({ published: true, ...result });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "تأیید انتشار پس از بررسی مشابهت ناموفق بود.";
     return res.status(400).json({ message });
   }
 }

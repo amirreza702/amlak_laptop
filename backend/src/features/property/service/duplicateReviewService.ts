@@ -1,13 +1,17 @@
-import { DuplicateDecision } from "@prisma/client";
+import { DuplicateDecision, ListingStatus } from "@prisma/client";
 
 import {
   createDuplicateReview,
   findDuplicateReviewById,
   findDuplicateReviewsForProperty,
   reviewDuplicate,
+  findDuplicateReviewsForPrimaryProperty,
+  findHashtiDuplicateReviewQueue,
 } from "../repository/duplicateReviewRepository";
 
 import { findPropertyById } from "../repository/propertyRepository";
+import { updatePropertyListingStatus } from "./propertyListingStatusService";
+import { getPropertySimilaritySummaryService } from "./duplicateMatchingService";
 
 import type { DuplicateReview } from "../types/duplicateReview";
 
@@ -222,4 +226,71 @@ export const reviewDuplicateService = async (
     data.reviewedBy,
     data.notes
   );
+};
+
+/** صف بررسی مشابهت، گروه‌بندی‌شده بر اساس ملک اصلی و فقط با آخرین تصمیم هر کاندیدا. */
+export const getHashtiDuplicateReviewQueueService = async () => {
+  const properties = await findHashtiDuplicateReviewQueue();
+  return properties.map((property) => {
+    const latestByCandidate = new Map<string, (typeof property.duplicateReviewsAsPrimary)[number]>();
+    for (const review of property.duplicateReviewsAsPrimary) {
+      if (!latestByCandidate.has(review.candidatePropertyId)) {
+        latestByCandidate.set(review.candidatePropertyId, review);
+      }
+    }
+    const reviews = [...latestByCandidate.values()];
+    return {
+      property: {
+        id: property.id,
+        propertyType: property.propertyType,
+        city: property.city,
+        district: property.district,
+        area: property.area,
+        rooms: property.rooms,
+        listing: property.listing,
+      },
+      maximumSimilarityScore: reviews.reduce(
+        (maximum, review) => Math.max(maximum, review.similarityScore),
+        0
+      ),
+      reviews,
+    };
+  });
+};
+
+/** انتشار فقط از صف مشابهت و پس از تصمیم‌گیری درباره تمام کاندیداهای فعلی مجاز است. */
+export const publishPropertyAfterDuplicateReviewService = async (propertyId: string) => {
+  const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
+  if (reviews.length === 0) {
+    throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
+  }
+
+  const latestByCandidate = new Map<string, (typeof reviews)[number]>();
+  for (const review of reviews) {
+    if (!latestByCandidate.has(review.candidatePropertyId)) {
+      latestByCandidate.set(review.candidatePropertyId, review);
+    }
+  }
+
+  for (const review of latestByCandidate.values()) {
+    if (review.decision === null) {
+      throw new Error("ابتدا تمام پرونده‌های مشابهت این ملک را تعیین تکلیف کنید.");
+    }
+    if (review.decision === DuplicateDecision.SAME_PROPERTY) {
+      throw new Error("حداقل یک کاندیدا همان ملک تشخیص داده شده است؛ انتشار این رکورد مجاز نیست.");
+    }
+    if (review.decision !== DuplicateDecision.DIFFERENT_PROPERTY) {
+      throw new Error("تصمیم یکی از پرونده‌های مشابهت معتبر نیست.");
+    }
+  }
+
+  const summary = await getPropertySimilaritySummaryService(propertyId);
+  for (const match of summary.matches) {
+    const review = latestByCandidate.get(match.property.id);
+    if (!review || review.decision !== DuplicateDecision.DIFFERENT_PROPERTY) {
+      throw new Error("برای یکی از املاک مشابه فعلی هنوز تصمیم نهایی ثبت نشده است.");
+    }
+  }
+
+  return updatePropertyListingStatus(propertyId, { status: ListingStatus.PUBLISHED });
 };

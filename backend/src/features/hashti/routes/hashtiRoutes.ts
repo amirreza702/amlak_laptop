@@ -9,7 +9,8 @@ import {
 } from "../controller/agentManagementController";
 import { getAdminAuditLogsController } from "../controller/adminAuditLogController";
 import userManagementRoutes from "./userManagementRoutes";
-import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController } from "../controller/propertyManagementController";
+import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController, publishHashtiPropertyAfterDuplicateReviewController } from "../controller/propertyManagementController";
+import { getHashtiDuplicateReviewQueueController } from "../../property/controller/duplicateReviewController";
 
 const router = Router();
 
@@ -53,6 +54,19 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.HASHTI),
   approveHashtiPropertyPublicationController
+);
+
+router.get(
+  "/hashti/duplicate-review-queue",
+  authMiddleware,
+  requireRole(UserRole.HASHTI),
+  getHashtiDuplicateReviewQueueController
+);
+router.patch(
+  "/hashti/properties/:id/publish-after-duplicate-review",
+  authMiddleware,
+  requireRole(UserRole.HASHTI),
+  publishHashtiPropertyAfterDuplicateReviewController
 );
 
 router.use(userManagementRoutes);

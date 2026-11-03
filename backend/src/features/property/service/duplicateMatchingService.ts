@@ -1,140 +1,57 @@
 import type { Property } from "@prisma/client";
+import { findPropertyById, findPropertiesWithinRadius } from "../repository/propertyRepository";
+import { calculatePropertySimilarity } from "./propertySimilarityService";
 
-import {
-  findPropertyById,
-  findPropertiesWithinRadius,
-} from "../repository/propertyRepository";
+export const DUPLICATE_MATCHING_RADIUS_METERS = 1000;
+export const DUPLICATE_MATCHING_THRESHOLD = 0.80;
 
-import {
-  calculatePropertySimilarity,
-} from "./propertySimilarityService";
-
-/**
- * ============================================================
- * Constants
- * ============================================================
- */
-
-/**
- * فاصله فقط شرط ورود Candidate به Matching است.
- *
- * این مقدار هیچ نقشی در Similarity Score ندارد.
- */
-const DUPLICATE_MATCHING_RADIUS_METERS = 1000;
-
-/**
- * فقط املاک با Similarity حداقل 80٪
- * به عنوان Match برگردانده می‌شوند.
- */
-const DUPLICATE_MATCHING_THRESHOLD = 0.80;
-
-/**
- * ============================================================
- * Duplicate Match Result
- * ============================================================
- */
 export interface DuplicateMatchResult {
   property: Property;
   distanceMeters: number;
   similarityScore: number;
 }
 
-/**
- * ============================================================
- * Find Duplicate Matches
- * ============================================================
- *
- * جریان:
- *
- * Property
- *    ↓
- * پیدا کردن Candidateها در شعاع 1000 متر
- *    ↓
- * محاسبه Similarity فقط بر اساس مشخصات ملک
- *    ↓
- * حذف امتیازهای کمتر از 80٪
- *    ↓
- * بازگرداندن Matchها
- *
- * نکته:
- *
- * distanceMeters فقط برای نمایش/اطلاعات خروجی است.
- * در محاسبه similarityScore استفاده نمی‌شود.
- */
+export interface PropertySimilaritySummary {
+  maximumSimilarityScore: number;
+  matches: DuplicateMatchResult[];
+}
+
+/** محاسبه یکپارچه بیشترین تشابه و کاندیداهای بالاتر از آستانه؛ شعاع فقط برای انتخاب کاندیداست. */
+export const getPropertySimilaritySummaryService = async (
+  propertyId: string
+): Promise<PropertySimilaritySummary> => {
+  const primaryProperty = await findPropertyById(propertyId);
+  if (!primaryProperty) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
+
+  const candidates = await findPropertiesWithinRadius(
+    primaryProperty.latitudeExact,
+    primaryProperty.longitudeExact,
+    DUPLICATE_MATCHING_RADIUS_METERS,
+    propertyId
+  );
+
+  const scored = candidates.map((candidate) => ({
+    property: candidate.property,
+    distanceMeters: candidate.distanceMeters,
+    similarityScore: calculatePropertySimilarity(primaryProperty, candidate.property),
+  }));
+
+  const maximumSimilarityScore = scored.reduce(
+    (maximum, match) => Math.max(maximum, match.similarityScore),
+    0
+  );
+
+  const matches = scored
+    .filter((match) => match.similarityScore >= DUPLICATE_MATCHING_THRESHOLD)
+    .sort((a, b) => b.similarityScore - a.similarityScore);
+
+  return { maximumSimilarityScore, matches };
+};
+
+/** API قدیمی Matching همان قرارداد قبلی را حفظ می‌کند و فقط کاندیداهای معتبر را برمی‌گرداند. */
 export const findDuplicateMatchesService = async (
   propertyId: string
 ): Promise<DuplicateMatchResult[]> => {
-  /**
-   * ----------------------------------------------------------
-   * دریافت ملک اصلی
-   * ----------------------------------------------------------
-   */
-  const primaryProperty =
-    await findPropertyById(propertyId);
-
-  if (!primaryProperty) {
-    throw new Error(
-      "ملک مورد نظر برای Matching پیدا نشد."
-    );
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * پیدا کردن Candidateها
-   * ----------------------------------------------------------
-   *
-   * فقط املاکی که حداکثر 1000 متر
-   * با ملک اصلی فاصله دارند وارد مرحله
-   * Similarity می‌شوند.
-   */
-  const candidateProperties =
-    await findPropertiesWithinRadius(
-      primaryProperty.latitudeExact,
-      primaryProperty.longitudeExact,
-      DUPLICATE_MATCHING_RADIUS_METERS,
-      propertyId
-    );
-
-  /**
-   * ----------------------------------------------------------
-   * Similarity
-   * ----------------------------------------------------------
-   *
-   * فاصله در اینجا وارد محاسبه نمی‌شود.
-   */
-  const matches: DuplicateMatchResult[] =
-    candidateProperties.map((candidate) => {
-  
-
-  const similarityScore =
-    calculatePropertySimilarity(
-      primaryProperty,
-      candidate.property
-    );
-
-        return {
-          property: candidate.property,
-          distanceMeters:
-            candidate.distanceMeters,
-          similarityScore,
-        };
-      })
-      /**
-       * فقط Matchهای واقعی بالای 80٪
-       */
-      .filter(
-        (match) =>
-          match.similarityScore >=
-          DUPLICATE_MATCHING_THRESHOLD
-      )
-      /**
-       * بیشترین Similarity ابتدا
-       */
-      .sort(
-        (a, b) =>
-          b.similarityScore -
-          a.similarityScore
-      );
-
-  return matches;
+  const summary = await getPropertySimilaritySummaryService(propertyId);
+  return summary.matches;
 };
