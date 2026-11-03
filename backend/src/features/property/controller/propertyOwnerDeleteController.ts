@@ -7,7 +7,7 @@ export async function deleteOwnPropertyController(req: Request, res: Response) {
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
     const property = await deleteOwnPropertyService(String(req.params.id), userId);
-    return res.status(200).json({ property, message: "ملک از فهرست فعال حذف شد؛ سوابق آن حفظ شده‌اند." });
+    return res.status(200).json({ property, message: "ملک، آگهی و همکاری‌های فعال حذف شدند؛ سوابق مدیریتی و حسابرسی حفظ شده‌اند." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     if (code === "PROPERTY_NOT_OWNED_BY_USER") return res.status(403).json({ message: "این ملک به حساب شما تعلق ندارد." });
@@ -24,7 +24,7 @@ export async function deleteAgentManagedOwnerPropertyController(req: Request, re
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
     const property = await deleteAgentManagedOwnerPropertyService(String(req.params.id), userId);
-    return res.status(200).json({ property, message: "ملک از فهرست فعال خارج شد؛ سوابق آن حفظ شده‌اند." });
+    return res.status(200).json({ property, message: "ملک، آگهی و همکاری‌های فعال حذف شدند؛ سوابق مدیریتی و حسابرسی حفظ شده‌اند." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     if (code === "PROPERTY_NOT_REGISTERED_BY_AGENT") return res.status(403).json({ message: "فقط ملکی را می‌توانید حذف کنید که خودتان ثبت کرده‌اید." });
@@ -48,6 +48,7 @@ export async function reactivateOwnPropertyController(req: Request, res: Respons
     if (code === "PROPERTY_NOT_OWNED_BY_USER") return res.status(403).json({ message: "این ملک به حساب شما تعلق ندارد." });
     if (code === "PROPERTY_NOT_FOUND") return res.status(404).json({ message: "ملک پیدا نشد." });
     if (code === "PROPERTY_ALREADY_ACTIVE") return res.status(409).json({ message: "این ملک هم‌اکنون فعال است." });
+    if (code === "PROPERTY_PERMANENTLY_DELETED") return res.status(409).json({ message: "ملک حذف‌شده قابل فعال‌سازی مجدد نیست." });
     console.error("Error reactivating owner's property:", error);
     return res.status(500).json({ message: "فعال‌سازی مجدد ملک ناموفق بود." });
   }
