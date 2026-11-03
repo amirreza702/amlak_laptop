@@ -80,6 +80,7 @@ export const findCustomerPropertyFavorites = async (
   return prisma.customerPropertyFavorite.findMany({
     where: {
       customerId,
+      property: { is: { isActive: true } },
     },
     orderBy: {
       createdAt: "desc",
