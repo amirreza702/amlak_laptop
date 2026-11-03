@@ -37,7 +37,7 @@ export async function createPropertyMediaService(data: {
 }): Promise<PropertyMedia> {
   if (data.type !== MediaType.IMAGE && data.type !== MediaType.MAIN_IMAGE) throw new Error("فقط فایل تصویری مجاز است.");
   const property = await findPropertyById(data.propertyId);
-  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
+  if (!property || property.deletedAt) throw new Error("ملک مورد نظر پیدا نشد یا حذف شده است.");
   if (property.listing && [ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(property.listing.status)) {
     throw new Error("بارگذاری تصویر برای این وضعیت آگهی مجاز نیست؛ ابتدا آگهی را برای بررسی انتشار به هشتی ارسال کنید.");
   }
