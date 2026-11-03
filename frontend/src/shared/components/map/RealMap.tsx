@@ -53,6 +53,8 @@ export interface MapProperty {
 
   price: string;
 
+  mainImage: string | null;
+
   latitude: number;
 
   longitude: number;
@@ -216,6 +218,8 @@ function mapApiPropertyToMapProperty(
     rooms: property.rooms ?? 0,
 
     price: formatPrice(property),
+
+    mainImage: property.mainImage,
 
     latitude: property.latitudePublic,
 
