@@ -49,7 +49,7 @@ export function EvaluationControl({ type, agentId, propertyId }: { type: Evaluat
   if (checking) return <span className="text-xs text-slate-400">بررسی…</span>;
   if (evaluated) return <span className="inline-flex rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">ثبت شده</span>;
   return <>
-    <button type="button" onClick={() => { setError(""); setOpen(true); }} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">ارزش‌گذاری</button>
+    <button type="button" onClick={(event) => { event.stopPropagation(); setError(""); setOpen(true); }} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">ارزش‌گذاری</button>
     <Modal open={open} title="ارزش‌گذاری" description="هر هدف فقط یک‌بار توسط شما ارزش‌گذاری می‌شود." onClose={() => { if (!saving) setOpen(false); }}>
       <form onSubmit={submit} className="space-y-3" dir="rtl">
         <label className="block space-y-1 text-sm font-medium">امتیاز از ۵<input required type="number" min="0" max="5" step="0.01" value={score} onChange={(event) => setScore(event.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
