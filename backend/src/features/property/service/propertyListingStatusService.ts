@@ -26,40 +26,14 @@ import type {
 /**
  * وضعیت‌های مجاز برای تغییر Listing
  */
-const allowedTransitions: Record<
-  ListingStatus,
-  ListingStatus[]
-> = {
-  // ثبت آگهی مستقیماً به صف بررسی هشتی می‌رود؛ تأیید مالک شرط انتشار نیست.
-  [ListingStatus.DRAFT]: [
-    ListingStatus.PENDING_HASHTI_VERIFICATION,
-  ],
-
-  [ListingStatus.PENDING_HASHTI_VERIFICATION]: [
-    ListingStatus.PUBLISHED,
-    ListingStatus.REJECTED,
-  ],
-
-  [ListingStatus.PUBLISHED]: [
-    ListingStatus.PAUSED,
-    ListingStatus.SOLD,
-    ListingStatus.RENTED,
-  ],
-
-  [ListingStatus.REJECTED]: [
-    ListingStatus.DRAFT,
-  ],
-
-  [ListingStatus.EXPIRED]: [
-    ListingStatus.DRAFT,
-  ],
-
-  [ListingStatus.PAUSED]: [
-    ListingStatus.PUBLISHED,
-  ],
-
+const allowedTransitions: Record<ListingStatus, ListingStatus[]> = {
+  [ListingStatus.DRAFT]: [ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
+  [ListingStatus.PENDING_HASHTI_VERIFICATION]: [ListingStatus.PUBLISHED, ListingStatus.REJECTED, ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
+  [ListingStatus.PUBLISHED]: [ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED, ListingStatus.DRAFT],
+  [ListingStatus.REJECTED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
+  [ListingStatus.EXPIRED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED],
+  [ListingStatus.PAUSED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.SOLD, ListingStatus.RENTED],
   [ListingStatus.SOLD]: [],
-
   [ListingStatus.RENTED]: [],
 };
 
@@ -128,126 +102,68 @@ export async function queuePropertyListingForHashtiReview(
 export async function updatePropertyListingStatus(
   propertyId: string,
   data: UpdatePropertyListingStatusInput,
+  actor: { id: string; role: string },
 ) {
-  const listing =
-    await findPropertyListingByPropertyId(propertyId);
+  const listing = await findPropertyListingByPropertyId(propertyId);
+  if (!listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
+  if (listing.status === data.status) return { listing, statusChanged: false };
 
-  if (!listing) {
-    throw new Error(
-      "برای این ملک اطلاعات معامله ثبت نشده است."
-    );
+  const hashtiOnly = data.status === ListingStatus.PUBLISHED || data.status === ListingStatus.REJECTED;
+  if (hashtiOnly && actor.role !== "HASHTI") {
+    throw new Error("تأیید یا رد انتشار فقط در اختیار هشتی است.");
+  }
+  if (!hashtiOnly && actor.role === "HASHTI" && data.status === ListingStatus.EXPIRED) {
+    throw new Error("انقضا از مسیر اختصاصی هشتی یا سامانه انجام می‌شود.");
   }
 
-  /**
-   * اگر وضعیت جدید با وضعیت فعلی یکی باشد،
-   * هیچ تغییری انجام نمی‌دهیم.
-   */
-  if (listing.status === data.status) {
-    return {
-      listing,
-      statusChanged: false,
-    };
-  }
-
-  /**
-   * بررسی Transition مجاز
-   */
-  const allowedStatuses =
-    allowedTransitions[listing.status];
+  const allowedStatuses = allowedTransitions[listing.status];
   if (!allowedStatuses.includes(data.status)) {
-    throw new Error(
-      `تغییر وضعیت از ${listing.status} به ${data.status} مجاز نیست.`
-    );
+    throw new Error(`تغییر وضعیت از ${listing.status} به ${data.status} مجاز نیست.`);
   }
 
-  const updateData: Parameters<
-    typeof updatePropertyListing
-  >[1] = {
-    status: data.status,
-  };
-
-  /**
-   * وقتی Listing منتشر می‌شود،
-   * publishedAt ثبت می‌شود.
-   */
-  const approvalPublishedAt =
-    data.status === ListingStatus.PUBLISHED
-      ? new Date()
-      : undefined;
-
+  const approvalPublishedAt = data.status === ListingStatus.PUBLISHED ? new Date() : undefined;
+  const updateData: Parameters<typeof updatePropertyListing>[1] = { status: data.status };
   if (approvalPublishedAt) {
     updateData.publishedAt = approvalPublishedAt;
     updateData.expiredAt = null;
+    updateData.rejectedAt = null;
   }
+  if (data.status === ListingStatus.REJECTED) updateData.rejectedAt = new Date();
+  if (data.status !== ListingStatus.PUBLISHED) updateData.publishedAt = null;
 
-  /**
-   * تمام تغییرات وابسته به تغییر وضعیت
-   * باید اتمیک باشند:
-   *
-   * 1. تغییر وضعیت Listing
-   * 2. تغییر confirmUntil در صورت انتشار
-   * 3. ثبت History
-   */
-  return prisma.$transaction(
-    async (
-      tx: Prisma.TransactionClient
-    ) => {
-      const updatedListing =
-        await updatePropertyListing(
-          listing.id,
-          updateData,
-          tx
-        );
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const mediaToRemove = [ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)
+      ? await tx.propertyMedia.findMany({ where: { propertyId, isActive: true }, select: { id: true } })
+      : [];
 
-      let confirmUntil:
-        Date | undefined;
-
-      /**
-       * انتشار Listing باعث می‌شود
-       * اعتبار Property برای ۳۱ روز تنظیم شود.
-       */
-      if (
-        data.status === ListingStatus.PUBLISHED
-      ) {
-        // مهلت ۳۱روزه دقیقاً از همان لحظه تأیید و انتشار هشتی آغاز می‌شود.
-        confirmUntil =
-          calculateConfirmUntil(approvalPublishedAt ?? new Date());
-
-        await updateProperty(
-          propertyId,
-          {
-            confirmUntil,
-          },
-          tx
-        );
-      }
-
-      /**
-       * ثبت تغییر وضعیت Listing در History
-       *
-       * performedBy فعلاً NULL است،
-       * چون قرارداد ورودی فعلی شناسه کاربر را دریافت نمی‌کند.
-       */
-      await createPropertyHistory(
-        {
-          propertyId,
-          action:
-            PropertyHistoryAction.LISTING_CHANGED,
-          field: "listing.status",
-          oldValue: listing.status,
-          newValue: data.status,
-          reason: "تغییر وضعیت آگهی",
-        },
-        tx
-      );
-
-      return {
-        listing: updatedListing,
-        statusChanged: true,
-        ...(confirmUntil
-          ? { confirmUntil }
-          : {}),
-      };
+    const updatedListing = await updatePropertyListing(listing.id, updateData, tx);
+    let confirmUntil: Date | undefined;
+    if (approvalPublishedAt) {
+      confirmUntil = calculateConfirmUntil(approvalPublishedAt);
+      await updateProperty(propertyId, { confirmUntil }, tx);
+    } else if ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)) {
+      await updateProperty(propertyId, { confirmUntil: null }, tx);
     }
-  );
+
+    if (mediaToRemove.length) {
+      await tx.propertyMedia.deleteMany({ where: { id: { in: mediaToRemove.map((item) => item.id) } } });
+    }
+
+    await createPropertyHistory({
+      propertyId,
+      action: PropertyHistoryAction.LISTING_CHANGED,
+      field: "listing.status",
+      oldValue: listing.status,
+      newValue: data.status,
+      performedBy: actor.id,
+      reason: "تغییر وضعیت آگهی",
+    }, tx);
+
+    return {
+      listing: updatedListing,
+      statusChanged: true,
+      removedMediaCount: mediaToRemove.length,
+      ...(confirmUntil ? { confirmUntil } : {}),
+    };
+  });
 }
