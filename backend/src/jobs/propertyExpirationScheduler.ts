@@ -12,7 +12,7 @@
  *
  * Scheduler
  *     ↓
- * هر ۱ ساعت
+ * هر ۱ دقیقه
  *     ↓
  * Property Expiration Job
  *     ↓
@@ -32,7 +32,7 @@ import {
  * × 60 ثانیه
  * × 1000 میلی‌ثانیه
  */
-const ONE_HOUR = 60 * 60 * 1000;
+const ONE_MINUTE = 60 * 1000;
 
 /**
  * شروع Scheduler انقضای ملک‌ها
@@ -61,6 +61,6 @@ export function startPropertyExpirationScheduler() {
         );
       }
     },
-    ONE_HOUR
+    ONE_MINUTE
   );
 }
