@@ -30,7 +30,7 @@ export const createOwnerAgentRequest = (data: { ownerId: string; propertyId: str
 
 export const findOwnerAgentRequests = (ownerId: string) =>
   prisma.ownerAgentRequest.findMany({
-    where: { ownerId },
+    where: { ownerId, status: { not: "DELETED" } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true, propertyId: true, description: true, status: true, createdAt: true, updatedAt: true,
