@@ -71,6 +71,10 @@ export function MapPropertyMarker({
             text-right
           "
         >
+          {property.mainImage && (
+            <img src={property.mainImage} alt={property.title} className="mb-2 h-28 w-full rounded-lg bg-slate-100 object-cover" loading="lazy" />
+          )}
+
           {/* عنوان ملک */}
           <div
             className="
