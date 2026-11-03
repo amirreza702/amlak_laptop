@@ -183,11 +183,6 @@ export async function registerProperty(
         }, tx);
       }
     } else {
-      const publicCoordinates = getPublicCoordinates(
-        `${data.city}:${data.address}:${data.latitudeExact}:${data.longitudeExact}`,
-        data.latitudeExact,
-        data.longitudeExact
-      );
       property = await createProperty(
         {
           registrationSource: isOwnerRegistration
@@ -205,8 +200,6 @@ export async function registerProperty(
           address: data.address,
           latitudeExact: data.latitudeExact,
           longitudeExact: data.longitudeExact,
-          latitudePublic: publicCoordinates.latitude,
-          longitudePublic: publicCoordinates.longitude,
           postalCode: data.postalCode ?? null,
           area: data.area ?? null,
           rooms: data.rooms ?? null,
@@ -245,6 +238,19 @@ export async function registerProperty(
         },
         tx
       );
+    }
+
+    // مختصات عمومیِ تقریبی را با شناسه ثابت خود ملک تولید می‌کنیم.
+    if (property.latitudePublic == null || property.longitudePublic == null) {
+      const publicCoordinates = getPublicCoordinates(
+        property.id,
+        property.latitudeExact,
+        property.longitudeExact
+      );
+      property = await updateProperty(property.id, {
+        latitudePublic: publicCoordinates.latitude,
+        longitudePublic: publicCoordinates.longitude,
+      }, tx);
     }
 
     if (isOwnerRegistration) {
