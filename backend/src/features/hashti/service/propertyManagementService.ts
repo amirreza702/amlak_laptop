@@ -12,14 +12,10 @@ export async function getHashtiPropertyRecords(input: {
   offset: number;
 }) {
   const result = await findHashtiPropertyRecords(input);
-  const properties = await Promise.all(result.properties.map(async (property) => {
-    const { _count, ...record } = property;
-    const requiresDuplicateReview = _count.duplicateReviewsAsPrimary > 0;
-    if (property.listing?.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
-      return { ...record, requiresDuplicateReview, maximumSimilarityScore: null };
-    }
-    const summary = await getPropertySimilaritySummaryService(property.id);
-    return { ...record, requiresDuplicateReview, maximumSimilarityScore: summary.maximumSimilarityScore };
+  const properties = result.properties.map(({ _count, ...record }) => ({
+    ...record,
+    requiresDuplicateReview: _count.duplicateReviewsAsPrimary > 0,
+    maximumSimilarityScore: null,
   }));
 
   return { ...result, properties };

@@ -111,6 +111,7 @@ export function HashtiPropertyAdminToolsPanel() {
   const [reviewProperty, setReviewProperty] = useState<HashtiPropertyRecord | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
+  const [publicationResult, setPublicationResult] = useState<{ propertyId: string; score: number; published: boolean; requiresDuplicateReview: boolean } | null>(null);
 
   const load = useCallback(async (offset = 0) => {
     setLoading(true);
@@ -179,10 +180,18 @@ export function HashtiPropertyAdminToolsPanel() {
       const result = await requestJson<{ published: boolean; requiresDuplicateReview: boolean; maximumSimilarityScore: number }>("/hashti/properties/" + encodeURIComponent(propertyId) + "/publish", {
         method: "PATCH",
       });
+      setPublicationResult({
+        propertyId,
+        score: result.maximumSimilarityScore,
+        published: result.published,
+        requiresDuplicateReview: result.requiresDuplicateReview,
+      });
+      setReviewProperty((current) => current?.id === propertyId
+        ? { ...current, maximumSimilarityScore: result.maximumSimilarityScore }
+        : current);
       setMessage(result.requiresDuplicateReview
-        ? `بیشترین تشابه ${similarityLabel(result.maximumSimilarityScore)} است؛ ملک به صف بررسی مشابهت منتقل شد. تأیید انتشار فقط از منوی بررسی مشابهت امکان‌پذیر است.`
-        : `ملک با بیشترین تشابه ${similarityLabel(result.maximumSimilarityScore)} با موفقیت منتشر شد.`);
-      setReviewProperty(null);
+        ? `بیشترین تشابه ${similarityLabel(result.maximumSimilarityScore)} است؛ ملک به صف بررسی مشابهت منتقل شد. تصمیم نهایی فقط از منوی بررسی مشابهت امکان‌پذیر است.`
+        : `بیشترین تشابه ${similarityLabel(result.maximumSimilarityScore)} است؛ ملک با موفقیت منتشر شد.`);
       await load(pagination.offset);
     } catch (cause) {
       setReviewError(cause instanceof Error ? cause.message : "تأیید انتشار ملک ناموفق بود.");
@@ -263,7 +272,7 @@ export function HashtiPropertyAdminToolsPanel() {
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">
                       <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> اتصال حساب مالک به ملک <ChevronDown className="h-3 w-3" /></button>
-                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && !property.requiresDuplicateReview && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> تأیید · بیشترین تشابه {similarityLabel(property.maximumSimilarityScore)}</button>}
+                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && !property.requiresDuplicateReview && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); setPublicationResult(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> بررسی تشابه و تأیید انتشار</button>}
                       {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && property.requiresDuplicateReview && <span className="inline-flex items-center rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">منتقل‌شده به صف بررسی مشابهت</span>}
                       {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => setExpireConfirmFor(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
                       {ownerFormFor === property.id && <Modal open={ownerFormFor === property.id} title="افزودن مالک به ملک" description={"شناسه ملک: " + property.id} onClose={() => setOwnerFormFor(null)}><form onSubmit={(event) => void addOwner(event, property.id)} className="space-y-4">
@@ -284,7 +293,7 @@ export function HashtiPropertyAdminToolsPanel() {
         open={Boolean(reviewProperty)}
         title="بررسی نهایی و تأیید انتشار ملک"
         description="تمام اطلاعات ثبت‌شده و جزئیات اختیاری را پیش از انتشار بررسی کنید."
-        onClose={() => { if (!busyReviewId) { setReviewProperty(null); setReviewError(null); } }}
+        onClose={() => { if (!busyReviewId) { setReviewProperty(null); setReviewError(null); setPublicationResult(null); } }}
       >
         {reviewProperty && (() => {
           const p = reviewProperty;
@@ -351,8 +360,13 @@ export function HashtiPropertyAdminToolsPanel() {
               <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-900">ثبت رابطه مالک و تأیید همکاری مشاور، شرط بررسی و انتشار آگهی نیست. انتخاب مشاور مستقل از فرایند تأیید انتشار هشتی انجام می‌شود.</p>
               <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
                 <button type="button" disabled={Boolean(busyReviewId)} onClick={() => { setReviewProperty(null); setReviewError(null); }} className="rounded-lg border px-4 py-2.5 text-sm">بازگشت</button>
-                <button type="button" disabled={busyReviewId === p.id || p.listing?.status !== "PENDING_HASHTI_VERIFICATION"} onClick={() => void approvePublication(p.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
-                  {busyReviewId === p.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} تأیید نهایی و انتشار · بیشترین تشابه {similarityLabel(p.maximumSimilarityScore)}
+                <button type="button" disabled={busyReviewId === p.id || p.listing?.status !== "PENDING_HASHTI_VERIFICATION" || publicationResult?.propertyId === p.id} onClick={() => void approvePublication(p.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                  {busyReviewId === p.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  {busyReviewId === p.id
+                    ? "در حال محاسبه تشابه..."
+                    : publicationResult?.propertyId === p.id
+                      ? `بیشترین تشابه: ${similarityLabel(publicationResult.score)}`
+                      : "محاسبه تشابه و تأیید نهایی"}
                 </button>
               </div>
             </div>
