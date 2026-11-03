@@ -91,6 +91,9 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
   const [editValues, setEditValues] = useState({ propertyType: "APARTMENT" as PropertyType, city: "", district: "", address: "", postalCode: "", area: "", rooms: "", floor: "", coordinates: null as Coordinates | null, transactionType: "SALE" as TransactionType, salePrice: "", depositAmount: "", rentAmount: "", internalNote: "" });
   const [savingProperty, setSavingProperty] = useState(false);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [statusEditingRecord, setStatusEditingRecord] = useState<PropertyRecord | null>(null);
+  const [selectedListingStatus, setSelectedListingStatus] = useState<"DRAFT" | "PENDING_HASHTI_VERIFICATION" | "PAUSED" | "SOLD" | "RENTED">("PENDING_HASHTI_VERIFICATION");
+  const [savingListingStatus, setSavingListingStatus] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +141,27 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
       setEditingProperty(null); setActionMessage("همه مشخصات ملک، موقعیت، اطلاعات معامله و یادداشت خصوصی ذخیره شد."); await load(pagination.offset);
     } catch (cause) { setActionError(cause instanceof Error ? cause.message : "ویرایش ملک ناموفق بود."); }
     finally { setSavingProperty(false); }
+  }
+
+  async function saveListingStatus() {
+    if (!statusEditingRecord) return;
+    setSavingListingStatus(true);
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await agentApiRequest(`/properties/${encodeURIComponent(statusEditingRecord.property.id)}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: selectedListingStatus }),
+      });
+      setStatusEditingRecord(null);
+      setActionMessage("وضعیت آگهی با موفقیت تغییر کرد.");
+      await load(pagination.offset);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "تغییر وضعیت آگهی ناموفق بود.");
+    } finally {
+      setSavingListingStatus(false);
+    }
   }
 
   async function renewListing(propertyId: string) {
@@ -223,7 +247,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     {record.hasAgentRelation && <><p className="mt-1 text-xs text-slate-600">{record.approvedByOwner ? "تأیید مالک دارد" : "در انتظار تأیید مالک"}</p><p className="mt-1 text-xs text-slate-500">ثبت ارتباط: {dateLabel(record.registeredAt)}</p>{record.isFirstRegistrant && <span className="mt-2 inline-block rounded bg-blue-50 px-2 py-1 text-xs text-blue-800">ثبت‌کننده نخست</span>}</>}
                   </td>
                   <td className="p-3"><AgentPrivateNoteEditor entityType="property" entityId={property.id} notes={notes} saving={savingNoteKey === `property:${property.id}`} onSave={saveNote} /></td>
-                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{(record.canManage || (record.status === "ACTIVE" && record.approvedByOwner)) && property.listing?.status === "EXPIRED" && <button type="button" onClick={() => void renewListing(property.id)} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">تمدید مجدد</button>}{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:property.latitudeExact !== null && property.longitudeExact !== null ? {latitude:property.latitudeExact,longitude:property.longitudeExact} : null,transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
+                  <td className="p-3"><div className="flex min-w-[130px] flex-col gap-2">{(record.canManage || (record.status === "ACTIVE" && record.approvedByOwner)) && property.listing?.status === "EXPIRED" && <button type="button" onClick={() => void renewListing(property.id)} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">تمدید مجدد</button>}{!record.canManage && record.status === "ACTIVE" && record.approvedByOwner && property.listing && <button type="button" onClick={() => { setStatusEditingRecord(record); setSelectedListingStatus("PENDING_HASHTI_VERIFICATION"); setActionError(null); setActionMessage(null); }} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">تغییر وضعیت آگهی</button>}{record.canManage && property.isActive ? <><button type="button" onClick={() => { setEditingProperty(property); setEditValues({propertyType:property.propertyType as PropertyType,city:property.city,district:property.district,address:property.address,postalCode:property.postalCode ?? "",area:property.area == null ? "" : String(property.area),rooms:property.rooms == null ? "" : String(property.rooms),floor:property.floor == null ? "" : String(property.floor),coordinates:property.latitudeExact !== null && property.longitudeExact !== null ? {latitude:property.latitudeExact,longitude:property.longitudeExact} : null,transactionType:(property.listing?.transactionType ?? "SALE") as TransactionType,salePrice:property.listing?.salePrice == null ? "" : String(property.listing.salePrice),depositAmount:property.listing?.depositAmount == null ? "" : String(property.listing.depositAmount),rentAmount:property.listing?.rentAmount == null ? "" : String(property.listing.rentAmount),internalNote:notes.find(note=>note.entityType==="property" && note.entityId===property.id)?.note ?? ""}); setActionError(null); setActionMessage(null); }} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"><Pencil className="h-3.5 w-3.5" /> ویرایش ملک</button><button type="button" onClick={() => { setDeletingPropertyId(property.id); setActionError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><Trash2 className="h-3.5 w-3.5" /> حذف از فهرست</button></> : <span className="text-xs text-slate-500">ویرایش و حذف فقط برای ملک فعال ثبت‌شده توسط همین مشاور در دسترس است.</span>}</div></td>
                 </RecordDetailsRow>
               );
             })}</tbody>
@@ -263,6 +287,24 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           <label className="space-y-1 text-sm sm:col-span-2">توضیحات خصوصی مشاور (اختیاری)<textarea rows={4} maxLength={10000} value={editValues.internalNote} onChange={e=>setEditValues(v=>({...v,internalNote:e.target.value}))} className="w-full rounded-lg border px-3 py-2" placeholder="فقط برای شما و مدیر ارشد هشتی" /></label>
           <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={()=>setEditingProperty(null)} className="rounded-lg border px-4 py-2">انصراف</button><button disabled={savingProperty} type="submit" className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
         </form>)}
+      </Modal>
+      <Modal open={Boolean(statusEditingRecord)} title="تغییر وضعیت آگهی" description="تغییر به پیش‌نویس، توقف، فروش یا اجاره نیازمند تأیید هشتی نیست؛ برای انتشار، تأیید هشتی الزامی است." onClose={() => { if (!savingListingStatus) setStatusEditingRecord(null); }}>
+        <div className="space-y-3" dir="rtl">
+          {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
+          <label className="block space-y-1 text-sm font-semibold">وضعیت جدید آگهی *
+            <select required value={selectedListingStatus} onChange={e=>setSelectedListingStatus(e.target.value as typeof selectedListingStatus)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5">
+              <option value="PENDING_HASHTI_VERIFICATION">ارسال برای تأیید انتشار هشتی</option>
+              <option value="DRAFT">پیش‌نویس</option>
+              <option value="PAUSED">متوقف</option>
+              <option value="SOLD">فروخته‌شده</option>
+              <option value="RENTED">اجاره‌رفته</option>
+            </select>
+          </label>
+          <div className="flex justify-end gap-2">
+            <button type="button" disabled={savingListingStatus} onClick={()=>setStatusEditingRecord(null)} className="rounded-lg border px-4 py-2">انصراف</button>
+            <button type="button" disabled={savingListingStatus} onClick={()=>void saveListingStatus()} className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{savingListingStatus ? "در حال ذخیره..." : "ثبت وضعیت"}</button>
+          </div>
+        </div>
       </Modal>
       <Modal open={Boolean(deletingPropertyId)} title="حذف ملک از فهرست فعال" description="اطلاعات و سوابق ملک پاک نمی‌شوند؛ فقط از فهرست فعال خارج می‌شود." onClose={() => setDeletingPropertyId(null)}>
         <div className="space-y-3">
