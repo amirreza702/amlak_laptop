@@ -77,7 +77,10 @@ export async function queuePropertyListingForHashtiReview(
     const property = await tx.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
     if (!property || property.deletedAt) return { queued: false, listing: null };
     const listing = await findPropertyListingByPropertyId(propertyId, tx);
-    if (!listing || listing.status !== ListingStatus.PUBLISHED) {
+    if (
+      !listing ||
+      ![ListingStatus.PUBLISHED, ListingStatus.EXPIRED].includes(listing.status)
+    ) {
       return { queued: false, listing };
     }
 
@@ -97,7 +100,9 @@ export async function queuePropertyListingForHashtiReview(
         oldValue: listing.status,
         newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
         performedBy,
-        reason: "تغییر اطلاعات آگهی؛ نیازمند بررسی مجدد هشتی پیش از انتشار",
+        reason: listing.status === ListingStatus.EXPIRED
+          ? "درخواست تمدید آگهی منقضی‌شده؛ نیازمند تأیید هشتی پیش از انتشار مجدد"
+          : "تغییر اطلاعات آگهی؛ نیازمند بررسی مجدد هشتی پیش از انتشار",
       },
       tx
     );
