@@ -53,6 +53,7 @@ export function PropertyEditForm({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hasListing, setHasListing] = useState(false);
+  const [listingStatus, setListingStatus] = useState<"DRAFT" | "PENDING_HASHTI_VERIFICATION" | "PAUSED" | "SOLD" | "RENTED">("PENDING_HASHTI_VERIFICATION");
   const [identity, setIdentity] = useState({
     registrantName: "",
     registrantMobile: "",
@@ -80,6 +81,7 @@ export function PropertyEditForm({
           approvedAgentMobile: property.approvedAgentMobile ?? "",
         });
         setHasListing(listing !== null);
+        setListingStatus("PENDING_HASHTI_VERIFICATION");
         setValues({
           propertyType: property.propertyType ?? "APARTMENT",
           city: property.city ?? "", district: property.district ?? "", address: property.address ?? "",
@@ -173,6 +175,15 @@ export function PropertyEditForm({
       const priceBody = await priceResponse.json().catch(() => ({}));
       if (!priceResponse.ok) throw new Error(priceBody.message || "ذخیره قیمت ناموفق بود.");
 
+      if (listingStatus !== "PENDING_HASHTI_VERIFICATION") {
+        const statusResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}/status`, {
+          method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: listingStatus }),
+        });
+        const statusBody = await statusResponse.json().catch(() => ({}));
+        if (!statusResponse.ok) throw new Error(statusBody.message || "تغییر وضعیت آگهی ناموفق بود.");
+      }
+
       if (mode === "agent" && onSavePrivateNote) {
         const saved = await onSavePrivateNote(propertyId, values.internalNote);
         if (!saved) throw new Error("مشخصات ملک ذخیره شد، اما یادداشت خصوصی ذخیره نشد.");
@@ -254,7 +265,18 @@ export function PropertyEditForm({
         </div>
       </section>
       {mode==="agent" && <label className="block space-y-1 text-sm">یادداشت خصوصی مشاور<textarea rows={3} maxLength={10000} value={values.internalNote} onChange={e=>update("internalNote",e.target.value)} className={inputClass}/></label>}
-      <PropertyMediaEditor propertyId={propertyId} onError={setError}/>
+      <section className="space-y-2 rounded-xl border border-slate-200 p-3">
+        <h3 className="font-bold">وضعیت آگهی *</h3>
+        <select required value={listingStatus} onChange={e=>setListingStatus(e.target.value as typeof listingStatus)} className={inputClass}>
+          <option value="PENDING_HASHTI_VERIFICATION">ارسال برای تأیید انتشار هشتی (پیش‌فرض)</option>
+          <option value="DRAFT">پیش‌نویس</option>
+          <option value="PAUSED">متوقف</option>
+          <option value="SOLD">فروخته‌شده</option>
+          <option value="RENTED">اجاره‌رفته</option>
+        </select>
+        <p className="text-xs leading-6 text-slate-500">تغییر به پیش‌نویس، توقف، فروش یا اجاره نیازمند تأیید هشتی نیست؛ انتشار فقط با تأیید هشتی انجام می‌شود.</p>
+      </section>
+      {!["DRAFT", "PAUSED", "SOLD", "RENTED"].includes(listingStatus) ? <PropertyMediaEditor propertyId={propertyId} onError={setError}/> : <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">برای وضعیت انتخاب‌شده بارگذاری تصویر غیرفعال است.</p>}
       <div className="flex justify-end gap-2"><button type="button" disabled={saving} onClick={onClose} className="rounded-lg border px-4 py-2">انصراف</button><button type="submit" disabled={saving} className="rounded-lg bg-[#043873] px-4 py-2 font-bold text-white disabled:opacity-50">{saving?"در حال ذخیره...":"ذخیره همه تغییرات"}</button></div>
     </form>
   );
