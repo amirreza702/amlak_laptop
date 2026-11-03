@@ -1,16 +1,11 @@
 import { autoArchivePropertiesJob } from "../features/property/job/autoArchivePropertiesJob";
 
-/** زمان اجرای بعدی: ابتدای ماه تقویمی بعد، ساعت ۰۰:۱۰ زمان سرور. */
-function millisecondsUntilNextMonth() {
-  const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 10, 0, 0);
-  return Math.max(1, nextMonth.getTime() - now.getTime());
-}
+const ARCHIVAL_INTERVAL_MS = 24 * 24 * 60 * 60 * 1000;
 
 export function startPropertyArchivalScheduler() {
   console.log("[Property Archival Scheduler] فعال شد.");
 
-  // یک بررسی هنگام راه‌اندازی؛ سپس در ابتدای هر ماه تقویمی.
+  // یک بررسی هنگام راه‌اندازی؛ سپس هر ۲۴ روز یک‌بار.
   void autoArchivePropertiesJob().catch((error) => {
     console.error("[Property Archival Scheduler] خطا در اجرای اولیه:", error);
   });
@@ -20,11 +15,11 @@ export function startPropertyArchivalScheduler() {
       try {
         await autoArchivePropertiesJob();
       } catch (error) {
-        console.error("[Property Archival Scheduler] خطا در اجرای ماهانه:", error);
+        console.error("[Property Archival Scheduler] خطا در اجرای ۲۴ روزه:", error);
       } finally {
         scheduleNextRun();
       }
-    }, millisecondsUntilNextMonth());
+    }, ARCHIVAL_INTERVAL_MS);
   };
 
   scheduleNextRun();
