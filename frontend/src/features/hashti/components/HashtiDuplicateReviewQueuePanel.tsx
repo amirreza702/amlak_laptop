@@ -6,6 +6,7 @@ import {
   decideHashtiDuplicateReview,
   getHashtiDuplicateReviewQueue,
   publishHashtiPropertyAfterDuplicateReview,
+  rejectHashtiPropertyAfterDuplicateReview,
 } from "@/features/hashti/api/hashtiApi";
 import type { DuplicateReviewQueueProperty } from "@/features/hashti/types/hashti";
 
@@ -38,7 +39,7 @@ export function HashtiDuplicateReviewQueuePanel() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(() => load()); }, [load]);
 
   async function decide(reviewId: string, decision: "SAME_PROPERTY" | "DIFFERENT_PROPERTY") {
     setBusyId(reviewId);
@@ -52,6 +53,21 @@ export function HashtiDuplicateReviewQueuePanel() {
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ثبت تصمیم مشابهت ناموفق بود.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function reject(propertyId: string) {
+    setBusyId(propertyId);
+    setError(null);
+    setMessage(null);
+    try {
+      await rejectHashtiPropertyAfterDuplicateReview(propertyId);
+      setMessage("به دلیل تشخیص تکراری بودن، آگهی رد شد.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "رد آگهی ناموفق بود.");
     } finally {
       setBusyId(null);
     }
@@ -138,6 +154,12 @@ export function HashtiDuplicateReviewQueuePanel() {
                     <p className="text-sm text-emerald-800">تمام کاندیداها به‌عنوان املاک متفاوت بررسی شده‌اند.</p>
                   ) : (
                     <p className="text-sm text-amber-800">برای انتشار، ابتدا تصمیم تمام کاندیداها را ثبت کنید.</p>
+                  )}
+                  {allReviewed && hasSameProperty && (
+                    <button type="button" disabled={busyId === item.property.id} onClick={() => void reject(item.property.id)} className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-50">
+                      {busyId === item.property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                      رد انتشار به علت تکراری بودن
+                    </button>
                   )}
                   {allDifferent && (
                     <button type="button" disabled={busyId === item.property.id} onClick={() => void publish(item.property.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">

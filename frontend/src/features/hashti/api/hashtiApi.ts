@@ -77,3 +77,10 @@ export async function publishHashtiPropertyAfterDuplicateReview(propertyId: stri
     method: "PATCH",
   });
 }
+
+
+export async function rejectHashtiPropertyAfterDuplicateReview(propertyId: string): Promise<{ rejected: boolean }> {
+  return requestJson("/hashti/properties/" + encodeURIComponent(propertyId) + "/reject-after-duplicate-review", {
+    method: "PATCH",
+  });
+}

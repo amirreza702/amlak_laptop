@@ -9,7 +9,7 @@ import {
 } from "../controller/agentManagementController";
 import { getAdminAuditLogsController } from "../controller/adminAuditLogController";
 import userManagementRoutes from "./userManagementRoutes";
-import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController, publishHashtiPropertyAfterDuplicateReviewController } from "../controller/propertyManagementController";
+import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController, publishHashtiPropertyAfterDuplicateReviewController, rejectHashtiPropertyAfterDuplicateReviewController } from "../controller/propertyManagementController";
 import { getHashtiDuplicateReviewQueueController } from "../../property/controller/duplicateReviewController";
 
 const router = Router();
@@ -67,6 +67,13 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.HASHTI),
   publishHashtiPropertyAfterDuplicateReviewController
+);
+
+router.patch(
+  "/hashti/properties/:id/reject-after-duplicate-review",
+  authMiddleware,
+  requireRole(UserRole.HASHTI),
+  rejectHashtiPropertyAfterDuplicateReviewController
 );
 
 router.use(userManagementRoutes);

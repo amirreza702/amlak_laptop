@@ -3,6 +3,7 @@ import { findHashtiPropertyRecords } from "../repository/propertyManagementRepos
 import { getPropertySimilaritySummaryService, DUPLICATE_MATCHING_THRESHOLD } from "../../property/service/duplicateMatchingService";
 import { createPendingDuplicateReviewsForProperty, findDuplicateReviewsForPrimaryProperty } from "../../property/repository/duplicateReviewRepository";
 import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
+import { findPropertyById } from "../../property/repository/propertyRepository";
 
 export async function getHashtiPropertyRecords(input: {
   status?: ListingStatus;
@@ -11,9 +12,10 @@ export async function getHashtiPropertyRecords(input: {
   offset: number;
 }) {
   const result = await findHashtiPropertyRecords(input);
-  if (input.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) return result;
-
   const properties = await Promise.all(result.properties.map(async (property) => {
+    if (property.listing?.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
+      return { ...property, maximumSimilarityScore: null };
+    }
     const summary = await getPropertySimilaritySummaryService(property.id);
     return { ...property, maximumSimilarityScore: summary.maximumSimilarityScore };
   }));
@@ -23,6 +25,12 @@ export async function getHashtiPropertyRecords(input: {
 
 /** غربال انتشار: تشابه بالا ملک را به صف مشابهت می‌فرستد، در غیر این صورت منتشر می‌کند. */
 export async function requestHashtiPropertyPublicationApproval(propertyId: string) {
+  const property = await findPropertyById(propertyId);
+  if (!property?.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
+  if (property.listing.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
+    throw new Error("این ملک در صف بررسی انتشار هشتی قرار ندارد.");
+  }
+
   const [summary, existingReviews] = await Promise.all([
     getPropertySimilaritySummaryService(propertyId),
     findDuplicateReviewsForPrimaryProperty(propertyId),

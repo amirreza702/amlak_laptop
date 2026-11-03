@@ -294,3 +294,29 @@ export const publishPropertyAfterDuplicateReviewService = async (propertyId: str
 
   return updatePropertyListingStatus(propertyId, { status: ListingStatus.PUBLISHED });
 };
+
+
+/** رد انتشار از صف مشابهت، فقط وقتی همه کاندیداها بررسی شده و حداقل یکی همان ملک باشد. */
+export const rejectPropertyAfterDuplicateReviewService = async (propertyId: string) => {
+  const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
+  if (reviews.length === 0) {
+    throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
+  }
+
+  const latestByCandidate = new Map<string, (typeof reviews)[number]>();
+  for (const review of reviews) {
+    if (!latestByCandidate.has(review.candidatePropertyId)) {
+      latestByCandidate.set(review.candidatePropertyId, review);
+    }
+  }
+
+  const latestReviews = [...latestByCandidate.values()];
+  if (latestReviews.some((review) => review.decision === null)) {
+    throw new Error("ابتدا تمام پرونده‌های مشابهت این ملک را تعیین تکلیف کنید.");
+  }
+  if (!latestReviews.some((review) => review.decision === DuplicateDecision.SAME_PROPERTY)) {
+    throw new Error("برای رد انتشار باید دست‌کم یک کاندیدا به‌عنوان همان ملک تشخیص داده شده باشد.");
+  }
+
+  return updatePropertyListingStatus(propertyId, { status: ListingStatus.REJECTED });
+};
