@@ -15,6 +15,7 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
   const [ownerLastName, setOwnerLastName] = useState("");
   const [propertyType, setPropertyType] = useState<PropertyType>("APARTMENT");
   const [transactionType, setTransactionType] = useState<TransactionType>("SALE");
+  const [listingStatus, setListingStatus] = useState<"DRAFT" | "PENDING_HASHTI_VERIFICATION" | "PAUSED" | "SOLD" | "RENTED">("PENDING_HASHTI_VERIFICATION");
   const [city, setCity] = useState("شاهرود");
   const [district, setDistrict] = useState("");
   const [address, setAddress] = useState("");
@@ -52,6 +53,13 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
       depositAmount: transactionType === "FULL_DEPOSIT" ? depositAmount.trim() : null,
       rentAmount: transactionType === "RENT" ? rentAmount.trim() : null,
     });
+    if (listingStatus !== "PENDING_HASHTI_VERIFICATION") {
+      const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/properties/${encodeURIComponent(propertyId)}/status`, {
+        method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: listingStatus }),
+      });
+      const statusBody = await statusResponse.json().catch(() => ({}));
+      if (!statusResponse.ok) throw new Error(statusBody.message || "تغییر وضعیت آگهی ناموفق بود.");
+    }
     setListingCreated(true);
     setMessage("اطلاعات ملک و معامله با موفقیت ثبت شد. آگهی هنوز منتشر نشده و برای انتشار باید مراحل بررسی و تأیید هشتی طی شود.");
   }
@@ -140,7 +148,7 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
   return {
     ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
-    transactionType, setTransactionType,
+    transactionType, setTransactionType, listingStatus, setListingStatus,
     city, setCity, district, setDistrict, address, setAddress,
     postalCode, setPostalCode, coordinates, setCoordinates,
     area, setArea, rooms, setRooms, floor, setFloor, details, setDetails,
