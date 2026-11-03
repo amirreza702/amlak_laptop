@@ -571,35 +571,10 @@ export default function PropertyDetailClient() {
             <PropertyEvaluationForm propertyId={property.id} listingStatus={property.listing?.status} />
 
             {/* ==================================================
-                دکمه‌های اقدام
+                اقدام‌های مشتری
                ================================================== */}
-            <div
-              className="
-                mt-8
-                grid
-                gap-3
-                sm:grid-cols-2
-              "
-            >
+            <div className="mt-8">
               <CustomerFavoriteButton propertyId={property.id} />
-
-              <Link
-                href="/request"
-                className="
-                  flex
-                  h-12
-                  items-center
-                  justify-center
-                  bg-slate-900
-                  text-sm
-                  font-bold
-                  text-white
-                  transition-colors
-                  hover:bg-slate-800
-                "
-              >
-                سپردن نیاز به هشتی
-              </Link>
             </div>
           </div>
         </section>
