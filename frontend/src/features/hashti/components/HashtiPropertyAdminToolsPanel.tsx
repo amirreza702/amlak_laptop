@@ -28,6 +28,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 type HashtiPropertyRecord = {
   id: string;
   maximumSimilarityScore: number | null;
+  requiresDuplicateReview: boolean;
   propertyType: string;
   registrationSource: string;
   ownerFirstName: string | null;
@@ -262,7 +263,8 @@ export function HashtiPropertyAdminToolsPanel() {
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">
                       <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> اتصال حساب مالک به ملک <ChevronDown className="h-3 w-3" /></button>
-                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> تأیید · بیشترین تشابه {similarityLabel(property.maximumSimilarityScore)}</button>}
+                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && !property.requiresDuplicateReview && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> تأیید · بیشترین تشابه {similarityLabel(property.maximumSimilarityScore)}</button>}
+                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && property.requiresDuplicateReview && <span className="inline-flex items-center rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">منتقل‌شده به صف بررسی مشابهت</span>}
                       {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => setExpireConfirmFor(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
                       {ownerFormFor === property.id && <Modal open={ownerFormFor === property.id} title="افزودن مالک به ملک" description={"شناسه ملک: " + property.id} onClose={() => setOwnerFormFor(null)}><form onSubmit={(event) => void addOwner(event, property.id)} className="space-y-4">
                         <label className="block space-y-1 text-xs"><span>شناسه حساب مالک برای اتصال</span><input required maxLength={200} value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>

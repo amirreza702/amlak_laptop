@@ -105,6 +105,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
         isActive: true,
         createdAt: true,
         confirmUntil: true,
+        _count: { select: { duplicateReviewsAsPrimary: true } },
         listing: {
           select: {
             status: true,
