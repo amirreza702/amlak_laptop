@@ -42,7 +42,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
   const {
     ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
-    transactionType, setTransactionType, listingStatus, setListingStatus,
+    transactionType, setTransactionType, listingStatus, setListingStatus, listingStatus, setListingStatus,
     city, setCity, district, setDistrict, address, setAddress,
     postalCode, setPostalCode, coordinates, setCoordinates,
     area, setArea, rooms, setRooms, floor, setFloor, details, setDetails,
@@ -109,6 +109,20 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
           </fieldset>
 
 
+        </fieldset>
+
+        <fieldset disabled={listingCreated || busy} className="space-y-2 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
+          <legend className="px-2 text-base font-bold">۳. وضعیت آگهی</legend>
+          <label className="block space-y-1.5 text-sm font-semibold">وضعیت اولیه آگهی *
+            <select required value={listingStatus} onChange={(e) => setListingStatus(e.target.value as typeof listingStatus)} className={inputClass}>
+              <option value="PENDING_HASHTI_VERIFICATION">ارسال برای تأیید انتشار هشتی (پیش‌فرض)</option>
+              <option value="DRAFT">پیش‌نویس</option>
+              <option value="PAUSED">متوقف</option>
+              <option value="SOLD">فروخته‌شده</option>
+              <option value="RENTED">اجاره‌رفته</option>
+            </select>
+          </label>
+          <p className="text-xs leading-6 text-slate-500">انتشار عمومی فقط پس از تأیید هشتی انجام می‌شود. پیش‌نویس، آگهی متوقف، فروخته‌شده و اجاره‌رفته تصویر ندارند.</p>
         </fieldset>
 
         <fieldset disabled={listingCreated || busy} className="space-y-2 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
