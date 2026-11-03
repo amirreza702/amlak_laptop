@@ -90,7 +90,8 @@ function calculateConfirmUntil(
  */
 export async function queuePropertyListingForHashtiReview(
   propertyId: string,
-  transaction?: Prisma.TransactionClient
+  transaction?: Prisma.TransactionClient,
+  performedBy?: string
 ) {
   const apply = async (tx: Prisma.TransactionClient) => {
     const listing = await findPropertyListingByPropertyId(propertyId, tx);
@@ -113,6 +114,7 @@ export async function queuePropertyListingForHashtiReview(
         field: "listing.status",
         oldValue: listing.status,
         newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
+        performedBy,
         reason: "تغییر اطلاعات آگهی؛ نیازمند بررسی مجدد هشتی پیش از انتشار",
       },
       tx
@@ -169,8 +171,8 @@ export async function updatePropertyListingStatus(
    * publishedAt ثبت می‌شود.
    */
   if (data.status === ListingStatus.PUBLISHED) {
-    updateData.publishedAt =
-      listing.publishedAt ?? new Date();
+    updateData.publishedAt = new Date();
+    updateData.expiredAt = null;
   }
 
   /**
