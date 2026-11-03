@@ -1,7 +1,7 @@
 import { ListingStatus } from "@prisma/client";
 import { findHashtiPropertyRecords } from "../repository/propertyManagementRepository";
 import { getPropertySimilaritySummaryService, DUPLICATE_MATCHING_THRESHOLD } from "../../property/service/duplicateMatchingService";
-import { createPendingDuplicateReviewsForProperty, findDuplicateReviewsForPrimaryProperty } from "../../property/repository/duplicateReviewRepository";
+import { createPendingDuplicateReviewsForProperty } from "../../property/repository/duplicateReviewRepository";
 import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
 import { findPropertyById } from "../../property/repository/propertyRepository";
 
@@ -21,7 +21,7 @@ export async function getHashtiPropertyRecords(input: {
   return { ...result, properties };
 }
 
-/** غربال انتشار: تشابه بالا ملک را به صف مشابهت می‌فرستد، در غیر این صورت منتشر می‌کند. */
+/** غربال انتشار: فقط تشابه فعلی ۸۰٪ یا بیشتر، ملک را به صف مشابهت می‌فرستد. */
 export async function requestHashtiPropertyPublicationApproval(propertyId: string) {
   const property = await findPropertyById(propertyId);
   if (!property?.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
@@ -29,12 +29,9 @@ export async function requestHashtiPropertyPublicationApproval(propertyId: strin
     throw new Error("این ملک در صف بررسی انتشار هشتی قرار ندارد.");
   }
 
-  const [summary, existingReviews] = await Promise.all([
-    getPropertySimilaritySummaryService(propertyId),
-    findDuplicateReviewsForPrimaryProperty(propertyId),
-  ]);
+  const summary = await getPropertySimilaritySummaryService(propertyId);
 
-  if (summary.maximumSimilarityScore >= DUPLICATE_MATCHING_THRESHOLD || existingReviews.length > 0) {
+  if (summary.maximumSimilarityScore >= DUPLICATE_MATCHING_THRESHOLD) {
     await createPendingDuplicateReviewsForProperty(propertyId, summary.matches);
     return {
       published: false,
