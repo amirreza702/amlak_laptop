@@ -38,6 +38,7 @@ const allowedTransitions: Record<ListingStatus, ListingStatus[]> = {
   [ListingStatus.PAUSED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.SOLD, ListingStatus.RENTED],
   [ListingStatus.SOLD]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.RENTED],
   [ListingStatus.RENTED]: [ListingStatus.DRAFT, ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PAUSED, ListingStatus.SOLD],
+  [ListingStatus.DELETED]: [],
 };
 
 /**
@@ -73,6 +74,8 @@ export async function queuePropertyListingForHashtiReview(
   performedBy?: string
 ) {
   const apply = async (tx: Prisma.TransactionClient) => {
+    const property = await tx.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
+    if (!property || property.deletedAt) return { queued: false, listing: null };
     const listing = await findPropertyListingByPropertyId(propertyId, tx);
     if (!listing || listing.status !== ListingStatus.PUBLISHED) {
       return { queued: false, listing };
@@ -109,6 +112,8 @@ export async function updatePropertyListingStatus(
   data: UpdatePropertyListingStatusInput,
   actor: { id: string; role: string },
 ) {
+  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
+  if (!property || property.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
   const listing = await findPropertyListingByPropertyId(propertyId);
   if (!listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
   if (listing.status === data.status) return { listing, statusChanged: false };
