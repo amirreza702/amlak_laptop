@@ -9,7 +9,6 @@ import {
 } from "../controller/agentManagementController";
 import { getAdminAuditLogsController } from "../controller/adminAuditLogController";
 import userManagementRoutes from "./userManagementRoutes";
-import { getOwnerVerificationQueueController } from "../controller/verificationQueueController";
 import { approveHashtiPropertyPublicationController, getHashtiPropertyRecordsController } from "../controller/propertyManagementController";
 
 const router = Router();
@@ -54,13 +53,6 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.HASHTI),
   approveHashtiPropertyPublicationController
-);
-
-router.get(
-  "/hashti/owner-verification-queue",
-  authMiddleware,
-  requireRole(UserRole.HASHTI),
-  getOwnerVerificationQueueController
 );
 
 router.use(userManagementRoutes);

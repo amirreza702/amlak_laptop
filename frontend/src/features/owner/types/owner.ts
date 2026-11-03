@@ -2,7 +2,6 @@ export interface OwnerProperty {
   propertyId: string;
   share: number;
   isPrimary: boolean;
-  verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
   property: {
     id: string;
     registrationSource: "OWNER" | "AGENT";

@@ -11,7 +11,6 @@ import { checkPropertyConfirmationController } from "../controller/propertyConfi
 import { expirePropertyListingController } from "../controller/expirePropertyListingController";
 import { renewPropertyListingController } from "../controller/renewPropertyListingController";
 import { addPropertyOwnerController } from "../controller/propertyOwnerController";
-import { verifyPropertyOwnerController } from "../controller/propertyOwnerVerificationController";
 import { approvePropertyAgentByOwnerController } from "../controller/propertyAgentApprovalController";
 import { revokePropertyAgentController } from "../controller/propertyAgentRevocationController";
 import { createPropertyMediaController, getPropertyMediaController, getPublicPropertyMediaContentController, getPrivatePropertyMediaContentController, deletePropertyMediaController, reorderPropertyMediaController } from "../controller/propertyMediaController";
@@ -150,12 +149,6 @@ router.post(
   authMiddleware, requireRole(UserRole.HASHTI),
   addPropertyOwnerController
 );
-router.patch(
-  "/properties/:id/owners/:ownerId/verification",
-  authMiddleware, requireRole(UserRole.HASHTI),
-  verifyPropertyOwnerController
-);
-
 // تصمیم درباره نمایندگی ملک فقط با نشست مالک همان ملک انجام می‌شود.
 router.patch(
   "/properties/:id/agents/:agentId/approval",

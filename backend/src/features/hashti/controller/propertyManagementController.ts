@@ -53,8 +53,7 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
   try {
     const result = await updatePropertyListingStatus(
       propertyId,
-      { status: ListingStatus.PUBLISHED },
-      { allowHashtiPublicationFromLegacyOwnerApproval: true }
+      { status: ListingStatus.PUBLISHED }
     );
     return res.status(200).json({
       message: "ملک با موفقیت تأیید و منتشر شد.",

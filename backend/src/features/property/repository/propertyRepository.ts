@@ -78,7 +78,6 @@ export const findPropertyByIdWithContacts = async (id: string) => {
         select: {
           ownerId: true,
           isPrimary: true,
-          verificationStatus: true,
           owner: {
             select: {
               userId: true,

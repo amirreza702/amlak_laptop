@@ -116,8 +116,6 @@ export const findOwnerPropertiesByOwnerId = async (ownerId: string) =>
       ownerId: true,
       share: true,
       isPrimary: true,
-      verificationStatus: true,
-      verifiedAt: true,
       property: {
         select: {
           id: true, registrationSource: true, propertyType: true, city: true, district: true, address: true, postalCode: true,

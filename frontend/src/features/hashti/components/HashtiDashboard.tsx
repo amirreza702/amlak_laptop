@@ -22,7 +22,6 @@ import { useHashtiAgentManagement } from "@/features/hashti/hooks/useHashtiAgent
 import { useHashtiAuditLogs } from "@/features/hashti/hooks/useHashtiAuditLogs";
 import { UserNotificationsPanel } from "@/features/notification/components/UserNotificationsPanel";
 import { HashtiUserManagementPanel } from "./HashtiUserManagementPanel";
-import { HashtiVerificationQueuePanel } from "./HashtiVerificationQueuePanel";
 import { HashtiPropertyAdminToolsPanel } from "./HashtiPropertyAdminToolsPanel";
 import { formatPersianDateTime } from "@/shared/utils/date";
 import { Modal } from "@/shared/components/Modal";
@@ -278,7 +277,6 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
 
       <div id="property-tools" hidden={selectedTool !== "property-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiPropertyAdminToolsPanel /></div>
       <div id="user-management" hidden={selectedTool !== "user-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiUserManagementPanel /></div>
-      <div id="verification-queue" hidden={selectedTool !== "property-management"} className="scroll-mt-5 w-full min-w-0 lg:col-start-2 lg:col-span-1"><HashtiVerificationQueuePanel /></div>
       <section hidden={selectedTool !== "profile"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-bold">پروفایل</h2>
         <p className="mt-2 text-sm leading-7 text-slate-600">اطلاعات حساب فعال کارکنان هشتی</p>

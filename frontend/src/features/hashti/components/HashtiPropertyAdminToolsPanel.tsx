@@ -67,19 +67,17 @@ type HashtiPropertyRecord = {
   confirmUntil: string | null;
   listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null; expiredAt: string | null } | null;
   media: { id: string; type: string; url: string; sortOrder: number }[];
-  owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string; user: { mobile: string } } }[];
+  owners: { ownerId: string; share: number; isPrimary: boolean; owner: { firstName: string; lastName: string; user: { mobile: string } } }[];
   agents: { agentId: string; status: string; approvedByOwner: boolean; approvedAt: string | null; isFirstRegistrant: boolean; agent: { firstName: string; lastName: string; user: { mobile: string } } }[];
 };
 type Pagination = { total: number; limit: number; offset: number };
 
 const propertyLabels: Record<string, string> = { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" };
-const listingLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PENDING_OWNER_APPROVAL: "در انتظار تأیید هشتی", PENDING_HASHTI_VERIFICATION: "در انتظار تأیید هشتی", PUBLISHED: "منتشرشده", REJECTED: "ردشده", EXPIRED: "منقضی", PAUSED: "متوقف", SOLD: "فروخته‌شده", RENTED: "اجاره‌رفته" };
-const verificationLabels: Record<string, string> = { PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" };
+const listingLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PENDING_HASHTI_VERIFICATION: "در انتظار تأیید هشتی", PUBLISHED: "منتشرشده", REJECTED: "ردشده", EXPIRED: "منقضی", PAUSED: "متوقف", SOLD: "فروخته‌شده", RENTED: "اجاره‌رفته" };
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
 const statusOptions = [
   { value: "ALL", label: "همه وضعیت‌ها" },
   { value: "DRAFT", label: "پیش‌نویس" },
-  { value: "PENDING_OWNER_APPROVAL", label: "در انتظار تأیید مالک" },
   { value: "PENDING_HASHTI_VERIFICATION", label: "در انتظار تأیید هشتی" },
   { value: "PUBLISHED", label: "منتشرشده" },
   { value: "REJECTED", label: "ردشده" },
@@ -156,7 +154,7 @@ export function HashtiPropertyAdminToolsPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ownerId: normalizedOwnerId, share: parsedShare, isPrimary }),
       });
-      setMessage("رکورد مالکیت ثبت شد؛ تاریخچه مالکیت و گزارش مدیریتی در سمت سرور حفظ می‌شوند.");
+      setMessage("ارتباط مالک و ملک ثبت شد؛ تاریخچه و گزارش مدیریتی در سمت سرور ثبت شدند.");
       setOwnerId("");
       setShare("6");
       setIsPrimary(false);
@@ -231,7 +229,7 @@ export function HashtiPropertyAdminToolsPanel() {
       {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full min-w-[1300px] text-right text-sm">
-            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">آگهی و وضعیت</th><th className="p-3">رکوردهای مالکیت</th><th className="p-3">رکوردهای مشاور</th><th className="p-3">عملیات رکورد</th></tr></thead>
+            <thead className="bg-slate-100"><tr><th className="p-3">رکورد ملک</th><th className="p-3">آگهی و وضعیت</th><th className="p-3">مالک مرتبط</th><th className="p-3">رکوردهای مشاور</th><th className="p-3">عملیات رکورد</th></tr></thead>
             <tbody>{loading && properties.length === 0 ? <tr><td colSpan={5} className="p-5 text-center text-sm text-slate-500"><span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin" /> در حال دریافت رکوردهای املاک...</span></td></tr> : properties.length === 0 ? <tr><td colSpan={5} className="p-5 text-center text-sm text-slate-600">در این وضعیت، رکورد ملکی برای نمایش وجود ندارد.</td></tr> : properties.map((property) => {
               return (
                 <RecordDetailsRow key={property.id} record={property} title="رکورد" className="border-t border-slate-200 align-top">
@@ -252,21 +250,21 @@ export function HashtiPropertyAdminToolsPanel() {
                     {property.listing?.expiredAt && <p className="mt-1 text-xs text-slate-500">انقضا: {dateLabel(property.listing.expiredAt)}</p>}
                   </td>
                   <td className="p-3">
-                    {property.owners.length ? <div className="min-w-[220px] space-y-3">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p><p className="mt-1 text-xs text-slate-600">شماره مالک: <span dir="ltr" className="font-mono">{owner.owner.user.mobile}</span></p><p className="mt-1 text-xs text-slate-600">سهم: {owner.share} دانگ · {verificationLabels[owner.verificationStatus] ?? owner.verificationStatus}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{owner.ownerId}</p></div>)}</div> : <span className="text-slate-500">مالک مرتبط ثبت نشده</span>}
+                    {property.owners.length ? <div className="min-w-[220px] space-y-3">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p><p className="mt-1 text-xs text-slate-600">شماره مالک: <span dir="ltr" className="font-mono">{owner.owner.user.mobile}</span></p><p className="mt-1 text-xs text-slate-600">سهم: {owner.share} دانگ</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{owner.ownerId}</p></div>)}</div> : <span className="text-slate-500">مالک مرتبط ثبت نشده</span>}
                   </td>
                   <td className="p-3">
                     {property.agents.length ? <div className="min-w-[200px] space-y-3">{property.agents.map((agent) => <div key={agent.agentId} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0"><p className="font-semibold">{agent.agent.firstName} {agent.agent.lastName}</p><p className="mt-1 text-xs text-slate-600">شماره مشاور: <span dir="ltr" className="font-mono">{agent.agent.user.mobile}</span></p><p className="mt-1 text-xs text-slate-600">{agent.status === "ACTIVE" ? "ارتباط فعال" : "ارتباط خاتمه‌یافته"} · {agent.approvedByOwner ? "تأیید مالک" : "بدون تأیید مالک"}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{agent.agentId}</p></div>)}</div> : <span className="text-slate-500">مشاور مرتبط ثبت نشده</span>}
                   </td>
                   <td className="p-3">
                     <div className="flex min-w-[190px] flex-col items-start gap-2">
-                      <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> افزودن مالک به این ملک <ChevronDown className="h-3 w-3" /></button>
-                      {["PENDING_HASHTI_VERIFICATION", "PENDING_OWNER_APPROVAL"].includes(property.listing?.status ?? "") && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> بررسی و تأیید انتشار</button>}
+                      <button type="button" onClick={() => { setOwnerFormFor(ownerFormFor === property.id ? null : property.id); setOwnerId(""); setError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold"><UserPlus className="h-4 w-4" /> اتصال حساب مالک به ملک <ChevronDown className="h-3 w-3" /></button>
+                      {property.listing?.status === "PENDING_HASHTI_VERIFICATION" && <button type="button" onClick={() => { setReviewProperty(property); setReviewError(null); }} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900"><ClipboardCheck className="h-4 w-4" /> بررسی و تأیید انتشار</button>}
                       {property.listing && property.listing.status === "PUBLISHED" && <button type="button" onClick={() => setExpireConfirmFor(property.id)} disabled={busyExpireId === property.id} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 disabled:opacity-50">{busyExpireId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <TimerReset className="h-4 w-4" />} بررسی انقضای آگهی</button>}
                       {ownerFormFor === property.id && <Modal open={ownerFormFor === property.id} title="افزودن مالک به ملک" description={"شناسه ملک: " + property.id} onClose={() => setOwnerFormFor(null)}><form onSubmit={(event) => void addOwner(event, property.id)} className="space-y-4">
-                        <label className="block space-y-1 text-xs"><span>شناسه پروفایل مالک</span><input required maxLength={200} value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
+                        <label className="block space-y-1 text-xs"><span>شناسه حساب مالک برای اتصال</span><input required maxLength={200} value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
                         <label className="block space-y-1 text-xs"><span>سهم مالکیت (دانگ)</span><input required type="number" min="0.01" max="6" step="0.01" value={share} onChange={(event) => setShare(event.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5" dir="ltr" /></label>
                         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={isPrimary} onChange={(event) => setIsPrimary(event.target.checked)} className="h-4 w-4" /> مالک اصلی</label>
-                        <button type="submit" disabled={busyOwnerPropertyId === property.id} className="inline-flex w-full items-center justify-center gap-2 rounded bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyOwnerPropertyId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت مالکیت</button>
+                        <button type="submit" disabled={busyOwnerPropertyId === property.id} className="inline-flex w-full items-center justify-center gap-2 rounded bg-[#043873] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busyOwnerPropertyId === property.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} ثبت ارتباط مالک</button>
                       </form></Modal>}
                     </div>
                   </td>
@@ -320,7 +318,6 @@ export function HashtiPropertyAdminToolsPanel() {
               reviewRow(`مالک مرتبط ${index + 1}`, owner.owner.firstName + " " + owner.owner.lastName),
               reviewRow(`شماره مالک مرتبط ${index + 1}`, owner.owner.user.mobile),
               reviewRow(`سهم مالک مرتبط ${index + 1}`, owner.share + " دانگ"),
-              reviewRow(`وضعیت تأیید مالک مرتبط ${index + 1}`, owner.verificationStatus),
             ]),
           ].filter((entry) => entry[1] !== null && entry[1] !== undefined && entry[1] !== "");
           return (
@@ -345,10 +342,10 @@ export function HashtiPropertyAdminToolsPanel() {
                   <span className="block p-2 text-xs font-semibold text-slate-700">{media.type === "MAIN_IMAGE" ? "تصویر اصلی" : media.type === "FLOOR_PLAN" ? "نقشه" : "تصویر"} {media.sortOrder + 1}</span>
                 </a>)}</div>
               </div>}
-              <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-900">تأیید مالک یا تأیید همکاری مشاور، شرط بررسی و انتشار آگهی نیست. بررسی مالکیت و انتخاب مشاور مستقل از فرایند تأیید انتشار هشتی انجام می‌شوند.</p>
+              <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-900">ثبت رابطه مالک و تأیید همکاری مشاور، شرط بررسی و انتشار آگهی نیست. انتخاب مشاور مستقل از فرایند تأیید انتشار هشتی انجام می‌شود.</p>
               <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
                 <button type="button" disabled={Boolean(busyReviewId)} onClick={() => { setReviewProperty(null); setReviewError(null); }} className="rounded-lg border px-4 py-2.5 text-sm">بازگشت</button>
-                <button type="button" disabled={busyReviewId === p.id || !["PENDING_HASHTI_VERIFICATION", "PENDING_OWNER_APPROVAL"].includes(p.listing?.status ?? "")} onClick={() => void approvePublication(p.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                <button type="button" disabled={busyReviewId === p.id || p.listing?.status !== "PENDING_HASHTI_VERIFICATION"} onClick={() => void approvePublication(p.id)} className="inline-flex items-center gap-2 rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
                   {busyReviewId === p.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} تأیید نهایی و انتشار
                 </button>
               </div>

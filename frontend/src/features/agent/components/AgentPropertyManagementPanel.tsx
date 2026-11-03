@@ -55,7 +55,7 @@ type PropertyRecord = {
     createdAt: string;
     confirmUntil: string | null;
     listing: { status: string; transactionType: string; salePrice: string | number | null; depositAmount: string | number | null; rentAmount: string | number | null; publishedAt: string | null } | null;
-    owners: { ownerId: string; share: number; isPrimary: boolean; verificationStatus: string; owner: { firstName: string; lastName: string; user?: { mobile: string } } }[];
+    owners: { ownerId: string; share: number; isPrimary: boolean; owner: { firstName: string; lastName: string; user?: { mobile: string } } }[];
   };
 };
 type Pagination = { total: number; limit: number; offset: number };
@@ -65,12 +65,11 @@ const propertyLabels: Record<string, string> = {
   SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ",
 };
 const listingLabels: Record<string, string> = {
-  DRAFT: "پیش‌نویس", PENDING_OWNER_APPROVAL: "در انتظار تأیید مالک",
+  DRAFT: "پیش‌نویس",
   PENDING_HASHTI_VERIFICATION: "در انتظار تأیید هشتی", PUBLISHED: "منتشرشده",
   REJECTED: "ردشده", EXPIRED: "منقضی", PAUSED: "متوقف",
   SOLD: "فروخته‌شده", RENTED: "اجاره‌رفته",
 };
-const verificationLabels: Record<string, string> = { PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" };
 const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
 const dateLabel = (value: string | null) => value ? new Date(value).toLocaleDateString("fa-IR") : "—";
 const creatorRoleLabels: Record<string, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "هشتی" };
@@ -216,7 +215,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
                     <p className="mt-2 text-xs text-slate-500">مهلت تأیید: {dateLabel(property.confirmUntil)}</p>
                   </td>
                   <td className="p-3">
-                    {property.owners.length ? <div className="min-w-[190px] space-y-2">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-2 last:border-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p>{owner.owner.user?.mobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{owner.owner.user.mobile}</p>}<p className="mt-1 text-xs text-slate-600">سهم {owner.share} دانگ · {verificationLabels[owner.verificationStatus] ?? owner.verificationStatus}</p></div>)}</div> : property.ownerFirstName || property.ownerLastName || property.ownerMobile ? <div><p className="font-semibold">{property.ownerFirstName} {property.ownerLastName}</p>{property.ownerMobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{property.ownerMobile}</p>}</div> : <span className="text-slate-500">اطلاعات مالک برای این مشاور قابل نمایش نیست</span>}
+                    {property.owners.length ? <div className="min-w-[190px] space-y-2">{property.owners.map((owner) => <div key={owner.ownerId} className="border-b border-slate-100 pb-2 last:border-0"><p className="font-semibold">{owner.owner.firstName} {owner.owner.lastName}{owner.isPrimary ? " · اصلی" : ""}</p>{owner.owner.user?.mobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{owner.owner.user.mobile}</p>}<p className="mt-1 text-xs text-slate-600">سهم {owner.share} دانگ</p></div>)}</div> : property.ownerFirstName || property.ownerLastName || property.ownerMobile ? <div><p className="font-semibold">{property.ownerFirstName} {property.ownerLastName}</p>{property.ownerMobile && <p dir="ltr" className="mt-1 text-xs text-slate-600">{property.ownerMobile}</p>}</div> : <span className="text-slate-500">اطلاعات مالک برای این مشاور قابل نمایش نیست</span>}
                   </td>
                   <td className="p-3">
                     <p>{record.status === "ACTIVE" ? "ارتباط فعال" : record.status === "REVOKED" ? "ارتباط خاتمه‌یافته" : "بدون ارتباط با این مشاور"}</p>

@@ -20,12 +20,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
   const validDate = parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : undefined;
   const dateRange = validDate ? { gte: new Date(validDate.getFullYear(), validDate.getMonth(), validDate.getDate()), lt: new Date(validDate.getFullYear(), validDate.getMonth(), validDate.getDate() + 1) } : undefined;
   const where: Prisma.PropertyWhereInput = {
-    ...(input.status
-      ? input.status === ListingStatus.PENDING_HASHTI_VERIFICATION
-        // آگهی‌های قدیمی که پیش‌تر منتظر تأیید مالک بوده‌اند نیز باید در صف بررسی هشتی دیده شوند.
-        ? { listing: { is: { status: { in: [ListingStatus.PENDING_HASHTI_VERIFICATION, ListingStatus.PENDING_OWNER_APPROVAL] } } } }
-        : { listing: { is: { status: input.status } } }
-      : {}),
+    ...(input.status ? { listing: { is: { status: input.status } } } : {}),
     ...(search ? {
       OR: [
         { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
@@ -38,7 +33,6 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
           { propertyType: exact as any }, { registrationSource: exact as any },
           { listing: { is: { status: exact as any } } },
           { listing: { is: { transactionType: exact as any } } },
-          { owners: { some: { verificationStatus: exact as any } } },
           { agents: { some: { status: exact as any } } },
         ] : []),
         ...(numericSearch !== undefined ? [
@@ -55,7 +49,6 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
           { createdAt: dateRange }, { confirmUntil: dateRange },
           { listing: { is: { publishedAt: dateRange } } },
           { listing: { is: { expiredAt: dateRange } } },
-          { owners: { some: { verifiedAt: dateRange } } },
           { agents: { some: { approvedAt: dateRange } } },
         ] : []),
         { owners: { some: { ownerId: contains(search) } } },
@@ -127,7 +120,6 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             ownerId: true,
             share: true,
             isPrimary: true,
-            verificationStatus: true,
             owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },

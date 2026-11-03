@@ -1,4 +1,4 @@
-import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType, PropertyAgentStatus, PropertyType, TransactionType, VerificationStatus, type Prisma } from "@prisma/client";
+import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType, PropertyAgentStatus, PropertyType, TransactionType, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
@@ -33,7 +33,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const exactOccupancyStatus = enumMatch(Object.values(OccupancyStatus));
   const exactListingStatus = enumMatch(Object.values(ListingStatus));
   const exactTransactionType = enumMatch(Object.values(TransactionType));
-  const exactVerificationStatus = enumMatch(Object.values(VerificationStatus));
   const exactPropertyAgentStatus = enumMatch(Object.values(PropertyAgentStatus));
 
   const matchingPrivateNotes = search
@@ -89,9 +88,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     ...(validDate ? [{ createdAt: { gte: dayStart, lt: dayEnd } }, { confirmUntil: { gte: dayStart, lt: dayEnd } }] : []),
     ...(exactListingStatus ? [{ listing: { is: { status: exactListingStatus } } }] : []),
     ...(exactTransactionType ? [{ listing: { is: { transactionType: exactTransactionType } } }] : []),
-    ...(exactVerificationStatus ? [
-      { owners: { some: { verificationStatus: exactVerificationStatus } } },
-    ] : []),
     ...(numericSearch !== undefined ? [{ owners: { some: { share: numericSearch } } }] : []),
     ...(boolSearch !== undefined ? [{ owners: { some: { isPrimary: boolSearch } } }] : []),
     { owners: { some: { owner: { is: { firstName: contains(search) } } } } },
@@ -159,7 +155,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             ownerId: true,
             share: true,
             isPrimary: true,
-            verificationStatus: true,
             owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },

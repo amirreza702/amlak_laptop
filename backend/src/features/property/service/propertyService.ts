@@ -160,11 +160,10 @@ export async function registerProperty(
     ? await findPropertyByPostalCode(data.postalCode)
     : null;
 
-  // مالک نباید ناخواسته به ملک موجودی که ممکن است متعلق به شخص دیگری باشد متصل شود.
-  // اتصال مالکیت برای ملک موجود باید از فرایند بررسی/تأیید مالکیت عبور کند.
+  // جلوگیری از اتصال ناخواسته حساب مالک به ملک موجود؛ رابطه تکراری باید جداگانه بررسی شود.
   if (isOwnerRegistration && existingProperty) {
     throw new Error(
-      "ملکی با این کد پستی قبلاً ثبت شده است؛ برای اتصال و تأیید مالکیت از فرایند بررسی هشتی استفاده کنید."
+      "ملکی با این کد پستی قبلاً ثبت شده است؛ برای جلوگیری از ثبت ملک تکراری، اطلاعات آن را بررسی کنید."
     );
   }
 
@@ -241,7 +240,6 @@ export async function registerProperty(
     }
 
     if (isOwnerRegistration) {
-      // مالکیت ادعاشده با وضعیت PENDING ذخیره می‌شود و تأیید نهایی جداگانه است.
       const propertyOwner = await createPropertyOwner(
         {
           propertyId: property.id,
@@ -261,9 +259,8 @@ export async function registerProperty(
             ownerId: data.ownerId,
             share: 6,
             isPrimary: true,
-            verificationStatus: "PENDING",
           }),
-          reason: "ثبت ادعای مالکیت توسط مالک؛ نیازمند تأیید هشتی",
+          reason: "ثبت رابطه مالک و ملک از نشست احراز هویت‌شده مالک",
         },
         tx
       );

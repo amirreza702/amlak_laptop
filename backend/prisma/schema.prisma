@@ -45,7 +45,6 @@ enum TransactionType {
 // وضعیت ثبت و انتشار ملک
 enum ListingStatus {
   DRAFT
-  PENDING_OWNER_APPROVAL
   PENDING_HASHTI_VERIFICATION
   PUBLISHED
   REJECTED
@@ -599,8 +598,6 @@ model PropertyOwner {
 
   isPrimary Boolean @default(false)
 
-  verificationStatus VerificationStatus @default(PENDING)
-  verifiedAt         DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
