@@ -55,6 +55,7 @@ import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 import type { UpdatePropertyInput } from "../types/updateProperty";
 
 import { prisma } from "../../../lib/prisma";
+import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 /**
@@ -182,6 +183,11 @@ export async function registerProperty(
         }, tx);
       }
     } else {
+      const publicCoordinates = getPublicCoordinates(
+        `${data.city}:${data.address}:${data.latitudeExact}:${data.longitudeExact}`,
+        data.latitudeExact,
+        data.longitudeExact
+      );
       property = await createProperty(
         {
           registrationSource: isOwnerRegistration
@@ -199,6 +205,8 @@ export async function registerProperty(
           address: data.address,
           latitudeExact: data.latitudeExact,
           longitudeExact: data.longitudeExact,
+          latitudePublic: publicCoordinates.latitude,
+          longitudePublic: publicCoordinates.longitude,
           postalCode: data.postalCode ?? null,
           area: data.area ?? null,
           rooms: data.rooms ?? null,
@@ -428,9 +436,20 @@ export async function updatePropertyService(
      * Update Property
      * ----------------------------------------------------------
      */
+    const updateData: UpdatePropertyInput = { ...data };
+    if (data.latitudeExact !== undefined || data.longitudeExact !== undefined) {
+      const publicCoordinates = getPublicCoordinates(
+        property.id,
+        data.latitudeExact ?? property.latitudeExact,
+        data.longitudeExact ?? property.longitudeExact
+      );
+      updateData.latitudePublic = publicCoordinates.latitude;
+      updateData.longitudePublic = publicCoordinates.longitude;
+    }
+
     const updatedProperty = await updateProperty(
       propertyId,
-      data,
+      updateData,
       tx
     );
 
