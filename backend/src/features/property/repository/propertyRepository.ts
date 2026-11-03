@@ -41,6 +41,8 @@ export const findPropertyByPostalCode = async (
   return prisma.property.findFirst({
     where: {
       postalCode,
+      isActive: true,
+      deletedAt: null,
     },
   });
 };
@@ -242,6 +244,8 @@ export const findPropertiesWithinRadius = async (
     WHERE
       p."latitudeExact" IS NOT NULL
       AND p."longitudeExact" IS NOT NULL
+      AND p."isActive" = TRUE
+      AND p."deletedAt" IS NULL
 
       ${
         excludePropertyId
@@ -341,6 +345,8 @@ export const findExpiredProperties = async (
   return prisma.property.findMany({
     where: {
       ...(propertyId ? { id: propertyId } : {}),
+      isActive: true,
+      deletedAt: null,
       ...(force ? {} : { confirmUntil: { lte: now } }),
       listing: { status: "PUBLISHED" },
     },
