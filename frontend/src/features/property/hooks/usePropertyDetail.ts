@@ -47,6 +47,7 @@ interface Property {
   latitudePublic?: number | null;
   longitudePublic?: number | null;
   isActive: boolean;
+  media: Array<{ id: string; type: string; url: string; sortOrder: number }>;
   contact?: { type: "AGENT" | "OWNER"; label: "مشاور ثبت‌کننده" | "مشاور تأییدشده" | "مالک"; firstName: string; lastName: string; mobile: string } | null;
   ownerDetails?: { firstName: string | null; lastName: string | null; mobile: string | null } | null;
 
