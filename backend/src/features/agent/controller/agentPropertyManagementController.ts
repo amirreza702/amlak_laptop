@@ -46,12 +46,14 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
   }) || (req.query.address !== undefined && (typeof req.query.address !== "string" || req.query.address.length > 500)) || (totalUnits !== undefined && totalUnits !== null && totalUnits < 1);
   const propertyType = req.query.propertyType; const transactionType = req.query.transactionType;
   const documentType = req.query.documentType; const ownershipType = req.query.ownershipType; const landTenure = req.query.landTenure;
+  const listingStatus = req.query.listingStatus;
   if (limit === null || offset === null || areaMin === null || areaMax === null || roomsMin === null || roomsMax === null || floor === null || totalUnits === null || invalidTextFilter ||
       (propertyType !== undefined && (typeof propertyType !== "string" || !Object.values(PropertyType).includes(propertyType as PropertyType))) ||
       (transactionType !== undefined && (typeof transactionType !== "string" || !Object.values(TransactionType).includes(transactionType as TransactionType))) ||
       (documentType !== undefined && (typeof documentType !== "string" || !Object.values(DocumentType).includes(documentType as DocumentType))) ||
       (ownershipType !== undefined && (typeof ownershipType !== "string" || !Object.values(OwnershipType).includes(ownershipType as OwnershipType))) ||
       (landTenure !== undefined && (typeof landTenure !== "string" || !Object.values(LandTenure).includes(landTenure as LandTenure))) ||
+      (listingStatus !== undefined && (typeof listingStatus !== "string" || !Object.values(ListingStatus).includes(listingStatus as ListingStatus))) ||
       (areaMin !== undefined && areaMax !== undefined && areaMin > areaMax) || (roomsMin !== undefined && roomsMax !== undefined && roomsMin > roomsMax)) {
     return res.status(400).json({ message: "Invalid property filters or pagination parameters" });
   }
@@ -63,7 +65,7 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
       address: typeof req.query.address === "string" ? req.query.address.trim() : undefined,
       propertyType: propertyType as PropertyType | undefined, transactionType: transactionType as TransactionType | undefined,
       documentType: documentType as DocumentType | undefined, ownershipType: ownershipType as OwnershipType | undefined,
-      landTenure: landTenure as LandTenure | undefined,
+      landTenure: landTenure as LandTenure | undefined, listingStatus: listingStatus as ListingStatus | undefined,
       areaMin, areaMax, roomsMin, roomsMax, floor, totalUnits, limit, offset,
     });
     return res.status(200).json({
