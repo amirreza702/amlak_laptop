@@ -1,4 +1,5 @@
 import { prisma } from "../../../lib/prisma";
+import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 
 /**
  * ============================================================
@@ -62,7 +63,6 @@ export interface PropertySearchFilters {
 export async function searchProperties(
   filters: PropertySearchFilters
 ) {
-  const now = new Date();
 
   /**
    * ----------------------------------------------------------
@@ -125,11 +125,10 @@ export async function searchProperties(
   }
 
   /**
-   * فقط ملک‌هایی که تأیید یک‌ماهه آنها هنوز معتبر است.
+   * وضعیت انتشار مرجع نمایش عمومی است.
+   * Job روزانه، آگهی‌های سررسیدشده را از PUBLISHED به EXPIRED تغییر می‌دهد.
+   * شرط confirmUntil در این Query نباید آگهی‌های قدیمیِ بدون تاریخ را حذف کند.
    */
-  propertyWhere.confirmUntil = {
-    gte: now,
-  };
 
   /**
    * ----------------------------------------------------------
@@ -266,7 +265,12 @@ export async function searchProperties(
    * مختصات دقیق عمداً خارج از خروجی هستند.
    */
 
-  return properties.map((property) => ({
+  return properties.map((property) => {
+    const publicCoordinates = property.latitudePublic != null && property.longitudePublic != null
+      ? { latitude: property.latitudePublic, longitude: property.longitudePublic }
+      : getPublicCoordinates(property.id, property.latitudeExact, property.longitudeExact);
+
+    return ({
     id: property.id,
 
     propertyType: property.propertyType,
@@ -282,11 +286,9 @@ export async function searchProperties(
     yearBuilt: property.yearBuilt,
     floor: property.floor,
 
-    latitudePublic:
-      property.latitudePublic,
+    latitudePublic: publicCoordinates.latitude,
 
-    longitudePublic:
-      property.longitudePublic,
+    longitudePublic: publicCoordinates.longitude,
 
     salePrice:
       property.listing?.salePrice ?? null,
@@ -301,5 +303,6 @@ export async function searchProperties(
       (property.media.find((media) => media.type === "MAIN_IMAGE") ?? property.media[0])?.url ?? null,
 
     updatedAt: property.updatedAt,
-  }));
+  });
+  });
 }
