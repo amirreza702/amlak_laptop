@@ -251,7 +251,6 @@ model Customer {
 
   evaluations     Evaluation[]
   favorites       CustomerPropertyFavorite[]
-  agentFavorites  CustomerAgentFavorite[]
 
   searchRequests PropertySearchRequest[]
 
@@ -284,25 +283,6 @@ model CustomerPropertyFavorite {
   @@index([propertyId])
 
   @@map("customer_property_favorites")
-}
-
-// ============================================================
-// CUSTOMER AGENT FAVORITE
-// ============================================================
-
-model CustomerAgentFavorite {
-  id         String   @id @default(uuid())
-  customerId String
-  agentId    String
-  createdAt  DateTime @default(now())
-
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-
-  @@unique([customerId, agentId])
-  @@index([customerId, createdAt])
-  @@index([agentId])
-  @@map("customer_agent_favorites")
 }
 
 // ============================================================
@@ -396,7 +376,6 @@ model Agent {
 
   propertyAgents PropertyAgent[]
   evaluations    Evaluation[]
-  customerFavorites CustomerAgentFavorite[]
 
 
   ownerAgentRequestAccessLogs OwnerAgentRequestAccessLog[]
@@ -938,8 +917,7 @@ model Evaluation {
   @@index([type])
   @@index([agentId])
   @@index([propertyId])
-  @@unique([evaluatorUserId, propertyId, type])
-  @@unique([evaluatorUserId, agentId, type])
+  @@unique([evaluatorUserId, propertyId])
   @@map("evaluations")
 }
 

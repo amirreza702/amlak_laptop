@@ -87,3 +87,37 @@ export const findCustomerPropertyFavorites = async (
     },
   });
 };
+
+/** ایجاد علاقه‌مندی مشاور برای مشتری */
+export const createCustomerAgentFavorite = (customerId: string, agentId: string) =>
+  prisma.customerAgentFavorite.create({
+    data: { customerId, agentId },
+    include: { agent: { select: { id: true, firstName: true, lastName: true, agencyName: true } } },
+  });
+
+/** یافتن علاقه‌مندی مشاور */
+export const findCustomerAgentFavorite = (customerId: string, agentId: string) =>
+  prisma.customerAgentFavorite.findUnique({
+    where: { customerId_agentId: { customerId, agentId } },
+  });
+
+/** حذف علاقه‌مندی مشاور */
+export const deleteCustomerAgentFavorite = (customerId: string, agentId: string) =>
+  prisma.customerAgentFavorite.delete({
+    where: { customerId_agentId: { customerId, agentId } },
+  });
+
+/** دریافت مشاوران علاقه‌مندی‌شده */
+export const findCustomerAgentFavorites = (customerId: string) =>
+  prisma.customerAgentFavorite.findMany({
+    where: { customerId, agent: { user: { isActive: true } } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      agent: {
+        select: {
+          id: true, firstName: true, lastName: true, agencyName: true,
+          verificationStatus: true,
+        },
+      },
+    },
+  });

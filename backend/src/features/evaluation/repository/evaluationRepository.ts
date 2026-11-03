@@ -34,7 +34,7 @@ export const createEvaluation = async (
     return await prisma.evaluation.create({ data });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      throw new Error("User has already evaluated this property");
+      throw new Error("You have already evaluated this target");
     }
     throw error;
   }
@@ -218,12 +218,6 @@ export const findCustomerPropertyFavorite = async (customerId: string, propertyI
   return prisma.customerPropertyFavorite.findUnique({
     where: { customerId_propertyId: { customerId, propertyId } },
     select: { id: true },
-  });
-};
-
-export const findOwnerApprovedAgentForProperty = async (ownerId: string, propertyId: string, agentId: string) => {
-  return prisma.propertyAgent.findFirst({
-    where: { ownerAgentRequest: undefined } as never,
   });
 };
 

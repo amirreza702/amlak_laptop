@@ -63,12 +63,17 @@ export async function createEvaluationController(
       });
     }
 
-    if (error.message === "Property is not currently published") {
+    if (error.message === "You have already evaluated this target") {
       return res.status(409).json({ message: error.message });
     }
 
-    if (error.message === "User has already evaluated this property") {
-      return res.status(409).json({ message: error.message });
+    if (
+      error.message === "Agent must be in customer favorites before evaluation" ||
+      error.message === "Property must be in customer favorites before evaluation" ||
+      error.message === "Agent is not the owner-approved agent for this property" ||
+      error.message === "Agent can evaluate only properties they registered or were approved to represent"
+    ) {
+      return res.status(403).json({ message: error.message });
     }
 
     if (
