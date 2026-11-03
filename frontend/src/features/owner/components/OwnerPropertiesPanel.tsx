@@ -27,6 +27,7 @@ const ownerListingLabels: Record<string, string> = {
   PAUSED: "متوقف",
   SOLD: "فروخته‌شده",
   RENTED: "اجاره‌رفته",
+  DELETED: "حذف‌شده",
 };
 
 export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mobile: string }; mode?: "properties" | "agents" }) {
@@ -117,7 +118,7 @@ export function OwnerPropertiesPanel({ user, mode = "properties" }: { user: { mo
           <div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setEditingProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="submit" disabled={savingProperty} className="rounded-lg bg-[#043873] px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال ذخیره..." : "ذخیره تغییرات"}</button></div>
         </form>}
       </Modal>
-      <Modal open={Boolean(pendingDeleteProperty)} title="حذف ملک از فهرست فعال" description="ملک غیرفعال می‌شود؛ سوابق و اطلاعات وابسته حفظ می‌شوند." onClose={() => { if (!savingProperty) setPendingDeleteProperty(null); }}>
+      <Modal open={Boolean(pendingDeleteProperty)} title="حذف ملک و آگهی" description="ملک، آگهی و همکاری‌های فعال مشاوران حذف می‌شوند؛ سوابق مدیریتی و حسابرسی فقط برای هشتی و ادمین باقی می‌مانند." onClose={() => { if (!savingProperty) setPendingDeleteProperty(null); }}>
         <div className="space-y-4" dir="rtl">{actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}<p>آیا ملک «{pendingDeleteProperty?.property.city}، {pendingDeleteProperty?.property.district}» از فهرست فعال حذف شود؟</p><p className="break-all font-mono text-xs text-slate-500" dir="ltr">{pendingDeleteProperty?.propertyId}</p><div className="flex justify-end gap-2"><button type="button" disabled={savingProperty} onClick={() => setPendingDeleteProperty(null)} className="rounded-lg border px-4 py-2.5">انصراف</button><button type="button" disabled={savingProperty} onClick={() => void confirmPropertyDelete()} className="rounded-lg bg-red-700 px-4 py-2.5 font-bold text-white disabled:opacity-50">{savingProperty ? "در حال حذف..." : "تأیید حذف"}</button></div></div>
       </Modal>
     </section>
