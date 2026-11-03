@@ -3,7 +3,7 @@ import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
   agentId: string; userId: string; query?: string; city?: string; district?: string; address?: string;
-  propertyType?: PropertyType; transactionType?: TransactionType;
+  propertyType?: PropertyType; transactionType?: TransactionType; listingStatus?: ListingStatus;
   documentType?: DocumentType; ownershipType?: OwnershipType; landTenure?: LandTenure;
   areaMin?: number; areaMax?: number; roomsMin?: number; roomsMax?: number; floor?: number; totalUnits?: number; limit: number; offset: number;
 }
@@ -61,6 +61,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
       { listing: { is: null } },
       { listing: { is: { status: { notIn: [ListingStatus.PUBLISHED, ListingStatus.EXPIRED] } } } },
       { listing: { is: { status: ListingStatus.PUBLISHED } }, confirmUntil: { gt: now } },
+      // مشاورِ ایجادکننده، حتی پس از انقضای آگهی، برای مشاهده وضعیت و تمدید باید رکورد را ببیند.
+      { registrationSource: "AGENT", createdByUserId: input.userId },
       { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true } } },
     ],
   });
@@ -77,6 +79,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     } });
   }
   if (input.transactionType) fieldConditions.push({ listing: { is: { transactionType: input.transactionType } } });
+  if (input.listingStatus) fieldConditions.push({ listing: { is: { status: input.listingStatus } } });
 
   const searchConditions: Prisma.PropertyWhereInput[] = search ? [
     { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
