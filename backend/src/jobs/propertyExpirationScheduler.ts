@@ -12,7 +12,7 @@
  *
  * Scheduler
  *     ↓
- * هر ۱ دقیقه
+ * روزی یک‌بار
  *     ↓
  * Property Expiration Job
  *     ↓
@@ -32,7 +32,7 @@ import {
  * × 60 ثانیه
  * × 1000 میلی‌ثانیه
  */
-const ONE_MINUTE = 60 * 1000;
+const ONE_DAY = 24 * 60 * 60 * 1000;
 
 /**
  * شروع Scheduler انقضای ملک‌ها
@@ -42,7 +42,7 @@ export function startPropertyExpirationScheduler() {
     "[Property Expiration Scheduler] فعال شد."
   );
 
-  // یک اجرای فوری هنگام بالا آمدن Backend؛ سپس بررسی ساعتی.
+  // یک اجرای فوری هنگام بالا آمدن Backend؛ سپس بررسی روزانه.
   void expirePropertiesJob().catch((error) => {
     console.error("[Property Expiration Scheduler] خطا در اجرای اولیه:", error);
   });
@@ -61,6 +61,6 @@ export function startPropertyExpirationScheduler() {
         );
       }
     },
-    ONE_MINUTE
+    ONE_DAY
   );
 }
