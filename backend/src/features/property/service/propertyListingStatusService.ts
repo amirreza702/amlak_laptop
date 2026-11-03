@@ -170,8 +170,13 @@ export async function updatePropertyListingStatus(
    * وقتی Listing منتشر می‌شود،
    * publishedAt ثبت می‌شود.
    */
-  if (data.status === ListingStatus.PUBLISHED) {
-    updateData.publishedAt = new Date();
+  const approvalPublishedAt =
+    data.status === ListingStatus.PUBLISHED
+      ? new Date()
+      : undefined;
+
+  if (approvalPublishedAt) {
+    updateData.publishedAt = approvalPublishedAt;
     updateData.expiredAt = null;
   }
 
@@ -204,8 +209,9 @@ export async function updatePropertyListingStatus(
       if (
         data.status === ListingStatus.PUBLISHED
       ) {
+        // مهلت ۳۱روزه دقیقاً از همان لحظه تأیید و انتشار هشتی آغاز می‌شود.
         confirmUntil =
-          calculateConfirmUntil(new Date());
+          calculateConfirmUntil(approvalPublishedAt ?? new Date());
 
         await updateProperty(
           propertyId,
