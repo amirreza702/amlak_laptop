@@ -133,7 +133,7 @@ router.patch(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT),
   requireVerifiedAgent,
-  requirePropertyAccess("id", false, true, false),
+  requirePropertyAccess("id", false, true, true),
   renewPropertyListingController
 );
 
