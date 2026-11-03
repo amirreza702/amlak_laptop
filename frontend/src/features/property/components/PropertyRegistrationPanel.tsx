@@ -42,7 +42,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
   const {
     ownerMobile, setOwnerMobile, ownerFirstName, setOwnerFirstName, ownerLastName, setOwnerLastName,
     propertyType, setPropertyType,
-    transactionType, setTransactionType,
+    transactionType, setTransactionType, listingStatus, setListingStatus,
     city, setCity, district, setDistrict, address, setAddress,
     postalCode, setPostalCode, coordinates, setCoordinates,
     area, setArea, rooms, setRooms, floor, setFloor, details, setDetails,
@@ -111,6 +111,20 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
 
         </fieldset>
 
+        <fieldset disabled={listingCreated || busy} className="space-y-2 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
+          <legend className="px-2 text-base font-bold">۳. وضعیت آگهی</legend>
+          <label className="block space-y-1.5 text-sm font-semibold">وضعیت اولیه آگهی *
+            <select required value={listingStatus} onChange={(e) => setListingStatus(e.target.value as typeof listingStatus)} className={inputClass}>
+              <option value="PENDING_HASHTI_VERIFICATION">ارسال برای تأیید انتشار هشتی (پیش‌فرض)</option>
+              <option value="DRAFT">پیش‌نویس</option>
+              <option value="PAUSED">متوقف</option>
+              <option value="SOLD">فروخته‌شده</option>
+              <option value="RENTED">اجاره‌رفته</option>
+            </select>
+          </label>
+          <p className="text-xs leading-6 text-slate-500">انتشار عمومی فقط پس از تأیید هشتی انجام می‌شود. پیش‌نویس، آگهی متوقف، فروخته‌شده و اجاره‌رفته تصویر ندارند.</p>
+        </fieldset>
+
         <fieldset disabled={listingCreated || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
           <legend className="px-2 text-base font-bold">۲. نوع معامله و قیمت</legend>
           <label className="block space-y-1.5 text-sm font-semibold"><span aria-hidden="true" className="ml-1 text-red-600">*</span>نوع معامله
@@ -172,7 +186,7 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
 
 
 
-        {createdPropertyId ? <PropertyMediaEditor propertyId={createdPropertyId} /> : (
+        {createdPropertyId && !["DRAFT", "PAUSED", "SOLD", "RENTED"].includes(listingStatus) ? <PropertyMediaEditor propertyId={createdPropertyId} /> : createdPropertyId ? <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">برای وضعیت انتخاب‌شده بارگذاری تصویر غیرفعال است.</p> : (
           <section className="space-y-2 rounded-xl border border-dashed border-slate-300 p-4">
             <button type="button" disabled className="cursor-not-allowed rounded-lg bg-slate-300 px-4 py-2 text-sm font-bold text-slate-600">بارگذاری تصویر</button>
             <p className="text-xs text-slate-500">پس از ثبت مشخصات اولیه ملک، دکمه بارگذاری فعال می‌شود تا تصاویر به همان ملک متصل شوند.</p>
