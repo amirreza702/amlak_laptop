@@ -74,7 +74,7 @@ export async function queuePropertyListingForHashtiReview(
 ) {
   const apply = async (tx: Prisma.TransactionClient) => {
     const listing = await findPropertyListingByPropertyId(propertyId, tx);
-    if (!listing || listing.status === ListingStatus.PENDING_HASHTI_VERIFICATION) {
+    if (!listing || listing.status !== ListingStatus.PUBLISHED) {
       return { queued: false, listing };
     }
 
