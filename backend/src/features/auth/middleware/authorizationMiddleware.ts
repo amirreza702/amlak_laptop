@@ -113,6 +113,7 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
         select: {
           registrationSource: true,
           createdByUserId: true,
+          deletedAt: true,
           owners: {
             where: { owner: { is: { userId: user.id } } },
             select: { ownerId: true },
@@ -129,6 +130,8 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
           },
         },
       });
+
+      if (property?.deletedAt) return res.status(403).json({ message: "This property has been deleted" });
 
       const allowed = Boolean(
         property &&
@@ -167,9 +170,9 @@ export function requirePropertyCreator(paramName = "id") {
     try {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
-        select: { createdByUserId: true },
+        select: { createdByUserId: true, deletedAt: true },
       });
-      if (!property || property.createdByUserId !== user.id) {
+      if (!property || property.deletedAt || property.createdByUserId !== user.id) {
         return res.status(403).json({ message: "Only the property creator can edit or delete this property" });
       }
       return next();
@@ -205,6 +208,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
         where: { id: propertyId },
         select: {
           createdByUserId: true,
+          deletedAt: true,
           confirmUntil: true,
           listing: { select: { status: true } },
           owners: {
@@ -224,7 +228,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
         },
       });
 
-      if (!property) {
+      if (!property || property.deletedAt) {
         return res.status(403).json({ message: "You do not have access to this property" });
       }
 
