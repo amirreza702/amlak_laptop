@@ -179,7 +179,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
   async function deleteOwnerProperty() {
     if (!deletingPropertyId) return;
     setActionError(null); setActionMessage(null);
-    try { await agentApiRequest(`/agents/me/properties/${encodeURIComponent(deletingPropertyId)}`, { method: "DELETE" }); setDeletingPropertyId(null); setActionMessage("ملک از فهرست فعال خارج شد؛ سوابق آن حفظ شده‌اند."); await load(pagination.offset); }
+    try { await agentApiRequest(`/agents/me/properties/${encodeURIComponent(deletingPropertyId)}`, { method: "DELETE" }); setDeletingPropertyId(null); setActionMessage("ملک، آگهی و همکاری‌های فعال حذف شدند؛ سوابق مدیریتی و حسابرسی حفظ شده‌اند."); await load(pagination.offset); }
     catch (cause) { setActionError(cause instanceof Error ? cause.message : "حذف ملک ناموفق بود."); }
   }
 
@@ -306,7 +306,7 @@ export function AgentPropertyManagementPanel({ notes, savingNoteKey, saveNote, n
           </div>
         </div>
       </Modal>
-      <Modal open={Boolean(deletingPropertyId)} title="حذف ملک از فهرست فعال" description="اطلاعات و سوابق ملک پاک نمی‌شوند؛ فقط از فهرست فعال خارج می‌شود." onClose={() => setDeletingPropertyId(null)}>
+      <Modal open={Boolean(deletingPropertyId)} title="حذف ملک و آگهی" description="ملک، آگهی و همکاری‌های فعال مشاوران حذف می‌شوند؛ سوابق مدیریتی و حسابرسی فقط برای هشتی و ادمین باقی می‌مانند." onClose={() => setDeletingPropertyId(null)}>
         <div className="space-y-3">
           {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
           <div className="flex justify-end gap-2"><button type="button" onClick={()=>setDeletingPropertyId(null)} className="rounded-lg border px-4 py-2">انصراف</button><button type="button" onClick={()=>void deleteOwnerProperty()} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white">تأیید حذف</button></div>
