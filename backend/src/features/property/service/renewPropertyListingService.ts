@@ -1,7 +1,6 @@
-import { ListingStatus, PropertyHistoryAction, UserRole } from "@prisma/client";
+import { ListingStatus, UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
-
-const LISTING_VALIDITY_DAYS = 31;
+import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 export async function renewExpiredPropertyListing(propertyId: string, actor: { id: string; role: string }) {
   const property = await prisma.property.findUnique({
@@ -35,29 +34,29 @@ export async function renewExpiredPropertyListing(propertyId: string, actor: { i
   if (!property.isActive) throw new Error("INACTIVE_PROPERTY_CANNOT_BE_RENEWED");
   if (property.listing.status !== ListingStatus.EXPIRED) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
 
-  const now = new Date();
-  const confirmUntil = new Date(now);
-  confirmUntil.setDate(confirmUntil.getDate() + LISTING_VALIDITY_DAYS);
-
   return prisma.$transaction(async (tx) => {
-    const changed = await tx.propertyListing.updateMany({
-      where: { id: property.listing!.id, status: ListingStatus.EXPIRED },
-      data: { status: ListingStatus.PUBLISHED, publishedAt: now, expiredAt: null },
+    const queued = await queuePropertyListingForHashtiReview(propertyId, tx, actor.id);
+    if (!queued.queued || !queued.listing) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
+
+    const recipients = await tx.user.findMany({
+      where: { role: UserRole.HASHTI, isActive: true },
+      select: { id: true },
     });
-    if (changed.count !== 1) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
-    const listing = await tx.propertyListing.findUniqueOrThrow({ where: { id: property.listing!.id } });
-    await tx.property.update({ where: { id: propertyId }, data: { confirmUntil } });
-    await tx.propertyHistory.create({
-      data: {
-        propertyId,
-        action: PropertyHistoryAction.LISTING_CHANGED,
-        field: "listing.status",
-        oldValue: ListingStatus.EXPIRED,
-        newValue: ListingStatus.PUBLISHED,
-        performedBy: actor.id,
-        reason: "تمدید انتشار آگهی برای ۳۱ روز",
-      },
-    });
-    return { listing, confirmUntil };
+    if (recipients.length) {
+      await tx.notification.createMany({
+        data: recipients.map((recipient) => ({
+          userId: recipient.id,
+          title: "تمدید آگهی در انتظار تأیید هشتی",
+          message: "یک آگهی منقضی‌شده برای بررسی و تأیید مجدد انتشار به صف هشتی بازگشته است.",
+          details: {
+            propertyId,
+            action: "RENEWAL_PENDING_HASHTI_APPROVAL",
+            occurredAt: new Date().toISOString(),
+          },
+        })),
+      });
+    }
+
+    return { listing: queued.listing, requiresHashtiApproval: true };
   });
 }
