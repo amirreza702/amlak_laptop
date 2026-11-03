@@ -23,6 +23,7 @@ import { useHashtiAuditLogs } from "@/features/hashti/hooks/useHashtiAuditLogs";
 import { UserNotificationsPanel } from "@/features/notification/components/UserNotificationsPanel";
 import { HashtiUserManagementPanel } from "./HashtiUserManagementPanel";
 import { HashtiPropertyAdminToolsPanel } from "./HashtiPropertyAdminToolsPanel";
+import { HashtiDuplicateReviewQueuePanel } from "./HashtiDuplicateReviewQueuePanel";
 import { formatPersianDateTime } from "@/shared/utils/date";
 import { Modal } from "@/shared/components/Modal";
 import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
@@ -83,6 +84,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             ["user-management", "مدیریت کاربران"],
             ["agent-management", "مدیریت مشاوران"],
             ["property-management", "مدیریت املاک"],
+            ["duplicate-review", "بررسی مشابهت"],
             ["reports", "گزارش‌ها و سوابق"],
             ["profile", "پروفایل"],
             ["notifications", "اعلان‌ها"],
@@ -161,6 +163,10 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             </table>
           </div>
         )}
+      </section>
+
+      <section id="duplicate-review" hidden={selectedTool !== "duplicate-review"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <HashtiDuplicateReviewQueuePanel />
       </section>
 
       <section id="duplicate-management" hidden={selectedTool !== "property-management"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

@@ -57,3 +57,31 @@ export interface AdminAuditLog {
   userAgent: string | null;
   createdAt: string;
 }
+
+
+export interface DuplicateReviewQueueCandidate {
+  id: string;
+  propertyType: string;
+  city: string;
+  district: string;
+  area: number | null;
+  rooms: number | null;
+}
+
+export interface DuplicateReviewQueueItem extends DuplicateReview {
+  candidateProperty: DuplicateReviewQueueCandidate;
+}
+
+export interface DuplicateReviewQueueProperty {
+  property: {
+    id: string;
+    propertyType: string;
+    city: string;
+    district: string;
+    area: number | null;
+    rooms: number | null;
+    listing: { status: string } | null;
+  };
+  maximumSimilarityScore: number;
+  reviews: DuplicateReviewQueueItem[];
+}

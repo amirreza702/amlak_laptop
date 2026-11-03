@@ -18,6 +18,7 @@ import type {
   AdminAuditLog,
   DuplicateMatch,
   DuplicateReview,
+  DuplicateReviewQueueProperty,
   ExactLocationLog,
   ManagedAgent,
 } from "@/features/hashti/types/hashti";
@@ -64,4 +65,15 @@ export async function resetHashtiUserPassword(userId: string, newPassword: strin
 
 export async function getHashtiExactLocationAccessLogs(propertyId: string): Promise<{ accessLogs: ExactLocationLog[] }> {
   return requestJson("/properties/" + encodeURIComponent(propertyId) + "/exact-location-access-logs");
+}
+
+
+export async function getHashtiDuplicateReviewQueue(): Promise<{ properties: DuplicateReviewQueueProperty[] }> {
+  return requestJson("/hashti/duplicate-review-queue");
+}
+
+export async function publishHashtiPropertyAfterDuplicateReview(propertyId: string): Promise<{ published: boolean }> {
+  return requestJson("/hashti/properties/" + encodeURIComponent(propertyId) + "/publish-after-duplicate-review", {
+    method: "PATCH",
+  });
 }
