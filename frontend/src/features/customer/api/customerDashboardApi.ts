@@ -155,3 +155,26 @@ export async function updateCustomerProfile(
   );
   return parseResponse<{ id: string; firstName: string; lastName: string }>(response, "ویرایش پروفایل انجام نشد.");
 }
+
+
+export interface CustomerAgentFavoriteRecord {
+  id: string;
+  customerId: string;
+  agentId: string;
+  createdAt: string;
+  agent: { id: string; firstName: string; lastName: string; agencyName: string | null; verificationStatus: string };
+}
+
+export async function getCustomerFavoriteAgents(customerId: string): Promise<CustomerAgentFavoriteRecord[]> {
+  const response = await fetch(`${API_URL}/customers/${encodeURIComponent(customerId)}/favorite-agents`, {
+    credentials: "include", cache: "no-store",
+  });
+  return parseResponse<CustomerAgentFavoriteRecord[]>(response, "دریافت مشاوران علاقه‌مندی‌شده انجام نشد.");
+}
+
+export async function removeCustomerAgentFavorite(customerId: string, agentId: string): Promise<void> {
+  const response = await fetch(`${API_URL}/customers/${encodeURIComponent(customerId)}/favorite-agents/${encodeURIComponent(agentId)}`, {
+    method: "DELETE", credentials: "include",
+  });
+  await parseResponse<unknown>(response, "حذف مشاور از علاقه‌مندی‌ها انجام نشد.");
+}

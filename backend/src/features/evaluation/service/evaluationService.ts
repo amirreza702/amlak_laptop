@@ -690,12 +690,3 @@ const normalizeComment = (
     ? undefined
     : value;
 };
-
-export async function getEvaluationStatusService(
-  evaluatorUserId: string,
-  type: EvaluationType,
-  target: { agentId?: string; propertyId?: string },
-) {
-  if (!target.agentId && !target.propertyId) throw new Error("Evaluation target is required");
-  return findEvaluationByEvaluatorAndTarget(evaluatorUserId, type, target);
-}

@@ -29,6 +29,7 @@ import type { CustomerSearchRequestRecord } from "../api/customerDashboardApi";
 import {
   closeCustomerSearchRequest,
   removeCustomerFavorite,
+  removeCustomerAgentFavorite,
   updateCustomerProfile,
   updateCustomerSearchRequest,
 } from "../api/customerDashboardApi";
@@ -37,6 +38,7 @@ import {
 } from "@/features/notification/api/notificationApi";
 import { Modal } from "@/shared/components/Modal";
 import { CustomerSearchRequestPage } from "./CustomerSearchRequestPage";
+import { EvaluationControl } from "@/shared/components/EvaluationControl";
 
 type DashboardTab = "requests" | "favorites" | "notifications" | "profile";
 
@@ -78,7 +80,7 @@ export function CustomerDashboard() {
   const [favoritesSearch, setFavoritesSearch] = useState("");
   const [notificationsSearch, setNotificationsSearch] = useState("");
   const {
-    user, profile, setProfile, requests, favorites, notifications, setNotifications,
+    user, profile, setProfile, requests, favorites, agentFavorites, notifications, setNotifications,
     loading, pageError, actionMessage, setActionMessage,
     actionError, setActionError, busyId, setBusyId, editingId, setEditingId,
     editValues, setEditValues, firstName, setFirstName, lastName, setLastName, refreshData,
@@ -99,6 +101,7 @@ export function CustomerDashboard() {
   const activeCount = useMemo(() => requests.filter((request) => request.status === "ACTIVE").length, [requests]);
   const unreadCount = useMemo(() => notifications.filter((notification) => !notification.isRead).length, [notifications]);
   const visibleFavorites = useMemo(() => favorites.filter((item) => JSON.stringify(item).toLocaleLowerCase().includes(favoritesSearch.trim().toLocaleLowerCase())), [favorites, favoritesSearch]);
+  const visibleAgentFavorites = useMemo(() => agentFavorites.filter((item) => JSON.stringify(item).toLocaleLowerCase().includes(favoritesSearch.trim().toLocaleLowerCase())), [agentFavorites, favoritesSearch]);
   const visibleNotifications = useMemo(() => notifications.filter((item) => JSON.stringify(item).toLocaleLowerCase().includes(notificationsSearch.trim().toLocaleLowerCase())), [notifications, notificationsSearch]);
 
   const markNotificationRead = async (notificationId: string) => {
@@ -171,7 +174,7 @@ export function CustomerDashboard() {
 
   const tabItems: Array<{ id: DashboardTab; label: string; count?: number; icon: typeof FileText }> = [
     { id: "requests", label: "درخواست‌های من", count: requests.length, icon: FileText },
-    { id: "favorites", label: "علاقه‌مندی‌ها", count: favorites.length, icon: Heart },
+    { id: "favorites", label: "علاقه‌مندی‌ها", count: favorites.length + agentFavorites.length, icon: Heart },
     { id: "notifications", label: "اعلان‌ها", count: unreadCount, icon: Bell },
     { id: "profile", label: "پروفایل", icon: UserRound },
   ];
@@ -266,7 +269,42 @@ export function CustomerDashboard() {
             )}
 
             {tab === "favorites" && (
-              <div className="space-y-3"><input value={favoritesSearch} onChange={(event) => setFavoritesSearch(event.target.value)} aria-label="جست‌وجو در علاقه‌مندی‌ها" placeholder="جست‌وجو در شناسه، شهر، مشخصات و قیمت ملک..." className={inputClass} /><div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">{favorites.length === 0 ? <div className="p-6"><EmptyState text="هنوز ملکی به علاقه‌مندی‌ها اضافه نکرده‌اید." action={<Link href="/search" className="font-bold text-[#043873] underline">جست‌وجوی ملک</Link>} /></div> : <table className="w-full min-w-[850px] text-right text-sm"><thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">قیمت</th><th className="p-3">عملیات</th></tr></thead><tbody>{visibleFavorites.map((favorite) => <RecordDetailsRow key={favorite.id} record={favorite} title="رکورد" className="border-t border-slate-200 align-top"><td className="p-3"><p className="font-bold">{favorite.property ? `${propertyLabel(favorite.property.propertyType)} در ${favorite.property.city}` : "آگهی غیرفعال"}</p><p className="mt-1 break-all font-mono text-xs text-slate-400" dir="ltr">{favorite.propertyId}</p></td><td className="p-3">{favorite.property ? <p>{favorite.property.district} · {favorite.property.area ?? "—"} متر · {favorite.property.rooms ?? "—"} اتاق</p> : <p className="text-slate-500">این آگهی دیگر در فهرست عمومی فعال نیست.</p>}</td><td className="p-3 font-semibold text-[#043873]">{favorite.property ? money(favorite.property.listing.salePrice ?? favorite.property.listing.depositAmount ?? favorite.property.listing.rentAmount) : "—"}</td><td className="p-3"><div className="flex flex-wrap gap-2">{favorite.property && <Link href={`/property/${encodeURIComponent(favorite.propertyId)}`} className="whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold text-[#043873] underline">مشاهده ملک</Link>}<button type="button" disabled={busyId === favorite.propertyId} onClick={() => setConfirmAction({ kind: "remove-favorite", id: favorite.propertyId })} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"><Heart className="h-4 w-4" /> حذف</button></div></td></RecordDetailsRow>)}</tbody></table>}</div></div>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-base font-bold">املاک علاقه‌مندی‌شده</h2>
+                  <input value={favoritesSearch} onChange={(event) => setFavoritesSearch(event.target.value)} aria-label="جست‌وجو در علاقه‌مندی‌ها" placeholder="جست‌وجو در شهر، مشخصات و قیمت..." className={inputClass} />
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                    {favorites.length === 0 ? <div className="p-6"><EmptyState text="هنوز ملکی به علاقه‌مندی‌ها اضافه نکرده‌اید." action={<Link href="/search" className="font-bold text-[#043873] underline">جست‌وجوی ملک</Link>} /></div> : (
+                      <table className="w-full min-w-[950px] text-right text-sm">
+                        <thead className="bg-slate-100"><tr><th className="p-3">ملک</th><th className="p-3">مشخصات</th><th className="p-3">قیمت</th><th className="p-3">ارزش‌گذاری</th><th className="p-3">عملیات</th></tr></thead>
+                        <tbody>{visibleFavorites.map((favorite) => <RecordDetailsRow key={favorite.id} record={favorite} title="رکورد" className="border-t border-slate-200 align-top">
+                          <td className="p-3"><p className="font-bold">{favorite.property ? `${propertyLabel(favorite.property.propertyType)} در ${favorite.property.city}` : "آگهی غیرفعال"}</p><p className="mt-1 text-xs text-slate-500">{favorite.property?.district ?? "—"}</p></td>
+                          <td className="p-3">{favorite.property ? `${favorite.property.area ?? "—"} متر · ${favorite.property.rooms ?? "—"} اتاق` : "جزئیات عمومی در دسترس نیست"}</td>
+                          <td className="p-3 font-semibold text-[#043873]">{favorite.property ? money(favorite.property.listing.salePrice ?? favorite.property.listing.depositAmount ?? favorite.property.listing.rentAmount) : "—"}</td>
+                          <td className="p-3">{favorite.property && <EvaluationControl type="CUSTOMER_TO_PROPERTY" propertyId={favorite.propertyId} />}</td>
+                          <td className="p-3"><div className="flex flex-wrap gap-2">{favorite.property && <Link href={`/property/${encodeURIComponent(favorite.propertyId)}`} className="whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold text-[#043873] underline">مشاهده ملک</Link>}<button type="button" disabled={busyId === favorite.propertyId} onClick={() => setConfirmAction({ kind: "remove-favorite", id: favorite.propertyId })} className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"><Heart className="h-4 w-4" /> حذف</button></div></td>
+                        </RecordDetailsRow>)}</tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h2 className="text-base font-bold">مشاوران علاقه‌مندی‌شده</h2>
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                    {agentFavorites.length === 0 ? <p className="p-5 text-sm text-slate-500">هنوز مشاوری به فهرست علاقه‌مندی‌ها اضافه نشده است.</p> : (
+                      <table className="w-full min-w-[760px] text-right text-sm">
+                        <thead className="bg-slate-100"><tr><th className="p-3">مشاور</th><th className="p-3">آژانس</th><th className="p-3">ارزش‌گذاری</th><th className="p-3">عملیات</th></tr></thead>
+                        <tbody>{visibleAgentFavorites.map((favorite) => <RecordDetailsRow key={favorite.id} record={favorite} title="مشاور" className="border-t border-slate-200 align-top">
+                          <td className="p-3 font-semibold">{favorite.agent.firstName} {favorite.agent.lastName}</td>
+                          <td className="p-3">{favorite.agent.agencyName || "—"}</td>
+                          <td className="p-3"><EvaluationControl type="CUSTOMER_TO_AGENT" agentId={favorite.agentId} /></td>
+                          <td className="p-3"><button type="button" disabled={busyId === favorite.agentId} onClick={() => void runAction(favorite.agentId, async () => { if (!profile) return; await removeCustomerAgentFavorite(profile.id, favorite.agentId); setActionMessage("مشاور از علاقه‌مندی‌ها حذف شد."); })} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50">حذف از علاقه‌مندی</button></td>
+                        </RecordDetailsRow>)}</tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
 
             {tab === "notifications" && (
