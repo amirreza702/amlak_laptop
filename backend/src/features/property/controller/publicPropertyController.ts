@@ -1,27 +1,22 @@
 import type { Request, Response } from "express";
 
 import { getPublishedPublicPropertyById } from "../service/publicPropertyService";
-import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 /**
  * GET /properties/:id/public
  *
- * این Endpoint فقط داده‌های قابل نمایش عمومی آگهی را برمی‌گرداند.
- * Endpoint جزئیات احراز هویت‌شده قبلی بدون تغییر باقی می‌ماند.
+ * این Endpoint همیشه فقط داده‌های عمومی آگهی را برمی‌گرداند؛
+ * نقش و هویت نشست کاربر در پاسخ جستجو دخالت ندارد.
+ * Endpoint جزئیات احراز هویت‌شده پنل‌ها بدون تغییر باقی می‌ماند.
  */
 export async function getPublicPropertyByIdController(
   req: Request<{ id: string }>,
   res: Response
 ) {
   try {
-    const user = (req as AuthenticatedRequest).user;
-    // پاسخ شخصی‌سازی‌شده نباید در cache مشترک بین مالک، مشاور و بازدیدکننده ذخیره شود.
+    // پاسخ عمومی و یکسان است؛ برای جلوگیری از ذخیره پاسخ در cache مشترک، no-store حفظ می‌شود.
     res.setHeader("Cache-Control", "private, no-store");
-    res.vary("Cookie");
-    const property = await getPublishedPublicPropertyById(
-      req.params.id,
-      user ? { id: user.id, role: user.role } : undefined
-    );
+    const property = await getPublishedPublicPropertyById(req.params.id);
     const apiBase = (process.env.PUBLIC_API_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
     return res.status(200).json({
       ...property,
