@@ -200,6 +200,7 @@ model User {
   agent    Agent?
   createdSearchRequests PropertySearchRequest[] @relation("SearchRequestCreator")
   createdProperties Property[] @relation("PropertyCreator")
+  addedPropertyOwnerRelations PropertyOwner[] @relation("PropertyOwnerAddedBy")
   createdOwners Owner[] @relation("OwnerCreator")
   createdCustomers Customer[] @relation("CustomerCreator")
 
@@ -624,15 +625,21 @@ model PropertyOwner {
 
   isPrimary Boolean @default(false)
 
+  // Snapshot کاربری که رابطه مالکیت را ایجاد کرده است.
+  addedByUserId String?
+  addedByRole   UserRole?
+  addedByMobile String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner      Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  addedByUser User?   @relation("PropertyOwnerAddedBy", fields: [addedByUserId], references: [id], onDelete: SetNull)
 
   @@id([propertyId, ownerId])
   @@index([ownerId])
+  @@index([addedByUserId])
   @@map("property_owners")
 }
 
