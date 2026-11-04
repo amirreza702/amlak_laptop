@@ -85,14 +85,16 @@ export async function updatePropertyPrice(
   if (!allowedTransactionTypes.includes(data.transactionType)) {
     throw new Error("نوع معامله معتبر نیست.");
   }
-  const selectedPrice = data.transactionType === TransactionType.SALE
-    ? data.salePrice
+  const selectedPrices = data.transactionType === TransactionType.SALE
+    ? [data.salePrice]
     : data.transactionType === TransactionType.FULL_DEPOSIT
-      ? data.depositAmount
-      : data.rentAmount;
-  if (typeof selectedPrice !== "string" || !/^[0-9]+$/.test(selectedPrice) ||
-      !Number.isFinite(Number(selectedPrice)) || Number(selectedPrice) <= 0) {
-    throw new Error("مبلغ معامله باید یک عدد صحیح مثبت به تومان باشد.");
+      ? [data.depositAmount]
+      : data.transactionType === TransactionType.RENT
+        ? [data.rentAmount]
+        : [data.depositAmount, data.rentAmount];
+  if (selectedPrices.some((value) => typeof value !== "string" || !/^[0-9]+$/.test(value) ||
+      !Number.isFinite(Number(value)) || Number(value) <= 0)) {
+    throw new Error("همه مبالغ مربوط به نوع معامله باید عدد صحیح مثبت به تومان باشند.");
   }
 
   if (
