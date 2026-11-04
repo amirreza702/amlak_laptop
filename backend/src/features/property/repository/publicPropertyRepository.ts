@@ -4,8 +4,8 @@ import { prisma } from "../../../lib/prisma";
  * دریافت جزئیات فقط از آگهی‌های عمومی منتشرشده.
  *
  * این Query عمداً مختصات دقیق، نشانی، کد پستی،
- * اطلاعات مدیریتی و سوابق داخلی را برنمی‌گرداند.
- * روابط تماس فقط برای ساخت contact عمومی در Service انتخاب می‌شوند.
+ * اطلاعات هویتی مالک و سوابق داخلی را برنمی‌گرداند.
+ * روابط لازم فقط برای تعیین مخاطب عمومی آگهی انتخاب می‌شوند.
  */
 export async function findPublishedPublicPropertyById(id: string) {
   return prisma.property.findFirst({
@@ -13,16 +13,12 @@ export async function findPublishedPublicPropertyById(id: string) {
       id,
       isActive: true,
       listing: {
-        status: { in: ["PUBLISHED", "EXPIRED"] },
+        status: "PUBLISHED",
       },
     },
     select: {
       id: true,
       registrationSource: true,
-      createdByUserId: true,
-      ownerFirstName: true,
-      ownerLastName: true,
-      ownerMobile: true,
       propertyType: true,
       city: true,
       district: true,
@@ -53,15 +49,10 @@ export async function findPublishedPublicPropertyById(id: string) {
       isActive: true,
       listing: {
         select: {
-          id: true,
-          propertyId: true,
           transactionType: true,
           salePrice: true,
           depositAmount: true,
           rentAmount: true,
-          status: true,
-          publishedAt: true,
-          confirmUntil: true,
         },
       },
       owners: {
@@ -71,7 +62,6 @@ export async function findPublishedPublicPropertyById(id: string) {
           addedByRole: true,
           owner: {
             select: {
-              userId: true,
               firstName: true,
               lastName: true,
               user: { select: { mobile: true } },
@@ -80,8 +70,7 @@ export async function findPublishedPublicPropertyById(id: string) {
         },
       },
       agents: {
-        // رابطه ثبت‌کننده نخست حتی در صورت لغو ارتباط خوانده می‌شود؛
-        // در سرویس هرگز به مشاور دیگری به‌عنوان جایگزین او fallback نمی‌کنیم.
+        // مخاطب عمومی آگهی مشاورمحور فقط مشاور ثبت‌کننده نخست است.
         orderBy: [
           { isFirstRegistrant: "desc" },
           { registeredAt: "asc" },
@@ -90,11 +79,8 @@ export async function findPublishedPublicPropertyById(id: string) {
           status: true,
           isFirstRegistrant: true,
           approvedByOwner: true,
-          approvedByOwnerId: true,
           agent: {
             select: {
-              id: true,
-              userId: true,
               firstName: true,
               lastName: true,
               user: { select: { mobile: true } },
@@ -110,7 +96,6 @@ export async function findPublishedPublicPropertyById(id: string) {
           sortOrder: "asc",
         },
         select: {
-          id: true,
           type: true,
           url: true,
           sortOrder: true,
