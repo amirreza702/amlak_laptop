@@ -138,12 +138,12 @@ export async function createPropertyListingWithInitialPrice(
       : null;
 
   const depositAmount =
-    data.transactionType === TransactionType.FULL_DEPOSIT
+    data.transactionType === TransactionType.FULL_DEPOSIT || data.transactionType === TransactionType.DEPOSIT_AND_RENT
       ? data.depositAmount ?? null
       : null;
 
   const rentAmount =
-    data.transactionType === TransactionType.RENT
+    data.transactionType === TransactionType.RENT || data.transactionType === TransactionType.DEPOSIT_AND_RENT
       ? data.rentAmount ?? null
       : null;
 
