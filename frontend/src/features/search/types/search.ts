@@ -1,4 +1,4 @@
-export type TransactionType = "خرید" | "رهن کامل" | "اجاره" | "رهن و اجاره";
+export type TransactionType = "فروش" | "رهن کامل" | "اجاره" | "رهن و اجاره";
 export type PropertyType = "آپارتمان" | "خانه" | "ویلا" | "زمین" | "مغازه" | "اداری" | "باغ";
 
 export interface PropertySearchResult {
