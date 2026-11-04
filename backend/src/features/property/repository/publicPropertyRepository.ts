@@ -44,8 +44,6 @@ export async function findPublishedPublicPropertyById(id: string) {
       renovationStatus: true,
       renovationYear: true,
       occupancyStatus: true,
-      latitudePublic: true,
-      longitudePublic: true,
       isActive: true,
       listing: {
         select: {

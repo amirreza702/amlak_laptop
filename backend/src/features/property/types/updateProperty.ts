@@ -28,14 +28,6 @@ export interface UpdatePropertyInput {
 
   longitudeExact?: number;
 
-  /**
-   * مختصات عمومی می‌تواند Nullable باشد،
-   * چون ممکن است هنوز برای نمایش عمومی تعیین نشده باشد.
-   */
-  latitudePublic?: number | null;
-
-  longitudePublic?: number | null;
-
   area?: number | null;
 
   rooms?: number | null;

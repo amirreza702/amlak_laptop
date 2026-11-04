@@ -78,8 +78,6 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
         postalCode: true,
         latitudeExact: true,
         longitudeExact: true,
-        latitudePublic: true,
-        longitudePublic: true,
         area: true,
         rooms: true,
         floor: true,

@@ -1,28 +1,28 @@
+import { createHash } from "node:crypto";
+
 /**
- * Generate stable, slightly displaced public coordinates.
+ * Create stable public coordinates for one listing.
  *
- * Exact property coordinates must never be returned by public search.
- * A deterministic offset keeps the marker stable between requests while
- * separating it from the property's exact location.
+ * The listing ID seeds a deterministic pseudo-random point that is
+ * uniformly distributed across a disk with a maximum radius of 200m.
+ * The generated point is stored on PropertyListing and is not exposed
+ * as an input to public APIs.
  */
 export function getPublicCoordinates(
-  propertyId: string,
+  listingId: string,
   latitudeExact: number,
   longitudeExact: number
 ): { latitude: number; longitude: number } {
-  let hash = 2166136261;
+  const seed = createHash("md5").update(listingId).digest();
+  const angleFraction = seed.readUInt32BE(0) / 0xffffffff;
+  const radiusFraction = seed.readUInt32BE(4) / 0xffffffff;
 
-  for (let index = 0; index < propertyId.length; index += 1) {
-    hash ^= propertyId.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  const normalized = (hash >>> 0) / 0xffffffff;
-  const angle = normalized * Math.PI * 2;
-  const distanceMeters = 120 + ((hash >>> 8) % 101);
+  const angle = angleFraction * Math.PI * 2;
+  // sqrt makes points uniform by area, not clustered toward the center.
+  const distanceMeters = Math.sqrt(radiusFraction) * 200;
   const latitudeRadians = (latitudeExact * Math.PI) / 180;
   const metersPerDegree = 111_320;
-  const longitudeScale = Math.max(Math.cos(latitudeRadians), 0.2);
+  const longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadians)), 0.2);
 
   const latitude = latitudeExact +
     (Math.cos(angle) * distanceMeters) / metersPerDegree;
@@ -30,7 +30,7 @@ export function getPublicCoordinates(
     (Math.sin(angle) * distanceMeters) / (metersPerDegree * longitudeScale);
 
   return {
-    latitude: Number(latitude.toFixed(5)),
-    longitude: Number(longitude.toFixed(5)),
+    latitude: Number(latitude.toFixed(6)),
+    longitude: Number(longitude.toFixed(6)),
   };
 }

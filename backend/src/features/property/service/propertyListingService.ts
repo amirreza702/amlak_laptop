@@ -43,6 +43,7 @@ import {
 import {
   findPropertyListingByPropertyId,
   createPropertyListing,
+  updatePropertyListing,
 } from "../repository/propertyListingRepository";
 
 import { createPriceHistory } from "../repository/priceHistoryRepository";
@@ -50,6 +51,7 @@ import { createPriceHistory } from "../repository/priceHistoryRepository";
 import type { UpdatePropertyPriceInput } from "../types/updatePropertyPrice";
 
 import { prisma } from "../../../lib/prisma";
+import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 
 /**
  * ============================================================
@@ -167,7 +169,15 @@ export async function createPropertyListingWithInitialPrice(
        * ایجاد Listing
        * ------------------------------------------------------
        */
-      const listing = await createPropertyListing(
+      const propertyLocation = await tx.property.findUnique({
+        where: { id: propertyId },
+        select: { latitudeExact: true, longitudeExact: true },
+      });
+      if (!propertyLocation) {
+        throw new Error("ملک مورد نظر برای ایجاد آگهی پیدا نشد.");
+      }
+
+      const createdListing = await createPropertyListing(
         {
           propertyId,
           transactionType: data.transactionType,
@@ -175,6 +185,20 @@ export async function createPropertyListingWithInitialPrice(
           salePrice,
           depositAmount,
           rentAmount,
+        },
+        tx
+      );
+
+      const publicCoordinates = getPublicCoordinates(
+        createdListing.id,
+        propertyLocation.latitudeExact,
+        propertyLocation.longitudeExact
+      );
+      const listing = await updatePropertyListing(
+        createdListing.id,
+        {
+          latitudePublic: publicCoordinates.latitude,
+          longitudePublic: publicCoordinates.longitude,
         },
         tx
       );

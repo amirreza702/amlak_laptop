@@ -56,6 +56,7 @@ import type { UpdatePropertyInput } from "../types/updateProperty";
 
 import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
+import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 /**
@@ -240,19 +241,6 @@ export async function registerProperty(
       );
     }
 
-    // مختصات عمومیِ تقریبی را با شناسه ثابت خود ملک تولید می‌کنیم.
-    if (property.latitudePublic == null || property.longitudePublic == null) {
-      const publicCoordinates = getPublicCoordinates(
-        property.id,
-        property.latitudeExact,
-        property.longitudeExact
-      );
-      property = await updateProperty(property.id, {
-        latitudePublic: publicCoordinates.latitude,
-        longitudePublic: publicCoordinates.longitude,
-      }, tx);
-    }
-
     if (isOwnerRegistration) {
       const propertyOwner = await createPropertyOwner(
         {
@@ -417,11 +405,7 @@ export async function updatePropertyService(
     (data.latitudeExact !== undefined &&
       data.latitudeExact !== property.latitudeExact) ||
     (data.longitudeExact !== undefined &&
-      data.longitudeExact !== property.longitudeExact) ||
-    (data.latitudePublic !== undefined &&
-      data.latitudePublic !== property.latitudePublic) ||
-    (data.longitudePublic !== undefined &&
-      data.longitudePublic !== property.longitudePublic);
+      data.longitudeExact !== property.longitudeExact);
 
   /**
    * ============================================================
@@ -444,21 +428,27 @@ export async function updatePropertyService(
      * ----------------------------------------------------------
      */
     const updateData: UpdatePropertyInput = { ...data };
-    if (data.latitudeExact !== undefined || data.longitudeExact !== undefined) {
-      const publicCoordinates = getPublicCoordinates(
-        property.id,
-        data.latitudeExact ?? property.latitudeExact,
-        data.longitudeExact ?? property.longitudeExact
-      );
-      updateData.latitudePublic = publicCoordinates.latitude;
-      updateData.longitudePublic = publicCoordinates.longitude;
-    }
-
     const updatedProperty = await updateProperty(
       propertyId,
       updateData,
       tx
     );
+
+    // مختصات عمومی متعلق به همین آگهی است؛ فقط با تغییر مختصات دقیق ملک بازتولید می‌شود.
+    const previousListing = locationChanged
+      ? await tx.propertyListing.findUnique({ where: { propertyId } })
+      : null;
+    const updatedListing = previousListing
+      ? await updatePropertyListing(
+          previousListing.id,
+          getPublicCoordinates(
+            previousListing.id,
+            updatedProperty.latitudeExact,
+            updatedProperty.longitudeExact
+          ),
+          tx
+        )
+      : null;
 
     // انتشار قبلی تا بررسی مجدد هشتی متوقف می‌شود؛ تأیید مالک/مشاور مستقل باقی می‌ماند.
     await queuePropertyListingForHashtiReview(propertyId, tx);
@@ -491,14 +481,14 @@ export async function updatePropertyService(
           oldValue: JSON.stringify({
             latitudeExact: property.latitudeExact,
             longitudeExact: property.longitudeExact,
-            latitudePublic: property.latitudePublic,
-            longitudePublic: property.longitudePublic,
+            latitudePublic: property.listing?.latitudePublic ?? null,
+            longitudePublic: property.listing?.longitudePublic ?? null,
           }),
           newValue: JSON.stringify({
             latitudeExact: updatedProperty.latitudeExact,
             longitudeExact: updatedProperty.longitudeExact,
-            latitudePublic: updatedProperty.latitudePublic,
-            longitudePublic: updatedProperty.longitudePublic,
+            latitudePublic: updatedListing?.latitudePublic ?? null,
+            longitudePublic: updatedListing?.longitudePublic ?? null,
           }),
           reason: "تغییر موقعیت ملک",
         },

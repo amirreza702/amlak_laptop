@@ -84,15 +84,9 @@ export async function getPublishedPublicPropertyById(id: string) {
     sortOrder,
   }));
 
-  // مختصات عمومی فقط در نتایج جستجو استفاده می‌شود و در جزئیات عددی ارسال نمی‌شود.
-  const {
-    latitudePublic: _latitudePublic,
-    longitudePublic: _longitudePublic,
-    ...publicDetails
-  } = publicProperty;
-
+  // مختصات عمومی در نتایج جستجو استفاده می‌شود؛ جزئیات عمومی آن را ارسال نمی‌کند.
   return {
-    ...publicDetails,
+    ...publicProperty,
     listing,
     media,
     contact,

@@ -1,5 +1,4 @@
 import { prisma } from "../../../lib/prisma";
-import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 
 export type PropertyType = "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
 export type TransactionType = "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
@@ -75,11 +74,6 @@ export async function searchProperties(filters: PropertySearchFilters) {
   });
 
   return properties.map((property) => {
-    const publicCoordinates =
-      property.latitudePublic != null && property.longitudePublic != null
-        ? { latitude: property.latitudePublic, longitude: property.longitudePublic }
-        : getPublicCoordinates(property.id, property.latitudeExact, property.longitudeExact);
-
     return {
       id: property.id,
       propertyType: property.propertyType,
@@ -90,8 +84,8 @@ export async function searchProperties(filters: PropertySearchFilters) {
       rooms: property.rooms,
       yearBuilt: property.yearBuilt,
       floor: property.floor,
-      latitudePublic: publicCoordinates.latitude,
-      longitudePublic: publicCoordinates.longitude,
+      latitudePublic: property.listing?.latitudePublic ?? null,
+      longitudePublic: property.listing?.longitudePublic ?? null,
       salePrice: property.listing?.salePrice ?? null,
       depositAmount: property.listing?.depositAmount ?? null,
       rentAmount: property.listing?.rentAmount ?? null,

@@ -472,10 +472,6 @@ model Property {
   latitudeExact  Float
   longitudeExact Float
 
-  // Approximate public location
-  latitudePublic  Float?
-  longitudePublic Float?
-
   // ----------------------------
   // Physical characteristics
   // ----------------------------
@@ -585,6 +581,10 @@ model Property {
 model PropertyListing {
   id         String @id @default(uuid())
   propertyId String @unique
+
+  // Approximate location belongs to this specific listing, not the underlying property.
+  latitudePublic  Float?
+  longitudePublic Float?
 
   transactionType TransactionType
 
