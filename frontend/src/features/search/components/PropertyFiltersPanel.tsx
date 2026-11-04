@@ -1,1003 +1,146 @@
 "use client";
 
-/**
- * =========================================================
- * PropertyFiltersPanel
- * =========================================================
- *
- * پنل فیلترهای پیشرفته جستجوی ملک
- *
- * نکته معماری:
- *
- * این کامپوننت فقط مسئول UI است.
- *
- * State و منطق اصلی جستجو در:
- *
- * usePropertySearch
- *
- * قرار دارد.
- *
- * بنابراین این فایل:
- *
- * - مقدار فیلترها را نمایش می‌دهد
- * - تغییر فیلتر را به Hook ارسال می‌کند
- * - عملیات Reset را اجرا می‌کند
- * - عملیات Search را اجرا می‌کند
- *
- * =========================================================
- */
-
 import { X } from "lucide-react";
-
-import type {
-  PropertySearchState,
-} from "../types/search";
-
-/**
- * =========================================================
- * Props
- * =========================================================
- */
+import type { PropertySearchState } from "../types/search";
 
 interface PropertyFiltersPanelProps {
-  /**
-   * آیا پنل نمایش داده شود؟
-   */
   isOpen: boolean;
-
-  /**
-   * بستن پنل
-   */
   onClose: () => void;
-
-  /**
-   * State فعلی فیلترها
-   */
   filters: PropertySearchState;
-
-  /**
-   * تغییر یک فیلتر
-   */
-  setFilter: <K extends keyof PropertySearchState>(
-    key: K,
-    value: PropertySearchState[K]
-  ) => void;
-
-  /**
-   * بازگرداندن فیلترها به مقدار اولیه
-   */
+  setFilter: <K extends keyof PropertySearchState>(key: K, value: PropertySearchState[K]) => void;
   resetFilters: () => void;
-
-  /**
-   * تعداد فیلترهای فعال
-   */
   getActiveFilterCount: () => number;
-
-  /**
-   * اجرای جستجو
-   */
   search: () => Promise<void>;
-
-  /**
-   * آیا جستجو در حال اجراست؟
-   */
   isSearching: boolean;
 }
 
-/**
- * =========================================================
- * گزینه‌های تعداد اتاق
- * =========================================================
- */
-
-const roomOptions = [
-  { value: "1", label: "۱ اتاق" },
-  { value: "2", label: "۲ اتاق" },
-  { value: "3", label: "۳ اتاق" },
-  { value: "4", label: "۴ اتاق" },
-  { value: "5+", label: "۵ اتاق و بیشتر" },
-];
-
-/**
- * =========================================================
- * گزینه‌های تعداد حمام
- * =========================================================
- */
-
-const bathroomOptions = [
-  { value: "1", label: "۱ حمام" },
-  { value: "2", label: "۲ حمام" },
-  { value: "3+", label: "۳ حمام و بیشتر" },
-];
-
-/**
- * =========================================================
- * گزینه‌های سن بنا
- * =========================================================
- *
- * مقدار value برای نگهداری در State استفاده می‌شود.
- *
- * مثال:
- *
- * 0       → نوساز
- * 1-5     → یک تا پنج سال
- * 6-10    → شش تا ده سال
- * 11-20   → یازده تا بیست سال
- * 20+     → بیشتر از بیست سال
- *
- * =========================================================
- */
-
-const ageOptions = [
-  { value: "", label: "مهم نیست" },
-  { value: "0", label: "نوساز" },
-  { value: "1-5", label: "۱ تا ۵ سال" },
-  { value: "6-10", label: "۶ تا ۱۰ سال" },
-  { value: "11-20", label: "۱۱ تا ۲۰ سال" },
-  { value: "20+", label: "بیش از ۲۰ سال" },
-];
-
-/**
- * =========================================================
- * گزینه‌های تازگی آگهی
- * =========================================================
- */
-
-const updateOptions = [
-  { value: "", label: "مهم نیست" },
-  { value: "1", label: "امروز" },
-  { value: "3", label: "۳ روز اخیر" },
-  { value: "7", label: "۷ روز اخیر" },
-  { value: "30", label: "۳۰ روز اخیر" },
-];
-
-/**
- * =========================================================
- * PropertyFiltersPanel
- * =========================================================
- */
-
-const Checkbox = ({
-    checked,
-    label,
-    onChange,
-  }: {
-    checked: boolean;
-    label: string;
-    onChange: (checked: boolean) => void;
-  }) => {
-    return (
-      <label
-        className="
-          flex
-          cursor-pointer
-          items-center
-          gap-3
-          rounded-lg
-          border
-          border-slate-200
-          bg-white
-          px-3
-          py-3
-          text-sm
-          transition
-          hover:border-slate-300
-          hover:bg-slate-50
-        "
-      >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(event) =>
-            onChange(event.target.checked)
-          }
-          className="
-            h-4
-            w-4
-            accent-slate-900
-          "
-        />
-
-        <span className="text-slate-700">
-          {label}
-        </span>
-      </label>
-    );
-};
-
-export function PropertyFiltersPanel({
-  isOpen,
-  onClose,
-  filters,
-  setFilter,
-  resetFilters,
-  getActiveFilterCount,
-  search,
-  isSearching,
-}: PropertyFiltersPanelProps) {
-  /**
-   * اگر پنل بسته است، هیچ چیزی نمایش نده.
-   */
-  if (!isOpen) {
-    return null;
-  }
-
-  /**
-   * =======================================================
-   * کلاس مشترک Input
-   * =======================================================
-   */
-
-  const inputClassName = `
-    h-11
-    w-full
-    rounded-lg
-    border
-    border-slate-200
-    bg-white
-    px-3
-    text-sm
-    text-slate-800
-    outline-none
-    transition
-    placeholder:text-slate-400
-    focus:border-slate-400
-    focus:ring-2
-    focus:ring-slate-200
-  `;
-
-  /**
-   * =======================================================
-   * کلاس مشترک Select
-   * =======================================================
-   */
-
-  const selectClassName = `
-    h-11
-    w-full
-    rounded-lg
-    border
-    border-slate-200
-    bg-white
-    px-3
-    text-sm
-    text-slate-800
-    outline-none
-    transition
-    focus:border-slate-400
-    focus:ring-2
-    focus:ring-slate-200
-  `;
-
-  /**
-   * =======================================================
-   * اجرای جستجو
-   * =======================================================
-   */
-
-  const handleSearch = async () => {
-    await search();
-    onClose();
-  };
-
-  /**
-   * =======================================================
-   * خروجی
-   * =======================================================
-   */
-
-  return (
-    <div
-      className="
-        mt-3
-        max-h-[calc(100dvh-150px)]
-        overflow-y-auto
-        rounded-xl
-        border
-        border-white/70
-        bg-white/95
-        p-4
-        shadow-2xl
-        backdrop-blur-xl
-        sm:p-5
-      "
-    >
-      {/* ===================================================
-          Header
-         =================================================== */}
-
-      <div
-        className="
-          mb-5
-          flex
-          items-center
-          justify-between
-          border-b
-          border-slate-100
-          pb-4
-        "
-      >
-        <div>
-          <h2 className="text-base font-bold text-slate-900">
-            فیلترهای جستجو
-          </h2>
-
-          <p className="mt-1 text-xs text-slate-500">
-            {getActiveFilterCount() === 0
-              ? "هنوز فیلتری انتخاب نشده"
-              : `${getActiveFilterCount()} فیلتر فعال`}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="بستن فیلترها"
-          className="
-            flex
-            h-9
-            w-9
-            items-center
-            justify-center
-            rounded-lg
-            bg-slate-100
-            text-slate-600
-            transition
-            hover:bg-slate-200
-          "
-        >
-          <X size={18} />
-        </button>
-      </div>
-
-      {/* ===================================================
-          نوع معامله و ملک
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          نوع معامله و ملک
-        </h3>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <select
-            value={filters.transactionType}
-            onChange={(event) =>
-              setFilter(
-                "transactionType",
-                event.target.value as PropertySearchState["transactionType"]
-              )
-            }
-            className={selectClassName}
-          >
-            <option value="">نوع معامله</option>
-            <option value="خرید">خرید</option>
-            <option value="رهن">رهن</option>
-            <option value="اجاره">اجاره</option>
-            <option value="رهن و اجاره">
-              رهن و اجاره
-            </option>
-          </select>
-
-          <select
-            value={filters.propertyType}
-            onChange={(event) =>
-              setFilter(
-                "propertyType",
-                event.target.value as PropertySearchState["propertyType"]
-              )
-            }
-            className={selectClassName}
-          >
-            <option value="">نوع ملک</option>
-            <option value="آپارتمان">آپارتمان</option>
-            <option value="خانه">خانه</option>
-            <option value="ویلا">ویلا</option>
-            <option value="زمین">زمین</option>
-            <option value="مغازه">مغازه</option>
-            <option value="اداری">اداری</option>
-            <option value="باغ">باغ</option>
-          </select>
-        </div>
-      </section>
-
-      {/* ===================================================
-          موقعیت
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          موقعیت
-        </h3>
-
-        <input
-          type="text"
-          value={filters.city}
-          onChange={(event) =>
-            setFilter("city", event.target.value)
-          }
-          placeholder="شهر"
-          className={inputClassName}
-        />
-
-        <input
-          type="text"
-          value={filters.district}
-          onChange={(event) =>
-            setFilter("district", event.target.value)
-          }
-          placeholder="محله یا منطقه"
-          className={`${inputClassName} mt-3`}
-        />
-      </section>
-
-      {/* ===================================================
-          قیمت
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          محدوده قیمت
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={filters.minPrice}
-            onChange={(event) =>
-              setFilter(
-                "minPrice",
-                event.target.value
-              )
-            }
-            placeholder="حداقل قیمت"
-            className={inputClassName}
-          />
-
-          <input
-            type="text"
-            inputMode="numeric"
-            value={filters.maxPrice}
-            onChange={(event) =>
-              setFilter(
-                "maxPrice",
-                event.target.value
-              )
-            }
-            placeholder="حداکثر قیمت"
-            className={inputClassName}
-          />
-        </div>
-
-        <p className="mt-2 text-xs text-slate-400">
-          مبلغ را به واحد مناسب ملک وارد کنید.
-        </p>
-      </section>
-
-      {/* ===================================================
-          متراژ
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          متراژ
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={filters.minArea}
-            onChange={(event) =>
-              setFilter(
-                "minArea",
-                event.target.value
-              )
-            }
-            placeholder="حداقل متراژ"
-            className={inputClassName}
-          />
-
-          <input
-            type="text"
-            inputMode="numeric"
-            value={filters.maxArea}
-            onChange={(event) =>
-              setFilter(
-                "maxArea",
-                event.target.value
-              )
-            }
-            placeholder="حداکثر متراژ"
-            className={inputClassName}
-          />
-        </div>
-
-        <p className="mt-2 text-xs text-slate-400">
-          واحد: مترمربع
-        </p>
-      </section>
-
-      {/* ===================================================
-          مشخصات ملک
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          مشخصات ملک
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          <select
-            value={filters.rooms}
-            onChange={(event) =>
-              setFilter(
-                "rooms",
-                event.target.value
-              )
-            }
-            className={selectClassName}
-          >
-            <option value="">
-              تعداد اتاق
-            </option>
-
-            {roomOptions.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.bathrooms}
-            onChange={(event) =>
-              setFilter(
-                "bathrooms",
-                event.target.value
-              )
-            }
-            className={selectClassName}
-          >
-            <option value="">
-              تعداد حمام
-            </option>
-
-            {bathroomOptions.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </section>
-
-      {/* ===================================================
-          سن بنا
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          سن بنا
-        </h3>
-
-        <select
-          value={
-            filters.minYearBuilt === "20" &&
-            filters.maxYearBuilt === ""
-              ? "20+"
-              : filters.minYearBuilt &&
-                  filters.maxYearBuilt
-                ? `${filters.minYearBuilt}-${filters.maxYearBuilt}`
-                : filters.minYearBuilt === "0" &&
-                    filters.maxYearBuilt === "0"
-                  ? "0"
-                  : ""
-          }
-          onChange={(event) => {
-            const value = event.target.value;
-
-            /**
-             * بدون محدودیت
-             */
-            if (value === "") {
-              setFilter("minYearBuilt", "");
-              setFilter("maxYearBuilt", "");
-              return;
-            }
-
-            /**
-             * نوساز
-             */
-            if (value === "0") {
-              setFilter("minYearBuilt", "0");
-              setFilter("maxYearBuilt", "0");
-              return;
-            }
-
-            /**
-             * بازه سنی
-             */
-            if (value.includes("-")) {
-              const [min, max] =
-                value.split("-");
-
-              setFilter(
-                "minYearBuilt",
-                min
-              );
-
-              setFilter(
-                "maxYearBuilt",
-                max
-              );
-
-              return;
-            }
-
-            /**
-             * بیشتر از ۲۰ سال
-             */
-            if (value === "20+") {
-              setFilter(
-                "minYearBuilt",
-                "20"
-              );
-
-              setFilter(
-                "maxYearBuilt",
-                ""
-              );
-            }
-          }}
-          className={selectClassName}
-        >
-          {ageOptions.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </section>
-
-      {/* ===================================================
-          طبقه
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          طبقه
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="number"
-            min="0"
-            value={filters.minFloor}
-            onChange={(event) =>
-              setFilter(
-                "minFloor",
-                event.target.value
-              )
-            }
-            placeholder="از طبقه"
-            className={inputClassName}
-          />
-
-          <input
-            type="number"
-            min="0"
-            value={filters.maxFloor}
-            onChange={(event) =>
-              setFilter(
-                "maxFloor",
-                event.target.value
-              )
-            }
-            placeholder="تا طبقه"
-            className={inputClassName}
-          />
-        </div>
-      </section>
-
-      {/* ===================================================
-          امکانات
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          امکانات
-        </h3>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Checkbox
-            checked={filters.hasParking}
-            label="پارکینگ"
-            onChange={(value) =>
-              setFilter(
-                "hasParking",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.hasElevator}
-            label="آسانسور"
-            onChange={(value) =>
-              setFilter(
-                "hasElevator",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.hasStorage}
-            label="انباری"
-            onChange={(value) =>
-              setFilter(
-                "hasStorage",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.hasBalcony}
-            label="بالکن"
-            onChange={(value) =>
-              setFilter(
-                "hasBalcony",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.hasYard}
-            label="حیاط"
-            onChange={(value) =>
-              setFilter(
-                "hasYard",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.hasPool}
-            label="استخر"
-            onChange={(value) =>
-              setFilter(
-                "hasPool",
-                value
-              )
-            }
-          />
-        </div>
-      </section>
-
-      {/* ===================================================
-          اعتبار و وضعیت حقوقی
-         =================================================== */}
-
-      <section className="mb-6">
-        <div className="mb-3">
-          <h3 className="text-sm font-bold text-slate-800">
-            اعتبار و وضعیت حقوقی
-          </h3>
-
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            اطلاعاتی که توسط هشتی بررسی و تأیید شده‌اند.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          <Checkbox
-            checked={filters.singlePageDeed}
-            label="سند تک‌برگ"
-            onChange={(value) =>
-              setFilter(
-                "singlePageDeed",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.documentsVerified}
-            label="مدارک تأیید شده"
-            onChange={(value) =>
-              setFilter(
-                "documentsVerified",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.transactionAllowed}
-            label="قابل معامله"
-            onChange={(value) =>
-              setFilter(
-                "transactionAllowed",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={filters.ownerVerified}
-            label="مالک احراز هویت شده"
-            onChange={(value) =>
-              setFilter(
-                "ownerVerified",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={
-              filters.propertyInfoVerified
-            }
-            label="اطلاعات ملک تأیید شده"
-            onChange={(value) =>
-              setFilter(
-                "propertyInfoVerified",
-                value
-              )
-            }
-          />
-
-          <Checkbox
-            checked={
-              filters.locationVerified
-            }
-            label="موقعیت ملک تأیید شده"
-            onChange={(value) =>
-              setFilter(
-                "locationVerified",
-                value
-              )
-            }
-          />
-        </div>
-      </section>
-
-      {/* ===================================================
-          تازگی آگهی
-         =================================================== */}
-
-      <section className="mb-6">
-        <h3 className="mb-3 text-sm font-bold text-slate-800">
-          تازگی آگهی
-        </h3>
-
-        <select
-          value={filters.updatedWithinDays}
-          onChange={(event) =>
-            setFilter(
-              "updatedWithinDays",
-              event.target.value
-            )
-          }
-          className={selectClassName}
-        >
-          {updateOptions.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </section>
-
-      {/* ===================================================
-          فقط آگهی‌های فعال
-         =================================================== */}
-
-      <section className="mb-5">
-        <Checkbox
-          checked={filters.onlyActive}
-          label="فقط آگهی‌های فعال"
-          onChange={(value) =>
-            setFilter(
-              "onlyActive",
-              value
-            )
-          }
-        />
-      </section>
-
-      {/* ===================================================
-          دکمه‌های پایین پنل
-         =================================================== */}
-
-      <div
-        className="
-          sticky
-          bottom-0
-          flex
-          gap-2
-          border-t
-          border-slate-100
-          bg-white/95
-          pt-4
-          backdrop-blur
-        "
-      >
-        {/* -----------------------------------------------
-            پاک کردن
-           ----------------------------------------------- */}
-
-        <button
-          type="button"
-          onClick={resetFilters}
-          className="
-            h-12
-            rounded-lg
-            border
-            border-slate-200
-            px-4
-            text-sm
-            font-semibold
-            text-slate-700
-            transition
-            hover:bg-slate-50
-          "
-        >
-          پاک کردن
-        </button>
-
-        {/* -----------------------------------------------
-            نمایش نتایج
-           ----------------------------------------------- */}
-
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={isSearching}
-          className="
-            flex
-            h-12
-            flex-1
-            items-center
-            justify-center
-            rounded-lg
-            bg-slate-900
-            px-4
-            text-sm
-            font-bold
-            text-white
-            transition
-            hover:bg-slate-800
-            disabled:cursor-not-allowed
-            disabled:opacity-60
-          "
-        >
-          {isSearching
-            ? "در حال جستجو..."
-            : `نمایش نتایج${
-                getActiveFilterCount() > 0
-                  ? ` (${getActiveFilterCount()})`
-                  : ""
-              }`}
-        </button>
-      </div>
+const inputClass = "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+
+function RangeField({ label, minValue, maxValue, onMinChange, onMaxChange, minPlaceholder = "حداقل", maxPlaceholder = "حداکثر" }: {
+  label: string; minValue: string; maxValue: string;
+  onMinChange: (value: string) => void; onMaxChange: (value: string) => void;
+  minPlaceholder?: string; maxPlaceholder?: string;
+}) {
+  return <section className="space-y-2">
+    <h3 className="text-sm font-bold text-slate-800">{label}</h3>
+    <div className="grid grid-cols-2 gap-3">
+      <input className={inputClass} type="number" min="0" value={minValue} onChange={(event) => onMinChange(event.target.value)} placeholder={minPlaceholder} />
+      <input className={inputClass} type="number" min="0" value={maxValue} onChange={(event) => onMaxChange(event.target.value)} placeholder={maxPlaceholder} />
     </div>
-  );
+  </section>;
+}
+
+function SelectField({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return <label className="block space-y-1.5 text-sm">
+    <span className="font-semibold text-slate-700">{label}</span>
+    <select className={inputClass} value={value} onChange={(event) => onChange(event.target.value)}>
+      <option value="">مهم نیست</option>
+      {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+    </select>
+  </label>;
+}
+
+export function PropertyFiltersPanel({ isOpen, onClose, filters, setFilter, resetFilters, getActiveFilterCount, search, isSearching }: PropertyFiltersPanelProps) {
+  if (!isOpen) return null;
+  const handleSearch = async () => { await search(); onClose(); };
+
+  return <div className="mt-3 max-h-[calc(100dvh-150px)] overflow-y-auto rounded-xl border border-white/70 bg-white/95 p-4 shadow-2xl backdrop-blur-xl sm:p-5">
+    <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
+      <div>
+        <h2 className="text-base font-bold text-slate-900">فیلترهای جستجو</h2>
+        <p className="mt-1 text-xs text-slate-500">{getActiveFilterCount() === 0 ? "هنوز فیلتری انتخاب نشده" : getActiveFilterCount() + " فیلتر فعال"}</p>
+      </div>
+      <button type="button" onClick={onClose} aria-label="بستن فیلترها" className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"><X size={18} /></button>
+    </div>
+
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">نوع معامله و ملک</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SelectField label="نوع معامله" value={filters.transactionType} onChange={(value) => setFilter("transactionType", value as PropertySearchState["transactionType"])} options={[
+            { value: "خرید", label: "فروش" }, { value: "رهن کامل", label: "رهن کامل" }, { value: "اجاره", label: "اجاره" }, { value: "رهن و اجاره", label: "رهن و اجاره" },
+          ]} />
+          <SelectField label="نوع ملک" value={filters.propertyType} onChange={(value) => setFilter("propertyType", value as PropertySearchState["propertyType"])} options={[
+            { value: "آپارتمان", label: "آپارتمان" }, { value: "خانه", label: "خانه" }, { value: "ویلا", label: "ویلا" }, { value: "زمین", label: "زمین" }, { value: "مغازه", label: "مغازه" }, { value: "اداری", label: "اداری" }, { value: "باغ", label: "باغ" },
+          ]} />
+        </div>
+        {filters.transactionType === "خرید" && <RangeField label="قیمت فروش (تومان)" minValue={filters.minSalePrice} maxValue={filters.maxSalePrice} onMinChange={(value) => setFilter("minSalePrice", value)} onMaxChange={(value) => setFilter("maxSalePrice", value)} />}
+        {filters.transactionType === "رهن کامل" && <RangeField label="مبلغ رهن کامل (تومان)" minValue={filters.minDepositAmount} maxValue={filters.maxDepositAmount} onMinChange={(value) => setFilter("minDepositAmount", value)} onMaxChange={(value) => setFilter("maxDepositAmount", value)} />}
+        {filters.transactionType === "اجاره" && <RangeField label="اجاره ماهانه (تومان)" minValue={filters.minRentAmount} maxValue={filters.maxRentAmount} onMinChange={(value) => setFilter("minRentAmount", value)} onMaxChange={(value) => setFilter("maxRentAmount", value)} />}
+        {filters.transactionType === "رهن و اجاره" && <>
+          <RangeField label="مبلغ رهن (تومان)" minValue={filters.minDepositAmount} maxValue={filters.maxDepositAmount} onMinChange={(value) => setFilter("minDepositAmount", value)} onMaxChange={(value) => setFilter("maxDepositAmount", value)} />
+          <RangeField label="اجاره ماهانه (تومان)" minValue={filters.minRentAmount} maxValue={filters.maxRentAmount} onMinChange={(value) => setFilter("minRentAmount", value)} onMaxChange={(value) => setFilter("maxRentAmount", value)} />
+        </>}
+        {!filters.transactionType && <p className="text-xs text-slate-500">برای فیلتر قیمت ابتدا نوع معامله را انتخاب کنید.</p>}
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">موقعیت عمومی</h3>
+        <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">شهر / روستا</span><input className={inputClass} value={filters.city} onChange={(event) => setFilter("city", event.target.value)} placeholder="شهر یا روستا" /></label>
+        <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">محله / منطقه</span><input className={inputClass} value={filters.district} onChange={(event) => setFilter("district", event.target.value)} placeholder="محله یا منطقه" /></label>
+        <p className="text-xs leading-6 text-slate-500">نشانی دقیق، کد پستی و مختصات دقیق خصوصی هستند و در جستجوی عمومی فیلتر نمی‌شوند.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">مشخصات فیزیکی</h3>
+        <RangeField label="متراژ (مترمربع)" minValue={filters.minArea} maxValue={filters.maxArea} onMinChange={(value) => setFilter("minArea", value)} onMaxChange={(value) => setFilter("maxArea", value)} />
+        <RangeField label="تعداد اتاق" minValue={filters.minRooms} maxValue={filters.maxRooms} onMinChange={(value) => setFilter("minRooms", value)} onMaxChange={(value) => setFilter("maxRooms", value)} />
+        <RangeField label="سال ساخت" minValue={filters.minYearBuilt} maxValue={filters.maxYearBuilt} onMinChange={(value) => setFilter("minYearBuilt", value)} onMaxChange={(value) => setFilter("maxYearBuilt", value)} />
+        <RangeField label="طبقه" minValue={filters.minFloor} maxValue={filters.maxFloor} onMinChange={(value) => setFilter("minFloor", value)} onMaxChange={(value) => setFilter("maxFloor", value)} />
+        <RangeField label="تعداد کل واحدها" minValue={filters.minTotalUnits} maxValue={filters.maxTotalUnits} onMinChange={(value) => setFilter("minTotalUnits", value)} onMaxChange={(value) => setFilter("maxTotalUnits", value)} />
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">اطلاعات حقوقی</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SelectField label="نوع سند" value={filters.documentType} onChange={(value) => setFilter("documentType", value)} options={[
+            { value: "SINGLE_SHEET", label: "تک‌برگ" }, { value: "OLD_DEED", label: "سند دفترچه‌ای" }, { value: "OFFICIAL_CONTRACT", label: "قرارداد رسمی" }, { value: "ORDINARY_CONTRACT", label: "قولنامه عادی" },
+          ]} />
+          <SelectField label="نوع مالکیت" value={filters.ownershipType} onChange={(value) => setFilter("ownershipType", value)} options={[
+            { value: "SIX_DANG", label: "شش‌دانگ" }, { value: "SHARED", label: "مشاع" },
+          ]} />
+          <SelectField label="وضعیت عرصه" value={filters.landTenure} onChange={(value) => setFilter("landTenure", value)} options={[
+            { value: "FREEHOLD", label: "ملکی" }, { value: "ENDOWMENT", label: "اوقافی" },
+          ]} />
+          <SelectField label="وضعیت سکونت" value={filters.occupancyStatus} onChange={(value) => setFilter("occupancyStatus", value)} options={[
+            { value: "VACANT", label: "خالی" }, { value: "OWNER_OCCUPIED", label: "مالک ساکن است" }, { value: "TENANT_OCCUPIED", label: "مستأجر دارد" },
+          ]} />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">پارکینگ و امکانات</h3>
+        <RangeField label="تعداد پارکینگ" minValue={filters.minParkingCount} maxValue={filters.maxParkingCount} onMinChange={(value) => setFilter("minParkingCount", value)} onMaxChange={(value) => setFilter("maxParkingCount", value)} />
+        <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">نوع پارکینگ</span><input className={inputClass} value={filters.parkingType} onChange={(event) => setFilter("parkingType", event.target.value)} /></label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SelectField label="آسانسور" value={filters.hasElevator} onChange={(value) => setFilter("hasElevator", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
+          <SelectField label="انباری" value={filters.hasStorage} onChange={(value) => setFilter("hasStorage", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
+          <SelectField label="بالکن" value={filters.hasBalcony} onChange={(value) => setFilter("hasBalcony", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
+          <SelectField label="حیاط" value={filters.hasYard} onChange={(value) => setFilter("hasYard", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">سیستم گرمایش</span><input className={inputClass} value={filters.heatingSystem} onChange={(event) => setFilter("heatingSystem", event.target.value)} /></label>
+          <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">سیستم سرمایش</span><input className={inputClass} value={filters.coolingSystem} onChange={(event) => setFilter("coolingSystem", event.target.value)} /></label>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-bold text-slate-800">وضعیت بازسازی</h3>
+        <SelectField label="وضعیت بازسازی" value={filters.renovationStatus} onChange={(value) => setFilter("renovationStatus", value)} options={[
+          { value: "NO_RENOVATION", label: "بدون بازسازی" }, { value: "PARTIAL", label: "بازسازی جزئی" }, { value: "FULL", label: "بازسازی کامل" },
+        ]} />
+        <RangeField label="سال بازسازی" minValue={filters.minRenovationYear} maxValue={filters.maxRenovationYear} onMinChange={(value) => setFilter("minRenovationYear", value)} onMaxChange={(value) => setFilter("maxRenovationYear", value)} />
+      </section>
+    </div>
+
+    <div className="sticky bottom-0 mt-6 flex gap-2 border-t border-slate-100 bg-white/95 pt-4 backdrop-blur">
+      <button type="button" onClick={resetFilters} className="h-12 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">پاک کردن</button>
+      <button type="button" onClick={handleSearch} disabled={isSearching} className="flex h-12 flex-1 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+        {isSearching ? "در حال جستجو..." : "نمایش نتایج (" + getActiveFilterCount() + ")"}
+      </button>
+    </div>
+  </div>;
 }
