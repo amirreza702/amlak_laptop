@@ -4,7 +4,7 @@ interface PropertySearchResponse { count: number; items: PropertySearchResult[];
 
 function mapTransactionType(value: TransactionType | ""): string | undefined {
   switch (value) {
-    case "خرید": return "SALE";
+    case "فروش": return "SALE";
     case "رهن کامل": return "FULL_DEPOSIT";
     case "اجاره": return "RENT";
     case "رهن و اجاره": return "DEPOSIT_AND_RENT";
