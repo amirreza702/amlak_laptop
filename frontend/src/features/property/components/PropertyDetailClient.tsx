@@ -87,6 +87,19 @@ function getPriceLabel(
   }
 
   /**
+   * رهن و اجاره
+   */
+  if (listing.transactionType === "DEPOSIT_AND_RENT") {
+    const deposit = listing.depositAmount
+      ? `رهن ${Number(listing.depositAmount).toLocaleString("fa-IR")} تومان`
+      : "";
+    const rent = listing.rentAmount
+      ? `اجاره ماهانه ${Number(listing.rentAmount).toLocaleString("fa-IR")} تومان`
+      : "";
+    return [deposit, rent].filter(Boolean).join(" / ") || "قیمت ثبت نشده است";
+  }
+
+  /**
    * اجاره
    */
   if (
