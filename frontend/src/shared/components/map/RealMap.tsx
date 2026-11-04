@@ -374,31 +374,20 @@ export function RealMap({
       }
 
       /**
-       * تعداد اتاق
+       * بازه تعداد اتاق؛ فیلتر اصلی نیز در Backend اعمال شده است.
        */
-      if (appliedFilters?.rooms) {
-        const roomsFilter =
-          appliedFilters.rooms;
+      if (
+        appliedFilters?.minRooms &&
+        property.rooms < Number(appliedFilters.minRooms)
+      ) {
+        return false;
+      }
 
-        if (roomsFilter.endsWith("+")) {
-          const minimumRooms = Number(
-            roomsFilter.replace("+", "")
-          );
-
-          if (
-            property.rooms <
-            minimumRooms
-          ) {
-            return false;
-          }
-        } else {
-          if (
-            property.rooms !==
-            Number(roomsFilter)
-          ) {
-            return false;
-          }
-        }
+      if (
+        appliedFilters?.maxRooms &&
+        property.rooms > Number(appliedFilters.maxRooms)
+      ) {
+        return false;
       }
 
       /**
