@@ -46,6 +46,7 @@ export interface Property {
   totalUnits?: number | null;
   parkingCount?: number | null;
   parkingType?: string | null;
+  parkingNumber?: string | null;
   hasElevator?: boolean | null;
   hasStorage?: boolean | null;
   hasBalcony?: boolean | null;
