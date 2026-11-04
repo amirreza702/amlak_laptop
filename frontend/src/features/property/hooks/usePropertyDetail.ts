@@ -3,63 +3,68 @@
 import { useEffect, useState } from "react";
 
 export interface PropertyListing {
-  id: string;
-  propertyId: string;
   transactionType: string;
   salePrice?: string | null;
   depositAmount?: string | null;
   rentAmount?: string | null;
-  status: string;
-  publishedAt?: string | null;
-  rejectedAt?: string | null;
-  expiredAt?: string | null;
+}
+
+export interface PropertyMedia {
+  type: string;
+  url: string;
+  sortOrder: number;
+}
+
+export interface PropertyContact {
+  type: "AGENT" | "OWNER";
+  label: "مشاور ثبت‌کننده" | "مشاور تأییدشده" | "مالک";
+  firstName: string;
+  lastName: string;
+  mobile: string;
+}
+
+export interface PropertyOwnerDetails {
+  firstName: string | null;
+  lastName: string | null;
+  mobile: string | null;
 }
 
 /**
- * ============================================================
- * نوع اطلاعات ملک
- * ============================================================
- *
- * ساختار پاسخ:
- *
- * GET /properties/:id
- *
- * شامل:
- *
- * Property
- * +
- * listing
- * ============================================================
+ * فقط فیلدهای مجاز صفحه جزئیات عمومی جستجوی ملک.
+ * آدرس دقیق، کد پستی، مختصات، یادداشت‌ها و اطلاعات سیستمی عمداً در این نوع نیستند.
  */
-interface Property {
+export interface Property {
   id: string;
   propertyType: string;
-  registrationSource?: string;
   city: string;
   district: string;
-  address?: string | null;
-  postalCode?: string | null;
   area?: number | null;
   rooms?: number | null;
   yearBuilt?: number | null;
   floor?: number | null;
+  unitNumber?: string | null;
+  totalUnits?: number | null;
+  parkingCount?: number | null;
+  parkingType?: string | null;
+  hasElevator?: boolean | null;
+  hasStorage?: boolean | null;
+  hasBalcony?: boolean | null;
+  hasYard?: boolean | null;
+  heatingSystem?: string | null;
+  coolingSystem?: string | null;
+  documentType?: string | null;
+  ownershipType?: string | null;
+  landTenure?: string | null;
   description?: string | null;
-  latitudePublic?: number | null;
-  longitudePublic?: number | null;
+  renovationStatus?: string | null;
+  renovationYear?: number | null;
+  occupancyStatus?: string | null;
   isActive: boolean;
-  media: Array<{ id: string; type: string; url: string; sortOrder: number }>;
-  contact?: { type: "AGENT" | "OWNER"; label: "مشاور ثبت‌کننده" | "مشاور تأییدشده" | "مالک"; firstName: string; lastName: string; mobile: string } | null;
-  ownerDetails?: { firstName: string | null; lastName: string | null; mobile: string | null } | null;
-
-  /**
-   * Listing فعلی ملک
-   *
-   * قیمت فعلی در این بخش قرار دارد.
-   */
+  media: PropertyMedia[];
+  contact?: PropertyContact | null;
+  ownerDetails?: PropertyOwnerDetails | null;
   listing?: PropertyListing | null;
 }
-
-
 
 type LoadState = "loading" | "loaded" | "not-found" | "error";
 
@@ -68,8 +73,7 @@ function getPublicApiUrl(): string {
 }
 
 /**
- * دریافت اطلاعات عمومی ملک و مدیریت وضعیت‌های بارگذاری، خطا و پیدا نشدن.
- * قرارداد endpoint و رفتار درخواست عمداً بدون تغییر نگه داشته شده‌اند.
+ * دریافت جزئیات عمومی ملک با حفظ endpoint و رفتار احراز هویت اختیاری.
  */
 export function usePropertyDetail() {
   const [property, setProperty] = useState<Property | null>(null);
@@ -83,7 +87,7 @@ export function usePropertyDetail() {
     try {
       id = decodeURIComponent(id);
     } catch {
-      // اگر قسمت URL کدگذاری نامعتبر داشته باشد، همان مقدار رد می‌شود.
+      // URL نامعتبر در ادامه به وضعیت پیدا نشدن تبدیل می‌شود.
     }
 
     if (!id || id === "__csr__") {
