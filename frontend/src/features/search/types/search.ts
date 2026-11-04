@@ -1,44 +1,21 @@
-export type TransactionType =
-  | "خرید"
-  | "رهن کامل"
-  | "اجاره"
-  | "رهن و اجاره";
+export type TransactionType = "خرید" | "رهن کامل" | "اجاره" | "رهن و اجاره";
+export type PropertyType = "آپارتمان" | "خانه" | "ویلا" | "زمین" | "مغازه" | "اداری" | "باغ";
 
-export type PropertyType =
-  | "آپارتمان"
-  | "خانه"
-  | "ویلا"
-  | "زمین"
-  | "مغازه"
-  | "اداری"
-  | "باغ";
-
-/**
- * ------------------------------------------------------------
- * نتیجه‌ای که Backend برای هر ملک برمی‌گرداند
- * ------------------------------------------------------------
- */
 export interface PropertySearchResult {
   id: string;
-
   propertyType: string;
   transactionType: string | null;
-
   city: string;
   district: string;
-
   area: number | null;
   rooms: number | null;
   yearBuilt: number | null;
   floor: number | null;
-
   latitudePublic: number | null;
   longitudePublic: number | null;
-
   salePrice: string | null;
   depositAmount: string | null;
   rentAmount: string | null;
-
   mainImage: string | null;
   updatedAt: string;
 }
@@ -48,36 +25,36 @@ export interface PropertySearchState {
   propertyType: PropertyType | "";
   city: string;
   district: string;
-
-  minPrice: string;
-  maxPrice: string;
-
+  minSalePrice: string;
+  maxSalePrice: string;
+  minDepositAmount: string;
+  maxDepositAmount: string;
+  minRentAmount: string;
+  maxRentAmount: string;
   minArea: string;
   maxArea: string;
-
-  rooms: string;
-  bathrooms: string;
-
+  minRooms: string;
+  maxRooms: string;
   minYearBuilt: string;
   maxYearBuilt: string;
-
   minFloor: string;
   maxFloor: string;
-
-  hasParking: boolean;
-  hasElevator: boolean;
-  hasStorage: boolean;
-  hasBalcony: boolean;
-  hasYard: boolean;
-  hasPool: boolean;
-
-  singlePageDeed: boolean;
-  documentsVerified: boolean;
-  transactionAllowed: boolean;
-  ownerVerified: boolean;
-  propertyInfoVerified: boolean;
-  locationVerified: boolean;
-
-  updatedWithinDays: string;
-  onlyActive: boolean;
+  minTotalUnits: string;
+  maxTotalUnits: string;
+  minParkingCount: string;
+  maxParkingCount: string;
+  documentType: string;
+  ownershipType: string;
+  landTenure: string;
+  parkingType: string;
+  hasElevator: string;
+  hasStorage: string;
+  hasBalcony: string;
+  hasYard: string;
+  heatingSystem: string;
+  coolingSystem: string;
+  renovationStatus: string;
+  minRenovationYear: string;
+  maxRenovationYear: string;
+  occupancyStatus: string;
 }
