@@ -260,7 +260,7 @@ export default function PropertyDetailClient() {
             </h1>
             <p className="mt-2 text-sm text-slate-500">{location}</p>
             <p className="mt-1 text-xs text-slate-400">
-              موقعیت تقریبی ملک برای حفظ حریم خصوصی نمایش داده می‌شود؛ نشانی دقیق منتشر نمی‌شود.
+              برای حفظ حریم خصوصی، نشانی دقیق ملک نمایش داده نمی‌شود.
             </p>
 
             {priceItems.length > 0 && (
