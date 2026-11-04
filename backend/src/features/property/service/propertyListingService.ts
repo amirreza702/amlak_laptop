@@ -117,13 +117,11 @@ export async function createPropertyListingWithInitialPrice(
     );
   }
 
-  if (
-    data.transactionType === TransactionType.RENT &&
-    !data.rentAmount
-  ) {
-    throw new Error(
-      "برای اجاره، مبلغ اجاره الزامی است."
-    );
+  if (data.transactionType === TransactionType.RENT && !data.rentAmount) {
+    throw new Error("برای اجاره، مبلغ اجاره الزامی است.");
+  }
+  if (data.transactionType === TransactionType.DEPOSIT_AND_RENT && (!data.depositAmount || !data.rentAmount)) {
+    throw new Error("برای رهن و اجاره، مبلغ رهن و اجاره ماهانه هر دو الزامی هستند.");
   }
 
   /**
