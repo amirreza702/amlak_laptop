@@ -15,6 +15,7 @@ const transactionOptions: Array<{
   { value: "SALE", label: "خرید" },
   { value: "FULL_DEPOSIT", label: "رهن کامل" },
   { value: "RENT", label: "اجاره" },
+  { value: "DEPOSIT_AND_RENT", label: "رهن و اجاره" },
 ];
 
 const propertyOptions: Array<{
