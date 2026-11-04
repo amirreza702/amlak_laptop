@@ -91,7 +91,7 @@ function getTransactionLabel(
       return "خرید";
 
     case "FULL_DEPOSIT":
-      return "رهن";
+      return "رهن کامل";
 
     case "RENT":
       return "اجاره";
