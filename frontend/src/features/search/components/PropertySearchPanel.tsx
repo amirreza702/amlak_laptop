@@ -32,7 +32,7 @@ interface PropertySearchPanelProps {
 
 const transactionTypes: TransactionType[] = [
   "خرید",
-  "رهن",
+  "رهن کامل",
   "اجاره",
   "رهن و اجاره",
 ];
