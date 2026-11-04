@@ -88,7 +88,7 @@ function getTransactionLabel(
 ): string {
   switch (transactionType) {
     case "SALE":
-      return "خرید";
+      return "فروش";
 
     case "FULL_DEPOSIT":
       return "رهن کامل";
