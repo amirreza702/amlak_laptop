@@ -55,5 +55,6 @@ export function validatePropertyRegistration(input: PropertyRegistrationValidati
   if (input.transactionType === "SALE" && !(Number(input.salePrice) > 0)) return "قیمت فروش باید بیشتر از صفر باشد.";
   if (input.transactionType === "FULL_DEPOSIT" && !(Number(input.depositAmount) > 0)) return "مبلغ رهن کامل باید بیشتر از صفر باشد.";
   if (input.transactionType === "RENT" && !(Number(input.rentAmount) > 0)) return "مبلغ اجاره باید بیشتر از صفر باشد.";
+  if (input.transactionType === "DEPOSIT_AND_RENT" && (!(Number(input.depositAmount) > 0) || !(Number(input.rentAmount) > 0))) return "برای رهن و اجاره، هر دو مبلغ رهن و اجاره ماهانه باید بیشتر از صفر باشند.";
   return null;
 }
