@@ -21,6 +21,9 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     ...publicProperty
   } = property;
 
+  // مالکی که هشتی به‌عنوان رابطه تکمیلی افزوده است، هیچ‌گاه منبع اطلاعات تماس آگهی عمومی نیست.
+  const publicOwners = owners.filter((relation) => relation.addedByRole !== "HASHTI");
+
   const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant);
   const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE"
     ? firstRegistrantRelation.agent
@@ -30,12 +33,12 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
   const approvedOwnerRelation = approvedAgentRelation?.approvedByOwnerId
-    ? owners.find((relation) => relation.ownerId === approvedAgentRelation.approvedByOwnerId) ?? null
+    ? publicOwners.find((relation) => relation.ownerId === approvedAgentRelation.approvedByOwnerId) ?? null
     : null;
-  const primaryOwnerRelation = owners[0] ?? null;
+  const primaryOwnerRelation = publicOwners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
   const viewerOwnerRelation = viewer?.role === "OWNER"
-    ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
+    ? publicOwners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
   const isApprovedAgent = viewer?.role === "AGENT" &&
     approvedAgent?.userId === viewer.id;
