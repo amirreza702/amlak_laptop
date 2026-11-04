@@ -140,8 +140,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         address: true,
         latitudeExact: true,
         longitudeExact: true,
-        latitudePublic: true,
-        longitudePublic: true,
         postalCode: true,
         area: true,
         rooms: true,
@@ -149,7 +147,17 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         isActive: true,
         createdAt: true,
         listing: {
-          select: { status: true, transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, publishedAt: true, confirmUntil: true },
+          select: {
+            status: true,
+            transactionType: true,
+            salePrice: true,
+            depositAmount: true,
+            rentAmount: true,
+            publishedAt: true,
+            confirmUntil: true,
+            latitudePublic: true,
+            longitudePublic: true,
+          },
         },
         owners: {
           orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
@@ -198,8 +206,8 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         // برای املاک فاقد رابطه، اطلاعات هویتی و موقعیت دقیق مالک محفوظ می‌ماند.
         ...(hasUsableRelation ? {} : {
           address: "برای مشاهده نشانی دقیق، ابتدا باید همکاری مالک با مشاور تأیید شود.",
-          latitudeExact: property.latitudePublic,
-          longitudeExact: property.longitudePublic,
+          latitudeExact: property.listing?.latitudePublic ?? null,
+          longitudeExact: property.listing?.longitudePublic ?? null,
           owners: [],
           listing: property.listing ? {
             ...property.listing,
