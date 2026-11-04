@@ -37,7 +37,11 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     : null;
   const primaryOwnerRelation = publicOwners[0] ?? null;
   const primaryOwner = primaryOwnerRelation?.owner ?? null;
+  // رابطه مالکیت برای مجوز مشاهده آگهی منقضی‌شده همچنان مستقل از نمایش اطلاعات تماس است.
   const viewerOwnerRelation = viewer?.role === "OWNER"
+    ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
+    : null;
+  const viewerPublicOwnerRelation = viewer?.role === "OWNER"
     ? publicOwners.find((relation) => relation.owner.userId === viewer.id) ?? null
     : null;
   const isApprovedAgent = viewer?.role === "AGENT" &&
@@ -50,7 +54,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
   // پس از تأیید مشاور، فقط مالکی که همان مشاور را تأیید کرده است، به همراه آن مشاور،
   // به اطلاعات مالک دسترسی دارد. پیش از تأیید، مالکِ واردشده فقط اطلاعات خودش را می‌بیند.
   const viewerIsAuthorizedOwner = Boolean(
-    registrationSource === "OWNER" && viewerOwnerRelation && (!approvedAgent || approvedAgentRelation?.approvedByOwnerId === viewerOwnerRelation.ownerId)
+    registrationSource === "OWNER" && viewerPublicOwnerRelation && (!approvedAgent || approvedAgentRelation?.approvedByOwnerId === viewerPublicOwnerRelation.ownerId)
   );
   const mayViewOwnerDetails = Boolean(
     viewerIsAuthorizedOwner || isApprovedAgentForOwnerDetails || isAgentCreator || viewer?.role === "HASHTI"
@@ -98,7 +102,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     };
   }
 
-  const ownerForViewer = (viewerIsAuthorizedOwner ? viewerOwnerRelation?.owner : null) ??
+  const ownerForViewer = (viewerIsAuthorizedOwner ? viewerPublicOwnerRelation?.owner : null) ??
     (isApprovedAgentForOwnerDetails ? approvedOwnerRelation?.owner : null) ??
     (isAgentCreator || viewer?.role === "HASHTI" ? primaryOwner : null);
   const ownerDetails = mayViewOwnerDetails
