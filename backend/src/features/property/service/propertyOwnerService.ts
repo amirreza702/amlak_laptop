@@ -183,7 +183,7 @@ export async function addPropertyOwner(
           `نام و نام خانوادگی مالک: ${ownerFullName}`,
           `شماره تماس مالک: ${owner.user.mobile}`,
           `ملک: ${property.city}، ${property.district}، ${property.address}`,
-        ].join("\\n"),
+        ].join("\n"),
         details: {
           action: "HASHTI_ADDED_PROPERTY_OWNER",
           subjectType: "PROPERTY_OWNER",
