@@ -113,5 +113,28 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
       }
     : null;
 
-  return { ...publicProperty, contact, ownerDetails };
+  // پاسخ جزئیات جستجو فقط داده‌های عمومی و فیلدهای لازم برای UI را برمی‌گرداند.
+  // شناسه‌ها و زمان‌بندی داخلی listing و شناسه فایل‌های رسانه‌ای به مرورگر ارسال نمی‌شوند.
+  const listing = publicProperty.listing
+    ? {
+        transactionType: publicProperty.listing.transactionType,
+        salePrice: publicProperty.listing.salePrice,
+        depositAmount: publicProperty.listing.depositAmount,
+        rentAmount: publicProperty.listing.rentAmount,
+      }
+    : null;
+  const media = publicProperty.media.map(({ type, url, sortOrder }) => ({
+    type,
+    url,
+    sortOrder,
+  }));
+
+  // مختصات تقریبی برای نقشه جستجوست؛ در صفحه جزئیات به صورت عددی لازم نیست.
+  const {
+    latitudePublic: _latitudePublic,
+    longitudePublic: _longitudePublic,
+    ...publicDetails
+  } = publicProperty;
+
+  return { ...publicDetails, listing, media, contact, ownerDetails };
 }
