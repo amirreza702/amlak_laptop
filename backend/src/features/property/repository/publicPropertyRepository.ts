@@ -67,6 +67,7 @@ export async function findPublishedPublicPropertyById(id: string) {
         orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
         select: {
           ownerId: true,
+          addedByRole: true,
           owner: {
             select: {
               userId: true,
