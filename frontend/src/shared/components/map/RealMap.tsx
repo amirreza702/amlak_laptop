@@ -16,6 +16,8 @@
 
 import "leaflet/dist/leaflet.css";
 
+import { useMemo, useState } from "react";
+
 import {
   MapContainer,
   TileLayer,
@@ -29,6 +31,7 @@ import type {
 import { MapPropertyMarker } from "../MapPropertyMarker";
 
 import { MapControls } from "./MapControls";
+import { MapClusterLayer } from "./MapClusterLayer";
 
 import {
   MapViewport,
@@ -291,19 +294,19 @@ export function RealMap({
   results = [],
   onBoundsChange,
 }: RealMapProps) {
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+
   /**
    * ----------------------------------------------------------
    * تبدیل نتایج Backend به داده مورد نیاز نقشه
    * ----------------------------------------------------------
    */
-  const properties = results
-    .map(mapApiPropertyToMapProperty)
-    .filter(
-      (
-        property
-      ): property is MapProperty =>
-        property !== null
-    );
+  const properties = useMemo(
+    () => results
+      .map(mapApiPropertyToMapProperty)
+      .filter((property): property is MapProperty => property !== null),
+    [results]
+  );
 
   /**
    * ----------------------------------------------------------
@@ -422,6 +425,10 @@ export function RealMap({
       )
     : filteredProperties;
 
+  const selectedProperty = visibleProperties.find(
+    (property) => property.id === selectedPropertyId
+  ) ?? null;
+
   return (
     <MapContainer
       center={SHAHRUD_CENTER}
@@ -446,15 +453,21 @@ export function RealMap({
         properties={visibleProperties}
       />
 
-      {/* ======================================================
-          Markerهای ملک‌های واقعی Backend
-          ====================================================== */}
-      {visibleProperties.map((property) => (
+      {/* خوشه‌بندی بر اساس فاصله تصویری و بزرگ‌نمایی نقشه */}
+      <MapClusterLayer
+        properties={visibleProperties}
+        selectedPropertyId={selectedPropertyId}
+        onSelect={(property) => setSelectedPropertyId(property.id)}
+      />
+
+      {/* محدوده فقط برای آگهی انتخاب‌شده نمایش داده می‌شود */}
+      {selectedProperty && (
         <MapPropertyMarker
-          key={property.id}
-          property={property}
+          key={selectedProperty.id}
+          property={selectedProperty}
+          onSelect={(property) => setSelectedPropertyId(property.id)}
         />
-      ))}
+      )}
     </MapContainer>
   );
 }
