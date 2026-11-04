@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, LoaderCircle, UserRoundPlus } from "lucide-react";
 import { agentApiRequest } from "../api/agentApi";
-type CustomerRequestTransactionType = "SALE" | "FULL_DEPOSIT" | "RENT";
+type CustomerRequestTransactionType = "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
 type CustomerRequestPropertyType = "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
 
 const inputClassName = "w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-[#043873] focus:ring-2 focus:ring-[#043873]/10";
@@ -12,6 +12,7 @@ const transactionOptions: Array<{ value: CustomerRequestTransactionType; label: 
   { value: "SALE", label: "خرید" },
   { value: "FULL_DEPOSIT", label: "رهن کامل" },
   { value: "RENT", label: "اجاره" },
+  { value: "DEPOSIT_AND_RENT", label: "رهن و اجاره" },
 ];
 const propertyOptions: Array<{ value: CustomerRequestPropertyType; label: string }> = [
   { value: "APARTMENT", label: "آپارتمان" },
