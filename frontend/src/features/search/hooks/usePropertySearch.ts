@@ -32,13 +32,23 @@ export function usePropertySearch() {
   const [results, setResults] = useState<PropertySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  function applyFilterChange<K extends keyof PropertySearchState>(previous: PropertySearchState, key: K, value: PropertySearchState[K]) {
+    const next = { ...previous, [key]: value };
+    if (key === "transactionType") {
+      next.minSalePrice = ""; next.maxSalePrice = "";
+      next.minDepositAmount = ""; next.maxDepositAmount = "";
+      next.minRentAmount = ""; next.maxRentAmount = "";
+    }
+    return next;
+  }
+
   function setFilter<K extends keyof PropertySearchState>(key: K, value: PropertySearchState[K]) {
-    setFilters((previous) => ({ ...previous, [key]: value }));
+    setFilters((previous) => applyFilterChange(previous, key, value));
   }
 
   function setQuickFilter<K extends keyof PropertySearchState>(key: K, value: PropertySearchState[K]) {
     setFilters((previous) => {
-      const nextFilters = { ...previous, [key]: value };
+      const nextFilters = applyFilterChange(previous, key, value);
       setAppliedFilters(nextFilters);
       return nextFilters;
     });
