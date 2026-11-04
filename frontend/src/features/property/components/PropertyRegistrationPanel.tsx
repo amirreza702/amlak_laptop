@@ -28,6 +28,7 @@ const transactionTypes: { value: TransactionType; label: string }[] = [
   { value: "SALE", label: "فروش" },
   { value: "FULL_DEPOSIT", label: "رهن کامل" },
   { value: "RENT", label: "اجاره" },
+  { value: "DEPOSIT_AND_RENT", label: "رهن و اجاره" },
 ];
 
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#043873] focus:ring-2 focus:ring-blue-100";
@@ -138,10 +139,13 @@ export function PropertyRegistrationPanel({ mode, accountMobile = "", onSavePriv
           {transactionType === "FULL_DEPOSIT" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ رهن کامل (تومان)
             <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required />
           </label>}
-          {transactionType === "RENT" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ اجاره ماهانه (تومان)
+          {(transactionType === "RENT" || transactionType === "DEPOSIT_AND_RENT") && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ اجاره ماهانه (تومان)
             <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={rentAmount} onChange={(e) => setRentAmount(e.target.value)} required />
           </label>}
-          <p className="text-xs leading-6 text-slate-500">طبق منطق فعلی سرور، برای فروش قیمت فروش، برای رهن کامل مبلغ رهن و برای اجاره مبلغ اجاره الزامی است.</p>
+          {transactionType === "DEPOSIT_AND_RENT" && <label className="block space-y-1.5 text-sm font-semibold"><span className="ml-1 text-red-600">*</span>مبلغ رهن (تومان)
+            <input className={inputClass} type="number" min="1" step="1" inputMode="numeric" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required />
+          </label>}
+          <p className="text-xs leading-6 text-slate-500">برای رهن و اجاره، مبلغ رهن و اجاره ماهانه هر دو الزامی هستند.</p>
         </fieldset>
 
           <fieldset disabled={Boolean(createdPropertyId) || busy} className="space-y-4 rounded-xl border border-slate-200 p-4 disabled:opacity-70">
