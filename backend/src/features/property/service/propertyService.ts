@@ -438,22 +438,23 @@ export async function updatePropertyService(
     const previousListing = locationChanged
       ? await tx.propertyListing.findUnique({ where: { propertyId } })
       : null;
-    let updatedListing = null;
-    if (previousListing) {
-      const publicCoordinates = getPublicCoordinates(
-        previousListing.id,
-        updatedProperty.latitudeExact,
-        updatedProperty.longitudeExact
-      );
-      updatedListing = await updatePropertyListing(
-        previousListing.id,
-        {
-          latitudePublic: publicCoordinates.latitude,
-          longitudePublic: publicCoordinates.longitude,
-        },
-        tx
-      );
-    }
+    const publicCoordinates = previousListing
+      ? getPublicCoordinates(
+          previousListing.id,
+          updatedProperty.latitudeExact,
+          updatedProperty.longitudeExact
+        )
+      : null;
+    const updatedListing = previousListing && publicCoordinates
+      ? await updatePropertyListing(
+          previousListing.id,
+          {
+            latitudePublic: publicCoordinates.latitude,
+            longitudePublic: publicCoordinates.longitude,
+          },
+          tx
+        )
+      : null;
 
     // انتشار قبلی تا بررسی مجدد هشتی متوقف می‌شود؛ تأیید مالک/مشاور مستقل باقی می‌ماند.
     await queuePropertyListingForHashtiReview(propertyId, tx);
