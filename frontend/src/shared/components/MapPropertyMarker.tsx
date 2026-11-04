@@ -4,6 +4,7 @@
 import Link from "next/link";
 
 import {
+  Circle,
   CircleMarker,
   Popup,
 } from "react-leaflet";
@@ -30,7 +31,20 @@ export function MapPropertyMarker({
   onSelect,
 }: MapPropertyMarkerProps) {
   return (
-    <CircleMarker
+    <>
+      <Circle
+        center={[property.latitude, property.longitude]}
+        radius={1000}
+        pathOptions={{
+          color: "#0f766e",
+          weight: 1,
+          opacity: 0.65,
+          fillColor: "#14b8a6",
+          fillOpacity: 0.06,
+          dashArray: "5 7",
+        }}
+      />
+      <CircleMarker
       center={[
         property.latitude,
         property.longitude,
@@ -149,6 +163,7 @@ export function MapPropertyMarker({
           </Link>
         </div>
       </Popup>
-    </CircleMarker>
+      </CircleMarker>
+    </>
   );
 }
