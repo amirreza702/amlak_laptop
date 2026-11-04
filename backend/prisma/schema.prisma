@@ -40,6 +40,7 @@ enum TransactionType {
   SALE
   FULL_DEPOSIT
   RENT
+  DEPOSIT_AND_RENT
 }
 
 // وضعیت ثبت و انتشار ملک
