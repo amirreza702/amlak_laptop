@@ -15,7 +15,7 @@ interface MapPropertyMarkerProps {
 }
 
 /**
- * Build a stable, slightly irregular public area (maximum radius 500m).
+ * Build a stable, slightly irregular public area (maximum radius 250m).
  * The public point is deliberately not drawn as a center marker.
  */
 function getApproximateAreaPositions(
@@ -33,7 +33,7 @@ function getApproximateAreaPositions(
     const raw = Math.sin((seed + 1) * 0.0001 + (index + 1) * 127.1) * 43758.5453;
     const random = raw - Math.floor(raw);
     const angle = (index / vertexCount) * Math.PI * 2;
-    const radiusMeters = 420 + random * 80;
+    const radiusMeters = 200 + random * 50;
     const latitudeOffset = (Math.cos(angle) * radiusMeters) / 111_320;
     const longitudeOffset =
       (Math.sin(angle) * radiusMeters) / (111_320 * longitudeScale);
