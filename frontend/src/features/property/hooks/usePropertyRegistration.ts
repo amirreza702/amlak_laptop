@@ -50,8 +50,8 @@ export function usePropertyRegistration(mode: "owner" | "agent", accountMobile =
     await createPropertyListing(propertyId, {
       transactionType,
       salePrice: transactionType === "SALE" ? salePrice.trim() : null,
-      depositAmount: transactionType === "FULL_DEPOSIT" ? depositAmount.trim() : null,
-      rentAmount: transactionType === "RENT" ? rentAmount.trim() : null,
+      depositAmount: transactionType === "FULL_DEPOSIT" || transactionType === "DEPOSIT_AND_RENT" ? depositAmount.trim() : null,
+      rentAmount: transactionType === "RENT" || transactionType === "DEPOSIT_AND_RENT" ? rentAmount.trim() : null,
     });
     if (listingStatus !== "PENDING_HASHTI_VERIFICATION") {
       const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/properties/${encodeURIComponent(propertyId)}/status`, {
