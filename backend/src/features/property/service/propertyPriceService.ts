@@ -167,7 +167,12 @@ export async function updatePropertyPrice(
   }
 
   if (data.transactionType === TransactionType.RENT) {
+    priceChanged = listing.rentAmount?.toString() !== newRentAmount;
+  }
+
+  if (data.transactionType === TransactionType.DEPOSIT_AND_RENT) {
     priceChanged =
+      listing.depositAmount?.toString() !== newDepositAmount ||
       listing.rentAmount?.toString() !== newRentAmount;
   }
 
