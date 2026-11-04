@@ -34,7 +34,7 @@ interface SearchTabsProps {
 
 const transactionTypes: TransactionType[] = [
   "خرید",
-  "رهن",
+  "رهن کامل",
   "اجاره",
   "رهن و اجاره",
 ];
