@@ -61,7 +61,7 @@ const validateCustomer = async (
 export const createCustomerSearchRequest = async (
   customerId: string | null,
   data: {
-    transactionType: "SALE" | "FULL_DEPOSIT" | "RENT";
+    transactionType: "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
     propertyType: "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
     city: string;
     budget: number;
@@ -249,7 +249,8 @@ export const updateCustomerSearchRequest = async (
     transactionType?: 
       | "SALE"
       | "FULL_DEPOSIT"
-      | "RENT";
+      | "RENT"
+      | "DEPOSIT_AND_RENT";
 
     propertyType?:
       | "APARTMENT"
@@ -373,7 +374,7 @@ export const getActivePropertySearchRequests =
     minBudget?: string; maxBudget?: string; hashtiVerified?: string;
     createdFrom?: string; createdTo?: string;
   } = {}) => {
-    const transactionTypes = ["SALE", "FULL_DEPOSIT", "RENT"];
+    const transactionTypes = ["SALE", "FULL_DEPOSIT", "RENT", "DEPOSIT_AND_RENT"];
     const propertyTypes = ["APARTMENT", "HOUSE", "VILLA", "LAND", "SHOP", "OFFICE", "GARDEN"];
     if (filters.transactionType && !transactionTypes.includes(filters.transactionType)) throw new Error("Invalid transaction type filter");
     if (filters.propertyType && !propertyTypes.includes(filters.propertyType)) throw new Error("Invalid property type filter");
