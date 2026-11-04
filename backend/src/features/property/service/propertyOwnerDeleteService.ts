@@ -51,13 +51,33 @@ async function removePropertyFromOperationalUse(propertyId: string, userId: stri
 
 export async function deleteOwnPropertyService(propertyId: string, userId: string) {
   const property = await prisma.property.findUnique({
-    where: { id: propertyId }, select: { id: true, createdByUserId: true, deletedAt: true },
+    where: { id: propertyId },
+    select: {
+      id: true,
+      createdByUserId: true,
+      deletedAt: true,
+      owners: {
+        where: { owner: { is: { userId } } },
+        select: { ownerId: true },
+        take: 1,
+      },
+    },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
-  if (property.createdByUserId !== userId) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
+
+  // مالک مرتبط از طریق PropertyOwner مستقل از ایجادکننده حق حذف عملیاتی دارد.
+  const isCreator = property.createdByUserId === userId;
+  const isRelatedOwner = property.owners.length > 0;
+  if (!isCreator && !isRelatedOwner) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
-  return removePropertyFromOperationalUse(propertyId, userId,
-    "مالک ایجادکننده، ملک و آگهی را حذف کرد؛ سوابق مدیریتی و حسابرسی حفظ شدند.");
+
+  return removePropertyFromOperationalUse(
+    propertyId,
+    userId,
+    isRelatedOwner
+      ? "مالک مرتبط، ملک و آگهی را حذف کرد؛ سوابق مدیریتی و حسابرسی حفظ شدند."
+      : "مالک ایجادکننده، ملک و آگهی را حذف کرد؛ سوابق مدیریتی و حسابرسی حفظ شدند."
+  );
 }
 
 export async function deleteAgentManagedOwnerPropertyService(propertyId: string, userId: string) {
