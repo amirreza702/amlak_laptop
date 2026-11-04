@@ -39,6 +39,13 @@ export function usePropertySearch() {
       next.minDepositAmount = ""; next.maxDepositAmount = "";
       next.minRentAmount = ""; next.maxRentAmount = "";
     }
+    if (key === "propertyType" && (value === "زمین" || value === "باغ")) {
+      next.minRooms = ""; next.maxRooms = "";
+      next.minFloor = ""; next.maxFloor = "";
+      next.minTotalUnits = ""; next.maxTotalUnits = "";
+      next.hasElevator = ""; next.hasStorage = "";
+      next.hasBalcony = ""; next.hasYard = "";
+    }
     return next;
   }
 
