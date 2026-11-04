@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-import {
-  Polygon,
-  Popup,
-} from "react-leaflet";
+import { Polygon, Popup } from "react-leaflet";
 
 import type { MapProperty } from "./map/RealMap";
 
@@ -15,14 +11,15 @@ interface MapPropertyMarkerProps {
 }
 
 /**
- * Build a stable, slightly irregular public area (maximum radius 250m).
- * The public point is deliberately not drawn as a center marker.
+ * محدوده عمومی نامنظم آگهی؛ هیچ نقطه مرکزی روی نقشه رسم نمی‌شود.
+ * تمام رأس‌ها حداکثر ۲۵۰ متر از مختصات عمومی فاصله دارند.
  */
 function getApproximateAreaPositions(
   property: MapProperty
 ): Array<[number, number]> {
   const seed = Array.from(property.id).reduce(
-    (value, character) => (Math.imul(value, 31) + character.charCodeAt(0)) | 0,
+    (value, character) =>
+      (Math.imul(value, 31) + character.charCodeAt(0)) | 0,
     7
   );
   const latitudeRadians = (property.latitude * Math.PI) / 180;
@@ -30,7 +27,8 @@ function getApproximateAreaPositions(
   const vertexCount = 16;
 
   return Array.from({ length: vertexCount }, (_, index) => {
-    const raw = Math.sin((seed + 1) * 0.0001 + (index + 1) * 127.1) * 43758.5453;
+    const raw =
+      Math.sin((seed + 1) * 0.0001 + (index + 1) * 127.1) * 43758.5453;
     const random = raw - Math.floor(raw);
     const angle = (index / vertexCount) * Math.PI * 2;
     const radiusMeters = 200 + random * 50;
@@ -45,44 +43,32 @@ function getApproximateAreaPositions(
   });
 }
 
-/**
- * نمایش محدوده تقریبی آگهی روی نقشه.
- *
- * عمداً نقطه مرکزی یا نشانگر موقعیت نمایش داده نمی‌شود؛
- * کلیک روی خود محدوده، اطلاعات آگهی را باز می‌کند.
- */
+/** فقط برای آگهی انتخاب‌شده محدوده تقریبی را نمایش می‌دهد. */
 export function MapPropertyMarker({
   property,
   onSelect,
 }: MapPropertyMarkerProps) {
-  const areaPositions = getApproximateAreaPositions(property);
-
   return (
     <Polygon
-      positions={areaPositions}
+      positions={getApproximateAreaPositions(property)}
       pathOptions={{
-        color: "#0f766e",
-        weight: 1.5,
-        opacity: 0.7,
-        fillColor: "#14b8a6",
-        fillOpacity: 0.09,
-        dashArray: "5 7",
+        color: "#ea580c",
+        weight: 2,
+        opacity: 0.95,
+        fillColor: "#fb923c",
+        fillOpacity: 0.16,
+        dashArray: "6 5",
       }}
       eventHandlers={{
-        click: () => {
-          onSelect?.(property);
-        },
+        click: () => onSelect?.(property),
       }}
     >
       <Popup
-        autoPan={true}
+        autoPan
         autoPanPaddingTopLeft={[15, 130]}
         autoPanPaddingBottomRight={[80, 110]}
       >
-        <div
-          dir="rtl"
-          className="min-w-[210px] space-y-3 text-right"
-        >
+        <div dir="rtl" className="min-w-[210px] space-y-3 text-right">
           {property.mainImage && (
             <img
               src={property.mainImage}
@@ -91,24 +77,17 @@ export function MapPropertyMarker({
               loading="lazy"
             />
           )}
-
           <div className="text-sm font-bold text-slate-900">
             {property.title}
           </div>
-
-          <div className="text-xs text-slate-500">
-            {property.location}
-          </div>
-
+          <div className="text-xs text-slate-500">{property.location}</div>
           <div className="flex gap-3 text-xs text-slate-600">
             <span>{property.area} متر</span>
             {property.rooms > 0 && <span>{property.rooms} خواب</span>}
           </div>
-
           <div className="pt-1 text-sm font-bold text-slate-900">
             {property.price}
           </div>
-
           <Link
             href={`/property/${property.id}`}
             className="block border-t border-slate-200 pt-2 text-sm font-bold text-brand-turquoise transition-colors hover:text-slate-900"
