@@ -123,7 +123,7 @@ export const findActivePropertySearchRequests =
   } = {}) => {
     const where: Prisma.PropertySearchRequestWhereInput = { status: "ACTIVE" };
     if (filters.city) where.city = { contains: filters.city, mode: "insensitive" };
-    if (filters.transactionType) where.transactionType = filters.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT";
+    if (filters.transactionType) where.transactionType = filters.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
     if (filters.propertyType) where.propertyType = filters.propertyType as "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
     if (filters.hashtiVerified !== undefined) where.hashtiVerified = filters.hashtiVerified;
     if (filters.minBudget !== undefined || filters.maxBudget !== undefined) {
