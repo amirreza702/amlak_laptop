@@ -1,12 +1,11 @@
 import { findPublishedPublicPropertyById } from "../repository/publicPropertyRepository";
 
-type PropertyViewer = { id: string; role: string } | undefined;
-
 /**
- * جزئیات عمومی آگهی با استثنای محرمانگی برای مالک، مشاور تأییدشده
- * همان ملک و مشاور ثبت‌کننده ملک‌های مشاورمحور.
+ * جزئیات مسیر جستجو همیشه با سطح دسترسی عمومی برمی‌گردد.
+ * هویت و نقش نشست کاربر در این خروجی دخالت ندارد؛
+ * اطلاعات خصوصی مالک فقط از مسیرهای خصوصی پنل‌های مجاز قابل دریافت است.
  */
-export async function getPublishedPublicPropertyById(id: string, viewer?: PropertyViewer) {
+export async function getPublishedPublicPropertyById(id: string) {
   const property = await findPublishedPublicPropertyById(id);
   if (!property) throw new Error("آگهی عمومی موردنظر پیدا نشد.");
 
@@ -14,14 +13,10 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     owners,
     agents,
     registrationSource,
-    createdByUserId,
-    ownerFirstName,
-    ownerLastName,
-    ownerMobile,
     ...publicProperty
   } = property;
 
-  // مالکی که هشتی به‌عنوان رابطه تکمیلی افزوده است، هیچ‌گاه منبع اطلاعات تماس آگهی عمومی نیست.
+  // مالکی که هشتی به‌عنوان رابطه تکمیلی افزوده است، منبع اطلاعات تماس عمومی نیست.
   const publicOwners = owners.filter((relation) => relation.addedByRole !== "HASHTI");
 
   const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant);
@@ -32,40 +27,10 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
-  const approvedOwnerRelation = approvedAgentRelation?.approvedByOwnerId
-    ? publicOwners.find((relation) => relation.ownerId === approvedAgentRelation.approvedByOwnerId) ?? null
-    : null;
-  const primaryOwnerRelation = publicOwners[0] ?? null;
-  const primaryOwner = primaryOwnerRelation?.owner ?? null;
-  // رابطه مالکیت برای مجوز مشاهده آگهی منقضی‌شده همچنان مستقل از نمایش اطلاعات تماس است.
-  const viewerOwnerRelation = viewer?.role === "OWNER"
-    ? owners.find((relation) => relation.owner.userId === viewer.id) ?? null
-    : null;
-  const viewerPublicOwnerRelation = viewer?.role === "OWNER"
-    ? publicOwners.find((relation) => relation.owner.userId === viewer.id) ?? null
-    : null;
-  const isApprovedAgent = viewer?.role === "AGENT" &&
-    approvedAgent?.userId === viewer.id;
-  // نمایش جزئیات هویتی مالک علاوه بر تأیید مشاور، به اتصال همان مالک به درخواست تأییدشده نیاز دارد.
-  const isApprovedAgentForOwnerDetails = isApprovedAgent && Boolean(approvedOwnerRelation);
-  const isAgentCreator = viewer?.role === "AGENT" &&
-    registrationSource === "AGENT" &&
-    createdByUserId === viewer.id;
-  // پس از تأیید مشاور، فقط مالکی که همان مشاور را تأیید کرده است، به همراه آن مشاور،
-  // به اطلاعات مالک دسترسی دارد. پیش از تأیید، مالکِ واردشده فقط اطلاعات خودش را می‌بیند.
-  const viewerIsAuthorizedOwner = Boolean(
-    registrationSource === "OWNER" && viewerPublicOwnerRelation && (!approvedAgent || approvedAgentRelation?.approvedByOwnerId === viewerPublicOwnerRelation.ownerId)
-  );
-  const mayViewOwnerDetails = Boolean(
-    viewerIsAuthorizedOwner || isApprovedAgentForOwnerDetails || isAgentCreator || viewer?.role === "HASHTI"
-  );
+  const primaryOwner = publicOwners[0]?.owner ?? null;
 
-  const confirmUntil = publicProperty.listing?.confirmUntil ?? null;
-  const isExpired = publicProperty.listing?.status === "EXPIRED" || (publicProperty.listing?.status === "PUBLISHED" && (!confirmUntil || confirmUntil <= new Date()));
-  if (isExpired && !(viewer?.role === "HASHTI" || Boolean(viewerOwnerRelation) || isApprovedAgent)) {
-    throw new Error("آگهی عمومی موردنظر پیدا نشد.");
-  }
-
+  // اطلاعات تماس عمومی بر اساس منشأ آگهی و وضعیت تأیید مالک تعیین می‌شود،
+  // نه بر اساس نقش یا هویت بازدیدکننده.
   let contact: {
     type: "OWNER" | "AGENT";
     label: "مالک" | "مشاور ثبت‌کننده" | "مشاور تأییدشده";
@@ -93,6 +58,8 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
       mobile: approvedAgent.user.mobile,
     };
   } else if (primaryOwner) {
+    // استثنای آگهی مالک‌محور: تا وقتی مشاور منتخب وجود ندارد،
+    // مالک ثبت‌کننده، مخاطب عمومی آگهی است.
     contact = {
       type: "OWNER",
       label: "مالک",
@@ -102,19 +69,7 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     };
   }
 
-  const ownerForViewer = (viewerIsAuthorizedOwner ? viewerPublicOwnerRelation?.owner : null) ??
-    (isApprovedAgentForOwnerDetails ? approvedOwnerRelation?.owner : null) ??
-    (isAgentCreator || viewer?.role === "HASHTI" ? primaryOwner : null);
-  const ownerDetails = mayViewOwnerDetails
-    ? {
-        firstName: isAgentCreator || viewer?.role === "HASHTI" ? ownerFirstName ?? ownerForViewer?.firstName ?? null : ownerForViewer?.firstName ?? null,
-        lastName: isAgentCreator || viewer?.role === "HASHTI" ? ownerLastName ?? ownerForViewer?.lastName ?? null : ownerForViewer?.lastName ?? null,
-        mobile: isAgentCreator || viewer?.role === "HASHTI" ? ownerMobile ?? ownerForViewer?.user.mobile ?? null : ownerForViewer?.user.mobile ?? null,
-      }
-    : null;
-
-  // پاسخ جزئیات جستجو فقط داده‌های عمومی و فیلدهای لازم برای UI را برمی‌گرداند.
-  // شناسه‌ها و زمان‌بندی داخلی listing و شناسه فایل‌های رسانه‌ای به مرورگر ارسال نمی‌شوند.
+  // پاسخ جستجو برای همه کاربران یکسان است؛ هیچ مشخصات خصوصی مالک ارسال نمی‌شود.
   const listing = publicProperty.listing
     ? {
         transactionType: publicProperty.listing.transactionType,
@@ -129,12 +84,18 @@ export async function getPublishedPublicPropertyById(id: string, viewer?: Proper
     sortOrder,
   }));
 
-  // مختصات تقریبی برای نقشه جستجوست؛ در صفحه جزئیات به صورت عددی لازم نیست.
+  // مختصات عمومی فقط در نتایج جستجو استفاده می‌شود و در جزئیات عددی ارسال نمی‌شود.
   const {
     latitudePublic: _latitudePublic,
     longitudePublic: _longitudePublic,
     ...publicDetails
   } = publicProperty;
 
-  return { ...publicDetails, listing, media, contact, ownerDetails };
+  return {
+    ...publicDetails,
+    listing,
+    media,
+    contact,
+    ownerDetails: null,
+  };
 }
