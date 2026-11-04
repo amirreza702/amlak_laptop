@@ -75,7 +75,7 @@ type Pagination = { total: number; limit: number; offset: number };
 
 const propertyLabels: Record<string, string> = { APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ" };
 const listingLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PENDING_HASHTI_VERIFICATION: "در انتظار تأیید هشتی", PUBLISHED: "منتشرشده", REJECTED: "ردشده", EXPIRED: "منقضی", PAUSED: "متوقف", SOLD: "فروخته‌شده", RENTED: "اجاره‌رفته", DELETED: "حذف‌شده" };
-const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره" };
+const transactionLabels: Record<string, string> = { SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره", DEPOSIT_AND_RENT: "رهن و اجاره" };
 const statusOptions = [
   { value: "ALL", label: "همه وضعیت‌ها" },
   { value: "DRAFT", label: "پیش‌نویس" },
@@ -299,7 +299,7 @@ export function HashtiPropertyAdminToolsPanel() {
           const p = reviewProperty;
           const enumLabels: Record<string, string> = {
             APARTMENT: "آپارتمان", HOUSE: "خانه", VILLA: "ویلا", LAND: "زمین", SHOP: "مغازه", OFFICE: "اداری", GARDEN: "باغ",
-            SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره",
+            SALE: "فروش", FULL_DEPOSIT: "رهن کامل", RENT: "اجاره", DEPOSIT_AND_RENT: "رهن و اجاره",
             SINGLE_SHEET: "سند تک‌برگ", OLD_DEED: "سند دفترچه‌ای", OFFICIAL_CONTRACT: "قرارداد رسمی", ORDINARY_CONTRACT: "قولنامه عادی",
             SIX_DANG: "شش‌دانگ", SHARED: "مشاع", FREEHOLD: "ملکی", ENDOWMENT: "اوقافی",
             NO_RENOVATION: "بدون بازسازی", PARTIAL: "بازسازی جزئی", FULL: "بازسازی کامل",
