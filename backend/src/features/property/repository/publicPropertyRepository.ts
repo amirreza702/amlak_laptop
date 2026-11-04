@@ -34,6 +34,7 @@ export async function findPublishedPublicPropertyById(id: string) {
       totalUnits: true,
       parkingCount: true,
       parkingType: true,
+      parkingNumber: true,
       hasElevator: true,
       hasStorage: true,
       hasBalcony: true,
