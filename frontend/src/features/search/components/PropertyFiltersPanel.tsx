@@ -25,7 +25,7 @@ function RangeField({ label, minValue, maxValue, onMinChange, onMaxChange, minPl
     <h3 className="text-sm font-bold text-slate-800">{label}</h3>
     <div className="grid grid-cols-2 gap-3">
       <input className={inputClass} type="number" min={min} value={minValue} onChange={(event) => onMinChange(event.target.value)} placeholder={minPlaceholder} />
-      <input className={inputClass} type="number" min="0" value={maxValue} onChange={(event) => onMaxChange(event.target.value)} placeholder={maxPlaceholder} />
+      <input className={inputClass} type="number" min={min} value={maxValue} onChange={(event) => onMaxChange(event.target.value)} placeholder={maxPlaceholder} />
     </div>
   </section>;
 }
@@ -87,10 +87,12 @@ export function PropertyFiltersPanel({ isOpen, onClose, filters, setFilter, rese
       <section className="space-y-3">
         <h3 className="text-sm font-bold text-slate-800">مشخصات فیزیکی</h3>
         <RangeField label="متراژ (مترمربع)" minValue={filters.minArea} maxValue={filters.maxArea} onMinChange={(value) => setFilter("minArea", value)} onMaxChange={(value) => setFilter("maxArea", value)} />
-        <RangeField label="تعداد اتاق" minValue={filters.minRooms} maxValue={filters.maxRooms} onMinChange={(value) => setFilter("minRooms", value)} onMaxChange={(value) => setFilter("maxRooms", value)} />
+        {filters.propertyType !== "زمین" && filters.propertyType !== "باغ" && <RangeField label="تعداد اتاق" minValue={filters.minRooms} maxValue={filters.maxRooms} onMinChange={(value) => setFilter("minRooms", value)} onMaxChange={(value) => setFilter("maxRooms", value)} />}
         <RangeField label="سال ساخت" minValue={filters.minYearBuilt} maxValue={filters.maxYearBuilt} onMinChange={(value) => setFilter("minYearBuilt", value)} onMaxChange={(value) => setFilter("maxYearBuilt", value)} />
-        <RangeField label="طبقه" min={-10} minValue={filters.minFloor} maxValue={filters.maxFloor} onMinChange={(value) => setFilter("minFloor", value)} onMaxChange={(value) => setFilter("maxFloor", value)} />
-        <RangeField label="تعداد کل واحدها" minValue={filters.minTotalUnits} maxValue={filters.maxTotalUnits} onMinChange={(value) => setFilter("minTotalUnits", value)} onMaxChange={(value) => setFilter("maxTotalUnits", value)} />
+        {filters.propertyType !== "زمین" && filters.propertyType !== "باغ" && <>
+          <RangeField label="طبقه" min={-10} minValue={filters.minFloor} maxValue={filters.maxFloor} onMinChange={(value) => setFilter("minFloor", value)} onMaxChange={(value) => setFilter("maxFloor", value)} />
+          <RangeField label="تعداد کل واحدها" minValue={filters.minTotalUnits} maxValue={filters.maxTotalUnits} onMinChange={(value) => setFilter("minTotalUnits", value)} onMaxChange={(value) => setFilter("maxTotalUnits", value)} />
+        </>}
       </section>
 
       <section className="space-y-3">
@@ -115,12 +117,12 @@ export function PropertyFiltersPanel({ isOpen, onClose, filters, setFilter, rese
         <h3 className="text-sm font-bold text-slate-800">پارکینگ و امکانات</h3>
         <RangeField label="تعداد پارکینگ" minValue={filters.minParkingCount} maxValue={filters.maxParkingCount} onMinChange={(value) => setFilter("minParkingCount", value)} onMaxChange={(value) => setFilter("maxParkingCount", value)} />
         <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">نوع پارکینگ</span><input className={inputClass} value={filters.parkingType} onChange={(event) => setFilter("parkingType", event.target.value)} /></label>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {filters.propertyType !== "زمین" && filters.propertyType !== "باغ" && <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <SelectField label="آسانسور" value={filters.hasElevator} onChange={(value) => setFilter("hasElevator", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
           <SelectField label="انباری" value={filters.hasStorage} onChange={(value) => setFilter("hasStorage", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
           <SelectField label="بالکن" value={filters.hasBalcony} onChange={(value) => setFilter("hasBalcony", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
           <SelectField label="حیاط" value={filters.hasYard} onChange={(value) => setFilter("hasYard", value)} options={[{ value: "true", label: "دارد" }, { value: "false", label: "ندارد" }]} />
-        </div>
+        </div>}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">سیستم گرمایش</span><input className={inputClass} value={filters.heatingSystem} onChange={(event) => setFilter("heatingSystem", event.target.value)} /></label>
           <label className="block space-y-1.5 text-sm"><span className="font-semibold text-slate-700">سیستم سرمایش</span><input className={inputClass} value={filters.coolingSystem} onChange={(event) => setFilter("coolingSystem", event.target.value)} /></label>
