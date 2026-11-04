@@ -147,7 +147,15 @@ export function MapClusterLayer({
                   <button
                     key={property.id}
                     type="button"
-                    onClick={() => onSelect(property)}
+                    onClick={() => {
+                      onSelect(property);
+                      map.closePopup();
+                      map.flyTo(
+                        [property.latitude, property.longitude],
+                        Math.max(15, map.getZoom() + 1),
+                        { duration: 0.35 }
+                      );
+                    }}
                     className="block w-full rounded-lg border border-slate-200 p-2 text-right transition-colors hover:bg-teal-50"
                   >
                     <span className="block text-sm font-bold text-slate-800">
