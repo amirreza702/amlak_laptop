@@ -1,11 +1,9 @@
-
 "use client";
 
 import Link from "next/link";
 
 import {
-  Circle,
-  CircleMarker,
+  Polygon,
   Popup,
 } from "react-leaflet";
 
@@ -17,44 +15,58 @@ interface MapPropertyMarkerProps {
 }
 
 /**
- * نشانگر ملک روی نقشه
+ * Build a stable, slightly irregular public area (maximum radius 500m).
+ * The public point is deliberately not drawn as a center marker.
+ */
+function getApproximateAreaPositions(
+  property: MapProperty
+): Array<[number, number]> {
+  const seed = Array.from(property.id).reduce(
+    (value, character) => (Math.imul(value, 31) + character.charCodeAt(0)) | 0,
+    7
+  );
+  const latitudeRadians = (property.latitude * Math.PI) / 180;
+  const longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadians)), 0.2);
+  const vertexCount = 16;
+
+  return Array.from({ length: vertexCount }, (_, index) => {
+    const raw = Math.sin((seed + 1) * 0.0001 + (index + 1) * 127.1) * 43758.5453;
+    const random = raw - Math.floor(raw);
+    const angle = (index / vertexCount) * Math.PI * 2;
+    const radiusMeters = 420 + random * 80;
+    const latitudeOffset = (Math.cos(angle) * radiusMeters) / 111_320;
+    const longitudeOffset =
+      (Math.sin(angle) * radiusMeters) / (111_320 * longitudeScale);
+
+    return [
+      property.latitude + latitudeOffset,
+      property.longitude + longitudeOffset,
+    ];
+  });
+}
+
+/**
+ * نمایش محدوده تقریبی آگهی روی نقشه.
  *
- * با کلیک روی نشانگر:
- * - اطلاعات خلاصه ملک نمایش داده می‌شود.
- * - کاربر می‌تواند از طریق لینک، وارد صفحه جزئیات شود.
- *
- * عمداً از double-click استفاده نمی‌کنیم؛
- * چون double-click با Zoom نقشه تداخل دارد.
+ * عمداً نقطه مرکزی یا نشانگر موقعیت نمایش داده نمی‌شود؛
+ * کلیک روی خود محدوده، اطلاعات آگهی را باز می‌کند.
  */
 export function MapPropertyMarker({
   property,
   onSelect,
 }: MapPropertyMarkerProps) {
+  const areaPositions = getApproximateAreaPositions(property);
+
   return (
-    <>
-      <Circle
-        center={[property.latitude, property.longitude]}
-        radius={1000}
-        pathOptions={{
-          color: "#0f766e",
-          weight: 1,
-          opacity: 0.65,
-          fillColor: "#14b8a6",
-          fillOpacity: 0.06,
-          dashArray: "5 7",
-        }}
-      />
-      <CircleMarker
-      center={[
-        property.latitude,
-        property.longitude,
-      ]}
-      radius={9}
+    <Polygon
+      positions={areaPositions}
       pathOptions={{
-        fillColor: "#0f172a",
-        fillOpacity: 0.95,
-        color: "#ffffff",
-        weight: 3,
+        color: "#0f766e",
+        weight: 1.5,
+        opacity: 0.7,
+        fillColor: "#14b8a6",
+        fillOpacity: 0.09,
+        dashArray: "5 7",
       }}
       eventHandlers={{
         click: () => {
@@ -62,108 +74,49 @@ export function MapPropertyMarker({
         },
       }}
     >
-      {/*
-        Popup اطلاعات خلاصه ملک
-
-        offset باعث می‌شود Popup کمی از محل
-        دقیق نشانگر فاصله داشته باشد.
-
-        فعلاً direction را حذف کرده‌ایم تا
-        با TypeScript/react-leaflet خطا نداشته باشد.
-      */}
       <Popup
-      offset={[0, 10]}
-      autoPan={true}
-      autoPanPaddingTopLeft={[15, 130]}
-      autoPanPaddingBottomRight={[80, 110]}
+        autoPan={true}
+        autoPanPaddingTopLeft={[15, 130]}
+        autoPanPaddingBottomRight={[80, 110]}
       >
         <div
           dir="rtl"
-          className="
-            min-w-[210px]
-            space-y-3
-            text-right
-          "
+          className="min-w-[210px] space-y-3 text-right"
         >
           {property.mainImage && (
-            <img src={property.mainImage} alt={property.title} className="mb-2 h-28 w-full rounded-lg bg-slate-100 object-cover" loading="lazy" />
+            <img
+              src={property.mainImage}
+              alt={property.title}
+              className="mb-2 h-28 w-full rounded-lg bg-slate-100 object-cover"
+              loading="lazy"
+            />
           )}
 
-          {/* عنوان ملک */}
-          <div
-            className="
-              text-sm
-              font-bold
-              text-slate-900
-            "
-          >
+          <div className="text-sm font-bold text-slate-900">
             {property.title}
           </div>
 
-          {/* محل ملک */}
-          <div
-            className="
-              text-xs
-              text-slate-500
-            "
-          >
+          <div className="text-xs text-slate-500">
             {property.location}
           </div>
 
-          {/* متراژ و تعداد خواب */}
-          <div
-            className="
-              flex
-              gap-3
-              text-xs
-              text-slate-600
-            "
-          >
-            <span>
-              {property.area} متر
-            </span>
-
-            {property.rooms > 0 && (
-              <span>
-                {property.rooms} خواب
-              </span>
-            )}
+          <div className="flex gap-3 text-xs text-slate-600">
+            <span>{property.area} متر</span>
+            {property.rooms > 0 && <span>{property.rooms} خواب</span>}
           </div>
 
-          {/* قیمت */}
-          <div
-            className="
-              pt-1
-              text-sm
-              font-bold
-              text-slate-900
-            "
-          >
+          <div className="pt-1 text-sm font-bold text-slate-900">
             {property.price}
           </div>
 
-          {/*
-            لینک ورود به صفحه جزئیات ملک
-          */}
           <Link
             href={`/property/${property.id}`}
-            className="
-              block
-              border-t
-              border-slate-200
-              pt-2
-              text-sm
-              font-bold
-              text-brand-turquoise
-              transition-colors
-              hover:text-slate-900
-            "
+            className="block border-t border-slate-200 pt-2 text-sm font-bold text-brand-turquoise transition-colors hover:text-slate-900"
           >
             مشاهده جزئیات ملک ←
           </Link>
         </div>
       </Popup>
-      </CircleMarker>
-    </>
+    </Polygon>
   );
 }
