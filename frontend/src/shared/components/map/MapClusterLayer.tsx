@@ -152,7 +152,7 @@ export function MapClusterLayer({
                       map.closePopup();
                       map.flyTo(
                         [property.latitude, property.longitude],
-                        Math.max(15, map.getZoom() + 1),
+                        Math.min(18, Math.max(15, map.getZoom() + 1)),
                         { duration: 0.35 }
                       );
                     }}
