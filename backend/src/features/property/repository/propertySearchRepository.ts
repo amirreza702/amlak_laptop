@@ -25,7 +25,8 @@ export type PropertyType =
 export type TransactionType =
   | "SALE"
   | "FULL_DEPOSIT"
-  | "RENT";
+  | "RENT"
+  | "DEPOSIT_AND_RENT";
 
 export type ListingStatus = "PUBLISHED";
 
@@ -196,10 +197,9 @@ export async function searchProperties(
      * فعلاً فیلتر قیمت را بر اساس ودیعه انجام می‌دهیم.
      * فیلتر مستقل rentAmount را بعداً اضافه می‌کنیم.
      */
-    if (filters.transactionType === "RENT") {
-      priceConditions.push(
-        createRange("rentAmount")
-      );
+    if (filters.transactionType === "RENT" || filters.transactionType === "DEPOSIT_AND_RENT") {
+      // در رهن و اجاره، فیلتر عمومی قیمت بر اساس اجاره ماهانه اعمال می‌شود.
+      priceConditions.push(createRange("rentAmount"));
     }
 
     /**
