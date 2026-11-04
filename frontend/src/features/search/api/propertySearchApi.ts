@@ -15,8 +15,7 @@ function mapTransactionType(value: TransactionType | ""): string | undefined {
     case "خرید": return "SALE";
     case "رهن": return "FULL_DEPOSIT";
     case "اجاره": return "RENT";
-    // Backend فعلاً نوع مستقلی برای «رهن و اجاره» ندارد.
-    case "رهن و اجاره":
+    case "رهن و اجاره": return "DEPOSIT_AND_RENT";
     default: return undefined;
   }
 }
