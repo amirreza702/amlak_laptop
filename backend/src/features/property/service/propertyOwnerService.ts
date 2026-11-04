@@ -36,6 +36,12 @@ export async function addPropertyOwner(
     where: {
       id: data.ownerId,
     },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      user: { select: { mobile: true } },
+    },
   });
 
   if (!owner) {
@@ -122,12 +128,26 @@ export async function addPropertyOwner(
   // ----------------------------------------------------------
 
   return prisma.$transaction(async (tx) => {
+  const actor = data.performedBy
+    ? await tx.user.findUnique({
+        where: { id: data.performedBy },
+        select: { id: true, mobile: true, role: true },
+      })
+    : null;
+
+  if (!actor || actor.role !== "HASHTI") {
+    throw new Error("فقط کاربر هشتی مجاز به افزودن مالک به ملک است.");
+  }
+
   const propertyOwner = await createPropertyOwner(
     {
       propertyId: data.propertyId,
       ownerId: data.ownerId,
       share: data.share,
       isPrimary: data.isPrimary ?? false,
+      addedByUserId: actor.id,
+      addedByRole: actor.role,
+      addedByMobile: actor.mobile,
     },
     tx
   );
@@ -151,32 +171,52 @@ export async function addPropertyOwner(
   
 
   
-  if (data.performedBy) {
-    const actor = await tx.user.findUnique({
-      where: { id: data.performedBy },
-      select: { id: true, mobile: true, role: true },
-    });
-
-    if (actor?.role === "HASHTI") {
-      await tx.adminAuditLog.create({
-        data: {
-          actorUserId: actor.id,
-          actorMobile: actor.mobile,
+  // اعلان محرمانه فقط برای ایجادکننده همان ملک ارسال می‌شود.
+  if (property.createdByUserId && property.createdByUserId !== actor.id) {
+    const ownerFullName = `${owner.firstName} ${owner.lastName}`.trim();
+    await tx.notification.create({
+      data: {
+        userId: property.createdByUserId,
+        title: "افزودن مالک به ملک",
+        message: [
+          "هشتی یک مالک را به ملک ثبت‌شده شما متصل کرد.",
+          `نام و نام خانوادگی مالک: ${ownerFullName}`,
+          `شماره تماس مالک: ${owner.user.mobile}`,
+          `ملک: ${property.city}، ${property.district}، ${property.address}`,
+        ].join("\\n"),
+        details: {
+          action: "HASHTI_ADDED_PROPERTY_OWNER",
+          subjectType: "PROPERTY_OWNER",
+          subject: `${property.city}، ${property.district}`,
+          propertyId: property.id,
+          ownerId: owner.id,
+          ownerFirstName: owner.firstName,
+          ownerLastName: owner.lastName,
+          ownerMobile: owner.user.mobile,
           actorRole: actor.role,
-          action: "OWNER_PROPERTY_RELATION_CREATED",
-          targetType: "OWNER_PROPERTY",
-          targetId: data.ownerId,
-          details: {
-            propertyId: data.propertyId,
-            ownerId: data.ownerId,
-            share: data.share,
-            isPrimary: data.isPrimary ?? false,
-            reason: "Added property ownership relation by Hashti staff",
-          },
+          occurredAt: new Date().toISOString(),
         },
-      });
-    }
+      },
+    });
   }
+
+  await tx.adminAuditLog.create({
+    data: {
+      actorUserId: actor.id,
+      actorMobile: actor.mobile,
+      actorRole: actor.role,
+      action: "OWNER_PROPERTY_RELATION_CREATED",
+      targetType: "OWNER_PROPERTY",
+      targetId: data.ownerId,
+      details: {
+        propertyId: data.propertyId,
+        ownerId: data.ownerId,
+        share: data.share,
+        isPrimary: data.isPrimary ?? false,
+        reason: "Added property ownership relation by Hashti staff",
+      },
+    },
+  });
 
   return propertyOwner;
 });
