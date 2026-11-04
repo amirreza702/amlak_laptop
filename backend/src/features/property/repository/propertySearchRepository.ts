@@ -1,308 +1,102 @@
 import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 
-/**
- * ============================================================
- * انواع دامنه‌ای Search
- * ============================================================
- *
- * این Typeها عمداً مستقل از Prisma هستند.
- *
- * دلیل:
- * Repository نباید برای Typeهای ورودی Search
- * به فایل تولیدشده Prisma وابسته باشد.
- */
-
-export type PropertyType =
-  | "APARTMENT"
-  | "HOUSE"
-  | "VILLA"
-  | "LAND"
-  | "SHOP"
-  | "OFFICE"
-  | "GARDEN";
-
-export type TransactionType =
-  | "SALE"
-  | "FULL_DEPOSIT"
-  | "RENT"
-  | "DEPOSIT_AND_RENT";
-
+export type PropertyType = "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
+export type TransactionType = "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
 export type ListingStatus = "PUBLISHED";
 
-/**
- * ============================================================
- * فیلترهای جستجوی ملک
- * ============================================================
- */
-
 export interface PropertySearchFilters {
-  transactionType?: TransactionType;
-  propertyType?: PropertyType;
-
-  city?: string;
-  district?: string;
-
-  minPrice?: number;
-  maxPrice?: number;
-
-  minArea?: number;
-  maxArea?: number;
-
-  rooms?: number;
-
-  yearFrom?: number;
-  yearTo?: number;
+  transactionType?: TransactionType; propertyType?: PropertyType; city?: string; district?: string;
+  minSalePrice?: number; maxSalePrice?: number;
+  minDepositAmount?: number; maxDepositAmount?: number;
+  minRentAmount?: number; maxRentAmount?: number;
+  minArea?: number; maxArea?: number; minRooms?: number; maxRooms?: number;
+  yearFrom?: number; yearTo?: number; minFloor?: number; maxFloor?: number;
+  minTotalUnits?: number; maxTotalUnits?: number;
+  minParkingCount?: number; maxParkingCount?: number;
+  minRenovationYear?: number; maxRenovationYear?: number;
+  documentType?: string; ownershipType?: string; landTenure?: string;
+  parkingType?: string; heatingSystem?: string; coolingSystem?: string;
+  renovationStatus?: string; occupancyStatus?: string;
+  hasElevator?: boolean; hasStorage?: boolean; hasBalcony?: boolean; hasYard?: boolean;
 }
 
-/**
- * ============================================================
- * Search
- * ============================================================
- */
+function addNumberRange(where: Record<string, any>, field: string, min?: number, max?: number) {
+  if (min === undefined && max === undefined) return;
+  where[field] = {};
+  if (min !== undefined) where[field].gte = min;
+  if (max !== undefined) where[field].lte = max;
+}
 
-export async function searchProperties(
-  filters: PropertySearchFilters
-) {
+function addTextContains(where: Record<string, any>, field: string, value?: string) {
+  if (value?.trim()) where[field] = { contains: value.trim(), mode: "insensitive" };
+}
 
-  /**
-   * ----------------------------------------------------------
-   * فیلتر Property
-   * ----------------------------------------------------------
-   */
+export async function searchProperties(filters: PropertySearchFilters) {
+  const propertyWhere: Record<string, any> = { isActive: true };
+  if (filters.propertyType) propertyWhere.propertyType = filters.propertyType;
+  if (filters.city) propertyWhere.city = { contains: filters.city, mode: "insensitive" };
+  if (filters.district) propertyWhere.district = { contains: filters.district, mode: "insensitive" };
 
-  const propertyWhere: any = { isActive: true };
+  addNumberRange(propertyWhere, "area", filters.minArea, filters.maxArea);
+  addNumberRange(propertyWhere, "rooms", filters.minRooms, filters.maxRooms);
+  addNumberRange(propertyWhere, "yearBuilt", filters.yearFrom, filters.yearTo);
+  addNumberRange(propertyWhere, "floor", filters.minFloor, filters.maxFloor);
+  addNumberRange(propertyWhere, "totalUnits", filters.minTotalUnits, filters.maxTotalUnits);
+  addNumberRange(propertyWhere, "parkingCount", filters.minParkingCount, filters.maxParkingCount);
+  addNumberRange(propertyWhere, "renovationYear", filters.minRenovationYear, filters.maxRenovationYear);
 
-  if (filters.propertyType) {
-    propertyWhere.propertyType = filters.propertyType;
+  if (filters.documentType) propertyWhere.documentType = filters.documentType;
+  if (filters.ownershipType) propertyWhere.ownershipType = filters.ownershipType;
+  if (filters.landTenure) propertyWhere.landTenure = filters.landTenure;
+  if (filters.renovationStatus) propertyWhere.renovationStatus = filters.renovationStatus;
+  if (filters.occupancyStatus) propertyWhere.occupancyStatus = filters.occupancyStatus;
+
+  for (const field of ["hasElevator", "hasStorage", "hasBalcony", "hasYard"] as const) {
+    if (filters[field] !== undefined) propertyWhere[field] = filters[field];
   }
+  addTextContains(propertyWhere, "parkingType", filters.parkingType);
+  addTextContains(propertyWhere, "heatingSystem", filters.heatingSystem);
+  addTextContains(propertyWhere, "coolingSystem", filters.coolingSystem);
 
-  if (filters.city) {
-    propertyWhere.city = {
-      contains: filters.city,
-      mode: "insensitive",
-    };
-  }
+  const listingWhere: Record<string, any> = { status: "PUBLISHED" satisfies ListingStatus };
+  if (filters.transactionType) listingWhere.transactionType = filters.transactionType;
+  addNumberRange(listingWhere, "salePrice", filters.minSalePrice, filters.maxSalePrice);
+  addNumberRange(listingWhere, "depositAmount", filters.minDepositAmount, filters.maxDepositAmount);
+  addNumberRange(listingWhere, "rentAmount", filters.minRentAmount, filters.maxRentAmount);
 
-  if (filters.district) {
-    propertyWhere.district = {
-      contains: filters.district,
-      mode: "insensitive",
-    };
-  }
-
-  if (
-    filters.minArea !== undefined ||
-    filters.maxArea !== undefined
-  ) {
-    propertyWhere.area = {};
-
-    if (filters.minArea !== undefined) {
-      propertyWhere.area.gte = filters.minArea;
-    }
-
-    if (filters.maxArea !== undefined) {
-      propertyWhere.area.lte = filters.maxArea;
-    }
-  }
-
-  if (filters.rooms !== undefined) {
-    propertyWhere.rooms = filters.rooms;
-  }
-
-  if (
-    filters.yearFrom !== undefined ||
-    filters.yearTo !== undefined
-  ) {
-    propertyWhere.yearBuilt = {};
-
-    if (filters.yearFrom !== undefined) {
-      propertyWhere.yearBuilt.gte = filters.yearFrom;
-    }
-
-    if (filters.yearTo !== undefined) {
-      propertyWhere.yearBuilt.lte = filters.yearTo;
-    }
-  }
-
-  /**
-   * وضعیت انتشار مرجع نمایش عمومی است.
-   * Job روزانه، آگهی‌های سررسیدشده را از PUBLISHED به EXPIRED تغییر می‌دهد.
-   * شرط confirmUntil در این Query نباید آگهی‌های قدیمیِ بدون تاریخ را حذف کند.
-   */
-
-  /**
-   * ----------------------------------------------------------
-   * فیلتر Listing
-   * ----------------------------------------------------------
-   */
-
-  const listingWhere: any = {
-    status: "PUBLISHED" satisfies ListingStatus,
-  };
-
-  if (filters.transactionType) {
-    listingWhere.transactionType = filters.transactionType;
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * فیلتر قیمت
-   * ----------------------------------------------------------
-   */
-
-  if (
-    filters.minPrice !== undefined ||
-    filters.maxPrice !== undefined
-  ) {
-    const priceConditions: any[] = [];
-
-    const createRange = (field: string) => {
-      const range: any = {};
-
-      if (filters.minPrice !== undefined) {
-        range.gte = filters.minPrice;
-      }
-
-      if (filters.maxPrice !== undefined) {
-        range.lte = filters.maxPrice;
-      }
-
-      return {
-        [field]: range,
-      };
-    };
-
-    /**
-     * خرید
-     */
-    if (filters.transactionType === "SALE") {
-      priceConditions.push(
-        createRange("salePrice")
-      );
-    }
-
-    /**
-     * رهن کامل
-     */
-    if (filters.transactionType === "FULL_DEPOSIT") {
-      priceConditions.push(
-        createRange("depositAmount")
-      );
-    }
-
-    /**
-     * اجاره
-     *
-     * فعلاً فیلتر قیمت را بر اساس ودیعه انجام می‌دهیم.
-     * فیلتر مستقل rentAmount را بعداً اضافه می‌کنیم.
-     */
-    if (filters.transactionType === "RENT" || filters.transactionType === "DEPOSIT_AND_RENT") {
-      // در رهن و اجاره، فیلتر عمومی قیمت بر اساس اجاره ماهانه اعمال می‌شود.
-      priceConditions.push(createRange("rentAmount"));
-    }
-
-    /**
-     * اگر نوع معامله مشخص نشده باشد،
-     * قیمت می‌تواند در salePrice یا depositAmount باشد.
-     */
-    if (!filters.transactionType) {
-      priceConditions.push(
-        createRange("salePrice")
-      );
-
-      priceConditions.push(
-        createRange("depositAmount")
-      );
-
-      priceConditions.push(
-        createRange("rentAmount")
-      );
-    }
-
-    if (priceConditions.length > 0) {
-      listingWhere.OR = priceConditions;
-    }
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * Query
-   * ----------------------------------------------------------
-   */
-
-  const properties =
-    await prisma.property.findMany({
-      where: {
-        ...propertyWhere,
-        listing: listingWhere,
-      },
-
-      include: {
-        listing: true,
-
-        media: {
-          where: {
-            isActive: true,
-          },
-
-          orderBy: {
-            sortOrder: "asc",
-          },
-        },
-      },
-
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
-
-  /**
-   * ----------------------------------------------------------
-   * خروجی عمومی Search
-   * ----------------------------------------------------------
-   *
-   * مختصات دقیق عمداً خارج از خروجی هستند.
-   */
+  const properties = await prisma.property.findMany({
+    where: { ...propertyWhere, listing: listingWhere },
+    include: {
+      listing: true,
+      media: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
   return properties.map((property) => {
-    const publicCoordinates = property.latitudePublic != null && property.longitudePublic != null
-      ? { latitude: property.latitudePublic, longitude: property.longitudePublic }
-      : getPublicCoordinates(property.id, property.latitudeExact, property.longitudeExact);
+    const publicCoordinates =
+      property.latitudePublic != null && property.longitudePublic != null
+        ? { latitude: property.latitudePublic, longitude: property.longitudePublic }
+        : getPublicCoordinates(property.id, property.latitudeExact, property.longitudeExact);
 
-    return ({
-    id: property.id,
-
-    propertyType: property.propertyType,
-
-    transactionType:
-      property.listing?.transactionType ?? null,
-
-    city: property.city,
-    district: property.district,
-
-    area: property.area,
-    rooms: property.rooms,
-    yearBuilt: property.yearBuilt,
-    floor: property.floor,
-
-    latitudePublic: publicCoordinates.latitude,
-
-    longitudePublic: publicCoordinates.longitude,
-
-    salePrice:
-      property.listing?.salePrice ?? null,
-
-    depositAmount:
-      property.listing?.depositAmount ?? null,
-
-    rentAmount:
-      property.listing?.rentAmount ?? null,
-
-    mainImage:
-      (property.media.find((media) => media.type === "MAIN_IMAGE") ?? property.media[0])?.url ?? null,
-
-    updatedAt: property.updatedAt,
-  });
+    return {
+      id: property.id,
+      propertyType: property.propertyType,
+      transactionType: property.listing?.transactionType ?? null,
+      city: property.city,
+      district: property.district,
+      area: property.area,
+      rooms: property.rooms,
+      yearBuilt: property.yearBuilt,
+      floor: property.floor,
+      latitudePublic: publicCoordinates.latitude,
+      longitudePublic: publicCoordinates.longitude,
+      salePrice: property.listing?.salePrice ?? null,
+      depositAmount: property.listing?.depositAmount ?? null,
+      rentAmount: property.listing?.rentAmount ?? null,
+      mainImage: (property.media.find((media) => media.type === "MAIN_IMAGE") ?? property.media[0])?.url ?? null,
+      updatedAt: property.updatedAt,
+    };
   });
 }
