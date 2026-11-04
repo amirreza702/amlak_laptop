@@ -43,6 +43,9 @@ import type { TransactionType } from "@prisma/client";
  *
  * RENT
  *   → rentAmount
+ *
+ * DEPOSIT_AND_RENT
+ *   → depositAmount + rentAmount
  */
 export interface UpdatePropertyPriceInput {
   /**
