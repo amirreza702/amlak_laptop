@@ -96,6 +96,9 @@ function getTransactionLabel(
     case "RENT":
       return "اجاره";
 
+    case "DEPOSIT_AND_RENT":
+      return "رهن و اجاره";
+
     default:
       return "";
   }
@@ -160,7 +163,7 @@ function formatPrice(
     }
   }
 
-  if (property.transactionType === "RENT") {
+  if (property.transactionType === "RENT" || property.transactionType === "DEPOSIT_AND_RENT") {
     const deposit = property.depositAmount
       ? `رهن ${Number(
           property.depositAmount
