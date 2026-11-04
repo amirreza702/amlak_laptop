@@ -3,10 +3,9 @@ import { createHash } from "node:crypto";
 /**
  * Create stable public coordinates for one listing.
  *
- * The listing ID seeds a deterministic pseudo-random point that is
- * uniformly distributed across a disk with a maximum radius of 200m.
- * The generated point is stored on PropertyListing and is not exposed
- * as an input to public APIs.
+ * The public point is deterministically displaced 100–300m from the
+ * exact property location. It is stored per listing and remains stable
+ * until the exact property location changes.
  */
 export function getPublicCoordinates(
   listingId: string,
@@ -18,8 +17,10 @@ export function getPublicCoordinates(
   const radiusFraction = seed.readUInt32BE(4) / 0xffffffff;
 
   const angle = angleFraction * Math.PI * 2;
-  // sqrt makes points uniform by area, not clustered toward the center.
-  const distanceMeters = Math.sqrt(radiusFraction) * 200;
+  // Uniform distribution by area inside an annulus between 100m and 300m.
+  const distanceMeters = Math.sqrt(
+    100 * 100 + radiusFraction * (300 * 300 - 100 * 100)
+  );
   const latitudeRadians = (latitudeExact * Math.PI) / 180;
   const metersPerDegree = 111_320;
   const longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadians)), 0.2);
