@@ -157,11 +157,11 @@ export function PropertyEditForm({
       const price = {
         transactionType: values.transactionType,
         salePrice: values.transactionType === "SALE" ? values.salePrice.trim() : null,
-        depositAmount: values.transactionType === "FULL_DEPOSIT" ? values.depositAmount.trim() : null,
-        rentAmount: values.transactionType === "RENT" ? values.rentAmount.trim() : null,
+        depositAmount: values.transactionType === "FULL_DEPOSIT" || values.transactionType === "DEPOSIT_AND_RENT" ? values.depositAmount.trim() : null,
+        rentAmount: values.transactionType === "RENT" || values.transactionType === "DEPOSIT_AND_RENT" ? values.rentAmount.trim() : null,
       };
-      const requiredPrice = values.transactionType === "SALE" ? price.salePrice : values.transactionType === "FULL_DEPOSIT" ? price.depositAmount : price.rentAmount;
-      if (!requiredPrice || !/^[0-9]+$/.test(requiredPrice) || !Number.isFinite(Number(requiredPrice)) || Number(requiredPrice) <= 0) throw new Error("مبلغ مربوط به نوع معامله را به تومان و به‌صورت عدد صحیح مثبت وارد کنید.");
+      const requiredPrices = values.transactionType === "SALE" ? [price.salePrice] : values.transactionType === "FULL_DEPOSIT" ? [price.depositAmount] : values.transactionType === "RENT" ? [price.rentAmount] : [price.depositAmount, price.rentAmount];
+      if (requiredPrices.some(value => !value || !/^[0-9]+$/.test(value) || !Number.isFinite(Number(value)) || Number(value) <= 0)) throw new Error("همه مبالغ مربوط به نوع معامله را به تومان و به‌صورت عدد صحیح مثبت وارد کنید.");
 
       const updateResponse = await fetch(`${API_URL}/properties/${encodeURIComponent(propertyId)}`, {
         method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(details),
@@ -236,10 +236,11 @@ export function PropertyEditForm({
       <fieldset className="space-y-2 rounded-xl border p-3"><legend className="px-2 text-sm font-bold">موقعیت ملک *</legend><LocationPicker value={coordinateValue} onChange={point=>setValues(v=>({...v,latitudeExact:point?String(point.latitude):"",longitudeExact:point?String(point.longitude):""}))} city={values.city}/></fieldset>
       <section className="space-y-3 rounded-xl border p-3">
         <h3 className="font-bold">نوع معامله و قیمت *</h3>
-        <label className="block space-y-1 text-sm">نوع معامله<select required value={values.transactionType} onChange={e=>update("transactionType",e.target.value as TransactionType)} className={inputClass}><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option></select></label>
+        <label className="block space-y-1 text-sm">نوع معامله<select required value={values.transactionType} onChange={e=>update("transactionType",e.target.value as TransactionType)} className={inputClass}><option value="SALE">فروش</option><option value="FULL_DEPOSIT">رهن کامل</option><option value="RENT">اجاره</option><option value="DEPOSIT_AND_RENT">رهن و اجاره</option></select></label>
         {values.transactionType==="SALE" && <label className="block space-y-1 text-sm">قیمت فروش (تومان) *<input required type="number" min="1" value={values.salePrice} onChange={e=>update("salePrice",e.target.value)} className={inputClass}/></label>}
         {values.transactionType==="FULL_DEPOSIT" && <label className="block space-y-1 text-sm">مبلغ رهن (تومان) *<input required type="number" min="1" value={values.depositAmount} onChange={e=>update("depositAmount",e.target.value)} className={inputClass}/></label>}
-        {values.transactionType==="RENT" && <label className="block space-y-1 text-sm">اجاره ماهانه (تومان) *<input required type="number" min="1" value={values.rentAmount} onChange={e=>update("rentAmount",e.target.value)} className={inputClass}/></label>}
+        {(values.transactionType==="RENT" || values.transactionType==="DEPOSIT_AND_RENT") && <label className="block space-y-1 text-sm">اجاره ماهانه (تومان) *<input required type="number" min="1" value={values.rentAmount} onChange={e=>update("rentAmount",e.target.value)} className={inputClass}/></label>}
+        {values.transactionType==="DEPOSIT_AND_RENT" && <label className="block space-y-1 text-sm">مبلغ رهن (تومان) *<input required type="number" min="1" value={values.depositAmount} onChange={e=>update("depositAmount",e.target.value)} className={inputClass}/></label>}
       </section>
       <section className="space-y-3 rounded-xl border border-slate-200 p-3">
         <h3 className="font-bold">جزئیات اختیاری ملک</h3>
