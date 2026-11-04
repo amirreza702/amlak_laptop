@@ -1,5 +1,5 @@
 /** داده‌های فرم درخواست جست‌وجوی ملک؛ مستقل از مدل دیتابیس. */
-export type CustomerRequestTransactionType = "SALE" | "FULL_DEPOSIT" | "RENT";
+export type CustomerRequestTransactionType = "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
 
 export type CustomerRequestPropertyType =
   | "APARTMENT"
