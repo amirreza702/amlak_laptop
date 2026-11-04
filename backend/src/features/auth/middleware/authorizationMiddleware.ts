@@ -154,8 +154,8 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
 }
 
 /**
- * ویرایش و مدیریت رسانه فقط برای ایجادکننده ملک و کارکنان هشتی مجاز است.
- * تأیید همکاری مشاور با مالک، مجوز ویرایش ملک ایجاد نمی‌کند.
+ * مدیریت ملک برای ایجادکننده و مالک مرتبط مستقل و هم‌زمان مجاز است.
+ * ارتباط مالک از PropertyOwner احراز می‌شود؛ انتخاب مشاور به‌تنهایی مجوز ویرایش نیست.
  */
 export function requirePropertyCreator(paramName = "id") {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -170,10 +170,20 @@ export function requirePropertyCreator(paramName = "id") {
     try {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
-        select: { createdByUserId: true, deletedAt: true },
+        select: {
+          createdByUserId: true,
+          deletedAt: true,
+          owners: {
+            where: { owner: { is: { userId: user.id } } },
+            select: { ownerId: true },
+            take: 1,
+          },
+        },
       });
-      if (!property || property.deletedAt || property.createdByUserId !== user.id) {
-        return res.status(403).json({ message: "Only the property creator can edit or delete this property" });
+      const isCreator = property?.createdByUserId === user.id;
+      const isRelatedOwner = user.role === "OWNER" && Boolean(property?.owners.length);
+      if (!property || property.deletedAt || (!isCreator && !isRelatedOwner)) {
+        return res.status(403).json({ message: "Only the property creator or a related owner can manage this property" });
       }
       return next();
     } catch (error) {
