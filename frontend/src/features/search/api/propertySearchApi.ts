@@ -1,14 +1,6 @@
-import type {
-  PropertySearchResult,
-  PropertySearchState,
-  PropertyType,
-  TransactionType,
-} from "../types/search";
+import type { PropertySearchResult, PropertySearchState, PropertyType, TransactionType } from "../types/search";
 
-interface PropertySearchResponse {
-  count: number;
-  items: PropertySearchResult[];
-}
+interface PropertySearchResponse { count: number; items: PropertySearchResult[]; }
 
 function mapTransactionType(value: TransactionType | ""): string | undefined {
   switch (value) {
@@ -33,33 +25,43 @@ function mapPropertyType(value: PropertyType | ""): string | undefined {
   }
 }
 
-/** ساخت پارامترهای جست‌وجو و دریافت نتایج از API واقعی املاک. */
 export async function searchProperties(filters: PropertySearchState): Promise<PropertySearchResult[]> {
   const params = new URLSearchParams();
-  if (filters.city.trim()) params.set("city", filters.city.trim());
-  if (filters.district.trim()) params.set("district", filters.district.trim());
+  const setText = (key: string, value: string) => { if (value.trim()) params.set(key, value.trim()); };
 
-  const transactionType = mapTransactionType(filters.transactionType);
-  if (transactionType) params.set("transactionType", transactionType);
+  setText("city", filters.city);
+  setText("district", filters.district);
+  setText("transactionType", mapTransactionType(filters.transactionType) ?? "");
+  setText("propertyType", mapPropertyType(filters.propertyType) ?? "");
 
-  const propertyType = mapPropertyType(filters.propertyType);
-  if (propertyType) params.set("propertyType", propertyType);
+  const mappings: Array<[keyof PropertySearchState, string]> = [
+    ["minSalePrice", "minSalePrice"], ["maxSalePrice", "maxSalePrice"],
+    ["minDepositAmount", "minDepositAmount"], ["maxDepositAmount", "maxDepositAmount"],
+    ["minRentAmount", "minRentAmount"], ["maxRentAmount", "maxRentAmount"],
+    ["minArea", "minArea"], ["maxArea", "maxArea"],
+    ["minRooms", "minRooms"], ["maxRooms", "maxRooms"],
+    ["minYearBuilt", "yearFrom"], ["maxYearBuilt", "yearTo"],
+    ["minFloor", "minFloor"], ["maxFloor", "maxFloor"],
+    ["minTotalUnits", "minTotalUnits"], ["maxTotalUnits", "maxTotalUnits"],
+    ["minParkingCount", "minParkingCount"], ["maxParkingCount", "maxParkingCount"],
+    ["documentType", "documentType"], ["ownershipType", "ownershipType"], ["landTenure", "landTenure"],
+    ["parkingType", "parkingType"], ["hasElevator", "hasElevator"], ["hasStorage", "hasStorage"],
+    ["hasBalcony", "hasBalcony"], ["hasYard", "hasYard"],
+    ["heatingSystem", "heatingSystem"], ["coolingSystem", "coolingSystem"],
+    ["renovationStatus", "renovationStatus"],
+    ["minRenovationYear", "minRenovationYear"], ["maxRenovationYear", "maxRenovationYear"],
+    ["occupancyStatus", "occupancyStatus"],
+  ];
 
-  if (filters.minPrice.trim()) params.set("minPrice", filters.minPrice.trim());
-  if (filters.maxPrice.trim()) params.set("maxPrice", filters.maxPrice.trim());
-  if (filters.minArea.trim()) params.set("minArea", filters.minArea.trim());
-  if (filters.maxArea.trim()) params.set("maxArea", filters.maxArea.trim());
-  if (filters.rooms.trim()) params.set("rooms", filters.rooms.trim());
-  if (filters.minYearBuilt.trim()) params.set("yearFrom", filters.minYearBuilt.trim());
-  if (filters.maxYearBuilt.trim()) params.set("yearTo", filters.maxYearBuilt.trim());
+  for (const [stateKey, queryKey] of mappings) setText(queryKey, filters[stateKey]);
 
-  const queryString = params.toString();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
-  const response = await fetch(`${apiUrl}/properties/search${queryString ? `?${queryString}` : ""}`, {
+  const queryString = params.toString();
+  const response = await fetch(apiUrl + "/properties/search" + (queryString ? "?" + queryString : ""), {
     credentials: "include",
     cache: "no-store",
   });
-  if (!response.ok) throw new Error(`خطا در جستجوی ملک: ${response.status}`);
+  if (!response.ok) throw new Error("خطا در جستجوی ملک: " + response.status);
   const data = await response.json() as PropertySearchResponse;
   return data.items;
 }
