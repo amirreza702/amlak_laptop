@@ -55,60 +55,40 @@ function getPropertyTypeLabel(
  * نکته:
  * مقدار Decimal از Backend به صورت string دریافت می‌شود.
  */
+function formatCurrency(value?: string | null): string {
+  if (value == null || value === "") return "ثبت نشده";
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "ثبت نشده";
+  return `${amount.toLocaleString("fa-IR")} تومان`;
+}
+
+function hasAmount(value?: string | null): boolean {
+  return value !== null && value !== undefined && value !== "";
+}
+
+/**
+ * قیمت انواع معامله در جزئیات عمومی ملک.
+ * در رهن و اجاره، دو مبلغ مستقل نگهداری و نمایش داده می‌شوند.
+ */
 function getPriceLabel(
   listing?: PropertyListing | null
 ): string {
-  if (!listing) {
-    return "قیمت ثبت نشده است";
+  if (!listing) return "قیمت ثبت نشده است";
+
+  if (listing.transactionType === "SALE" && hasAmount(listing.salePrice)) {
+    return formatCurrency(listing.salePrice);
   }
 
-  /**
-   * فروش
-   */
-  if (
-    listing.transactionType === "SALE" &&
-    listing.salePrice
-  ) {
-    return `${Number(listing.salePrice).toLocaleString(
-      "fa-IR"
-    )} تومان`;
+  if (listing.transactionType === "FULL_DEPOSIT" && hasAmount(listing.depositAmount)) {
+    return formatCurrency(listing.depositAmount);
   }
 
-  /**
-   * رهن کامل
-   */
-  if (
-    listing.transactionType === "FULL_DEPOSIT" &&
-    listing.depositAmount
-  ) {
-    return `${Number(
-      listing.depositAmount
-    ).toLocaleString("fa-IR")} تومان`;
+  if (listing.transactionType === "RENT" && hasAmount(listing.rentAmount)) {
+    return formatCurrency(listing.rentAmount);
   }
 
-  /**
-   * رهن و اجاره
-   */
   if (listing.transactionType === "DEPOSIT_AND_RENT") {
-    const deposit = listing.depositAmount
-      ? `رهن ${Number(listing.depositAmount).toLocaleString("fa-IR")} تومان`
-      : "";
-    const rent = listing.rentAmount
-      ? `اجاره ماهانه ${Number(listing.rentAmount).toLocaleString("fa-IR")} تومان`
-      : "";
-    return [deposit, rent].filter(Boolean).join(" / ") || "قیمت ثبت نشده است";
-  }
-
-  /**
-   * اجاره
-   */
-  if (
-    listing.transactionType === "RENT" &&
-    listing.rentAmount
-  ) {
-    return `${Number(
-      listing.rentAmount
-    ).toLocaleString("fa-IR")} تومان`;
+    return "مبلغ رهن و اجاره";
   }
 
   return "قیمت ثبت نشده است";
@@ -403,25 +383,32 @@ export default function PropertyDetailClient() {
                 py-5
               "
             >
-              <div
-                className="
-                  text-xs
-                  text-slate-500
-                "
-              >
-                قیمت
+              <div className="text-xs text-slate-500">
+                {property.listing?.transactionType === "DEPOSIT_AND_RENT"
+                  ? "نوع معامله: رهن و اجاره"
+                  : "قیمت"}
               </div>
 
-              <div
-                className="
-                  mt-1
-                  text-lg
-                  font-bold
-                  text-slate-900
-                "
-              >
-                {price}
-              </div>
+              {property.listing?.transactionType === "DEPOSIT_AND_RENT" ? (
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-xs font-medium text-slate-500">مبلغ رهن</div>
+                    <div className="mt-2 text-lg font-bold text-slate-900">
+                      {formatCurrency(property.listing.depositAmount)}
+                    </div>
+                  </div>
+                  <div className="border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-xs font-medium text-slate-500">اجاره ماهانه</div>
+                    <div className="mt-2 text-lg font-bold text-slate-900">
+                      {formatCurrency(property.listing.rentAmount)}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-1 text-lg font-bold text-slate-900">
+                  {price}
+                </div>
+              )}
             </div>
 
             {/* ==================================================
