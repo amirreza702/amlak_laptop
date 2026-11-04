@@ -134,12 +134,12 @@ export async function updatePropertyPrice(
       : null;
 
   const newDepositAmount =
-    data.transactionType === TransactionType.FULL_DEPOSIT
+    data.transactionType === TransactionType.FULL_DEPOSIT || data.transactionType === TransactionType.DEPOSIT_AND_RENT
       ? data.depositAmount ?? null
       : null;
 
   const newRentAmount =
-    data.transactionType === TransactionType.RENT
+    data.transactionType === TransactionType.RENT || data.transactionType === TransactionType.DEPOSIT_AND_RENT
       ? data.rentAmount ?? null
       : null;
 
