@@ -94,6 +94,7 @@ function buildDetails(property: Property): {
 
   add(facilities, "تعداد پارکینگ", property.parkingCount);
   addEnum(facilities, "نوع پارکینگ", property.parkingType);
+  if (hasValue(property.parkingNumber)) facilities.push({ label: "شماره پارکینگ", value: String(property.parkingNumber) });
   addBoolean(facilities, "آسانسور", property.hasElevator);
   addBoolean(facilities, "انباری", property.hasStorage);
   addBoolean(facilities, "بالکن", property.hasBalcony);
