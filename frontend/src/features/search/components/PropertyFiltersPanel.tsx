@@ -16,15 +16,15 @@ interface PropertyFiltersPanelProps {
 
 const inputClass = "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
 
-function RangeField({ label, minValue, maxValue, onMinChange, onMaxChange, minPlaceholder = "حداقل", maxPlaceholder = "حداکثر" }: {
+function RangeField({ label, minValue, maxValue, onMinChange, onMaxChange, minPlaceholder = "حداقل", maxPlaceholder = "حداکثر", min = 0 }: {
   label: string; minValue: string; maxValue: string;
   onMinChange: (value: string) => void; onMaxChange: (value: string) => void;
-  minPlaceholder?: string; maxPlaceholder?: string;
+  minPlaceholder?: string; maxPlaceholder?: string; min?: number;
 }) {
   return <section className="space-y-2">
     <h3 className="text-sm font-bold text-slate-800">{label}</h3>
     <div className="grid grid-cols-2 gap-3">
-      <input className={inputClass} type="number" min="0" value={minValue} onChange={(event) => onMinChange(event.target.value)} placeholder={minPlaceholder} />
+      <input className={inputClass} type="number" min={min} value={minValue} onChange={(event) => onMinChange(event.target.value)} placeholder={minPlaceholder} />
       <input className={inputClass} type="number" min="0" value={maxValue} onChange={(event) => onMaxChange(event.target.value)} placeholder={maxPlaceholder} />
     </div>
   </section>;
@@ -61,13 +61,13 @@ export function PropertyFiltersPanel({ isOpen, onClose, filters, setFilter, rese
         <h3 className="text-sm font-bold text-slate-800">نوع معامله و ملک</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <SelectField label="نوع معامله" value={filters.transactionType} onChange={(value) => setFilter("transactionType", value as PropertySearchState["transactionType"])} options={[
-            { value: "خرید", label: "فروش" }, { value: "رهن کامل", label: "رهن کامل" }, { value: "اجاره", label: "اجاره" }, { value: "رهن و اجاره", label: "رهن و اجاره" },
+            { value: "فروش", label: "فروش" }, { value: "رهن کامل", label: "رهن کامل" }, { value: "اجاره", label: "اجاره" }, { value: "رهن و اجاره", label: "رهن و اجاره" },
           ]} />
           <SelectField label="نوع ملک" value={filters.propertyType} onChange={(value) => setFilter("propertyType", value as PropertySearchState["propertyType"])} options={[
             { value: "آپارتمان", label: "آپارتمان" }, { value: "خانه", label: "خانه" }, { value: "ویلا", label: "ویلا" }, { value: "زمین", label: "زمین" }, { value: "مغازه", label: "مغازه" }, { value: "اداری", label: "اداری" }, { value: "باغ", label: "باغ" },
           ]} />
         </div>
-        {filters.transactionType === "خرید" && <RangeField label="قیمت فروش (تومان)" minValue={filters.minSalePrice} maxValue={filters.maxSalePrice} onMinChange={(value) => setFilter("minSalePrice", value)} onMaxChange={(value) => setFilter("maxSalePrice", value)} />}
+        {filters.transactionType === "فروش" && <RangeField label="قیمت فروش (تومان)" minValue={filters.minSalePrice} maxValue={filters.maxSalePrice} onMinChange={(value) => setFilter("minSalePrice", value)} onMaxChange={(value) => setFilter("maxSalePrice", value)} />}
         {filters.transactionType === "رهن کامل" && <RangeField label="مبلغ رهن کامل (تومان)" minValue={filters.minDepositAmount} maxValue={filters.maxDepositAmount} onMinChange={(value) => setFilter("minDepositAmount", value)} onMaxChange={(value) => setFilter("maxDepositAmount", value)} />}
         {filters.transactionType === "اجاره" && <RangeField label="اجاره ماهانه (تومان)" minValue={filters.minRentAmount} maxValue={filters.maxRentAmount} onMinChange={(value) => setFilter("minRentAmount", value)} onMaxChange={(value) => setFilter("maxRentAmount", value)} />}
         {filters.transactionType === "رهن و اجاره" && <>
@@ -89,7 +89,7 @@ export function PropertyFiltersPanel({ isOpen, onClose, filters, setFilter, rese
         <RangeField label="متراژ (مترمربع)" minValue={filters.minArea} maxValue={filters.maxArea} onMinChange={(value) => setFilter("minArea", value)} onMaxChange={(value) => setFilter("maxArea", value)} />
         <RangeField label="تعداد اتاق" minValue={filters.minRooms} maxValue={filters.maxRooms} onMinChange={(value) => setFilter("minRooms", value)} onMaxChange={(value) => setFilter("maxRooms", value)} />
         <RangeField label="سال ساخت" minValue={filters.minYearBuilt} maxValue={filters.maxYearBuilt} onMinChange={(value) => setFilter("minYearBuilt", value)} onMaxChange={(value) => setFilter("maxYearBuilt", value)} />
-        <RangeField label="طبقه" minValue={filters.minFloor} maxValue={filters.maxFloor} onMinChange={(value) => setFilter("minFloor", value)} onMaxChange={(value) => setFilter("maxFloor", value)} />
+        <RangeField label="طبقه" min={-10} minValue={filters.minFloor} maxValue={filters.maxFloor} onMinChange={(value) => setFilter("minFloor", value)} onMaxChange={(value) => setFilter("maxFloor", value)} />
         <RangeField label="تعداد کل واحدها" minValue={filters.minTotalUnits} maxValue={filters.maxTotalUnits} onMinChange={(value) => setFilter("minTotalUnits", value)} onMaxChange={(value) => setFilter("maxTotalUnits", value)} />
       </section>
 
