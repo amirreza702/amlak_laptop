@@ -49,7 +49,7 @@ export async function createCustomerSearchRequestController(
     }
 
     // پروفایل مشتری از حساب موجود در Session استخراج می‌شود؛ customerId مسیر مبنای هویت نیست.
-    const profile = await getCurrentCustomerProfile(user.id);
+    const profile = await getCurrentCustomerProfile(user);
     const result = await createCustomerSearchRequest(
       profile.id,
       req.body,
