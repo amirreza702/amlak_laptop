@@ -8,6 +8,13 @@
  */
 
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+
+function getActor(req: Request) {
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) throw new Error("AUTHENTICATION_REQUIRED");
+  return { id: user.id, role: user.role, isActive: user.isActive };
+}
 
 import {
   createExactLocationAccessLogService,
@@ -79,7 +86,7 @@ export async function getExactLocationAccessLogsController(
     const propertyId = req.params.id;
 
     const accessLogs =
-      await getExactLocationAccessLogsService(propertyId);
+      await getExactLocationAccessLogsService(propertyId, getActor(req));
 
     return res.status(200).json({
       accessLogs,
