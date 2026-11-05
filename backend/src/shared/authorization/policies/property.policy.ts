@@ -63,6 +63,10 @@ export const propertyPolicy: AuthorizationPolicy = (
     return false;
   }
 
+  // دسترسی به عملیات Duplicate فقط برای هشتی مجاز است.
+  if (action === "VIEW_DUPLICATE_REVIEW_QUEUE") return isHashti;
+  if ([ "CREATE_DUPLICATE_REVIEW", "VIEW_DUPLICATE_REVIEWS", "REVIEW_DUPLICATE", "VIEW_DUPLICATE_MATCHES", "PUBLISH_AFTER_DUPLICATE_REVIEW", "REJECT_AFTER_DUPLICATE_REVIEW" ].includes(action)) return isHashti;
+
   // انتشار یا رد آگهی فقط یک تصمیم اختصاصی هشتی است.
   if (action === "APPROVE_PUBLICATION") {
     return isHashti;
