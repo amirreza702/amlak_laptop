@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../../../lib/prisma";
+import { authorize } from "../../../shared/authorization/authorization.core";
 import type { AuthenticatedRequest } from "./authMiddleware";
 
 type ProfileKind = "customer" | "owner" | "agent";
@@ -133,14 +134,23 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
 
       if (property?.deletedAt) return res.status(403).json({ message: "This property has been deleted" });
 
-      const allowed = Boolean(
-        property &&
-        ((user.role === "OWNER" && property.owners.length > 0) ||
-         (user.role === "AGENT" && (
-           property.agents.length > 0 ||
-           (allowAgentCreator && property.registrationSource === "AGENT" && property.createdByUserId === user.id)
-         )))
-      );
+      const allowed = property
+        ? await authorize("property", "ACCESS", {
+            actor: { id: user.id, role: user.role },
+            resource: {
+              id: propertyId,
+              data: {
+                isRelatedOwner: user.role === "OWNER" && property.owners.length > 0,
+                isApprovedAgent: user.role === "AGENT" && property.agents.length > 0,
+                isAllowedAgentCreator:
+                  allowAgentCreator &&
+                  user.role === "AGENT" &&
+                  property.registrationSource === "AGENT" &&
+                  property.createdByUserId === user.id,
+              },
+            },
+          })
+        : false;
 
       if (!allowed) {
         return res.status(403).json({ message: "You do not have access to this property" });
