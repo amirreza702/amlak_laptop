@@ -13,6 +13,7 @@
  */
 
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   getUserNotificationsService,
@@ -35,8 +36,11 @@ export async function getUserNotificationsController(
       });
     }
 
-    const notifications =
-      await getUserNotificationsService(userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const notifications = await getUserNotificationsService(userId, {
+      id: actor.id, role: actor.role, isActive: actor.isActive,
+    });
 
     return res.status(200).json(notifications);
   } catch (error) {
@@ -58,7 +62,9 @@ export async function markNotificationAsReadController(
 ) {
   try {
     const notificationId = req.params.id;
-    const userId = req.body.userId;
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const userId = actor.id;
 
     if (
       !notificationId ||
@@ -72,7 +78,8 @@ export async function markNotificationAsReadController(
     const notification =
       await markNotificationAsReadService(
         notificationId,
-        userId
+        userId,
+        { id: actor.id, role: actor.role, isActive: actor.isActive }
       );
 
     return res.status(200).json(notification);
