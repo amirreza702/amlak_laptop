@@ -1,12 +1,35 @@
 import type { Property } from "@prisma/client";
-import { findPropertyById, findPropertiesWithinRadius } from "../repository/propertyRepository";
+import { findPropertyById, findPropertiesWithinRadius, findPropertyByIdWithContacts } from "../repository/propertyRepository";
 import { calculatePropertySimilarity } from "./propertySimilarityService";
+import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 
 export const DUPLICATE_MATCHING_RADIUS_METERS = 1000;
 export const DUPLICATE_MATCHING_THRESHOLD = 0.80;
 
+export interface DuplicateMatchProperty {
+  id: string;
+  propertyType: Property["propertyType"];
+  city: string;
+  district: string | null;
+  area: number;
+  rooms: number | null;
+  yearBuilt: number | null;
+  latitudeExact: number | null;
+  longitudeExact: number | null;
+  latitudePublic: number | null;
+  longitudePublic: number | null;
+  mapLocation: { latitude: number; longitude: number; precision: "APPROXIMATE" } | null;
+  address: string;
+  postalCode: null;
+  ownerFirstName: null;
+  ownerLastName: null;
+  ownerMobile: null;
+  creatorMobile: null;
+  owners: [];
+}
+
 export interface DuplicateMatchResult {
-  property: Property;
+  property: DuplicateMatchProperty;
   distanceMeters: number;
   similarityScore: number;
 }
@@ -16,9 +39,14 @@ export interface PropertySimilaritySummary {
   matches: DuplicateMatchResult[];
 }
 
-/** محاسبه یکپارچه بیشترین تشابه و کاندیداهای بالاتر از آستانه؛ شعاع فقط برای انتخاب کاندیداست. */
+/**
+ * خروجی Matching هرگز اطلاعات خصوصی ملک کاندید را افشا نمی‌کند.
+ * مختصات دقیق فقط برای محاسبه داخلی فاصله استفاده می‌شود؛ خروجی همواره
+ * مختصات عمومی و محدوده تقریبی را برمی‌گرداند.
+ */
 export const getPropertySimilaritySummaryService = async (
-  propertyId: string
+  propertyId: string,
+  actor: { id: string; role: string },
 ): Promise<PropertySimilaritySummary> => {
   const primaryProperty = await findPropertyById(propertyId);
   if (!primaryProperty) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
@@ -27,7 +55,7 @@ export const getPropertySimilaritySummaryService = async (
     primaryProperty.latitudeExact,
     primaryProperty.longitudeExact,
     DUPLICATE_MATCHING_RADIUS_METERS,
-    propertyId
+    propertyId,
   );
 
   const scored = candidates.map((candidate) => ({
@@ -38,20 +66,74 @@ export const getPropertySimilaritySummaryService = async (
 
   const maximumSimilarityScore = scored.reduce(
     (maximum, match) => Math.max(maximum, match.similarityScore),
-    0
+    0,
   );
 
-  const matches = scored
+  const matches = await Promise.all(scored
     .filter((match) => match.similarityScore >= DUPLICATE_MATCHING_THRESHOLD)
-    .sort((a, b) => b.similarityScore - a.similarityScore);
+    .sort((a, b) => b.similarityScore - a.similarityScore)
+    .map(async (match): Promise<DuplicateMatchResult> => {
+      const fullCandidate = await findPropertyByIdWithContacts(match.property.id);
+      if (!fullCandidate) throw new Error("ملک مشابه دیگر در دسترس نیست.");
+
+      // تصمیم Policy برای این کاندید محاسبه می‌شود، اما Matching اطلاعات مالک
+      // یا مختصات دقیق را حتی در حالت مجاز بودن نیز در خروجی فهرست نمی‌دهد.
+      const visibility = await getPropertyVisibility(actor, fullCandidate);
+      const projected = projectPropertyForActor(fullCandidate, visibility, {
+        exposeCreatorContact: false,
+      });
+      const latitudePublic = fullCandidate.listing?.latitudePublic ?? null;
+      const longitudePublic = fullCandidate.listing?.longitudePublic ?? null;
+      const {
+        owners: _owners,
+        agents: _agents,
+        createdByUser: _createdByUser,
+        createdByUserId: _createdByUserId,
+        creatorMobile: _creatorMobile,
+        deletedAt: _deletedAt,
+        registrationSource: _registrationSource,
+        listing: _listing,
+        ...publicFields
+      } = projected;
+
+      return {
+        property: {
+          id: fullCandidate.id,
+          propertyType: fullCandidate.propertyType,
+          city: fullCandidate.city,
+          district: fullCandidate.district,
+          area: fullCandidate.area,
+          rooms: fullCandidate.rooms,
+          yearBuilt: fullCandidate.yearBuilt,
+          latitudeExact: null,
+          longitudeExact: null,
+          latitudePublic,
+          longitudePublic,
+          mapLocation: latitudePublic != null && longitudePublic != null
+            ? { latitude: latitudePublic, longitude: longitudePublic, precision: "APPROXIMATE" }
+            : null,
+          address: [fullCandidate.city, fullCandidate.district, "محدوده تقریبی"].filter(Boolean).join("، "),
+          postalCode: null,
+          ownerFirstName: null,
+          ownerLastName: null,
+          ownerMobile: null,
+          creatorMobile: null,
+          owners: [],
+        },
+        // فاصله دقیق برای جلوگیری از استنتاج موقعیت دقیق گرد می‌شود.
+        distanceMeters: Math.round(match.distanceMeters / 100) * 100,
+        similarityScore: match.similarityScore,
+      };
+    }));
 
   return { maximumSimilarityScore, matches };
 };
 
-/** API قدیمی Matching همان قرارداد قبلی را حفظ می‌کند و فقط کاندیداهای معتبر را برمی‌گرداند. */
+/** API Matching فقط خلاصه امن ملک‌های مشابه را برمی‌گرداند. */
 export const findDuplicateMatchesService = async (
-  propertyId: string
+  propertyId: string,
+  actor: { id: string; role: string },
 ): Promise<DuplicateMatchResult[]> => {
-  const summary = await getPropertySimilaritySummaryService(propertyId);
+  const summary = await getPropertySimilaritySummaryService(propertyId, actor);
   return summary.matches;
 };
