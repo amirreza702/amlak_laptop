@@ -38,6 +38,7 @@ import {
   findAgentPropertyEligibility,
   findEvaluationByEvaluatorAndTarget,
 } from "../repository/evaluationRepository";
+import { findPropertyAuthorizationContextById } from "../../property/repository/propertyRepository";
 
 /**
  * ============================================================
@@ -383,9 +384,14 @@ export const createEvaluationService = async (
       }
       const owner = await findOwnerByUserId(data.evaluatorUserId);
       if (!owner) throw new Error("Evaluator owner not found");
-      const property = await findPropertyById(data.propertyId);
+      const property = await findPropertyAuthorizationContextById(data.propertyId);
       if (!property) throw new Error("Evaluation target not found");
-      if (property.listing?.status !== "PUBLISHED" || !property.listing.confirmUntil || property.listing.confirmUntil <= new Date()) {
+      if (!property.owners?.some((relation) => relation.owner?.userId === evaluator.id && relation.ownerId === owner.id)) {
+        throw new Error("Owner can evaluate only a property related to their own profile");
+      }
+      if (property.deletedAt || property.isActive === false ||
+          property.listing?.status !== "PUBLISHED" ||
+          !property.listing.confirmUntil || property.listing.confirmUntil <= new Date()) {
         throw new Error("Property is not currently published");
       }
       return createAuthorizedEvaluation(evaluator, data.type, {
