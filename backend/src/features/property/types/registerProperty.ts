@@ -26,6 +26,7 @@ export interface PropertyCreator {
   id: string;
   mobile: string;
   role: PropertyCreatorRole;
+  isActive: boolean;
 }
 
 /**
