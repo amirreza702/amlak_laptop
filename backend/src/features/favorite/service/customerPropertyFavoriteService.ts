@@ -25,6 +25,7 @@
 import { findCustomerById } from "../../customer/repository/customerRepository";
 import { findAgentProfileById } from "../../agent/repository/agentRepository";
 import { findPropertyById } from "../../property/repository/propertyRepository";
+import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
 
 import {
   createCustomerPropertyFavorite,
@@ -64,6 +65,13 @@ export async function addPropertyToFavoritesService(
   if (!property) {
     throw new Error("ملک مورد نظر پیدا نشد.");
   }
+
+  const canFavorite = await authorizePropertyAction(
+    { id: customer.userId, role: "CUSTOMER" },
+    "FAVORITE",
+    property,
+  );
+  if (!canFavorite) throw new Error("این ملک در حال حاضر برای علاقه‌مندی قابل دسترسی نیست.");
 
   const existingFavorite =
     await findCustomerPropertyFavorite(
