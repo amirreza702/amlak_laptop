@@ -10,7 +10,18 @@ import {
   deactivatePropertyMedia,
   updatePropertyMediaOrder,
 } from "../repository/propertyMediaRepository";
-import { findPropertyById } from "../repository/propertyRepository";
+import { findPropertyById, findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
+
+type PropertyMediaActor = { id: string; role: string; isActive?: boolean };
+
+async function authorizePropertyMedia(propertyId: string, actor: PropertyMediaActor, action: "MANAGE" | "READ_PRIVATE") {
+  const context = await findPropertyAuthorizationContextById(propertyId);
+  if (!context) throw new Error("ملک مورد نظر پیدا نشد.");
+  const allowed = await authorizePropertyAction(actor, action, context);
+  if (!allowed) throw new Error("PROPERTY_MEDIA_ACCESS_FORBIDDEN");
+  return context;
+}
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
@@ -34,7 +45,9 @@ export async function createPropertyMediaService(data: {
   type: MediaType;
   imageData: string;
   sortOrder?: number;
+  actor: PropertyMediaActor;
 }): Promise<PropertyMedia> {
+  await authorizePropertyMedia(data.propertyId, data.actor, "MANAGE");
   if (data.type !== MediaType.IMAGE && data.type !== MediaType.MAIN_IMAGE) throw new Error("فقط فایل تصویری مجاز است.");
   const property = await findPropertyById(data.propertyId);
   if (!property || property.deletedAt) throw new Error("ملک مورد نظر پیدا نشد یا حذف شده است.");
@@ -64,15 +77,20 @@ export async function createPropertyMediaService(data: {
   return media;
 }
 
-export async function getPropertyMediaService(propertyId: string): Promise<PropertyMedia[]> {
+export async function getPropertyMediaService(propertyId: string, actor: PropertyMediaActor): Promise<PropertyMedia[]> {
+  await authorizePropertyMedia(propertyId, actor, "READ_PRIVATE");
   const property = await findPropertyById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   return findPropertyMedia(propertyId);
 }
 
-export async function getPropertyMediaFileService(mediaId: string, propertyId?: string, publicOnly = false) {
+export async function getPropertyMediaFileService(mediaId: string, propertyId?: string, publicOnly = false, actor?: PropertyMediaActor) {
   const media = await findPropertyMediaById(mediaId);
   if (!media || !media.isActive || (propertyId && media.propertyId !== propertyId)) throw new Error("تصویر مورد نظر پیدا نشد.");
+  if (!publicOnly) {
+    if (!actor) throw new Error("PROPERTY_MEDIA_ACCESS_FORBIDDEN");
+    await authorizePropertyMedia(media.propertyId, actor, "READ_PRIVATE");
+  }
   const listing = media.property.listing;
   if (publicOnly && (
     !media.property.isActive ||
@@ -87,7 +105,8 @@ export async function getPropertyMediaFileService(mediaId: string, propertyId?: 
   return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
 }
 
-export async function deletePropertyMediaService(propertyId: string, mediaId: string) {
+export async function deletePropertyMediaService(propertyId: string, mediaId: string, actor: PropertyMediaActor) {
+  await authorizePropertyMedia(propertyId, actor, "MANAGE");
   const media = await findPropertyMediaById(mediaId);
   if (!media || media.propertyId !== propertyId || !media.isActive) throw new Error("تصویر مورد نظر پیدا نشد.");
   await deactivatePropertyMedia(mediaId, propertyId);
@@ -95,7 +114,8 @@ export async function deletePropertyMediaService(propertyId: string, mediaId: st
   await unlink(storedFilePath(mediaId)).catch(() => undefined);
 }
 
-export async function reorderPropertyMediaService(propertyId: string, orderedIds: string[]) {
+export async function reorderPropertyMediaService(propertyId: string, orderedIds: string[], actor: PropertyMediaActor) {
+  await authorizePropertyMedia(propertyId, actor, "MANAGE");
   const current = await findPropertyMedia(propertyId);
   if (!Array.isArray(orderedIds) || orderedIds.length !== current.length ||
       new Set(orderedIds).size !== orderedIds.length ||
