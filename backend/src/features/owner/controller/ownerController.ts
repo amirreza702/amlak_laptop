@@ -140,10 +140,6 @@ export async function getOwnerPropertiesController(
   }
 }
 
-function getAuthenticatedOwnerUserId(req: Request): string | undefined {
-  return (req as AuthenticatedRequest).user?.id;
-}
-
 /** GET /owners/me/profile */
 export async function getCurrentOwnerProfileController(req: Request, res: Response) {
   try {
