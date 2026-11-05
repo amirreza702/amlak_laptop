@@ -49,12 +49,12 @@ export async function bootstrapSuperAdminController(req: Request, res: Response)
 
 export async function listUsersController(req: Request, res: Response) {
   try {
-    const result = await adminUsers({ search: queryString(req.query.search), role: queryString(req.query.role), isActive: queryBool(req.query.isActive), ...pagination(req) });
+    const result = await adminUsers(actorId(req) ?? "", { search: queryString(req.query.search), role: queryString(req.query.role), isActive: queryBool(req.query.isActive), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
 export async function userDetailsController(req: Request, res: Response) {
-  try { return res.status(200).json({ item: await adminUserDetails(routeParam(req, "userId")) }); } catch (error) { return sendError(res, error); }
+  try { return res.status(200).json({ item: await adminUserDetails(actorId(req) ?? "", routeParam(req, "userId")) }); } catch (error) { return sendError(res, error); }
 }
 export async function setUserStatusController(req: Request, res: Response) {
   try {
@@ -66,21 +66,21 @@ export async function setUserStatusController(req: Request, res: Response) {
 }
 export async function listOwnersController(req: Request, res: Response) {
   try {
-    const result = await adminOwners({ search: queryString(req.query.search), isActive: queryBool(req.query.isActive), ...pagination(req) });
+    const result = await adminOwners(actorId(req) ?? "", { search: queryString(req.query.search), isActive: queryBool(req.query.isActive), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
 export async function ownerDetailsController(req: Request, res: Response) {
-  try { return res.status(200).json({ item: await adminOwnerDetails(routeParam(req, "ownerId")) }); } catch (error) { return sendError(res, error); }
+  try { return res.status(200).json({ item: await adminOwnerDetails(actorId(req) ?? "", routeParam(req, "ownerId")) }); } catch (error) { return sendError(res, error); }
 }
 export async function listAgentsController(req: Request, res: Response) {
   try {
-    const result = await adminAgents({ search: queryString(req.query.search), isActive: queryBool(req.query.isActive), isVerified: queryBool(req.query.isVerified), ...pagination(req) });
+    const result = await adminAgents(actorId(req) ?? "", { search: queryString(req.query.search), isActive: queryBool(req.query.isActive), isVerified: queryBool(req.query.isVerified), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
 export async function agentDetailsController(req: Request, res: Response) {
-  try { return res.status(200).json({ item: await adminAgentDetails(routeParam(req, "agentId")) }); } catch (error) { return sendError(res, error); }
+  try { return res.status(200).json({ item: await adminAgentDetails(actorId(req) ?? "", routeParam(req, "agentId")) }); } catch (error) { return sendError(res, error); }
 }
 export async function setAgentVerificationController(req: Request, res: Response) {
   try {
@@ -99,7 +99,7 @@ export async function updateStaffPermissionsController(req: Request, res: Respon
 }
 export async function auditController(req: Request, res: Response) {
   try {
-    const result = await adminAudit({ targetType: queryString(req.query.targetType), targetId: queryString(req.query.targetId), targetUserId: queryString(req.query.targetUserId), actorUserId: queryString(req.query.actorUserId), ...pagination(req) });
+    const result = await adminAudit(actorId(req) ?? "", { targetType: queryString(req.query.targetType), targetId: queryString(req.query.targetId), targetUserId: queryString(req.query.targetUserId), actorUserId: queryString(req.query.actorUserId), ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
@@ -120,16 +120,16 @@ export async function createStaffAccountController(req: Request, res: Response) 
 
 export async function ownerHistoryController(req: Request, res: Response) {
   try {
-    const owner = await adminOwnerDetails(routeParam(req, "ownerId"));
-    const result = await adminAudit({ targetUserId: owner.user.id, ...pagination(req) });
+    const owner = await adminOwnerDetails(actorId(req) ?? "", routeParam(req, "ownerId"));
+    const result = await adminAudit(actorId(req) ?? "", { targetUserId: owner.user.id, ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
 
 export async function agentHistoryController(req: Request, res: Response) {
   try {
-    const agent = await adminAgentDetails(routeParam(req, "agentId"));
-    const result = await adminAudit({ targetUserId: agent.user.id, ...pagination(req) });
+    const agent = await adminAgentDetails(actorId(req) ?? "", routeParam(req, "agentId"));
+    const result = await adminAudit(actorId(req) ?? "", { targetUserId: agent.user.id, ...pagination(req) });
     return res.status(200).json({ items: result.items, pagination: { ...pagination(req), total: result.total, totalPages: Math.ceil(result.total / pagination(req).limit) } });
   } catch (error) { return sendError(res, error); }
 }
@@ -141,14 +141,14 @@ export async function setOwnerStatusController(req: Request, res: Response) {
     if (!actorUserId) return res.status(401).json({ message: "Authentication required" });
     if (typeof req.body?.isActive !== "boolean") return res.status(400).json({ message: "isActive must be a boolean" });
     const owner = await adminOwnerDetails(routeParam(req, "ownerId"));
-    const item = await adminSetUserStatus({ actorUserId, userId: owner.user.id, isActive: req.body.isActive, reason: req.body.reason });
+    const item = await adminSetUserStatus({ actorUserId, userId: owner.user.id, isActive: req.body.isActive, reason: req.body.reason, permission: "OWNERS_MANAGE" });
     return res.status(200).json({ item });
   } catch (error) { return sendError(res, error); }
 }
 
 
 export async function listStaffAccountsController(_req: Request, res: Response) {
-  try { return res.status(200).json({ items: await adminStaffAccounts() }); }
+  try { return res.status(200).json({ items: await adminStaffAccounts(actorId(_req) ?? "") }); }
   catch (error) { return sendError(res, error); }
 }
 
@@ -159,7 +159,7 @@ export async function setAgentStatusController(req: Request, res: Response) {
     if (!actorUserId) return res.status(401).json({ message: "Authentication required" });
     if (typeof req.body?.isActive !== "boolean") return res.status(400).json({ message: "isActive must be a boolean" });
     const agent = await adminAgentDetails(routeParam(req, "agentId"));
-    const item = await adminSetUserStatus({ actorUserId, userId: agent.user.id, isActive: req.body.isActive, reason: req.body.reason });
+    const item = await adminSetUserStatus({ actorUserId, userId: agent.user.id, isActive: req.body.isActive, reason: req.body.reason, permission: "AGENTS_MANAGE" });
     return res.status(200).json({ item });
   } catch (error) { return sendError(res, error); }
 }
