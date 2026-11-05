@@ -405,7 +405,9 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
   const visibleApprovedAgent = property.registrationSource === "OWNER"
     ? approvedAgent?.agent ?? null
     : null;
-  const registrant = property.registrationSource === "AGENT"
+  const creatorIsVerifiedAndActive = createdByUser?.isActive === true &&
+    createdByUser.agent?.verificationStatus === "VERIFIED";
+  const registrant = property.registrationSource === "AGENT" && creatorIsVerifiedAndActive
     ? createdByUser?.agent ?? null
     : null;
 
@@ -421,16 +423,16 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
       lastName: ownerDetails.lastName,
       mobile: ownerDetails.user.mobile,
     } : null,
-    exposeCreatorContact: visibility.canViewRegistrantDetails,
-    creatorMobile: property.creatorMobile,
+    exposeCreatorContact: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive,
+    creatorMobile: creatorIsVerifiedAndActive ? createdByUser?.mobile ?? null : null,
   });
 
   return {
     ...safeProperty,
-    registrantFirstName: visibility.canViewRegistrantDetails ? registrant?.firstName ?? null : null,
-    registrantLastName: visibility.canViewRegistrantDetails ? registrant?.lastName ?? null : null,
-    registrantMobile: visibility.canViewRegistrantDetails && property.registrationSource === "AGENT"
-      ? property.creatorMobile
+    registrantFirstName: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive ? registrant?.firstName ?? null : null,
+    registrantLastName: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive ? registrant?.lastName ?? null : null,
+    registrantMobile: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive && property.registrationSource === "AGENT"
+      ? createdByUser?.mobile ?? null
       : null,
     approvedAgentFirstName: visibility.canViewOwnerDetails ? visibleApprovedAgent?.firstName ?? null : null,
     approvedAgentLastName: visibility.canViewOwnerDetails ? visibleApprovedAgent?.lastName ?? null : null,
