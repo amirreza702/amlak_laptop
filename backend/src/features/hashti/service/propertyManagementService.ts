@@ -3,7 +3,7 @@ import { findHashtiPropertyRecords } from "../repository/propertyManagementRepos
 import { getPropertySimilaritySummaryService, DUPLICATE_MATCHING_THRESHOLD } from "../../property/service/duplicateMatchingService";
 import { createPendingDuplicateReviewsForProperty } from "../../property/repository/duplicateReviewRepository";
 import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
-import { findPropertyById } from "../../property/repository/propertyRepository";
+import { findPropertyAuthorizationContextById } from "../../property/repository/propertyRepository";
 import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
@@ -42,10 +42,10 @@ export async function requestHashtiPropertyPublicationApproval(
   propertyId: string,
   actor: { id: string; role: string },
 ) {
-  const property = await findPropertyById(propertyId);
-  if (!property?.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
-  const canManage = await authorizePropertyAction(actor, "MANAGE", property);
-  if (!canManage) throw new Error("تأیید انتشار فقط در اختیار هشتی است.");
+  const property = await findPropertyAuthorizationContextById(propertyId);
+  if (!property || property.deletedAt || !property.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
+  const canApprove = await authorizePropertyAction(actor, "APPROVE_PUBLICATION", property);
+  if (!canApprove) throw new Error("تأیید انتشار فقط در اختیار هشتی است.");
   if (property.listing.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
     throw new Error("این ملک در صف بررسی انتشار هشتی قرار ندارد.");
   }
