@@ -7,11 +7,12 @@ import { adminPolicy } from "./admin.policy";
 import { privateNotePolicy } from "./private-note.policy";
 import { searchRequestPolicy } from "./search-request.policy";
 import { agentPolicy } from "./agent.policy";
+import { createProfilePolicy } from "./profile.policy";
 
 registerAuthorizationPolicy("property", propertyPolicy);
-registerAuthorizationPolicy("owner", selfOwnedResourcePolicy);
+registerAuthorizationPolicy("owner", createProfilePolicy("OWNER"));
 registerAuthorizationPolicy("agent", agentPolicy);
-registerAuthorizationPolicy("customer", selfOwnedResourcePolicy);
+registerAuthorizationPolicy("customer", createProfilePolicy("CUSTOMER"));
 registerAuthorizationPolicy("notification", selfOwnedResourcePolicy);
 registerAuthorizationPolicy("searchRequest", searchRequestPolicy);
 registerAuthorizationPolicy("ownerAgentRequest", ownerAgentRequestPolicy);
