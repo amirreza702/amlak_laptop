@@ -4,6 +4,7 @@ import { findPropertyAuthorizationContextById } from "../repository/propertyRepo
 import { createPropertyOwner } from "../repository/propertyOwnerRepository";
 import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export interface AddPropertyOwnerInput {
   propertyId: string;
@@ -15,6 +16,7 @@ export interface AddPropertyOwnerInput {
 
 /** ایجاد رابطه مالکیت فقط توسط هشتی فعال و در یک تراکنش Serializable. */
 export async function addPropertyOwner(data: AddPropertyOwnerInput) {
+  if (data.performedBy) await requireAdminServicePermission(data.performedBy, "PROPERTIES_MANAGE");
   if (!Number.isFinite(data.share) || data.share <= 0 || data.share > 6) {
     throw new Error("سهم مالکیت باید بیشتر از صفر و حداکثر ۶ دانگ باشد.");
   }
