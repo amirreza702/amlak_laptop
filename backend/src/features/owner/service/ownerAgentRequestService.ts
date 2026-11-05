@@ -93,7 +93,22 @@ export async function getOwnerAgentRequestsService(actor: AuthorizationActor) {
     });
     return allowed ? request : null;
   }));
-  return authorized.filter((request): request is NonNullable<typeof request> => request !== null);
+  return authorized
+    .filter((request): request is NonNullable<typeof request> => request !== null)
+    .map((request) => ({
+      ...request,
+      responses: request.responses.map((response) => ({
+        ...response,
+        agent: {
+          ...response.agent,
+          user: {
+            ...response.agent.user,
+            // شماره تماس فقط برای مشاوری که درخواست همکاری را پذیرفته نمایش داده می‌شود.
+            mobile: response.status === "ACCEPTED" ? response.agent.user.mobile : null,
+          },
+        },
+      })),
+    }));
 }
 
 export async function closeOwnerAgentRequestService(actor: AuthorizationActor, requestId: string) {
