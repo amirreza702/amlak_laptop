@@ -17,6 +17,7 @@ import {
   findOwnerPropertiesByOwnerId,
   updateOwnerProfile,
 } from "../repository/ownerRepository";
+import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 
 /**
  * ------------------------------------------------------------
@@ -33,7 +34,8 @@ export const getOwnerProfile = async (
     throw new Error("Owner not found");
   }
 
-  return owner;
+  const { userId: _userId, ...safeOwner } = owner;
+  return safeOwner;
 };
 
 /**
@@ -101,37 +103,48 @@ export const updateOwnerProfileService = async (
  * Shape owner property records with the same per-owner contact privacy rules
  * for both profile-scoped and session-scoped endpoints.
  */
-const shapeOwnerPropertyRecords = (
-  owner: { firstName: string; lastName: string; user: { mobile: string } },
+const shapeOwnerPropertyRecords = async (
+  owner: { userId: string; firstName: string; lastName: string; user: { mobile: string } },
   records: Awaited<ReturnType<typeof findOwnerPropertiesByOwnerId>>
-) => records.map((record) => {
+) => Promise.all(records.map(async (record) => {
   const { agents, ownerAgentRequests, ...propertyData } = record.property;
-  const approvedAgent = agents.find((relation) => relation.status === "ACTIVE" && relation.approvedByOwner) ?? null;
+
+  // مالکیت و سطح نمایش ملک از Policy مرکزی تعیین می‌شود؛ این سرویس فقط
+  // روابط آماده‌شده توسط Repository را به Core می‌دهد.
+  const visibility = await getPropertyVisibility(
+    { id: owner.userId, role: "OWNER" },
+    { ...record.property, owners: record.property.owners },
+  );
+  const safeProperty = projectPropertyForActor(propertyData, visibility, {
+    owner,
+    owners: record.property.owners,
+  });
+
+  // نمایش شماره مشاور همچنان تابع رابطه همکاری پذیرفته‌شده است؛
+  // تصمیم محرمانگی داده‌های ملک و مالک از Policy مرکزی می‌آید.
+  const approvedAgent = agents.find((relation) =>
+    relation.status === "ACTIVE" && relation.approvedByOwner
+  ) ?? null;
   const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
     request.responses.some((response) => response.agentId === approvedAgent.agentId)
   ));
-  const canViewOwnerDetails = record.property.registrationSource === "OWNER" &&
-    (!approvedAgent || ownerApprovedThisAgent);
 
   return {
     ...record,
     property: {
-      ...propertyData,
-      ownerFirstName: canViewOwnerDetails ? owner.firstName : null,
-      ownerLastName: canViewOwnerDetails ? owner.lastName : null,
-      ownerMobile: canViewOwnerDetails ? owner.user.mobile : null,
+      ...safeProperty,
       agents: record.property.registrationSource === "AGENT"
         ? agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
         : agents.map((relation) => ({
             ...relation,
             agent: {
               ...relation.agent,
-              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner ? relation.agent.user.mobile : "" },
+              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner && ownerApprovedThisAgent ? relation.agent.user.mobile : "" },
             },
           })),
     },
   };
-});
+}));
 
 /**
  * Lists properties connected to an existing owner profile.
