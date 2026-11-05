@@ -6,12 +6,18 @@ interface SearchRequestAuthorizationData {
   isVerifiedAgent?: boolean;
   status?: string;
   createdByRole?: string;
+  isVerifiedAgent?: boolean;
 }
 
 /** Search requests distinguish customer ownership, agent authorship and marketplace visibility. */
 export const searchRequestPolicy: AuthorizationPolicy = (action, context) => {
   const data = context.resource?.data as SearchRequestAuthorizationData | undefined;
   if (!data || context.actor.isActive === false) return false;
+
+  if (action === "CREATE") {
+    if (context.actor.role === "CUSTOMER") return true;
+    return context.actor.role === "AGENT" && data.isVerifiedAgent === true;
+  }
 
   if (context.actor.role === "CUSTOMER") {
     if (data.isOwner !== true) return false;
