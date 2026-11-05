@@ -82,6 +82,7 @@ export async function getPropertyMediaController(
     const propertyId = req.params.id;
 
     const fileId = typeof req.query.fileId === "string" ? req.query.fileId : null;
+    res.setHeader("Cache-Control", "private, no-store");
     if (fileId) {
       const file = await getPropertyMediaFileService(fileId, propertyId, false, mediaActor(req));
       return res.status(200).json({ imageData: "data:image/webp;base64," + file.bytes.toString("base64") });
