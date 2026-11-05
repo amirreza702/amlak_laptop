@@ -24,6 +24,7 @@ import { findDuplicateMatchesController } from "../controller/duplicateMatchingC
 import { authMiddleware, optionalAuthMiddleware, type AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
 import { requireVerifiedAgent } from "../../auth/middleware/verifiedAgentMiddleware";
+import { requireAdminPermission } from "../../admin/middleware/requireAdminPermission";
 import {
   bindOwnProfileIdToBody,
   requirePropertyAccess,
@@ -34,6 +35,15 @@ import {
 const router = Router();
 const propertyManagers = [UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI] as const;
 const propertyEditors = [UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI] as const;
+
+function requireHashtiPermission(permission: "PROPERTIES_MANAGE" | "DUPLICATES_MANAGE") {
+  const checkPermission = requireAdminPermission(permission);
+  return (req: any, res: any, next: any) => {
+    const user = (req as AuthenticatedRequest).user;
+    if (user?.role !== UserRole.HASHTI) return next();
+    return checkPermission(req, res, next);
+  };
+}
 
 // اطلاعات عمومی منتشرشده ملک و جست‌وجو عمومی باقی می‌مانند.
 router.get("/properties/search", searchPropertyController);
@@ -109,7 +119,7 @@ router.get(
 );
 router.put(
   "/properties/:id/expire",
-  authMiddleware, requireRole(UserRole.HASHTI), expirePropertyListingController
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("PROPERTIES_MANAGE"), expirePropertyListingController
 );
 // مالک فقط می‌تواند ملک متعلق به حساب خودش را به‌صورت امن از فهرست فعال حذف کند.
 router.delete(
@@ -146,7 +156,7 @@ router.patch(
 // ایجاد رابطه مالکیت و تغییر وضعیت تأیید مالک، عملیات حساس کارکنان هشتی است.
 router.post(
   "/properties/:id/owners",
-  authMiddleware, requireRole(UserRole.HASHTI),
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("PROPERTIES_MANAGE"),
   addPropertyOwnerController
 );
 // تصمیم درباره نمایندگی ملک فقط با نشست مالک همان ملک انجام می‌شود.
@@ -180,17 +190,17 @@ router.post(
 // بررسی‌های Duplicate و تصمیم نهایی محرمانه و در اختیار هشتی است.
 router.post(
   "/properties/:id/duplicate-reviews",
-  authMiddleware, requireRole(UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("DUPLICATES_MANAGE"), requirePropertyAccess(),
   createDuplicateReviewController
 );
 router.get(
   "/properties/:id/duplicate-reviews",
-  authMiddleware, requireRole(UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("DUPLICATES_MANAGE"), requirePropertyAccess(),
   getDuplicateReviewsController
 );
 router.patch(
   "/duplicate-reviews/:id/review",
-  authMiddleware, requireRole(UserRole.HASHTI),
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("DUPLICATES_MANAGE"),
   reviewDuplicateController
 );
 router.get(
@@ -205,17 +215,17 @@ router.get(
 // آرشیو دستی فقط در اختیار هشتی است؛ مالک فقط امکان حذف عملیاتی ملک را دارد.
 router.patch(
   "/properties/:id/archive",
-  authMiddleware, requireRole(UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("PROPERTIES_MANAGE"), requirePropertyAccess(),
   archivePropertyController
 );
 router.get(
   "/properties/:id/archive",
-  authMiddleware, requireRole(UserRole.OWNER, UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.OWNER, UserRole.HASHTI), requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyAccess(),
   getPropertyArchiveController
 );
 router.patch(
   "/properties/:id/restore",
-  authMiddleware, requireRole(UserRole.OWNER, UserRole.HASHTI), requirePropertyAccess(),
+  authMiddleware, requireRole(UserRole.OWNER, UserRole.HASHTI), requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyAccess(),
   restorePropertyController
 );
 
