@@ -67,7 +67,6 @@ export async function updatePropertyPrice(
   actor: AuthorizationActor
 ) {
   if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
-  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   /**
    * ==========================================================
    * پیدا کردن Listing فعلی
