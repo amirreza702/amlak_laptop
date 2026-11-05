@@ -30,6 +30,7 @@ export interface PropertyAuthorizationSubject {
 export interface PropertyVisibility {
   canViewExactLocation: boolean;
   canViewOwnerDetails: boolean;
+  canViewRegistrantDetails: boolean;
   canManage: boolean;
 }
 
@@ -69,6 +70,7 @@ export function projectPropertyForActor<
     owner?: PropertyOwnerPrivateDetails | null;
     owners?: unknown[];
     exposeCreatorContact?: boolean;
+    creatorMobile?: string | null;
   } = {},
 ) {
   const canViewExactLocation = visibility.canViewExactLocation;
@@ -110,8 +112,8 @@ export function projectPropertyForActor<
       ? options.owner?.mobile ?? property.ownerMobile ?? null
       : null,
     owners: canViewOwnerDetails ? options.owners ?? property.owners ?? [] : [],
-    creatorMobile: canViewOwnerDetails && options.exposeCreatorContact
-      ? property.creatorMobile ?? null
+    creatorMobile: options.exposeCreatorContact
+      ? options.creatorMobile ?? property.creatorMobile ?? null
       : null,
   };
 }
@@ -177,6 +179,7 @@ export async function authorizePropertyAction(
         isApprovedAgent: isFinalApprovedAgent,
         isAllowedAgentCreator: Boolean(options.allowAgentCreator && isCreator),
         isRegisteredByCurrentAgent: isCreator,
+        isAgentRegisteredProperty: property.registrationSource === "AGENT",
       },
     },
   });
@@ -189,11 +192,12 @@ export async function getPropertyVisibility(
   expectedApproverOwnerId?: string,
 ): Promise<PropertyVisibility> {
   const options = { expectedApproverOwnerId };
-  const [canViewExactLocation, canViewOwnerDetails, canManage] = await Promise.all([
+  const [canViewExactLocation, canViewOwnerDetails, canViewRegistrantDetails, canManage] = await Promise.all([
     authorizePropertyAction(actor, "VIEW_EXACT_LOCATION", property, options),
     authorizePropertyAction(actor, "VIEW_OWNER_DETAILS", property, options),
+    authorizePropertyAction(actor, "VIEW_REGISTRANT_DETAILS", property, options),
     authorizePropertyAction(actor, "MANAGE", property, options),
   ]);
 
-  return { canViewExactLocation, canViewOwnerDetails, canManage };
+  return { canViewExactLocation, canViewOwnerDetails, canViewRegistrantDetails, canManage };
 }
