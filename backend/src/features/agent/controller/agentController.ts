@@ -101,9 +101,9 @@ export async function updateAgentProfileController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedUserId(req);
+    const actor = getAuthenticatedActor(req);
 
-    if (!userId) {
+    if (!actor) {
       return res.status(401).json({
         message: "Authentication required",
       });
