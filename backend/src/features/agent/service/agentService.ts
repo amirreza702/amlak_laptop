@@ -11,14 +11,16 @@ import {
   updateAgentProfile as updateAgentProfileRepository,
 } from "../repository/agentRepository";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * دریافت پروفایل فقط برای مالک آن.
  */
 export const getAgentProfile = async (
   agentId: string,
-  authenticatedUserId: string
+  actor: AuthorizationActor
 ) => {
+  const authenticatedUserId = actor.id;
   const agent = await findAgentProfileById(agentId);
 
   if (!agent) {
@@ -26,7 +28,7 @@ export const getAgentProfile = async (
   }
 
   const allowed = await authorize("agent", "READ", {
-    actor: { id: authenticatedUserId, role: "AGENT" },
+    actor,
     resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
   });
   if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
@@ -42,7 +44,7 @@ export const getAgentProfile = async (
  */
 export const updateAgentProfile = async (
   agentId: string,
-  authenticatedUserId: string,
+  actor: AuthorizationActor,
   data: {
     firstName?: string;
     lastName?: string;
@@ -50,6 +52,7 @@ export const updateAgentProfile = async (
     address?: string | null;
   }
 ) => {
+  const authenticatedUserId = actor.id;
   const agent = await findAgentProfileById(agentId);
 
   if (!agent) {
@@ -57,7 +60,7 @@ export const updateAgentProfile = async (
   }
 
   const allowed = await authorize("agent", "UPDATE", {
-    actor: { id: authenticatedUserId, role: "AGENT" },
+    actor,
     resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
   });
   if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
@@ -111,16 +114,15 @@ export const updateAgentProfile = async (
 /**
  * دریافت پروفایل از روی نشست جاری، بدون اتکا به profileId ارسال‌شده از مرورگر.
  */
-export const getCurrentAgentProfile = async (
-  authenticatedUserId: string
-) => {
+export const getCurrentAgentProfile = async (actor: AuthorizationActor) => {
+  const authenticatedUserId = actor.id;
   const agent = await findAgentProfileByUserId(authenticatedUserId);
 
   if (!agent) {
     throw new Error("AGENT_PROFILE_NOT_FOUND");
   }
   const allowed = await authorize("agent", "READ", {
-    actor: { id: authenticatedUserId, role: "AGENT" },
+    actor,
     resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
   });
   if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
