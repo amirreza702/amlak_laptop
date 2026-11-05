@@ -120,7 +120,6 @@ export async function updatePropertyListingStatus(
   actor: AuthorizationActor,
 ) {
   if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
-  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property || property.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
   const listing = await findPropertyListingByPropertyId(propertyId);
