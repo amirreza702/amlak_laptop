@@ -2,11 +2,11 @@ import { findAgentProfileByUserId } from "../repository/agentRepository";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
 
 /** تمام املاک برای مشاور فهرست می‌شوند؛ وضعیت رابطه و مجوز مدیریت هر ملک مستقل محاسبه می‌شود. */
-export async function getMyAgentPropertyRecords(userId: string, query: Omit<AgentPropertyQuery, "agentId">) {
+export async function getMyAgentPropertyRecords(userId: string, query: Omit<AgentPropertyQuery, "agentId" | "userId">) {
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
-  const result = await findAgentPropertyRecords({ agentId: agent.id, userId, ...query });
+  const result = await findAgentPropertyRecords({ ...query, agentId: agent.id, userId });
   return {
     ...result,
     properties: result.properties.map((record) => {
