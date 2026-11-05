@@ -95,7 +95,7 @@ async function removePropertyFromOperationalUse(
     });
 
     return { property: updated, mediaIds: media.map((item) => item.id) };
-  });
+  }, { isolationLevel: "Serializable" });
 
   // فایل‌ها پس از Commit دیتابیس حذف می‌شوند.
   await Promise.all(result.mediaIds.map((id) => unlink(storedFilePath(id)).catch(() => undefined)));
@@ -167,5 +167,5 @@ export async function reactivateOwnPropertyService(propertyId: string, actor: Au
       },
     });
     return updated;
-  });
+  }, { isolationLevel: "Serializable" });
 }
