@@ -319,6 +319,20 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
           createdByUserId: true,
           deletedAt: true,
           listing: { select: { status: true, confirmUntil: true } },
+          agents: {
+            where: {
+              agent: { is: { userId: user.id } },
+              status: "ACTIVE",
+            },
+            select: {
+              agentId: true,
+              status: true,
+              approvedByOwner: true,
+              approvedByOwnerId: true,
+              agent: { select: { userId: true, verificationStatus: true } },
+            },
+            take: 1,
+          },
         },
       });
       const allowed = property
