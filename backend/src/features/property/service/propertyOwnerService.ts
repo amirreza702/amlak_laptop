@@ -46,7 +46,7 @@ export async function addPropertyOwner(data: AddPropertyOwnerInput) {
       }),
       tx.owner.findUnique({
         where: { id: data.ownerId },
-        select: { id: true, firstName: true, lastName: true, user: { select: { mobile: true } } },
+        select: { id: true },
       }),
       tx.propertyOwner.findUnique({
         where: { propertyId_ownerId: { propertyId: data.propertyId, ownerId: data.ownerId } },
@@ -92,26 +92,18 @@ export async function addPropertyOwner(data: AddPropertyOwnerInput) {
     }, tx);
 
     if (property.createdByUserId && property.createdByUserId !== actor.id) {
-      const ownerFullName = `${owner.firstName} ${owner.lastName}`.trim();
+      // اعلان به ثبت‌کننده فقط رویداد را اطلاع می‌دهد؛ اطلاعات تماس و نشانی دقیق
+      // مالک از مسیر اعلان افشا نمی‌شود و باید از مجوز جزئیات ملک عبور کند.
       await tx.notification.create({
         data: {
           userId: property.createdByUserId,
           title: "افزودن مالک به ملک",
-          message: [
-            "هشتی یک مالک را به ملک ثبت‌شده شما متصل کرد.",
-            `نام و نام خانوادگی مالک: ${ownerFullName}`,
-            `شماره تماس مالک: ${owner.user.mobile}`,
-            `ملک: ${property.city}، ${property.district}، ${property.address}`,
-          ].join("\n"),
+          message: "هشتی یک مالک را به ملک ثبت‌شده شما متصل کرد.",
           details: {
             action: "HASHTI_ADDED_PROPERTY_OWNER",
             subjectType: "PROPERTY_OWNER",
             subject: `${property.city}، ${property.district}`,
             propertyId: property.id,
-            ownerId: owner.id,
-            ownerFirstName: owner.firstName,
-            ownerLastName: owner.lastName,
-            ownerMobile: owner.user.mobile,
             actorRole: actor.role,
             occurredAt: new Date().toISOString(),
           },
