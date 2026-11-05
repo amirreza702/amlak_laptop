@@ -187,7 +187,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
 
   const records = properties.map((property) => {
     const relation = property.agents.find((item) => item.agentId === input.agentId) ?? null;
-    const isCreator = property.registrationSource === "AGENT" && property.createdByUserId === input.userId;
     // Repository فقط داده و روابط را می‌خواند؛ تصمیم محرمانگی در Authorization Core است.
     return {
       propertyId: property.id,
