@@ -401,11 +401,16 @@ export function requireOwnSearchRequest() {
           customerId,
           createdByUserId: user.id,
         },
-        select: { id: true },
+        select: { id: true, status: true },
       });
-      const allowed = await authorize("searchRequest", "ACCESS", {
+      const action = req.method === "GET"
+        ? "READ"
+        : req.path.endsWith("/close")
+          ? "CLOSE"
+          : "UPDATE";
+      const allowed = await authorize("searchRequest", action, {
         actor: { id: user.id, role: user.role },
-        resource: { id: requestId, data: { isOwner: Boolean(request) } },
+        resource: { id: requestId, status: request?.status, data: { isOwner: Boolean(request), status: request?.status } },
       });
       if (!allowed) return res.status(404).json({ message: "Search request not found" });
       return next();
