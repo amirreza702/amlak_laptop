@@ -104,7 +104,11 @@ export async function getOwnerAgentRequestsService(actor: AuthorizationActor) {
           user: {
             ...response.agent.user,
             // شماره تماس فقط برای مشاوری که درخواست همکاری را پذیرفته نمایش داده می‌شود.
-            mobile: response.status === "ACCEPTED" ? response.agent.user.mobile : null,
+            mobile: response.status === "ACCEPTED" &&
+              response.agent.verificationStatus === "VERIFIED" &&
+              response.agent.user.isActive === true
+                ? response.agent.user.mobile
+                : null,
           },
         },
       })),
