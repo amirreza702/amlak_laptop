@@ -18,7 +18,7 @@ export async function getCurrentCustomerProfileController(
   }
 
   try {
-    const profile = await getCurrentCustomerProfile(user.id);
+    const profile = await getCurrentCustomerProfile(user);
     return res.status(200).json(profile);
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Customer not found") {
