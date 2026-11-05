@@ -154,7 +154,6 @@ router.patch(
   "/properties/:id/agents/:agentId/approval",
   authMiddleware,
   requireRole(UserRole.OWNER),
-  bindOwnProfileIdToBody("owner", "ownerId"),
   requirePropertyAccess("id", false),
   approvePropertyAgentByOwnerController
 );
