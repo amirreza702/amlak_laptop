@@ -15,6 +15,12 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
 
     // استخراج رابطه تأییدشده فقط برای تعیین اینکه اطلاعات کدام مالک نمایش داده شود؛
     // مجاز بودن نمایش را Policy مرکزی تعیین می‌کند.
+    const {
+      createdByUser,
+      agents: _agents,
+      owners: ownerRelations,
+      ...propertyData
+    } = record.property;
     const approvedAgentRelation = record.property.agents.find(
       (item) => item.status === "ACTIVE" && item.approvedByOwner
     ) ?? null;
@@ -29,12 +35,6 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
       selectedAgentRelation &&
       approvedOwnerRelation
     );
-    const {
-      createdByUser,
-      agents: _agents,
-      owners: ownerRelations,
-      ...propertyData
-    } = record.property;
     const primaryOwner = ownerRelations[0] ?? null;
     const visibleOwner = isApprovedAgent
       ? approvedOwnerRelation
