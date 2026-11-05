@@ -76,7 +76,9 @@ export async function removePropertyFromFavoritesService(customerId: string, pro
 export async function isPropertyFavoriteService(customerId: string, propertyId: string, actor: FavoriteActor) {
   if (!customerId || !propertyId) throw new Error("شناسه مشتری و ملک الزامی است.");
   return prisma.$transaction(async (tx) => {
-    await requireCustomerFavoriteAccess(tx, customerId, actor, "READ");
+    const access = await requireCustomerFavoriteAccess(tx, customerId, actor, "READ");
+    const property = await findPropertyAuthorizationContextById(propertyId, tx);
+    if (!property || !(await authorizePropertyAction(access.actor, "FAVORITE", property))) return false;
     return Boolean(await findCustomerPropertyFavorite(customerId, propertyId, tx));
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
