@@ -21,13 +21,14 @@ export async function expireExpiredProperties(input: {
     : null;
 
   if (input.performedBy) {
-    const allowed = Boolean(actor) && await authorize("admin", "EXPIRE_LISTING", {
+    const allowed = Boolean(actor) && await authorize("admin", "PERMISSION", {
       actor: { id: actor!.id, role: actor!.role, isActive: actor!.isActive },
       resource: { data: {
         isActive: actor!.isActive,
         isSuperAdmin: actor!.isSuperAdmin,
         permissions: actor!.adminPermissions,
       } },
+      metadata: { permission: "PROPERTIES_MANAGE" },
     });
     if (!allowed) throw new Error("HASHTI_PERMISSION_REQUIRED");
   }
@@ -45,13 +46,14 @@ export async function expireExpiredProperties(input: {
           where: { id: input.performedBy },
           select: { id: true, role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
         });
-        const freshAllowed = Boolean(freshActor) && await authorize("admin", "EXPIRE_LISTING", {
+        const freshAllowed = Boolean(freshActor) && await authorize("admin", "PERMISSION", {
           actor: { id: freshActor!.id, role: freshActor!.role, isActive: freshActor!.isActive },
           resource: { data: {
             isActive: freshActor!.isActive,
             isSuperAdmin: freshActor!.isSuperAdmin,
             permissions: freshActor!.adminPermissions,
           } },
+          metadata: { permission: "PROPERTIES_MANAGE" },
         });
         if (!freshAllowed) throw new Error("HASHTI_PERMISSION_REQUIRED");
       }
