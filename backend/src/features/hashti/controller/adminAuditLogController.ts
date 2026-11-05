@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { getAdminAuditLogsService } from "../service/adminAuditLogService";
 import type { AdminAuditLogQuery } from "../repository/adminAuditLogRepository";
 
@@ -35,6 +36,9 @@ export async function getAdminAuditLogsController(
   req: Request,
   res: Response
 ) {
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
+
   const limit = parseIntegerQuery(req.query.limit, 50, 1, 100);
   const offset = parseIntegerQuery(req.query.offset, 0, 0, 1_000_000);
   if (limit === null || offset === null) {
@@ -83,7 +87,7 @@ export async function getAdminAuditLogsController(
   };
 
   try {
-    const result = await getAdminAuditLogsService(query);
+    const result = await getAdminAuditLogsService(actor.id, query);
     return res.status(200).json({
       logs: result.logs,
       pagination: { total: result.total, limit, offset },
