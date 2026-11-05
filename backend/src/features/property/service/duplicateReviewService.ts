@@ -74,7 +74,7 @@ export const createDuplicateReviewService = async (
     );
   }
 
-  await requireDuplicatePropertyPermission(data.primaryPropertyId, actor, "CREATE_DUPLICATE_REVIEW");
+  await requireDuplicatePropertyPermission(data.primaryPropertyId, actor, "APPROVE_PUBLICATION");
 
   /**
    * ابتدا وجود ملک اصلی را بررسی می‌کنیم.
@@ -162,7 +162,7 @@ export const getDuplicateReviewsService = async (
   propertyId: string,
   actor: { id: string; role: string; isActive?: boolean },
 ): Promise<DuplicateReview[]> => {
-  await requireDuplicatePropertyPermission(propertyId, actor, "VIEW_DUPLICATE_REVIEWS");
+  await requireDuplicatePropertyPermission(propertyId, actor, "APPROVE_PUBLICATION");
   const property =
     await findPropertyById(propertyId);
 
@@ -208,7 +208,7 @@ export const reviewDuplicateService = async (
       "بررسی تکراری بودن ملک پیدا نشد."
     );
   }
-  await requireDuplicatePropertyPermission(duplicateReview.primaryPropertyId, actor, "REVIEW_DUPLICATE");
+  await requireDuplicatePropertyPermission(duplicateReview.primaryPropertyId, actor, "APPROVE_PUBLICATION");
 
   /**
    * Review تصمیم‌گیری‌شده دوباره قابل تغییر نیست.
@@ -248,7 +248,7 @@ export const reviewDuplicateService = async (
 
 /** صف بررسی مشابهت، گروه‌بندی‌شده بر اساس ملک اصلی و فقط با آخرین تصمیم هر کاندیدا. */
 export const getHashtiDuplicateReviewQueueService = async (actor: { id: string; role: string; isActive?: boolean }) => {
-  const allowed = await authorize("property", "VIEW_DUPLICATE_REVIEW_QUEUE", { actor, resource: { data: {} } });
+  const allowed = await authorize("property", "APPROVE_PUBLICATION", { actor, resource: { data: {} } });
   if (!allowed) throw new Error("DUPLICATE_REVIEW_FORBIDDEN");
   const properties = await findHashtiDuplicateReviewQueue();
   return properties.map((property) => {
@@ -283,7 +283,7 @@ export const publishPropertyAfterDuplicateReviewService = async (
   propertyId: string,
   actor: { id: string; role: string; isActive?: boolean },
 ) => {
-  await requireDuplicatePropertyPermission(propertyId, actor, "PUBLISH_AFTER_DUPLICATE_REVIEW");
+  await requireDuplicatePropertyPermission(propertyId, actor, "APPROVE_PUBLICATION");
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
   if (reviews.length === 0) {
     throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
@@ -325,7 +325,7 @@ export const rejectPropertyAfterDuplicateReviewService = async (
   propertyId: string,
   actor: { id: string; role: string; isActive?: boolean },
 ) => {
-  await requireDuplicatePropertyPermission(propertyId, actor, "REJECT_AFTER_DUPLICATE_REVIEW");
+  await requireDuplicatePropertyPermission(propertyId, actor, "APPROVE_PUBLICATION");
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
   if (reviews.length === 0) {
     throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
