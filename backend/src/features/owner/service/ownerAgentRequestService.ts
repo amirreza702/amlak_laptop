@@ -59,20 +59,23 @@ export async function createOwnerAgentRequestService(
   const description = typeof input.description === "string" ? input.description.trim().slice(0, 2000) : "";
   if (!propertyId) throw new Error("Property ID is required");
 
-  const relation = await findOwnedProperty(owner.id, propertyId);
-  if (!relation || !relation.property.isActive) throw new Error("Property does not belong to owner");
+  return prisma.$transaction(async (tx) => {
+    const relation = await findOwnedProperty(owner.id, propertyId, tx);
+    if (!relation || !relation.property.isActive || relation.property.deletedAt) {
+      throw new Error("Property does not belong to owner");
+    }
 
-  const canManage = await authorizePropertyAction(
-    actor,
-    "MANAGE",
-    relation.property,
-  );
-  if (!canManage) throw new Error("Property does not belong to owner");
+    const canManage = await authorizePropertyAction(actor, "MANAGE", relation.property);
+    if (!canManage) throw new Error("Property does not belong to owner");
 
-  if (await findActiveOwnerRequestForProperty(owner.id, propertyId)) {
-    throw new Error("An active request already exists for this property");
-  }
-  return createOwnerAgentRequest({ ownerId: owner.id, propertyId, description: description || null });
+    if (await findActiveOwnerRequestForProperty(owner.id, propertyId, tx)) {
+      throw new Error("An active request already exists for this property");
+    }
+    return createOwnerAgentRequest(
+      { ownerId: owner.id, propertyId, description: description || null },
+      tx,
+    );
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 /** فهرست درخواست‌های متعلق به مالک نشست جاری؛ شناسه پروفایل از URL اخذ نمی‌شود. */
@@ -97,20 +100,19 @@ export async function closeOwnerAgentRequestService(actor: AuthorizationActor, r
   const owner = await findOwnerProfileByUserId(userId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
-  const request = await findOwnerAgentRequestById(requestId);
-  if (!request) throw new Error("Active owner request not found");
+  return prisma.$transaction(async (tx) => {
+    const request = await findOwnerAgentRequestById(requestId, tx);
+    if (!request) throw new Error("Active owner request not found");
 
-  const allowed = await authorizeRequest(
-    actor,
-    "CLOSE",
-    request,
-    { isOwner: request.ownerId === owner.id },
-  );
-  if (!allowed) throw new Error("Active owner request not found");
+    const allowed = await authorizeRequest(actor, "CLOSE", request, {
+      isOwner: request.ownerId === owner.id,
+    });
+    if (!allowed) throw new Error("Active owner request not found");
 
-  const result = await closeOwnerAgentRequest(owner.id, requestId);
-  if (result.count === 0) throw new Error("Active owner request not found");
-  return { id: requestId, status: "CLOSED" };
+    const result = await closeOwnerAgentRequest(owner.id, requestId, tx);
+    if (result.count === 0) throw new Error("Active owner request not found");
+    return { id: requestId, status: "CLOSED" };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 /** فهرست درخواست‌های فعال برای مشاور تأییدشده صاحب نشست جاری. */
