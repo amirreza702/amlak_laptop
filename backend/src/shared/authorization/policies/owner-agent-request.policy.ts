@@ -43,7 +43,10 @@ export const ownerAgentRequestPolicy: AuthorizationPolicy = (
       data.isOwner === true &&
       data.status === "ACTIVE" &&
       data.isAgentAccepted === true &&
-      data.isAgentVerified === true;
+      data.isAgentVerified === true &&
+      data.isPropertyActive === true &&
+      data.isPropertyDeleted !== true &&
+      data.isPropertyExpired !== true;
   }
 
   if (action === "ACCESS_OWNER_CONTACT") {
