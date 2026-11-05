@@ -174,7 +174,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           select: {
             agentId: true, status: true, approvedByOwner: true, approvedByOwnerId: true, approvedAt: true,
             registeredAt: true, isFirstRegistrant: true,
-            agent: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            agent: { select: { userId: true, verificationStatus: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
       },
