@@ -64,7 +64,8 @@ export async function findPublishedPublicPropertyById(id: string) {
             select: {
               firstName: true,
               lastName: true,
-              user: { select: { mobile: true } },
+              verificationStatus: true,
+              user: { select: { mobile: true, isActive: true } },
             },
           },
         },
