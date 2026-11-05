@@ -17,7 +17,7 @@ import {
   findOwnerPropertiesByOwnerId,
   updateOwnerProfile,
 } from "../repository/ownerRepository";
-import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 
 /**
  * ------------------------------------------------------------
@@ -130,6 +130,14 @@ const shapeOwnerPropertyRecords = async (
   const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
     request.responses.some((response) => response.agentId === approvedAgent.agentId)
   ));
+  const canViewApprovedAgentContact = approvedAgent
+    ? await authorizePropertyAction(
+        { id: owner.userId, role: "OWNER" },
+        "VIEW_APPROVED_AGENT_CONTACT",
+        { ...record.property, owners: ownerRelations },
+        { allowApprovedAgentContact: ownerApprovedThisAgent },
+      )
+    : false;
 
   return {
     ...record,
@@ -141,7 +149,7 @@ const shapeOwnerPropertyRecords = async (
             ...relation,
             agent: {
               ...relation.agent,
-              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner && ownerApprovedThisAgent ? relation.agent.user.mobile : "" },
+              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner && canViewApprovedAgentContact ? relation.agent.user.mobile : "" },
             },
           })),
     },
