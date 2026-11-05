@@ -26,6 +26,10 @@ export async function requestHashtiPropertyPublicationApproval(
   propertyId: string,
   actor: { id: string; role: string },
 ) {
+  if (actor.role !== "HASHTI") {
+    throw new Error("تأیید انتشار فقط در اختیار هشتی است.");
+  }
+
   const property = await findPropertyById(propertyId);
   if (!property?.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
   if (property.listing.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
