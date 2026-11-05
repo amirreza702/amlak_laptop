@@ -18,6 +18,7 @@ import {
   updateOwnerProfile,
 } from "../repository/ownerRepository";
 import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 /**
  * ------------------------------------------------------------
@@ -176,6 +177,8 @@ export const getOwnerPropertiesService = async (ownerId: string) => {
 export const getCurrentOwnerProfile = async (authenticatedUserId: string) => {
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
+  const allowed = await authorize("owner", "READ", { actor: { id: authenticatedUserId, role: "OWNER" }, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
+  if (!allowed) throw new Error("OWNER_PROFILE_FORBIDDEN");
   const { userId: _userId, ...safeOwner } = owner;
   return safeOwner;
 };
@@ -189,6 +192,8 @@ export const updateCurrentOwnerProfileService = async (
 ) => {
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
+  const allowed = await authorize("owner", "UPDATE", { actor: { id: authenticatedUserId, role: "OWNER" }, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
+  if (!allowed) throw new Error("OWNER_PROFILE_FORBIDDEN");
   return updateOwnerProfileService(owner.id, data);
 };
 
@@ -198,6 +203,8 @@ export const updateCurrentOwnerProfileService = async (
 export const getCurrentOwnerPropertiesService = async (authenticatedUserId: string) => {
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
+  const allowed = await authorize("owner", "LIST_OWN", { actor: { id: authenticatedUserId, role: "OWNER" }, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
+  if (!allowed) throw new Error("OWNER_PROFILE_FORBIDDEN");
   const records = await findOwnerPropertiesByOwnerId(owner.id);
   return shapeOwnerPropertyRecords(owner, records);
 };
