@@ -5,7 +5,7 @@ import {
 } from "../controller/notificationController";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireOwnNotification } from "../../auth/middleware/authorizationMiddleware";
-import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import { requireOwnNotification, requireOwnNotificationUser } from "../../auth/middleware/authorizationMiddleware";
 
 const router = Router();
 
@@ -13,14 +13,7 @@ const router = Router();
 router.get(
   "/notifications/user/:userId",
   authMiddleware,
-  (req, res, next) => {
-    const user = (req as AuthenticatedRequest).user;
-    if (!user) return res.status(401).json({ message: "Authentication required" });
-    if (req.params.userId !== user.id) {
-      return res.status(403).json({ message: "You cannot access another user's notifications" });
-    }
-    return next();
-  },
+  requireOwnNotificationUser("userId"),
   getUserNotificationsController
 );
 
