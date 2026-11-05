@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
               <input value={searchInput} onChange={event => setSearchInput(event.target.value)} placeholder="نام، موبایل یا نام آژانس" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100" />
             </label>
             <label className="space-y-1 text-sm font-medium">نقش
-              <select value={role} onChange={event => { setRole(event.target.value as UserRole | ""); setPage(1); }} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal">
+              <select value={role} onChange={event => { setRole(event.target.value as Exclude<UserRole, "HASHTI"> | ""); setPage(1); }} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal">
                 <option value="">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option>
               </select>
             </label>
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
                 <tbody>{users.map(user => <RecordDetailsRow key={user.id} record={user} title="رکورد" className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
-                  <td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || false} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
+                  <td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
                 </RecordDetailsRow>)}</tbody>
               </table></div>
             )}
