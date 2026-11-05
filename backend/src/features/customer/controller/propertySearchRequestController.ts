@@ -300,6 +300,14 @@ export async function getActivePropertySearchRequestsController(
   res: Response
 ) {
   try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
+    const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
+      actor: { id: user.id, role: user.role },
+      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: true } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
+
     const result =
       await getActivePropertySearchRequests({
         city: typeof req.query.city === "string" ? req.query.city : undefined,
