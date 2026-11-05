@@ -5,6 +5,7 @@ import type { AuthorizationActor } from "../../../shared/authorization/authoriza
 import { findAgentProfileByUserId } from "../../agent/repository/agentRepository";
 import { findOwnerProfileByUserId } from "../repository/ownerRepository";
 import { authorizePropertyAction, getPropertyVisibility } from "../../property/service/propertyAuthorizationService";
+import { findPropertyAuthorizationContextById } from "../../property/repository/propertyRepository";
 import {
   closeOwnerAgentRequest,
   createOwnerAgentRequest,
@@ -258,13 +259,47 @@ export async function accessOwnerRequestContactService(actor: AuthorizationActor
     },
   });
 
-  const prior = await findOwnerRequestAccessLog(agent.id, requestId);
-  if (prior) return toPayload(prior);
-
   const access = await prisma.$transaction(async (tx) => {
-    const existing = await findOwnerRequestAccessLog(agent.id, requestId, tx);
+    const freshRequest = await tx.ownerAgentRequest.findFirst({
+      where: { id: requestId, status: "ACTIVE" },
+      select: { id: true, ownerId: true, propertyId: true, status: true },
+    });
+    if (!freshRequest) throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+
+    const freshAgent = await tx.agent.findUnique({
+      where: { userId },
+      select: { id: true, verificationStatus: true },
+    });
+    const freshProperty = await findPropertyAuthorizationContextById(freshRequest.propertyId, tx);
+    if (!freshAgent || freshAgent.id !== agent.id || freshAgent.verificationStatus !== "VERIFIED" ||
+        !freshProperty || !freshProperty.isActive || freshProperty.deletedAt) {
+      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+    }
+    const freshResponse = await tx.ownerAgentRequestResponse.findUnique({
+      where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId: freshAgent.id } },
+      select: { status: true },
+    });
+    const freshRelation = freshProperty.agents?.find((item) => item.agent?.userId === userId) ?? null;
+    const freshAllowed = await authorizeRequest(actor, "ACCESS_OWNER_CONTACT", freshRequest, {
+      isAgent: true,
+      isVerifiedAgent: true,
+      isPropertyActive: freshProperty.isActive,
+      isPropertyDeleted: Boolean(freshProperty.deletedAt),
+      isPropertyExpired: isExpiredListing(freshProperty.listing),
+      isAcceptedResponse: freshResponse?.status === "ACCEPTED",
+      isActiveAgentRelation: freshRelation?.status === "ACTIVE",
+      isApprovedByRequestOwner: freshRelation?.approvedByOwner === true &&
+        freshRelation.approvedByOwnerId === freshRequest.ownerId,
+      hasOwnerRelation: freshProperty.owners?.some((item) => item.ownerId === freshRequest.ownerId) === true,
+    });
+    const freshVisibility = await getPropertyVisibility(actor, freshProperty, freshRequest.ownerId);
+    if (!freshAllowed || !freshVisibility.canViewExactLocation || !freshVisibility.canViewOwnerDetails) {
+      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+    }
+
+    const existing = await findOwnerRequestAccessLog(freshAgent.id, requestId, tx);
     if (existing) return existing;
-    return createOwnerRequestAccessLog(agent.id, requestId, tx);
+    return createOwnerRequestAccessLog(freshAgent.id, requestId, tx);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
   return toPayload(access);
