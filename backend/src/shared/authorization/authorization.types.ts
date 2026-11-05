@@ -11,7 +11,8 @@ export type AuthorizationResource =
   | "agent"
   | "customer"
   | "searchRequest"
-  | "notification";
+  | "notification"
+  | "ownerAgentRequest";
 
 export type AuthorizationAction = string;
 
