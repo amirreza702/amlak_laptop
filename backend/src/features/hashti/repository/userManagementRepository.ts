@@ -59,8 +59,6 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         { agent: { is: { firstName: contains(search) } } },
         { agent: { is: { lastName: contains(search) } } },
         { agent: { is: { agencyName: contains(search) } } },
-        { agent: { is: { address: contains(search) } } },
-        { agent: { is: { verificationNotes: contains(search) } } },
                 ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
         ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { verificationStatus: boolSearch ? VerificationStatus.VERIFIED : { not: VerificationStatus.VERIFIED } } } }] : []),
         ...(dateRange ? [{ createdAt: dateRange }, { updatedAt: dateRange }, { agent: { is: { verificationReviewedAt: dateRange } } }] : []),
