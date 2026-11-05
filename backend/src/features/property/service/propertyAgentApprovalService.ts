@@ -38,6 +38,14 @@ export async function approvePropertyAgentByOwnerService(
 
     const propertyAgent = await findPropertyAgent(data.propertyId, data.agentId, tx);
     if (!propertyAgent) throw new Error("این مشاور به ملک مورد نظر متصل نیست.");
+
+    const agentProfile = await tx.agent.findUnique({
+      where: { id: data.agentId },
+      select: { userId: true, verificationStatus: true },
+    });
+    if (!agentProfile || agentProfile.verificationStatus !== "VERIFIED") {
+      throw new Error("AGENT_NOT_VERIFIED");
+    }
     if (propertyAgent.approvedByOwner && propertyAgent.status === "ACTIVE") {
       throw new Error("این مشاور قبلاً توسط مالک تأیید شده است.");
     }
@@ -65,6 +73,7 @@ export async function approvePropertyAgentByOwnerService(
         data: {
           isOwner: true,
           isAgentAccepted: Boolean(acceptedRequest),
+          isAgentVerified: agentProfile.verificationStatus === "VERIFIED",
           status: "ACTIVE",
         },
       },
@@ -99,8 +108,7 @@ export async function approvePropertyAgentByOwnerService(
       reason: "تأیید نهایی مشاور توسط مالک؛ تأیید مشاور قبلی در صورت وجود لغو شد",
     }, tx);
 
-    const [agent, ownerDetails, propertyDetails] = await Promise.all([
-      tx.agent.findUnique({ where: { id: data.agentId }, select: { userId: true } }),
+    const [ownerDetails, propertyDetails] = await Promise.all([
       tx.owner.findUnique({
         where: { id: owner.id },
         select: { firstName: true, lastName: true, user: { select: { mobile: true } } },
@@ -111,11 +119,11 @@ export async function approvePropertyAgentByOwnerService(
       }),
     ]);
 
-    if (agent?.userId) {
+    if (agentProfile.userId) {
       const actorName = ownerDetails ? ownerDetails.firstName + " " + ownerDetails.lastName : "مالک";
       await tx.notification.create({
         data: {
-          userId: agent.userId,
+          userId: agentProfile.userId,
           title: "تأیید نهایی همکاری",
           message: `مالک ${actorName} با شماره ${ownerDetails?.user.mobile ?? "ثبت‌نشده"} همکاری شما را برای این ملک تأیید نهایی کرد.`,
           details: {
