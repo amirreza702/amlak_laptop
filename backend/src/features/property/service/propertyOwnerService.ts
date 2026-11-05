@@ -1,4 +1,4 @@
-import { findPropertyById } from "../repository/propertyRepository";
+import { findPropertyById, findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 import {
   findPropertyOwner,
   createPropertyOwner,
@@ -6,6 +6,7 @@ import {
 import { prisma } from "../../../lib/prisma";
 import { PropertyHistoryAction } from "@prisma/client";
 import { createPropertyHistory } from "../repository/propertyHistoryRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 export interface AddPropertyOwnerInput {
   propertyId: string;
@@ -131,13 +132,17 @@ export async function addPropertyOwner(
   const actor = data.performedBy
     ? await tx.user.findUnique({
         where: { id: data.performedBy },
-        select: { id: true, mobile: true, role: true },
+        select: { id: true, mobile: true, role: true, isActive: true },
       })
     : null;
 
-  if (!actor || actor.role !== "HASHTI") {
-    throw new Error("فقط کاربر هشتی مجاز به افزودن مالک به ملک است.");
+  if (!actor || actor.role !== "HASHTI" || !actor.isActive) {
+    throw new Error("فقط کاربر فعال هشتی مجاز به افزودن مالک به ملک است.");
   }
+  const authorizationContext = await findPropertyAuthorizationContextById(data.propertyId, tx);
+  if (!authorizationContext) throw new Error("ملک مورد نظر پیدا نشد.");
+  const allowed = await authorizePropertyAction(actor, "ADD_OWNER_RELATION", authorizationContext);
+  if (!allowed) throw new Error("افزودن رابطه مالکیت برای این ملک مجاز نیست.");
 
   const propertyOwner = await createPropertyOwner(
     {
