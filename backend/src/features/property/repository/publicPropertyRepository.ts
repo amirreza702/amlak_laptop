@@ -12,8 +12,10 @@ export async function findPublishedPublicPropertyById(id: string) {
     where: {
       id,
       isActive: true,
+      deletedAt: null,
       listing: {
         status: "PUBLISHED",
+        confirmUntil: { gt: new Date() },
       },
     },
     select: {
