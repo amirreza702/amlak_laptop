@@ -162,7 +162,8 @@ export const getOwnerPropertiesService = async (ownerId: string) => {
 export const getCurrentOwnerProfile = async (authenticatedUserId: string) => {
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
-  return owner;
+  const { userId: _userId, ...safeOwner } = owner;
+  return safeOwner;
 };
 
 /**
