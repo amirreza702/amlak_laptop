@@ -328,10 +328,7 @@ export async function registerProperty(
   });
   // نتیجه ثبت نیز باید از همان تصمیم و Projection مرکزی عبور کند؛
   // به‌ویژه وقتی مشاور به‌واسطه کد پستی به ملک موجود دیگری متصل می‌شود.
-  const safeProperty = await getPropertyDetailsForActor(result.property.id, {
-    id: creator.id,
-    role: creator.role,
-  });
+  const safeProperty = await getPropertyDetailsForActor(result.property.id, creator);
   return { ...result, property: safeProperty as Property };
 }
 
