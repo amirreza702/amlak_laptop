@@ -225,13 +225,7 @@ router.post(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
   requireVerifiedAgent,
-  requirePropertyAccess(),
-  (req, res, next) => {
-    const user = (req as AuthenticatedRequest).user;
-    if (!user) return res.status(401).json({ message: "Authentication required" });
-    req.body = { ...(req.body ?? {}), userId: user.id };
-    return next();
-  },
+  requirePropertyAccess("id", false, true, true),
   createExactLocationAccessLogController
 );
 router.get(
