@@ -19,6 +19,7 @@
  * ============================================================
  */
 
+import { UserRole } from "@prisma/client";
 import {
   findCustomerById,
 } from "../repository/customerRepository";
@@ -114,7 +115,7 @@ export const createCustomerSearchRequest = async (
   return createPropertySearchRequest({
     customerId,
     createdByUserId: creator.id,
-    createdByRole: creator.role,
+    createdByRole: creator.role as UserRole,
     requesterMobile,
     requesterFirstName,
     requesterLastName,
