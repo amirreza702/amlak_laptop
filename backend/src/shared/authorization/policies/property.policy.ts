@@ -38,7 +38,7 @@ export const propertyPolicy: AuthorizationPolicy = (
   // ثبت سابقه فقط برای کاربری مجاز به مشاهده موقعیت دقیق؛
   // مشاهده سوابق محدود به هشتی و مالک مرتبط ملک است.
   if (action === "CREATE_EXACT_LOCATION_ACCESS_LOG") {
-    return isHashti || (data.isActive !== false && (isOwner || isFinalApprovedAgent || isCreator));
+    return isHashti || (data.isActive === true && (isOwner || isFinalApprovedAgent || isCreator));
   }
   if (action === "VIEW_EXACT_LOCATION_ACCESS_LOGS") {
     return isHashti || isOwner;
