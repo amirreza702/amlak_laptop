@@ -28,7 +28,11 @@ export const findPropertyMediaById = async (id: string) =>
       url: true,
       sortOrder: true,
       isActive: true,
-      property: { select: { listing: { select: { status: true, confirmUntil: true } } } },
+      property: { select: {
+        isActive: true,
+        deletedAt: true,
+        listing: { select: { status: true, confirmUntil: true } },
+      } },
     },
   });
 
