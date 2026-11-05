@@ -55,7 +55,7 @@ router.put(
   updateAgentProfileController
 );
 
-// Public request details omit owner contact and exact address until subscription access is granted.
+// اطلاعات درخواست برای مشاور فقط پس از تأیید نهایی مالک به نشانی دقیق و اطلاعات تماس مالک گسترش می‌یابد.
 router.get(
   "/agents/:agentId/owner-requests",
   authMiddleware,
