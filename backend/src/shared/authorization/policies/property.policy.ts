@@ -44,6 +44,12 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isHashti || isOwner;
   }
 
+  if (action === "REGISTER") {
+    return (context.actor.role === "OWNER" || context.actor.role === "AGENT") &&
+      context.actor.isActive === true &&
+      data.isDeleted !== true;
+  }
+
   if (action === "FAVORITE") {
     return context.actor.role === "CUSTOMER" &&
       data.isActive !== false &&
