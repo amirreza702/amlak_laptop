@@ -69,7 +69,7 @@ export const findActiveOwnerAgentRequests = (agentId: string) =>
   prisma.ownerAgentRequest.findMany({
     where: {
       status: "ACTIVE",
-      property: { isActive: true },
+      property: { isActive: true, deletedAt: null },
       owner: { user: { isActive: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -78,8 +78,9 @@ export const findActiveOwnerAgentRequests = (agentId: string) =>
       owner: { select: { createdByRole: true } },
       property: {
         select: {
+          isActive: true, deletedAt: true,
           createdByRole: true, propertyType: true, city: true, district: true, area: true, rooms: true,
-          listing: { select: { transactionType: true } },
+          listing: { select: { transactionType: true, status: true, confirmUntil: true } },
           agents: { where: { agentId }, select: { status: true, approvedByOwner: true } },
         },
       },
@@ -122,8 +123,19 @@ export const findOwnerRequestForAccess = (requestId: string, agentId: string) =>
 
 export const findOwnerAgentRequestForResponse = (requestId: string, db: Db = prisma) =>
   db.ownerAgentRequest.findFirst({
-    where: { id: requestId, status: "ACTIVE", property: { isActive: true } },
-    select: { id: true, propertyId: true, status: true },
+    where: { id: requestId, status: "ACTIVE", property: { isActive: true, deletedAt: null } },
+    select: {
+      id: true,
+      propertyId: true,
+      status: true,
+      property: {
+        select: {
+          isActive: true,
+          deletedAt: true,
+          listing: { select: { status: true, confirmUntil: true } },
+        },
+      },
+    },
   });
 
 export const upsertOwnerAgentRequestResponse = (
