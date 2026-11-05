@@ -6,7 +6,7 @@ import {
 } from "./propertyArchiveService";
 
 const DAYS_365_MS = 365 * 24 * 60 * 60 * 1000;
-const protectedStatuses = [
+const protectedStatuses: ListingStatus[] = [
   ListingStatus.PUBLISHED,
   ListingStatus.PENDING_HASHTI_VERIFICATION,
   ListingStatus.SOLD,
