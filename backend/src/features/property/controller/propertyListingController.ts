@@ -23,6 +23,7 @@
  */
 
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   createPropertyListingWithInitialPrice,
@@ -39,6 +40,8 @@ export async function createPropertyListingController(
   req: Request<{ id: string }>,
   res: Response
 ) {
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
     /**
      * شناسه Property از URL دریافت می‌شود.
@@ -51,7 +54,8 @@ export async function createPropertyListingController(
     const result =
       await createPropertyListingWithInitialPrice(
         propertyId,
-        req.body
+        req.body,
+        actor
       );
 
     /**
