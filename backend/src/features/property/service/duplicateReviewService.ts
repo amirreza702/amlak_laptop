@@ -1,4 +1,5 @@
 import { DuplicateDecision, ListingStatus } from "@prisma/client";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 import {
   createDuplicateReview,
@@ -45,7 +46,7 @@ import {
  * اگر Candidate در Matching نباشد، Review ساخته نمی‌شود.
  */
 
-async function requireDuplicatePropertyPermission(propertyId: string, actor: { id: string; role: string; isActive?: boolean }, action: string) {
+async function requireDuplicatePropertyPermission(propertyId: string, actor: AuthorizationActor, action: string) {
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, property);
@@ -60,7 +61,7 @@ export interface CreateDuplicateReviewInput {
 
 export const createDuplicateReviewService = async (
   data: CreateDuplicateReviewInput,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ): Promise<DuplicateReview> => {
   /**
    * Primary و Candidate نباید یک ملک باشند.
@@ -160,7 +161,7 @@ export const createDuplicateReviewService = async (
  */
 export const getDuplicateReviewsService = async (
   propertyId: string,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ): Promise<DuplicateReview[]> => {
   await requireDuplicatePropertyPermission(propertyId, actor, "VIEW_DUPLICATE_REVIEWS");
   const property =
@@ -193,7 +194,7 @@ export interface ReviewDuplicateInput {
 
 export const reviewDuplicateService = async (
   data: ReviewDuplicateInput,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ): Promise<DuplicateReview> => {
   /**
    * Review باید وجود داشته باشد.
@@ -247,7 +248,7 @@ export const reviewDuplicateService = async (
 };
 
 /** صف بررسی مشابهت، گروه‌بندی‌شده بر اساس ملک اصلی و فقط با آخرین تصمیم هر کاندیدا. */
-export const getHashtiDuplicateReviewQueueService = async (actor: { id: string; role: string; isActive?: boolean }) => {
+export const getHashtiDuplicateReviewQueueService = async (actor: AuthorizationActor) => {
   const allowed = await authorize("property", "VIEW_DUPLICATE_REVIEW_QUEUE", { actor, resource: { data: {} } });
   if (!allowed) throw new Error("DUPLICATE_REVIEW_FORBIDDEN");
   const properties = await findHashtiDuplicateReviewQueue();
@@ -281,7 +282,7 @@ export const getHashtiDuplicateReviewQueueService = async (actor: { id: string; 
 /** انتشار فقط از صف مشابهت و پس از تصمیم‌گیری درباره تمام کاندیداهای فعلی مجاز است. */
 export const publishPropertyAfterDuplicateReviewService = async (
   propertyId: string,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ) => {
   await requireDuplicatePropertyPermission(propertyId, actor, "PUBLISH_AFTER_DUPLICATE_REVIEW");
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
@@ -323,7 +324,7 @@ export const publishPropertyAfterDuplicateReviewService = async (
 /** رد انتشار از صف مشابهت، فقط وقتی همه کاندیداها بررسی شده و حداقل یکی همان ملک باشد. */
 export const rejectPropertyAfterDuplicateReviewService = async (
   propertyId: string,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ) => {
   await requireDuplicatePropertyPermission(propertyId, actor, "REJECT_AFTER_DUPLICATE_REVIEW");
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
