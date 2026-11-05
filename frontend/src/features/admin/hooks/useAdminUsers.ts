@@ -7,6 +7,8 @@ import { getAdminUserDetails, setAdminUserStatus } from "@/features/admin/api/ad
 export function useAdminUsers() {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
+  const [currentIsSuperAdmin, setCurrentIsSuperAdmin] = useState(false);
+  const [currentPermissions, setCurrentPermissions] = useState<string[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -23,7 +25,7 @@ export function useAdminUsers() {
   useEffect(() => {
     let cancelled = false;
     getCurrentUser().then(user => {
-      if (!cancelled) { setCurrentRole(user.role); setCurrentUserId(user.id); }
+      if (!cancelled) { setCurrentRole(user.role); setCurrentUserId(user.id); setCurrentIsSuperAdmin(user.isSuperAdmin === true); setCurrentPermissions(user.adminPermissions ?? []); }
     }).catch((cause: unknown) => {
       if (!cancelled) {
         setError(cause instanceof Error ? cause.message : "ابتدا وارد حساب شوید.");
@@ -72,6 +74,11 @@ export function useAdminUsers() {
     }
   }
 
+  const canManageUser = useCallback((user: AdminUser) => {
+    const requiredPermission = user.role === "OWNER" ? "OWNERS_MANAGE" : user.role === "AGENT" ? "AGENTS_MANAGE" : "USERS_MANAGE";
+    return currentIsSuperAdmin || currentPermissions.includes(requiredPermission);
+  }, [currentIsSuperAdmin, currentPermissions]);
+
   async function changeUserStatus(user: AdminUser) {
     if (user.id === currentUserId) {
       setError("نمی‌توانید وضعیت حساب خودتان را از این بخش تغییر دهید.");
@@ -90,7 +97,7 @@ export function useAdminUsers() {
     }
   }
   return {
-    currentRole, currentUserId, users, searchInput, setSearchInput, search, setSearch, reason, setReason,
+    currentRole, currentUserId, canManageUser, users, searchInput, setSearchInput, search, setSearch, reason, setReason,
     role, setRole, active, setActive, page, setPage, total, totalPages, loading, error,
     selectedUser, setSelectedUser, submitSearch, changeUserStatus, showUserDetails,
   };
