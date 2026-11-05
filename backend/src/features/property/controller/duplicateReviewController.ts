@@ -41,7 +41,7 @@ export async function createDuplicateReviewController(
       duplicateReview,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error instanceof Error && error.message.includes("FORBIDDEN") ? 403 : 400).json({
       message:
         error instanceof Error
           ? error.message
@@ -62,6 +62,8 @@ export async function getDuplicateReviewsController(
   res: Response
 ) {
   try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
     const propertyId = req.params.id;
 
     const duplicateReviews =
@@ -71,7 +73,7 @@ export async function getDuplicateReviewsController(
       duplicateReviews,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error instanceof Error && error.message.includes("FORBIDDEN") ? 403 : 400).json({
       message:
         error instanceof Error
           ? error.message
@@ -120,7 +122,7 @@ export async function reviewDuplicateController(
       duplicateReview,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error instanceof Error && error.message.includes("FORBIDDEN") ? 403 : 400).json({
       message:
         error instanceof Error
           ? error.message
