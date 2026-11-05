@@ -413,14 +413,15 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
       lastName: ownerDetails.lastName,
       mobile: ownerDetails.user.mobile,
     } : null,
-    exposeCreatorContact: visibility.canViewOwnerDetails,
+    exposeCreatorContact: visibility.canViewRegistrantDetails,
+    creatorMobile: property.creatorMobile,
   });
 
   return {
     ...safeProperty,
-    registrantFirstName: visibility.canViewOwnerDetails ? registrant?.firstName ?? null : null,
-    registrantLastName: visibility.canViewOwnerDetails ? registrant?.lastName ?? null : null,
-    registrantMobile: visibility.canViewOwnerDetails && property.registrationSource === "AGENT"
+    registrantFirstName: visibility.canViewRegistrantDetails ? registrant?.firstName ?? null : null,
+    registrantLastName: visibility.canViewRegistrantDetails ? registrant?.lastName ?? null : null,
+    registrantMobile: visibility.canViewRegistrantDetails && property.registrationSource === "AGENT"
       ? property.creatorMobile
       : null,
     approvedAgentFirstName: visibility.canViewOwnerDetails ? visibleApprovedAgent?.firstName ?? null : null,
