@@ -69,6 +69,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
         id: true,
         propertyType: true,
         registrationSource: true,
+        creatorMobile: true,
         ownerFirstName: true,
         ownerLastName: true,
         ownerMobile: true,
