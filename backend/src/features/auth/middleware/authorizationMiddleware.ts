@@ -219,8 +219,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
         select: {
           createdByUserId: true,
           deletedAt: true,
-          confirmUntil: true,
-          listing: { select: { status: true } },
+          listing: { select: { status: true, confirmUntil: true } },
           owners: {
             where: { owner: { is: { userId: user.id } } },
             select: { ownerId: true },
@@ -245,7 +244,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
       const isExpired =
         property.listing?.status === "EXPIRED" ||
         (property.listing?.status === "PUBLISHED" &&
-          (!property.confirmUntil || property.confirmUntil <= new Date()));
+          (!property.listing.confirmUntil || property.listing.confirmUntil <= new Date()));
 
       if (isExpired) {
         const isRelatedOwner = user.role === "OWNER" && property.owners.length > 0;
