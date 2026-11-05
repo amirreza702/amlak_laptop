@@ -239,7 +239,7 @@ export const createEvaluationService = async (
         throw new Error("Agent is not the owner-approved agent for this property");
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         ownerId: owner.id,
@@ -299,7 +299,7 @@ export const createEvaluationService = async (
         );
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         agentId: agent.id,
@@ -359,7 +359,7 @@ export const createEvaluationService = async (
         );
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         agentId: agent.id,
@@ -388,7 +388,7 @@ export const createEvaluationService = async (
       if (property.listing?.status !== "PUBLISHED" || !property.listing.confirmUntil || property.listing.confirmUntil <= new Date()) {
         throw new Error("Property is not currently published");
       }
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         ownerId: owner.id,
@@ -442,7 +442,7 @@ export const createEvaluationService = async (
         throw new Error("Property must be in customer favorites before evaluation");
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         customerId: customer.id,
@@ -502,7 +502,7 @@ export const createEvaluationService = async (
         );
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         customerId: customer.id,
@@ -562,7 +562,7 @@ export const createEvaluationService = async (
         );
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         ownerId: owner.id,
@@ -616,7 +616,7 @@ export const createEvaluationService = async (
         throw new Error("Agent can evaluate only properties they registered or were approved to represent");
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         agentId: agent.id,
@@ -665,7 +665,7 @@ export const createEvaluationService = async (
         );
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         agentId: agent.id,
