@@ -149,20 +149,17 @@ export const logoutAgent = logoutUser;
 export interface AdminUser {
   id: string;
   mobile: string;
-  role: UserRole;
+  role: Exclude<UserRole, "HASHTI">;
   isActive: boolean;
-  isSuperAdmin?: boolean;
-  adminPermissions?: string[];
   createdAt: string;
   updatedAt: string;
-  customer: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null; createdByUser?: { mobile: string } | null } | null;
-  owner: { id: string; firstName: string; lastName: string; createdByRole?: UserRole | null; createdByUser?: { mobile: string } | null } | null;
+  customer: { id: string; firstName: string; lastName: string } | null;
+  owner: { id: string; firstName: string; lastName: string } | null;
   agent: {
     id: string;
     firstName: string;
     lastName: string;
     agencyName: string | null;
-    isVerified: boolean;
   } | null;
 }
 
@@ -174,7 +171,7 @@ export interface AdminUsersResponse {
 /** دریافت فهرست مدیریتی؛ مجوز در بک‌اند کنترل می‌شود. */
 export async function getAdminUsers(filters: {
   search?: string;
-  role?: UserRole | "";
+  role?: Exclude<UserRole, "HASHTI"> | "";
   isActive?: "true" | "false" | "";
   page?: number;
   limit?: number;
