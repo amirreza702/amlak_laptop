@@ -118,7 +118,7 @@ router.put(
 );
 router.get(
   "/properties/:id/confirmation",
-  authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyAccess("id", false, true, true),
   checkPropertyConfirmationController
 );
 router.put(
