@@ -6,7 +6,6 @@ interface SearchRequestAuthorizationData {
   isVerifiedAgent?: boolean;
   status?: string;
   createdByRole?: string;
-  isVerifiedAgent?: boolean;
 }
 
 /** Search requests distinguish customer ownership, agent authorship and marketplace visibility. */
