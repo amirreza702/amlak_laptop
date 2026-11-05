@@ -44,7 +44,11 @@ export function requireOwnProfile(kind: ProfileKind, paramName: string) {
         }));
       }
 
-      if (!found) {
+      const allowed = await authorize(kind, req.method === "GET" ? "READ" : "UPDATE", {
+        actor: { id: user.id, role: user.role },
+        resource: { id, data: { isSelf: found } },
+      });
+      if (!allowed) {
         return res.status(403).json({ message: "You cannot access another user's profile" });
       }
       return next();
@@ -80,7 +84,11 @@ export function bindOwnProfileIdToBody(kind: ProfileKind, bodyField: string) {
         });
       }
 
-      if (!profile) {
+      const allowed = await authorize(kind, "BIND", {
+        actor: { id: user.id, role: user.role },
+        resource: { id: profile?.id, data: { isSelf: Boolean(profile) } },
+      });
+      if (!allowed || !profile) {
         return res.status(403).json({ message: "The account profile has not been created" });
       }
       req.body = { ...(req.body ?? {}), [bodyField]: profile.id };
@@ -106,8 +114,6 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
       return res.status(400).json({ message: "Invalid property ID" });
     }
 
-    if (user.role === "HASHTI") return next();
-
     try {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
@@ -132,14 +138,13 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
         },
       });
 
-      if (property?.deletedAt) return res.status(403).json({ message: "This property has been deleted" });
-
       const allowed = property
         ? await authorize("property", "ACCESS", {
             actor: { id: user.id, role: user.role },
             resource: {
               id: propertyId,
               data: {
+                isDeleted: Boolean(property.deletedAt),
                 isRelatedOwner: user.role === "OWNER" && property.owners.length > 0,
                 isApprovedAgent: user.role === "AGENT" && property.agents.length > 0,
                 isAllowedAgentCreator:
@@ -171,8 +176,6 @@ export function requirePropertyCreator(paramName = "id") {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = currentUser(req, res);
     if (!user) return;
-    if (user.role === "HASHTI") return next();
-
     const propertyId = req.params[paramName];
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       return res.status(400).json({ message: "Invalid property ID" });
@@ -227,8 +230,6 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = currentUser(req, res);
     if (!user) return;
-    if (user.role === "HASHTI") return next();
-
     const propertyId = req.params[paramName];
     if (typeof propertyId !== "string" || !propertyId.trim()) {
       return res.status(400).json({ message: "Invalid property ID" });
@@ -355,9 +356,11 @@ export function requireOwnNotification(paramName = "id") {
         where: { id, userId: user.id },
         select: { id: true },
       });
-      if (!notification) {
-        return res.status(404).json({ message: "Notification not found" });
-      }
+      const allowed = await authorize("notification", "ACCESS", {
+        actor: { id: user.id, role: user.role },
+        resource: { id, data: { isOwner: Boolean(notification) } },
+      });
+      if (!allowed) return res.status(404).json({ message: "Notification not found" });
       return next();
     } catch (error) {
       console.error("Notification authorization failed:", error);
@@ -387,9 +390,11 @@ export function requireOwnSearchRequest() {
         },
         select: { id: true },
       });
-      if (!request) {
-        return res.status(404).json({ message: "Search request not found" });
-      }
+      const allowed = await authorize("searchRequest", "ACCESS", {
+        actor: { id: user.id, role: user.role },
+        resource: { id: requestId, data: { isOwner: Boolean(request) } },
+      });
+      if (!allowed) return res.status(404).json({ message: "Search request not found" });
       return next();
     } catch (error) {
       console.error("Search request authorization failed:", error);
