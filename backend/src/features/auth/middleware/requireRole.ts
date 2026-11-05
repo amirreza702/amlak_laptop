@@ -13,7 +13,7 @@ export function requireRole(...allowedRoles: UserRole[]) {
 
     try {
       const allowed = await authorize("roleAccess", "ALLOW", {
-        actor: { id: user.id, role: user.role },
+        actor: { id: user.id, role: user.role, isActive: user.isActive },
         metadata: { allowedRoles },
       });
       if (!allowed) {
