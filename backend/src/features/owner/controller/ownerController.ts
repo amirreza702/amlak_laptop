@@ -47,9 +47,9 @@ export async function getOwnerProfileController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const owner = await getOwnerProfile(req.params.ownerId, userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const owner = await getOwnerProfile(req.params.ownerId, actor);
 
     return res.status(200).json(owner);
   } catch (error: any) {
@@ -83,9 +83,9 @@ export async function updateOwnerProfileController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const owner = await updateOwnerProfileService(req.params.ownerId, userId, req.body);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const owner = await updateOwnerProfileService(req.params.ownerId, actor, req.body);
 
     return res.status(200).json(owner);
   } catch (error: any) {
@@ -128,9 +128,9 @@ export async function getOwnerPropertiesController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const properties = await getOwnerPropertiesService(req.params.ownerId, userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const properties = await getOwnerPropertiesService(req.params.ownerId, actor);
     return res.status(200).json({ properties });
   } catch (error: any) {
     if (error.message === "OWNER_PROFILE_FORBIDDEN") return res.status(403).json({ message: "You cannot access another user's properties" });
@@ -147,9 +147,9 @@ function getAuthenticatedOwnerUserId(req: Request): string | undefined {
 /** GET /owners/me/profile */
 export async function getCurrentOwnerProfileController(req: Request, res: Response) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const owner = await getCurrentOwnerProfile(userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const owner = await getCurrentOwnerProfile(actor);
     return res.status(200).json(owner);
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "OWNER_PROFILE_NOT_FOUND") {
@@ -163,9 +163,9 @@ export async function getCurrentOwnerProfileController(req: Request, res: Respon
 /** PUT /owners/me/profile */
 export async function updateCurrentOwnerProfileController(req: Request, res: Response) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const owner = await updateCurrentOwnerProfileService(userId, req.body);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const owner = await updateCurrentOwnerProfileService(actor, req.body);
     return res.status(200).json(owner);
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -188,9 +188,9 @@ export async function updateCurrentOwnerProfileController(req: Request, res: Res
 /** GET /owners/me/properties */
 export async function getCurrentOwnerPropertiesController(req: Request, res: Response) {
   try {
-    const userId = getAuthenticatedOwnerUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const properties = await getCurrentOwnerPropertiesService(userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const properties = await getCurrentOwnerPropertiesService(actor);
     return res.status(200).json({ properties });
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "OWNER_PROFILE_NOT_FOUND") {
