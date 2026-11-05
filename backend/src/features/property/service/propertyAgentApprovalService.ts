@@ -66,6 +66,14 @@ export async function approvePropertyAgentByOwnerService(
       },
       select: { id: true },
     });
+    const confirmUntil = property.listing?.confirmUntil
+      ? new Date(property.listing.confirmUntil)
+      : null;
+    const isPropertyExpired =
+      property.listing?.status === "EXPIRED" ||
+      (property.listing?.status === "PUBLISHED" &&
+        (!confirmUntil || confirmUntil.getTime() <= Date.now()));
+
     const canApproveAgent = await authorize("ownerAgentRequest", "APPROVE_AGENT", {
       actor: data.actor,
       resource: {
@@ -75,6 +83,9 @@ export async function approvePropertyAgentByOwnerService(
           isOwner: true,
           isAgentAccepted: Boolean(acceptedRequest),
           isAgentVerified: agentProfile.verificationStatus === "VERIFIED",
+          isPropertyActive: property.isActive === true,
+          isPropertyDeleted: Boolean(property.deletedAt),
+          isPropertyExpired,
           status: "ACTIVE",
         },
       },
