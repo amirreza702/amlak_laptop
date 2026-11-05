@@ -25,6 +25,7 @@ import {
 import type {
   UpdatePropertyListingStatusInput,
 } from "../types/updatePropertyListingStatus";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * وضعیت‌های مجاز برای تغییر Listing
@@ -97,7 +98,7 @@ export async function queuePropertyListingForHashtiReview(
         propertyId,
         action: PropertyHistoryAction.LISTING_CHANGED,
         field: "listing.status",
-        oldValue: freshListing.status,
+        oldValue: listing.status,
         newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
         performedBy,
         reason: listing.status === ListingStatus.EXPIRED
@@ -115,7 +116,7 @@ export async function queuePropertyListingForHashtiReview(
 export async function updatePropertyListingStatus(
   propertyId: string,
   data: UpdatePropertyListingStatusInput,
-  actor: { id: string; role: string },
+  actor: AuthorizationActor,
 ) {
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property || property.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
@@ -194,7 +195,7 @@ export async function updatePropertyListingStatus(
       propertyId,
       action: PropertyHistoryAction.LISTING_CHANGED,
       field: "listing.status",
-      oldValue: listing.status,
+      oldValue: freshListing.status,
       newValue: data.status,
       performedBy: actor.id,
       reason: "تغییر وضعیت آگهی",
