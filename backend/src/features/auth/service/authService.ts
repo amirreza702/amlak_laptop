@@ -247,6 +247,7 @@ export const adminResetUserPasswordWithAuditService = async (input: {
   userAgent?: string;
   reason?: string | null;
 }) => {
+  await requireSuperAdminServicePermission(input.actorUserId);
   if (!input.userId.trim()) {
     throw new Error("INVALID_USER_ID");
   }
