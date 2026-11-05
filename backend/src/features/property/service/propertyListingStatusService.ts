@@ -97,7 +97,7 @@ export async function queuePropertyListingForHashtiReview(
         propertyId,
         action: PropertyHistoryAction.LISTING_CHANGED,
         field: "listing.status",
-        oldValue: listing.status,
+        oldValue: freshListing.status,
         newValue: ListingStatus.PENDING_HASHTI_VERIFICATION,
         performedBy,
         reason: listing.status === ListingStatus.EXPIRED
@@ -156,6 +156,22 @@ export async function updatePropertyListingStatus(
   if (data.status !== ListingStatus.PUBLISHED) updateData.publishedAt = null;
 
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const freshProperty = await findPropertyAuthorizationContextById(propertyId, tx);
+    if (!freshProperty || freshProperty.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
+    const freshListing = await findPropertyListingByPropertyId(propertyId, tx);
+    if (!freshListing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
+    const freshAllowed = await authorizePropertyAction(
+      actor,
+      hashtiOnly ? "APPROVE_PUBLICATION" : "MANAGE",
+      freshProperty,
+    );
+    if (!freshAllowed) throw new Error("شما اجازه تغییر وضعیت آگهی این ملک را ندارید.");
+    if (freshListing.status === data.status) {
+      return { listing: freshListing, statusChanged: false, removedMediaIds: [] as string[], archived: false };
+    }
+    if (!allowedTransitions[freshListing.status].includes(data.status)) {
+      throw new Error(`تغییر وضعیت از ${freshListing.status} به ${data.status} مجاز نیست.`);
+    }
     const archiveImmediately = data.status === ListingStatus.SOLD || data.status === ListingStatus.RENTED;
     const mediaToRemove = !archiveImmediately && ([ListingStatus.DRAFT, ListingStatus.PAUSED] as ListingStatus[]).includes(data.status)
       ? await tx.propertyMedia.findMany({ where: { propertyId, isActive: true }, select: { id: true } })
@@ -168,7 +184,7 @@ export async function updatePropertyListingStatus(
     } else if (([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED] as ListingStatus[]).includes(data.status)) {
       updateData.confirmUntil = null;
     }
-    const updatedListing = await updatePropertyListing(listing.id, updateData, tx);
+    const updatedListing = await updatePropertyListing(freshListing.id, updateData, tx);
 
     if (mediaToRemove.length) {
       await tx.propertyMedia.deleteMany({ where: { id: { in: mediaToRemove.map((item) => item.id) } } });
@@ -204,7 +220,7 @@ export async function updatePropertyListingStatus(
       archived: Boolean(archived),
       ...(confirmUntil ? { confirmUntil } : {}),
     };
-  });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   for (const mediaId of result.removedMediaIds) {
     await unlink(mediaFilePath(mediaId)).catch(() => undefined);
   }
