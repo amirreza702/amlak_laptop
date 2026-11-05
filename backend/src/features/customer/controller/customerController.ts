@@ -39,9 +39,9 @@ export async function getCustomerProfileController(
   res: Response
 ) {
   try {
-    const userId = (req as AuthenticatedRequest).user?.id;
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const result = await getCustomerProfile(req.params.customerId, userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerProfile(req.params.customerId, actor);
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -84,11 +84,11 @@ export async function updateCustomerProfileController(
   res: Response
 ) {
   try {
-    const userId = (req as AuthenticatedRequest).user?.id;
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
     const result = await updateCustomerProfileService(
       req.params.customerId,
-      userId,
+      actor,
       req.body
     );
 
