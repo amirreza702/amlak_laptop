@@ -40,7 +40,7 @@ export async function getHashtiManagementAccessController(req: Request, res: Res
 export async function getManagedUsersController(req: Request, res: Response) {
   const rawRole = req.query.role;
   const role = typeof rawRole === "string" ? rawRole.trim().toUpperCase() : "";
-  if (role && ![UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT].includes(role as UserRole)) return res.status(400).json({ message: "Invalid role filter" });
+  if (role && ![UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT].some((allowedRole) => allowedRole === role)) return res.status(400).json({ message: "Invalid role filter" });
 
   let isActive: boolean | undefined;
   if (req.query.active !== undefined) {
