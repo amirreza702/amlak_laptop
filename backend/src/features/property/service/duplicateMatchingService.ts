@@ -11,7 +11,7 @@ export interface DuplicateMatchProperty {
   propertyType: Property["propertyType"];
   city: string;
   district: string | null;
-  area: number;
+  area: number | null;
   rooms: number | null;
   yearBuilt: number | null;
   latitudeExact: number | null;
