@@ -49,7 +49,8 @@ export interface CreateDuplicateReviewInput {
 }
 
 export const createDuplicateReviewService = async (
-  data: CreateDuplicateReviewInput
+  data: CreateDuplicateReviewInput,
+  actor: { id: string; role: string },
 ): Promise<DuplicateReview> => {
   /**
    * Primary و Candidate نباید یک ملک باشند.
@@ -68,7 +69,8 @@ export const createDuplicateReviewService = async (
    */
   const primaryProperty =
     await findPropertyById(
-      data.primaryPropertyId
+      data.primaryPropertyId,
+      actor
     );
 
   if (!primaryProperty) {
@@ -287,7 +289,7 @@ export const publishPropertyAfterDuplicateReviewService = async (
     }
   }
 
-  const summary = await getPropertySimilaritySummaryService(propertyId);
+  const summary = await getPropertySimilaritySummaryService(propertyId, actor);
   for (const match of summary.matches) {
     const review = latestByCandidate.get(match.property.id);
     if (!review || review.decision !== DuplicateDecision.DIFFERENT_PROPERTY) {
