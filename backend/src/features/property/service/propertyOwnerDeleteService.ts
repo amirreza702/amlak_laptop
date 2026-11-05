@@ -50,7 +50,8 @@ async function removePropertyFromOperationalUse(propertyId: string, userId: stri
   return result.property;
 }
 
-export async function deleteOwnPropertyService(propertyId: string, userId: string) {
+export async function deleteOwnPropertyService(propertyId: string, actor: { id: string; role: string; isActive?: boolean }) {
+  const userId = actor.id;
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
     select: {
@@ -68,7 +69,7 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
 
   const allowed = await authorizePropertyAction(
-    { id: userId, role: "OWNER" },
+    actor,
     "MANAGE",
     property,
   );
@@ -86,7 +87,8 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
   );
 }
 
-export async function deleteAgentManagedOwnerPropertyService(propertyId: string, userId: string) {
+export async function deleteAgentManagedOwnerPropertyService(propertyId: string, actor: { id: string; role: string; isActive?: boolean }) {
+  const userId = actor.id;
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
     select: {
@@ -97,7 +99,7 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
   const allowed = await authorizePropertyAction(
-    { id: userId, role: "AGENT" },
+    actor,
     "MANAGE",
     property,
   );
@@ -107,7 +109,8 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
 }
 
 /** فعال‌سازی عادی هرگز ملک حذف‌شده را احیا نمی‌کند. */
-export async function reactivateOwnPropertyService(propertyId: string, userId: string) {
+export async function reactivateOwnPropertyService(propertyId: string, actor: { id: string; role: string; isActive?: boolean }) {
+  const userId = actor.id;
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
     select: {
@@ -120,7 +123,7 @@ export async function reactivateOwnPropertyService(propertyId: string, userId: s
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
   if (property.deletedAt) throw new Error("PROPERTY_PERMANENTLY_DELETED");
   const allowed = await authorizePropertyAction(
-    { id: userId, role: "OWNER" },
+    actor,
     "MANAGE",
     property,
   );
@@ -130,7 +133,7 @@ export async function reactivateOwnPropertyService(propertyId: string, userId: s
   const archive = await prisma.propertyArchive.findUnique({ where: { propertyId }, select: { propertyId: true } });
   if (archive) {
     const { restorePropertyService } = await import("./propertyArchiveService.js");
-    await restorePropertyService(propertyId, { id: userId, role: "OWNER" });
+    await restorePropertyService(propertyId, actor);
     return prisma.property.findUniqueOrThrow({ where: { id: propertyId } });
   }
 
