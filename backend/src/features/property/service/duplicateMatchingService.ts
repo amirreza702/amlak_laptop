@@ -47,7 +47,7 @@ export interface PropertySimilaritySummary {
  */
 export const getPropertySimilaritySummaryService = async (
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: { id: string; role: string; isActive?: boolean },
 ): Promise<PropertySimilaritySummary> => {
   const authorizationContext = await findPropertyAuthorizationContextById(propertyId);
   if (!authorizationContext) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
@@ -126,7 +126,7 @@ export const getPropertySimilaritySummaryService = async (
 /** API Matching فقط خلاصه امن ملک‌های مشابه را برمی‌گرداند. */
 export const findDuplicateMatchesService = async (
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: { id: string; role: string; isActive?: boolean },
 ): Promise<DuplicateMatchResult[]> => {
   const summary = await getPropertySimilaritySummaryService(propertyId, actor);
   return summary.matches;
