@@ -3,6 +3,8 @@ import path from "node:path";
 import { PropertyHistoryAction, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import { findPropertyArchive } from "../repository/propertyArchiveRepository";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 import type { PropertyArchive } from "../types/propertyArchive";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
@@ -60,9 +62,23 @@ export async function removeArchivedPropertyMediaFiles(mediaIds: string[]) {
 export interface ArchivePropertyInput {
   propertyId: string;
   archivedReason?: string | null;
+  actor: { id: string; role: string };
+}
+
+async function requireArchivePermission(
+  propertyId: string,
+  actor: { id: string; role: string },
+  action: "ARCHIVE" | "VIEW_ARCHIVE" | "RESTORE",
+) {
+  const property = await findPropertyAuthorizationContextById(propertyId);
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
+  const allowed = await authorizePropertyAction(actor, action, property);
+  if (!allowed) throw new Error("PROPERTY_ARCHIVE_FORBIDDEN");
+  return property;
 }
 
 export const archivePropertyService = async (data: ArchivePropertyInput): Promise<PropertyArchive> => {
+  await requireArchivePermission(data.propertyId, data.actor, "ARCHIVE");
   const result = await prisma.$transaction((tx) =>
     archivePropertyInTransaction(tx, data.propertyId, data.archivedReason),
   );
@@ -71,18 +87,22 @@ export const archivePropertyService = async (data: ArchivePropertyInput): Promis
   return result.archive;
 };
 
-export const getPropertyArchiveService = async (propertyId: string): Promise<PropertyArchive> => {
+export const getPropertyArchiveService = async (
+  propertyId: string,
+  actor: { id: string; role: string },
+): Promise<PropertyArchive> => {
+  await requireArchivePermission(propertyId, actor, "VIEW_ARCHIVE");
   const archive = await findPropertyArchive(propertyId);
   if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
   return archive;
 };
 
-export const restorePropertyService = async (propertyId: string): Promise<PropertyArchive> => {
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-    select: { deletedAt: true },
-  });
-  if (property?.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
+export const restorePropertyService = async (
+  propertyId: string,
+  actor: { id: string; role: string },
+): Promise<PropertyArchive> => {
+  const property = await requireArchivePermission(propertyId, actor, "RESTORE");
+  if (property.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
 
   const archive = await findPropertyArchive(propertyId);
   if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
@@ -97,6 +117,7 @@ export const restorePropertyService = async (propertyId: string): Promise<Proper
         oldValue: "false",
         newValue: "true",
         reason: "بازگردانی ملک از آرشیو",
+        performedBy: actor.id,
       },
     });
     await tx.propertyArchive.delete({ where: { propertyId } });
