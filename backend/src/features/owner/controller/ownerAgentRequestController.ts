@@ -14,7 +14,7 @@ const routeParam = (req: Request, key: string): string => {
 export async function createOwnerAgentRequestController(req: Request, res: Response) {
   const userId = actorId(req);
   if (!userId) return res.status(401).json({ message: "Authentication required" });
-  try { return res.status(201).json(await createOwnerAgentRequestService(routeParam(req, "ownerId"), req.body ?? {})); }
+  try { return res.status(201).json(await createOwnerAgentRequestService(routeParam(req, "ownerId"), userId, req.body ?? {})); }
   catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "Property ID is required" || message === "An active request already exists for this property") return res.status(400).json({ message });
