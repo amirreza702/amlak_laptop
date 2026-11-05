@@ -1,5 +1,5 @@
 import { authorize } from "../../../shared/authorization/authorization.core";
-import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import type { AuthorizationAction, AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 interface PropertyOwnerAuthorizationRelation {
   ownerId: string;
@@ -121,11 +121,16 @@ export function projectPropertyForActor<
  * این تابع داده یا رابطه را از دیتابیس نمی‌خواند؛ فقط اطلاعات آماده‌شده
  * توسط Repository را به Authorization Core می‌سپارد.
  */
-export async function getPropertyVisibility(
+/**
+ * Context و تصمیم تمام عملیات ملک فقط در این سرویس ساخته می‌شود.
+ * Middleware و Feature Service حق ندارند رابطه یا وضعیت ملک را جداگانه تفسیر کنند.
+ */
+export async function authorizePropertyAction(
   actor: AuthorizationActor,
+  action: AuthorizationAction,
   property: PropertyAuthorizationSubject,
-  expectedApproverOwnerId?: string,
-): Promise<PropertyVisibility> {
+  options: { allowAgentCreator?: boolean; expectedApproverOwnerId?: string } = {},
+): Promise<boolean> {
   const owners = property.owners ?? [];
   const agents = property.agents ?? [];
 
@@ -145,7 +150,8 @@ export async function getPropertyVisibility(
       relation.status === "ACTIVE" &&
       relation.approvedByOwner === true &&
       Boolean(relation.approvedByOwnerId) &&
-      (!expectedApproverOwnerId || relation.approvedByOwnerId === expectedApproverOwnerId) &&
+      (!options.expectedApproverOwnerId ||
+        relation.approvedByOwnerId === options.expectedApproverOwnerId) &&
       owners.some((owner) => owner.ownerId === relation.approvedByOwnerId),
     );
 
@@ -157,7 +163,7 @@ export async function getPropertyVisibility(
     (property.listing?.status === "PUBLISHED" &&
       (!confirmUntil || confirmUntil.getTime() <= Date.now()));
 
-  const context = {
+  return authorize("property", action, {
     actor,
     resource: {
       id: property.id,
@@ -168,14 +174,25 @@ export async function getPropertyVisibility(
         isCreator,
         isRelatedOwner,
         isFinalApprovedAgent,
+        isApprovedAgent: isFinalApprovedAgent,
+        isAllowedAgentCreator: Boolean(options.allowAgentCreator && isCreator),
+        isRegisteredByCurrentAgent: isCreator,
       },
     },
-  };
+  });
+}
 
+/** تمام مجوزهای مشاهده جزئیات ملک از یک Context مشترک و Policy مرکزی گرفته می‌شوند. */
+export async function getPropertyVisibility(
+  actor: AuthorizationActor,
+  property: PropertyAuthorizationSubject,
+  expectedApproverOwnerId?: string,
+): Promise<PropertyVisibility> {
+  const options = { expectedApproverOwnerId };
   const [canViewExactLocation, canViewOwnerDetails, canManage] = await Promise.all([
-    authorize("property", "VIEW_EXACT_LOCATION", context),
-    authorize("property", "VIEW_OWNER_DETAILS", context),
-    authorize("property", "MANAGE", context),
+    authorizePropertyAction(actor, "VIEW_EXACT_LOCATION", property, options),
+    authorizePropertyAction(actor, "VIEW_OWNER_DETAILS", property, options),
+    authorizePropertyAction(actor, "MANAGE", property, options),
   ]);
 
   return { canViewExactLocation, canViewOwnerDetails, canManage };
