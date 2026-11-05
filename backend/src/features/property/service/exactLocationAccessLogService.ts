@@ -15,6 +15,7 @@ import { findPropertyAuthorizationContextById } from "../repository/propertyRepo
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 import type { ExactLocationAccessLog } from "@prisma/client";
+import { prisma } from "../../../lib/prisma";
 
 /**
  * ============================================================
@@ -31,29 +32,21 @@ export interface CreateExactLocationAccessLogInput {
 export const createExactLocationAccessLogService = async (
   data: CreateExactLocationAccessLogInput
 ): Promise<ExactLocationAccessLog> => {
-  const property = await findPropertyAuthorizationContextById(data.propertyId);
-  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
+  return prisma.$transaction(async (tx) => {
+    const property = await findPropertyAuthorizationContextById(data.propertyId, tx);
+    if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
-  const canViewExactLocation = await authorizePropertyAction(
-    data.actor,
-    "VIEW_EXACT_LOCATION",
-    property,
-  );
-  const canCreateLog = await authorizePropertyAction(
-    data.actor,
-    "CREATE_EXACT_LOCATION_ACCESS_LOG",
-    property,
-  );
-  if (!canViewExactLocation || !canCreateLog) {
-    throw new Error("EXACT_LOCATION_ACCESS_FORBIDDEN");
-  }
+    const canViewExactLocation = await authorizePropertyAction(data.actor, "VIEW_EXACT_LOCATION", property);
+    const canCreateLog = await authorizePropertyAction(data.actor, "CREATE_EXACT_LOCATION_ACCESS_LOG", property);
+    if (!canViewExactLocation || !canCreateLog) throw new Error("EXACT_LOCATION_ACCESS_FORBIDDEN");
 
-  // هویت ثبت‌کننده فقط از نشست احراز هویت‌شده می‌آید.
-  return createExactLocationAccessLog(
-    data.propertyId,
-    data.actor.id,
-    data.reason ?? null,
-  );
+    return createExactLocationAccessLog(
+      data.propertyId,
+      data.actor.id,
+      data.reason ?? null,
+      tx,
+    );
+  }, { isolationLevel: "Serializable" });
 };
 
 /**
