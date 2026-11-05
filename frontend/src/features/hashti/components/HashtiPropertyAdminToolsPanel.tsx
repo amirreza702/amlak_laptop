@@ -344,7 +344,7 @@ export function HashtiPropertyAdminToolsPanel() {
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-slate-900">{valueText(value)}</p>
                 </div>)}
               </div>
-              <RecordLocationMap latitude={p.latitudeExact} longitude={p.longitudeExact} label="موقعیت دقیق ملک" />
+              <RecordLocationMap latitude={p.latitudeExact} longitude={p.longitudeExact} precision="EXACT" label="موقعیت دقیق ملک" />
               <div className="rounded-lg border border-slate-200 p-3">
                 <p className="font-bold text-sm">مختصات موقعیت ملک</p>
                 <p className="mt-1 text-xs text-slate-600" dir="ltr">{p.latitudeExact}, {p.longitudeExact}</p>
