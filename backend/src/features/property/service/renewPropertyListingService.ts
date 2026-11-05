@@ -1,46 +1,66 @@
-import { ListingStatus, UserRole } from "@prisma/client";
+import { ListingStatus } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
-export async function renewExpiredPropertyListing(propertyId: string, actor: { id: string; role: string }) {
+/**
+ * تمدید فقط یک درخواست بررسی مجدد برای هشتی ایجاد می‌کند.
+ * مجوز تمدید از Policy مرکزی ملک می‌آید؛ مالکیت/تأیید مشاور
+ * در این Service به‌صورت دستی تفسیر نمی‌شود.
+ */
+export async function renewExpiredPropertyListing(
+  propertyId: string,
+  actor: { id: string; role: string },
+) {
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
     select: {
       id: true,
       isActive: true,
+      registrationSource: true,
       createdByUserId: true,
-      listing: { select: { id: true, status: true } },
+      deletedAt: true,
+      listing: { select: { id: true, status: true, confirmUntil: true } },
       owners: {
-        where: { owner: { is: { userId: actor.id } } },
-        select: { ownerId: true },
-        take: 1,
+        select: {
+          ownerId: true,
+          owner: { select: { userId: true } },
+        },
       },
       agents: {
-        where: { agent: { is: { userId: actor.id } }, status: "ACTIVE", approvedByOwner: true },
-        select: { agentId: true },
-        take: 1,
+        where: { status: "ACTIVE" },
+        select: {
+          agentId: true,
+          status: true,
+          approvedByOwner: true,
+          approvedByOwnerId: true,
+          agent: { select: { userId: true } },
+        },
       },
     },
   });
 
   if (!property?.listing) throw new Error("PROPERTY_OR_LISTING_NOT_FOUND");
-  const isCreator = property.createdByUserId === actor.id &&
-    (actor.role === UserRole.OWNER || actor.role === UserRole.AGENT);
-  const authorized =
-    isCreator ||
-    (actor.role === UserRole.OWNER && property.owners.length > 0) ||
-    (actor.role === UserRole.AGENT && property.agents.length > 0);
+  if (!property.isActive || property.deletedAt) {
+    throw new Error("INACTIVE_PROPERTY_CANNOT_BE_RENEWED");
+  }
+
+  const authorized = await authorizePropertyAction(
+    actor,
+    "RENEW",
+    property,
+  );
   if (!authorized) throw new Error("PROPERTY_RENEWAL_FORBIDDEN");
-  if (!property.isActive) throw new Error("INACTIVE_PROPERTY_CANNOT_BE_RENEWED");
-  if (property.listing.status !== ListingStatus.EXPIRED) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
+  if (property.listing.status !== ListingStatus.EXPIRED) {
+    throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
+  }
 
   return prisma.$transaction(async (tx) => {
-    // تمدید فقط درخواست بررسی مجدد ایجاد می‌کند؛ انتشار و شروع مهلت ۳۱روزه
-    // منحصراً هنگام تأیید هشتی در updatePropertyListingStatus انجام می‌شود.
+    // انتشار و شروع مهلت جدید فقط پس از تأیید هشتی انجام می‌شود.
     const queued = await queuePropertyListingForHashtiReview(propertyId, tx, actor.id);
-    if (!queued.queued || !queued.listing) throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
-
-    // ابزار اعلان پنل هشتی/ادمین حفظ می‌شود، اما برای این رویداد پیامی تولید نمی‌کنیم.
+    if (!queued.queued || !queued.listing) {
+      throw new Error("PROPERTY_LISTING_NOT_EXPIRED");
+    }
     return { listing: queued.listing, requiresHashtiApproval: true };
   });
 }
