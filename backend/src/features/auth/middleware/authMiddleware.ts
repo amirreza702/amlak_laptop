@@ -8,6 +8,7 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     mobile: string;
     role: string;
+    isActive: boolean;
     isSuperAdmin: boolean;
     adminPermissions: string[];
   };
