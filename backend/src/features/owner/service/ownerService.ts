@@ -118,7 +118,11 @@ const shapeOwnerPropertyRecords = async (
     { ...record.property, owners: ownerRelations },
   );
   const safeProperty = projectPropertyForActor(propertyData, visibility, {
-    owner,
+    owner: {
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      mobile: owner.user.mobile,
+    },
     owners: [],
   });
 
