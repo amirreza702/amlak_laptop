@@ -51,7 +51,9 @@ export const getPropertySimilaritySummaryService = async (
   propertyId: string,
   actor: AuthorizationActor,
 ): Promise<PropertySimilaritySummary> => {
-  await requireAdminServicePermission(actor.id, "DUPLICATES_MANAGE");
+  if (actor.role === "HASHTI") {
+    await requireAdminServicePermission(actor.id, "DUPLICATES_MANAGE");
+  }
   const authorizationContext = await findPropertyAuthorizationContextById(propertyId);
   if (!authorizationContext) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, "VIEW_DUPLICATE_MATCHES", authorizationContext);
