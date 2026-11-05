@@ -46,6 +46,9 @@ export const propertyPolicy: AuthorizationPolicy = (
 
   if (action === "MANAGE") {
     if (isHashti) return true;
+    // پس از انقضا، ثبت‌کننده دیگر استثنای دسترسی نیست؛ فقط مالک مرتبط
+    // یا مشاور دارای تأیید نهایی مالک می‌تواند مدیریت کند.
+    if (data.isExpired) return isOwner || isFinalApprovedAgent;
     return Boolean(
       data.isCreator ||
       (context.actor.role === "OWNER" && data.isRelatedOwner),
@@ -53,7 +56,9 @@ export const propertyPolicy: AuthorizationPolicy = (
   }
 
   if (action === "EDIT_OWN_REGISTRATION") {
-    return context.actor.role === "AGENT" &&
+    if (isHashti) return true;
+    return !data.isExpired &&
+      context.actor.role === "AGENT" &&
       Boolean(data.isRegisteredByCurrentAgent);
   }
 
