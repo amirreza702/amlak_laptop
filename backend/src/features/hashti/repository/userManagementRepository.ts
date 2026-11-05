@@ -1,4 +1,4 @@
-import { UserRole, VerificationStatus, type Prisma } from "@prisma/client";
+import { UserRole, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface ManagedUserQuery {
@@ -35,7 +35,7 @@ export async function findManagedUsers(query: ManagedUserQuery) {
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const numericSearch = search !== undefined && search.trim() !== "" && Number.isFinite(Number(search)) ? Number(search) : undefined;
   const lower = search?.toLocaleLowerCase();
-  const boolSearch = lower === undefined ? undefined : ["true", "yes", "بله", "فعال", "تأییدشده"].includes(lower) ? true : ["false", "no", "خیر", "غیرفعال", "ردشده"].includes(lower) ? false : undefined;
+  const boolSearch = lower === undefined ? undefined : ["true", "yes", "بله", "فعال"].includes(lower) ? true : ["false", "no", "خیر", "غیرفعال"].includes(lower) ? false : undefined;
   const exactRole = search?.trim().toUpperCase();
   const parsedDate = search ? new Date(search) : null;
   const dateRange = parsedDate && !Number.isNaN(parsedDate.getTime())
@@ -60,9 +60,9 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         { agent: { is: { lastName: contains(search) } } },
         { agent: { is: { agencyName: contains(search) } } },
                 ...(exactRole && Object.values(UserRole).includes(exactRole as UserRole) ? [{ role: exactRole as UserRole }] : []),
-        ...(boolSearch !== undefined ? [{ isActive: boolSearch }, { isSuperAdmin: boolSearch }, { agent: { is: { verificationStatus: boolSearch ? VerificationStatus.VERIFIED : { not: VerificationStatus.VERIFIED } } } }] : []),
-        ...(dateRange ? [{ createdAt: dateRange }, { updatedAt: dateRange }, { agent: { is: { verificationReviewedAt: dateRange } } }] : []),
-        ...(exactRole && ["PENDING", "VERIFIED", "REJECTED"].includes(exactRole) ? [{ agent: { is: { verificationStatus: exactRole as any } } }] : []),
+        ...(boolSearch !== undefined ? [{ isActive: boolSearch }] : []),
+        ...(dateRange ? [{ createdAt: dateRange }, { updatedAt: dateRange }] : []),
+
       ],
     } : {}),
   };
@@ -73,9 +73,9 @@ export async function findManagedUsers(query: ManagedUserQuery) {
       where,
       skip: query.offset,
       take: query.limit,
-      orderBy: [{ isSuperAdmin: "desc" }, { createdAt: "desc" }],
+      orderBy: { createdAt: "desc" },
       select: {
-        id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true, createdAt: true, updatedAt: true,
+        id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true,
         customer: { select: { id: true, firstName: true, lastName: true } },
         owner: { select: { id: true, firstName: true, lastName: true } },
         agent: { select: {
