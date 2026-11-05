@@ -40,7 +40,7 @@ export async function getHashtiPropertyRecords(
 /** غربال انتشار: فقط تشابه فعلی ۸۰٪ یا بیشتر، ملک را به صف مشابهت می‌فرستد. */
 export async function requestHashtiPropertyPublicationApproval(
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: AuthorizationActor,
 ) {
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property || property.deletedAt || !property.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
