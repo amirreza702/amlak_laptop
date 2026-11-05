@@ -10,21 +10,27 @@ import { prisma } from "../../../lib/prisma";
 import { authorize } from "../../../shared/authorization/authorization.core";
 
 
-export async function requireAdminServicePermission(actorUserId: string, permission: AdminPermission) {
+export async function hasAdminServicePermission(actorUserId: string, permission: AdminPermission): Promise<boolean> {
   const account = await prisma.user.findUnique({
     where: { id: actorUserId },
     select: { id: true, role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
   });
-  const allowed = Boolean(account) && await authorize("admin", "PERMISSION", {
-    actor: { id: actorUserId, role: account!.role, isActive: account!.isActive },
+  if (!account) return false;
+  return authorize("admin", "PERMISSION", {
+    actor: { id: actorUserId, role: account.role, isActive: account.isActive },
     resource: { data: {
-      isActive: account!.isActive,
-      isSuperAdmin: account!.isSuperAdmin,
-      permissions: account!.adminPermissions,
+      isActive: account.isActive,
+      isSuperAdmin: account.isSuperAdmin,
+      permissions: account.adminPermissions,
     } },
     metadata: { permission },
   });
-  if (!allowed) throw new Error("ADMIN_PERMISSION_FORBIDDEN");
+}
+
+export async function requireAdminServicePermission(actorUserId: string, permission: AdminPermission) {
+  if (!(await hasAdminServicePermission(actorUserId, permission))) {
+    throw new Error("ADMIN_PERMISSION_FORBIDDEN");
+  }
 }
 
 export async function requireSuperAdminServicePermission(actorUserId: string) {
