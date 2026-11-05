@@ -69,7 +69,7 @@ async function requireArchivePermission(
   propertyId: string,
   actor: { id: string; role: string },
   action: "ARCHIVE" | "VIEW_ARCHIVE" | "RESTORE",
-  db?: Prisma.TransactionClient,
+  db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
   const property = await findPropertyAuthorizationContextById(propertyId, db);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
