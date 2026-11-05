@@ -70,7 +70,7 @@ export interface AdminStaff {
 export const getAdminStaff = () => request<{ items: AdminStaff[] }>("/admin/staff");
 
 export type AdminOwnerDetails = AdminOwner & {
-  properties: Array<{ property: { id: string; city: string; district: string; address: string; status: string } }>;
+  properties: Array<{ property: { id: string; city: string; district: string; status: string } }>;
 };
 export type AdminAgentDetails = AdminAgent & {
   address: string | null;
