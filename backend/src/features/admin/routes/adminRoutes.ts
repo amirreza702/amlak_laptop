@@ -23,7 +23,7 @@ router.post("/auth/admin/bootstrap", bootstrapSuperAdminController);
 
 router.get("/admin/users", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("USERS_READ"), listUsersController);
 router.get("/admin/users/:userId", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("USERS_READ"), userDetailsController);
-router.patch("/admin/users/:userId/status", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("USERS_MANAGE"), setUserStatusController);
+router.patch("/admin/users/:userId/status", authMiddleware, requireRole(UserRole.HASHTI), setUserStatusController);
 
 router.get("/admin/owners", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("OWNERS_MANAGE"), listOwnersController);
 router.get("/admin/owners/:ownerId", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("OWNERS_MANAGE"), ownerDetailsController);
