@@ -80,7 +80,7 @@ export async function publishHashtiPropertyAfterDuplicateReviewController(req: R
   if (!user) return res.status(401).json({ message: "Authentication required" });
 
   try {
-    const result = await publishPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role });
+    const result = await publishPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role, isActive: user.isActive });
     return res.status(200).json({ published: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "تأیید انتشار پس از بررسی مشابهت ناموفق بود.";
