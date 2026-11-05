@@ -34,6 +34,7 @@ function sendError(res: Response, error: unknown) {
     STAFF_MOBILE_EXISTS: [409, "A user with this mobile number already exists"],
     BOOTSTRAP_FORBIDDEN: [403, "Bootstrap secret is invalid or bootstrap is disabled"],
     ADMIN_PERMISSION_FORBIDDEN: [403, "You do not have the required admin permission"],
+    ADMIN_PERMISSION_GRANT_FORBIDDEN: [403, "You cannot grant permissions that you do not hold"],
   };
   const found = known[message];
   if (found) return res.status(found[0]).json({ message: found[1] });
