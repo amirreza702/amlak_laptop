@@ -50,6 +50,7 @@ export async function registerPropertyController(
       id: user.id,
       mobile: user.mobile,
       role: user.role,
+      isActive: user.isActive,
     });
 
     // پاسخ ثبت به همان مشاوری برمی‌گردد که ملک را ایجاد کرده است؛
