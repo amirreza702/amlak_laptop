@@ -23,9 +23,10 @@ export const propertyPolicy: AuthorizationPolicy = (
   context: AuthorizationContext,
 ): boolean => {
   const data = context.resource?.data as PropertyPolicyData | undefined;
-  if (!data || data.isDeleted) return false;
+  if (!data) return false;
 
   const isHashti = context.actor.role === "HASHTI";
+  if (data.isDeleted && !isHashti) return false;
   const isOwner = context.actor.role === "OWNER" && Boolean(data.isRelatedOwner);
   const isCreator = Boolean(data.isCreator);
   const isFinalApprovedAgent =
