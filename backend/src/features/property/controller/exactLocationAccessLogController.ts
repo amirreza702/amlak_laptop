@@ -35,7 +35,6 @@ export async function createExactLocationAccessLogController(
     { id: string },
     unknown,
     {
-      userId: string;
       reason?: string | null;
     }
   >,
@@ -44,15 +43,12 @@ export async function createExactLocationAccessLogController(
   try {
     const propertyId = req.params.id;
 
-    const {
-      userId,
-      reason = null,
-    } = req.body;
+    const { reason = null } = req.body;
 
     const accessLog =
       await createExactLocationAccessLogService({
         propertyId,
-        userId,
+        actor: getActor(req),
         reason,
       });
 
