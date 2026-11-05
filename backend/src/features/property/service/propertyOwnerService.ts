@@ -17,7 +17,6 @@ export interface AddPropertyOwnerInput {
 /** ایجاد رابطه مالکیت فقط توسط هشتی فعال و در یک تراکنش Serializable. */
 export async function addPropertyOwner(data: AddPropertyOwnerInput) {
   if (data.performedBy) await requireAdminServicePermission(data.performedBy, "PROPERTIES_MANAGE");
-  if (data.performedBy) await requireAdminServicePermission(data.performedBy, "PROPERTIES_MANAGE");
   if (!Number.isFinite(data.share) || data.share <= 0 || data.share > 6) {
     throw new Error("سهم مالکیت باید بیشتر از صفر و حداکثر ۶ دانگ باشد.");
   }
