@@ -392,7 +392,7 @@ export const getActivePropertySearchRequests =
     city?: string; transactionType?: string; propertyType?: string;
     minBudget?: string; maxBudget?: string; hashtiVerified?: string;
     createdFrom?: string; createdTo?: string;
-  } = {},
+  },
   actor: AuthorizationActor
   ) => {
     const agent = actor.role === "AGENT" ? await findAgentProfileByUserId(actor.id) : null;
