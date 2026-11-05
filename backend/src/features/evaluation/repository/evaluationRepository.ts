@@ -198,6 +198,7 @@ export const findAgentByUserId = async (
     select: {
       id: true,
       userId: true,
+      verificationStatus: true,
     },
   });
 };
