@@ -29,12 +29,14 @@ export async function getHashtiPropertyRecordsController(req: Request, res: Resp
   }
 
   try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
     const result = await getHashtiPropertyRecords({
       status: rawStatus === "ALL" ? undefined : rawStatus as ListingStatus,
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
       limit,
       offset,
-    });
+    }, { id: user.id, role: user.role });
     return res.status(200).json({
       properties: result.properties,
       pagination: { total: result.total, limit, offset },
