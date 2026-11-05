@@ -50,7 +50,7 @@ export async function requestHashtiPropertyPublicationApproval(
     throw new Error("این ملک در صف بررسی انتشار هشتی قرار ندارد.");
   }
 
-  const summary = await getPropertySimilaritySummaryService(propertyId);
+  const summary = await getPropertySimilaritySummaryService(propertyId, actor);
 
   if (summary.maximumSimilarityScore >= DUPLICATE_MATCHING_THRESHOLD) {
     await createPendingDuplicateReviewsForProperty(propertyId, summary.matches);
