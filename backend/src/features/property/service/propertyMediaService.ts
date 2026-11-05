@@ -38,15 +38,88 @@ const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id
 const maxImageBytes = 4 * 1024 * 1024;
 const maxImagesPerProperty = 20;
 
+function makeWebpChunk(type: string, payload: Buffer): Buffer {
+  const padding = payload.length % 2;
+  const chunk = Buffer.alloc(8 + payload.length + padding);
+  chunk.write(type, 0, 4, "ascii");
+  chunk.writeUInt32LE(payload.length, 4);
+  payload.copy(chunk, 8);
+  return chunk;
+}
+
+/**
+ * WebP metadata can contain EXIF GPS coordinates or XMP personal metadata.
+ * Keep only image-bearing chunks, remove metadata/unknown chunks, and clear
+ * the corresponding VP8X feature flags before a file becomes publicly served.
+ */
+function stripWebpMetadata(bytes: Buffer): Buffer {
+  if (bytes.length < 20 || bytes.toString("ascii", 0, 4) !== "RIFF" ||
+      bytes.toString("ascii", 8, 12) !== "WEBP" ||
+      bytes.readUInt32LE(4) !== bytes.length - 8) {
+    throw new Error("محتوای فایل تصویر معتبر نیست.");
+  }
+
+  const safeChunks: Buffer[] = [];
+  let offset = 12;
+  let imageChunkCount = 0;
+  let hasExtendedHeader = false;
+
+  while (offset < bytes.length) {
+    if (offset + 8 > bytes.length) throw new Error("ساختار فایل WebP معتبر نیست.");
+    const type = bytes.toString("ascii", offset, offset + 4);
+    const size = bytes.readUInt32LE(offset + 4);
+    const payloadStart = offset + 8;
+    const payloadEnd = payloadStart + size;
+    const paddedEnd = payloadEnd + (size % 2);
+
+    if (payloadEnd > bytes.length || paddedEnd > bytes.length) {
+      throw new Error("ساختار فایل WebP معتبر نیست.");
+    }
+
+    if (type === "ANIM" || type === "ANMF") {
+      throw new Error("بارگذاری تصویر متحرک مجاز نیست.");
+    }
+
+    const payload = bytes.subarray(payloadStart, payloadEnd);
+    if (type === "VP8X") {
+      if (hasExtendedHeader || offset !== 12 || size !== 10) {
+        throw new Error("ساختار فایل WebP معتبر نیست.");
+      }
+      hasExtendedHeader = true;
+      const safeHeader = Buffer.from(payload);
+      // Remove ICC profile, EXIF and XMP flags; their chunks are not retained.
+      safeHeader[0] = safeHeader[0] & ~0x2c;
+      safeChunks.push(makeWebpChunk(type, safeHeader));
+    } else if (type === "VP8 " || type === "VP8L") {
+      imageChunkCount += 1;
+      safeChunks.push(makeWebpChunk(type, Buffer.from(payload)));
+    } else if (type === "ALPH") {
+      if (!hasExtendedHeader) throw new Error("ساختار فایل WebP معتبر نیست.");
+      safeChunks.push(makeWebpChunk(type, Buffer.from(payload)));
+    }
+    // EXIF, XMP, ICCP and every unrecognized chunk are deliberately omitted.
+    offset = paddedEnd;
+  }
+
+  if (offset !== bytes.length || imageChunkCount !== 1) {
+    throw new Error("محتوای فایل تصویر معتبر نیست.");
+  }
+
+  const chunks = Buffer.concat(safeChunks);
+  const sanitized = Buffer.alloc(12 + chunks.length);
+  sanitized.write("RIFF", 0, 4, "ascii");
+  sanitized.writeUInt32LE(sanitized.length - 8, 4);
+  sanitized.write("WEBP", 8, 4, "ascii");
+  chunks.copy(sanitized, 12);
+  return sanitized;
+}
+
 function decodeOptimizedWebp(data: string): Buffer {
   const match = /^data:image\/webp;base64,([A-Za-z0-9+/]+={0,2})$/.exec(data || "");
   if (!match) throw new Error("تصویر باید پس از بهینه‌سازی با قالب WebP ارسال شود.");
   const bytes = Buffer.from(match[1], "base64");
   if (!bytes.length || bytes.length > maxImageBytes) throw new Error("حجم تصویر بهینه‌شده نباید بیشتر از ۴ مگابایت باشد.");
-  if (bytes.length < 12 || bytes.toString("ascii", 0, 4) !== "RIFF" || bytes.toString("ascii", 8, 12) !== "WEBP") {
-    throw new Error("محتوای فایل تصویر معتبر نیست.");
-  }
-  return bytes;
+  return stripWebpMetadata(bytes);
 }
 
 export async function createPropertyMediaService(data: {
