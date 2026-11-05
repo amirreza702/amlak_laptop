@@ -14,7 +14,7 @@ import { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
-  getPropertyById,
+  getPropertyDetailsForActor,
   registerProperty,
 } from "../service/propertyService";
 
@@ -78,97 +78,15 @@ export async function getPropertyByIdController(
   req: Request<{ id: string }>,
   res: Response
 ) {
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) return res.status(401).json({ message: "Authentication required" });
+
   try {
-    const property = await getPropertyById(req.params.id);
-    const user = (req as AuthenticatedRequest).user;
-    if (!user) return res.status(401).json({ message: "Authentication required" });
-
-    // استثنای مدیریتی هشتی حفظ می‌شود.
-    if (user.role === "HASHTI") return res.status(200).json(property);
-
-    const {
-      owners,
-      agents,
-      createdByUser,
-      creatorMobile: _creatorMobile,
-      createdByUserId: _createdByUserId,
-      ...baseProperty
-    } = property;
-    const ownOwner = owners.find((relation) => relation.owner.userId === user.id) ?? null;
-    const approvedAgent = agents.find(
-      (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
-    ) ?? null;
-    // شناسه مالک تأییدکننده روی خود رابطه PropertyAgent ذخیره می‌شود؛
-    // بنابراین بستن درخواست همکاری، مجوزهای مشاور منتخب را از بین نمی‌برد.
-    const approvedOwnerRelation = approvedAgent?.approvedByOwnerId
-      ? owners.find((relation) => relation.ownerId === approvedAgent.approvedByOwnerId) ?? null
-      : null;
-    const ownerIsApprover = Boolean(ownOwner && approvedAgent?.approvedByOwnerId === ownOwner.ownerId);
-    const isAgentCreator = property.registrationSource === "AGENT" &&
-      property.createdByRole === "AGENT" && property.createdByUserId === user.id;
-    const isApprovedAgent = user.role === "AGENT" &&
-      property.registrationSource === "OWNER" &&
-      approvedAgent?.agent.userId === user.id &&
-      Boolean(approvedOwnerRelation);
-    const canViewOwner = (user.role === "OWNER" && property.registrationSource === "OWNER" && Boolean(ownOwner) && (!approvedAgent || ownerIsApprover)) ||
-      (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
-
-    const primaryOwner = owners.find((relation) => relation.isPrimary) ?? owners[0] ?? null;
-    const visibleOwner = user.role === "OWNER"
-      ? (canViewOwner ? ownOwner : null)
-      : isApprovedAgent ? approvedOwnerRelation : primaryOwner;
-    const ownerFirstName = user.role === "OWNER"
-      ? (canViewOwner ? ownOwner?.owner.firstName ?? null : null)
-      : isApprovedAgent
-        ? approvedOwnerRelation?.owner.firstName ?? null
-        : canViewOwner ? property.ownerFirstName ?? visibleOwner?.owner.firstName ?? null : null;
-    const ownerLastName = user.role === "OWNER"
-      ? (canViewOwner ? ownOwner?.owner.lastName ?? null : null)
-      : isApprovedAgent
-        ? approvedOwnerRelation?.owner.lastName ?? null
-        : canViewOwner ? property.ownerLastName ?? visibleOwner?.owner.lastName ?? null : null;
-    const ownerMobile = user.role === "OWNER"
-      ? (canViewOwner ? ownOwner?.owner.user.mobile ?? null : null)
-      : isApprovedAgent
-        ? approvedOwnerRelation?.owner.user.mobile ?? null
-        : canViewOwner ? property.ownerMobile ?? visibleOwner?.owner.user.mobile ?? null : null;
-
-    // هویت مشاور تأییدشده، مانند شماره تماس عمومی آگهی، برای همه نقش‌های مجاز قابل نمایش است؛
-    // اما مشخصات مالک همچنان فقط برای همان مالک و همان مشاور باقی می‌ماند.
-    const visibleApprovedAgent = property.registrationSource === "OWNER"
-      ? approvedAgent?.agent ?? null
-      : null;
-    const registrant = property.registrationSource === "AGENT" ? createdByUser?.agent ?? null : null;
-
-    // نشانی و مختصات دقیق فقط برای مالک مرتبط، مشاور ثبت‌کننده،
-    // یا مشاوری که تأیید نهایی مالک را دارد نمایش داده می‌شود.
-    const canViewExactLocation =
-      (user.role === "OWNER" && Boolean(ownOwner)) ||
-      (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
-
-    return res.status(200).json({
-      ...baseProperty,
-      // برای سایر مشاوران فقط شهر، منطقه و نقطه جابه‌جاشده عمومی ارسال می‌شود.
-      address: canViewExactLocation
-        ? property.address
-        : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
-      latitudeExact: canViewExactLocation
-        ? property.latitudeExact
-        : property.listing?.latitudePublic ?? null,
-      longitudeExact: canViewExactLocation
-        ? property.longitudeExact
-        : property.listing?.longitudePublic ?? null,
-      postalCode: canViewExactLocation ? property.postalCode : null,
-      ownerFirstName,
-      ownerLastName,
-      ownerMobile,
-      registrantFirstName: registrant?.firstName ?? null,
-      registrantLastName: registrant?.lastName ?? null,
-      registrantMobile: property.registrationSource === "AGENT" ? property.creatorMobile : null,
-      approvedAgentFirstName: visibleApprovedAgent?.firstName ?? null,
-      approvedAgentLastName: visibleApprovedAgent?.lastName ?? null,
-      approvedAgentMobile: visibleApprovedAgent?.user.mobile ?? null,
+    const property = await getPropertyDetailsForActor(req.params.id, {
+      id: user.id,
+      role: user.role,
     });
+    return res.status(200).json(property);
   } catch (error: any) {
     return res.status(404).json({
       message: error.message || "ملک مورد نظر پیدا نشد.",
