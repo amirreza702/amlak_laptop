@@ -110,7 +110,7 @@ export async function reactivateOwnPropertyService(propertyId: string, userId: s
 
   const archive = await prisma.propertyArchive.findUnique({ where: { propertyId }, select: { propertyId: true } });
   if (archive) {
-    const { restorePropertyService } = await import("./propertyArchiveService");
+    const { restorePropertyService } = await import("./propertyArchiveService.js");
     await restorePropertyService(propertyId);
     return prisma.property.findUniqueOrThrow({ where: { id: propertyId } });
   }
