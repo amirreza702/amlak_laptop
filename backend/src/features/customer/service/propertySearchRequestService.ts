@@ -125,7 +125,8 @@ export const createCustomerSearchRequest = async (
 export const getCustomerSearchRequest =
   async (
     customerId: string,
-    requestId: string
+    requestId: string,
+    authenticatedUserId: string
   ) => {
     const customer =
       await findCustomerById(customerId);
@@ -151,13 +152,14 @@ export const getCustomerSearchRequest =
      * جلوگیری از دسترسی مشتری به
      * درخواست مشتری دیگر
      */
-    if (
-      request.customerId !== customerId
-    ) {
-      throw new Error(
-        "Search request does not belong to customer"
-      );
-    }
+    const allowed = await authorize("searchRequest", "READ", {
+      actor: { id: authenticatedUserId, role: "CUSTOMER" },
+      resource: { id: request.id, status: request.status, data: {
+        isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
+        status: request.status,
+      } },
+    });
+    if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
 
     return request;
   };
@@ -167,7 +169,8 @@ export const getCustomerSearchRequest =
  */
 export const getCustomerSearchRequests =
   async (
-    customerId: string
+    customerId: string,
+    authenticatedUserId: string
   ) => {
     const customer =
       await findCustomerById(customerId);
@@ -178,9 +181,12 @@ export const getCustomerSearchRequests =
       );
     }
 
-    return findPropertySearchRequestsByCustomerId(
-      customerId
-    );
+    const allowed = await authorize("searchRequest", "LIST_OWN", {
+      actor: { id: authenticatedUserId, role: "CUSTOMER" },
+      resource: { data: { isOwner: customer.userId === authenticatedUserId } },
+    });
+    if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
+    return findPropertySearchRequestsByCustomerId(customerId);
   };
 
   /**
@@ -188,7 +194,8 @@ export const getCustomerSearchRequests =
  */
 export const closeCustomerSearchRequest = async (
   customerId: string,
-  requestId: string
+  requestId: string,
+  authenticatedUserId: string
 ) => {
   /**
    * ابتدا مشتری باید وجود داشته باشد.
@@ -220,13 +227,14 @@ export const closeCustomerSearchRequest = async (
    * مشتری فقط می‌تواند درخواست خودش
    * را تغییر دهد.
    */
-  if (
-    request.customerId !== customerId
-  ) {
-    throw new Error(
-      "Search request does not belong to customer"
-    );
-  }
+  const allowed = await authorize("searchRequest", "CLOSE", {
+    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    resource: { id: request.id, status: request.status, data: {
+      isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
+      status: request.status,
+    } },
+  });
+  if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
 
   /**
    * فقط درخواست ACTIVE قابل بستن است.
@@ -252,6 +260,7 @@ export const closeCustomerSearchRequest = async (
 export const updateCustomerSearchRequest = async (
   customerId: string,
   requestId: string,
+  authenticatedUserId: string,
   data: {
     transactionType?: 
       | "SALE"
@@ -305,13 +314,14 @@ export const updateCustomerSearchRequest = async (
    * مشتری فقط درخواست خودش را
    * می‌تواند ویرایش کند.
    */
-  if (
-    request.customerId !== customerId
-  ) {
-    throw new Error(
-      "Search request does not belong to customer"
-    );
-  }
+  const allowed = await authorize("searchRequest", "UPDATE", {
+    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    resource: { id: request.id, status: request.status, data: {
+      isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
+      status: request.status,
+    } },
+  });
+  if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
 
   /**
    * فقط درخواست ACTIVE قابل ویرایش است.
