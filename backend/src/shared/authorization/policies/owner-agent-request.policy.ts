@@ -28,8 +28,23 @@ export const ownerAgentRequestPolicy: AuthorizationPolicy = (
   const data = context.resource?.data as OwnerAgentRequestPolicyData | undefined;
   if (!data || context.actor.isActive === false) return false;
 
+  if (action === "CREATE") {
+    return context.actor.role === "OWNER" &&
+      data.isOwner === true &&
+      data.status === "ACTIVE" &&
+      data.isPropertyActive === true &&
+      data.isPropertyDeleted !== true &&
+      data.isPropertyExpired !== true;
+  }
+
   if (action === "LIST_OWNER") {
     return context.actor.role === "OWNER" && data.isOwner === true;
+  }
+
+  if (action === "REVOKE_AGENT") {
+    return context.actor.role === "OWNER" &&
+      data.isOwner === true &&
+      data.isActiveAgentRelation === true;
   }
 
   if (action === "CLOSE") {
