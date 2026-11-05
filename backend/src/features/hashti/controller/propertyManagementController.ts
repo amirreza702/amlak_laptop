@@ -36,7 +36,7 @@ export async function getHashtiPropertyRecordsController(req: Request, res: Resp
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
       limit,
       offset,
-    }, { id: user.id, role: user.role });
+    }, user);
     return res.status(200).json({
       properties: result.properties,
       pagination: { total: result.total, limit, offset },
@@ -57,7 +57,7 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
   if (!user) return res.status(401).json({ message: "Authentication required" });
 
   try {
-    const result = await requestHashtiPropertyPublicationApproval(propertyId, { id: user.id, role: user.role });
+    const result = await requestHashtiPropertyPublicationApproval(propertyId, user);
     if (result.requiresDuplicateReview) {
       return res.status(200).json({
         ...result,
