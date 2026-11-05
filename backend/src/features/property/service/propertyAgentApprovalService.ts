@@ -5,6 +5,7 @@
 
 import { Prisma, PropertyHistoryAction } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
+import { authorize } from "../../../shared/authorization/authorization.core";
 import { findOwnerProfileByUserId } from "../../owner/repository/ownerRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
@@ -56,7 +57,19 @@ export async function approvePropertyAgentByOwnerService(
       },
       select: { id: true },
     });
-    if (!acceptedRequest) {
+    const canApproveAgent = await authorize("ownerAgentRequest", "APPROVE_AGENT", {
+      actor: { id: data.ownerUserId, role: "OWNER", isActive: true },
+      resource: {
+        id: acceptedRequest?.id,
+        status: "ACTIVE",
+        data: {
+          isOwner: true,
+          isAgentAccepted: Boolean(acceptedRequest),
+          status: "ACTIVE",
+        },
+      },
+    });
+    if (!canApproveAgent) {
       throw new Error("این مشاور درخواست همکاری فعال این ملک را نپذیرفته است.");
     }
 
