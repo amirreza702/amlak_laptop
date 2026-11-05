@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import L from "leaflet";
 import { CircleMarker, Marker, Popup, useMap } from "react-leaflet";
 
@@ -122,6 +123,12 @@ export function MapClusterLayer({
                   >
                     نمایش محدوده تقریبی
                   </button>
+                  <Link
+                    href={`/property/${property.id}`}
+                    className="block border-t border-slate-200 pt-2 text-sm font-bold text-brand-turquoise transition-colors hover:text-slate-900"
+                  >
+                    مشاهده جزئیات ملک ←
+                  </Link>
                 </div>
               </Popup>
             </CircleMarker>
