@@ -31,7 +31,7 @@ import { authorize } from "../../../shared/authorization/authorization.core";
 type FavoriteActor = { id: string; role: string; isActive?: boolean };
 
 async function authorizeCustomerFavoriteAccess(customerId: string, actor: FavoriteActor, action: "READ" | "UPDATE") {
-  const customer = await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
+  const customer = await findCustomerById(customerId);
   const allowed = Boolean(customer) && await authorize("customer", action, {
     actor,
     resource: { id: customerId, data: { isSelf: customer?.userId === actor.id } },
@@ -68,7 +68,7 @@ export async function addPropertyToFavoritesService(
     throw new Error("شناسه ملک الزامی است.");
   }
 
-  const customer = await findCustomerById(customerId);
+  const customer = await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
 
   if (!customer) {
     throw new Error("مشتری مورد نظر پیدا نشد.");
@@ -187,7 +187,7 @@ export async function getCustomerFavoritesService(
     throw new Error("شناسه مشتری الزامی است.");
   }
 
-  await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
+  const customer = await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
 
   if (!customer) {
     throw new Error("مشتری مورد نظر پیدا نشد.");
