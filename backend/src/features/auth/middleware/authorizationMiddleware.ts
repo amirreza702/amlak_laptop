@@ -190,9 +190,20 @@ export function requirePropertyCreator(paramName = "id") {
           },
         },
       });
-      const isCreator = property?.createdByUserId === user.id;
-      const isRelatedOwner = user.role === "OWNER" && Boolean(property?.owners.length);
-      if (!property || property.deletedAt || (!isCreator && !isRelatedOwner)) {
+      const allowed = property
+        ? await authorize("property", "MANAGE", {
+            actor: { id: user.id, role: user.role },
+            resource: {
+              id: propertyId,
+              data: {
+                isCreator: property.createdByUserId === user.id,
+                isRelatedOwner: user.role === "OWNER" && property.owners.length > 0,
+                isDeleted: Boolean(property.deletedAt),
+              },
+            },
+          })
+        : false;
+      if (!allowed) {
         return res.status(403).json({ message: "Only the property creator or a related owner can manage this property" });
       }
       return next();
@@ -293,7 +304,16 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
         },
         select: { id: true },
       });
-      if (!property) {
+      const allowed = property
+        ? await authorize("property", "EDIT_OWN_REGISTRATION", {
+            actor: { id: user.id, role: user.role },
+            resource: {
+              id: propertyId,
+              data: { isRegisteredByCurrentAgent: true },
+            },
+          })
+        : false;
+      if (!allowed) {
         return res.status(403).json({ message: "Agents may edit only properties they registered" });
       }
       return next();
