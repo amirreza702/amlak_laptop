@@ -12,7 +12,7 @@ const router = Router();
 
 router.get("/hashti/management/access", authMiddleware, requireRole(UserRole.HASHTI), getHashtiManagementAccessController);
 router.get("/hashti/management/users", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("USERS_READ"), getManagedUsersController);
-router.patch("/hashti/management/users/:userId/status", authMiddleware, requireRole(UserRole.HASHTI), requireAdminPermission("USERS_MANAGE"), setManagedUserStatusController);
+router.patch("/hashti/management/users/:userId/status", authMiddleware, requireRole(UserRole.HASHTI), setManagedUserStatusController);
 router.patch(
   "/hashti/management/profiles/:profileType/:profileId",
   authMiddleware,
