@@ -138,7 +138,7 @@ export async function getManagedAuditLogsController(req: Request, res: Response)
     limit, offset,
   };
   try {
-    const result = await getAdminAuditLogsService(query);
+    const result = await getAdminAuditLogsService(actor.id, query);
     return res.status(200).json({ logs: result.logs, pagination: { total: result.total, limit, offset } });
   } catch (error) {
     console.error("Failed to get managed user history:", error);
