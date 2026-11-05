@@ -88,7 +88,7 @@ export const updateOwnerProfileService = async (
     throw new Error("No profile fields to update");
   }
 
-  return updateOwnerProfile(ownerId, {
+  const updated = await updateOwnerProfile(ownerId, {
     ...(firstName !== undefined && {
       firstName,
     }),
@@ -97,6 +97,8 @@ export const updateOwnerProfileService = async (
       lastName,
     }),
   });
+  const { userId: _userId, ...safeUpdated } = updated;
+  return safeUpdated;
 };
 
 /**
