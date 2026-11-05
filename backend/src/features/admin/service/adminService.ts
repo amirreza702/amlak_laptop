@@ -76,7 +76,8 @@ export async function bootstrapSuperAdmin(input: { mobile: unknown; password: un
 export async function adminUsers(actorUserId: string, input: { search?: string; role?: string; isActive?: boolean; page: number; limit: number }) {
   await requireAdminServicePermission(actorUserId, "USERS_READ");
   pageArgs(input.page, input.limit);
-  if (input.role && !Object.values(UserRole).includes(input.role as UserRole)) throw new Error("INVALID_ROLE");
+  const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT];
+  if (input.role && !visibleRoles.includes(input.role as UserRole)) throw new Error("INVALID_ROLE");
   return listAdminUsers({ ...input, role: input.role as UserRole | undefined });
 }
 export const adminUserDetails = async (actorUserId: string, userId: string) => {
@@ -102,7 +103,17 @@ export const adminAgentDetails = async (actorUserId: string, agentId: string) =>
   const agent = await getAgent(agentId); if (!agent) throw new Error("AGENT_NOT_FOUND"); return agent;
 };
 export async function adminSetUserStatus(input: { actorUserId: string; userId: string; isActive: boolean; reason: unknown; permission?: AdminPermission }) {
-  await requireAdminServicePermission(input.actorUserId, input.permission ?? "USERS_MANAGE");
+  const target = await prisma.user.findUnique({ where: { id: input.userId }, select: { role: true } });
+  if (!target) throw new Error("USER_NOT_FOUND");
+  const requiredPermission: AdminPermission = target.role === UserRole.HASHTI
+    ? "STAFF_MANAGE"
+    : target.role === UserRole.OWNER
+      ? "OWNERS_MANAGE"
+      : target.role === UserRole.AGENT
+        ? "AGENTS_MANAGE"
+        : "USERS_MANAGE";
+  if (input.permission && input.permission !== requiredPermission) throw new Error("ADMIN_PERMISSION_FORBIDDEN");
+  await requireAdminServicePermission(input.actorUserId, requiredPermission);
   return setUserStatus({ ...input, reason: reasonValue(input.reason) });
 }
 export async function adminSetAgentVerification(input: { actorUserId: string; agentId: string; isVerified: boolean; reason: unknown }) {
