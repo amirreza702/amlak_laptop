@@ -14,12 +14,14 @@ export const ADMIN_PERMISSIONS = [
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];
 
+const NON_STAFF_USER_ROLES = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT] as const;
+
 const userSelect = {
   id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true,
   adminPermissions: true, createdAt: true, updatedAt: true,
   customer: { select: { id: true, firstName: true, lastName: true } },
   owner: { select: { id: true, firstName: true, lastName: true } },
-  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, address: true, verificationStatus: true } },
+  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true } },
 } satisfies Prisma.UserSelect;
 
 export async function createInitialSuperAdmin(data: { mobile: string; passwordHash: string }) {
@@ -40,7 +42,7 @@ export async function createInitialSuperAdmin(data: { mobile: string; passwordHa
 }
 
 export async function getAdminUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: userSelect });
+  const user = await prisma.user.findFirst({ where: { id: userId, role: { in: [...NON_STAFF_USER_ROLES] } }, select: userSelect });
   return user ? {
     ...user,
     agent: user.agent ? { ...user.agent, isVerified: user.agent.verificationStatus === VerificationStatus.VERIFIED } : null,
@@ -48,7 +50,7 @@ export async function getAdminUser(userId: string) {
 }
 
 export async function listAdminUsers(data: { search?: string; role?: UserRole; isActive?: boolean; page: number; limit: number }) {
-  const where: Prisma.UserWhereInput = {};
+  const where: Prisma.UserWhereInput = { role: { in: [...NON_STAFF_USER_ROLES] } };
   if (data.role) where.role = data.role;
   if (typeof data.isActive === "boolean") where.isActive = data.isActive;
   if (data.search?.trim()) {
