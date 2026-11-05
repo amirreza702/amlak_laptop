@@ -121,7 +121,6 @@ export async function updatePropertyListingStatus(
   if (!property || property.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
   const listing = await findPropertyListingByPropertyId(propertyId);
   if (!listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
-  if (listing.status === data.status) return { listing, statusChanged: false };
 
   const hashtiOnly = data.status === ListingStatus.PUBLISHED || data.status === ListingStatus.REJECTED;
   const allowedByAuthorization = await authorizePropertyAction(
@@ -136,6 +135,7 @@ export async function updatePropertyListingStatus(
         : "شما اجازه تغییر وضعیت آگهی این ملک را ندارید.",
     );
   }
+  if (listing.status === data.status) return { listing, statusChanged: false };
   if (!hashtiOnly && actor.role === "HASHTI" && data.status === ListingStatus.EXPIRED) {
     throw new Error("انقضا از مسیر اختصاصی هشتی یا سامانه انجام می‌شود.");
   }
