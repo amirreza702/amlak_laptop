@@ -11,7 +11,8 @@ import {
   findExactLocationAccessLogs,
 } from "../repository/exactLocationAccessLogRepository";
 
-import { findPropertyById } from "../repository/propertyRepository";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 import type { ExactLocationAccessLog } from "@prisma/client";
 
@@ -23,29 +24,35 @@ import type { ExactLocationAccessLog } from "@prisma/client";
 
 export interface CreateExactLocationAccessLogInput {
   propertyId: string;
-  userId: string;
+  actor: { id: string; role: string; isActive?: boolean };
   reason?: string | null;
 }
 
 export const createExactLocationAccessLogService = async (
   data: CreateExactLocationAccessLogInput
 ): Promise<ExactLocationAccessLog> => {
-  /**
-   * ابتدا بررسی می‌کنیم ملک وجود داشته باشد.
-   */
-  const property = await findPropertyById(data.propertyId);
+  const property = await findPropertyAuthorizationContextById(data.propertyId);
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
-  if (!property) {
-    throw new Error("ملک مورد نظر پیدا نشد.");
+  const canViewExactLocation = await authorizePropertyAction(
+    data.actor,
+    "VIEW_EXACT_LOCATION",
+    property,
+  );
+  const canCreateLog = await authorizePropertyAction(
+    data.actor,
+    "CREATE_EXACT_LOCATION_ACCESS_LOG",
+    property,
+  );
+  if (!canViewExactLocation || !canCreateLog) {
+    throw new Error("EXACT_LOCATION_ACCESS_FORBIDDEN");
   }
 
-  /**
-   * ثبت سابقه دسترسی.
-   */
+  // هویت ثبت‌کننده فقط از نشست احراز هویت‌شده می‌آید.
   return createExactLocationAccessLog(
     data.propertyId,
-    data.userId,
-    data.reason ?? null
+    data.actor.id,
+    data.reason ?? null,
   );
 };
 
@@ -56,16 +63,18 @@ export const createExactLocationAccessLogService = async (
  */
 
 export const getExactLocationAccessLogsService = async (
-  propertyId: string
+  propertyId: string,
+  actor: { id: string; role: string; isActive?: boolean },
 ): Promise<ExactLocationAccessLog[]> => {
-  /**
-   * قبل از دریافت سوابق، وجود ملک بررسی می‌شود.
-   */
-  const property = await findPropertyById(propertyId);
+  const property = await findPropertyAuthorizationContextById(propertyId);
+  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
-  if (!property) {
-    throw new Error("ملک مورد نظر پیدا نشد.");
-  }
+  const allowed = await authorizePropertyAction(
+    actor,
+    "VIEW_EXACT_LOCATION_ACCESS_LOGS",
+    property,
+  );
+  if (!allowed) throw new Error("EXACT_LOCATION_LOGS_FORBIDDEN");
 
   return findExactLocationAccessLogs(propertyId);
 };
