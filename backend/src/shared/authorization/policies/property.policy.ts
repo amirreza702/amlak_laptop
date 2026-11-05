@@ -45,6 +45,11 @@ export const propertyPolicy: AuthorizationPolicy = (
     return false;
   }
 
+  // انتشار یا رد آگهی فقط یک تصمیم اختصاصی هشتی است.
+  if (action === "APPROVE_PUBLICATION") {
+    return isHashti;
+  }
+
   if (action === "MANAGE") {
     if (isHashti) return true;
     // مجوز مشاهده مشاور تأییدشده، به‌تنهایی مجوز ویرایش نیست.
