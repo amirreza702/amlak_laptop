@@ -92,7 +92,7 @@ export const archivePropertyService = async (data: ArchivePropertyInput): Promis
 
 export const getPropertyArchiveService = async (
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: AuthorizationActor,
 ): Promise<PropertyArchive> => {
   await requireArchivePermission(propertyId, actor, "VIEW_ARCHIVE");
   const archive = await findPropertyArchive(propertyId);
@@ -102,7 +102,7 @@ export const getPropertyArchiveService = async (
 
 export const restorePropertyService = async (
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: AuthorizationActor,
 ): Promise<PropertyArchive> => {
   return prisma.$transaction(async (tx) => {
     const property = await requireArchivePermission(propertyId, actor, "RESTORE", tx);
