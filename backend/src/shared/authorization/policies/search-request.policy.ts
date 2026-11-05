@@ -27,7 +27,6 @@ export const searchRequestPolicy: AuthorizationPolicy = (action, context) => {
     if (action === "MANAGE_OWN") {
       return data.isCreator === true &&
         data.createdByRole === "AGENT" &&
-        data.status === "ACTIVE" &&
         data.isVerifiedAgent === true;
     }
     return false;
