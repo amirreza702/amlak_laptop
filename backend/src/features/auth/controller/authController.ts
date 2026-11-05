@@ -428,6 +428,12 @@ export async function listAdminUsersController(
       },
     });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === "ADMIN_PERMISSION_FORBIDDEN") {
+      return res.status(403).json({ message: "You do not have the required admin permission" });
+    }
+    if (error instanceof Error && error.message === "INVALID_ROLE") {
+      return res.status(400).json({ message: "Invalid user role filter" });
+    }
     console.error("Error listing admin users:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
