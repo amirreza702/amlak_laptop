@@ -3,14 +3,14 @@ import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware"
 import { approvePropertyAgentByOwnerService } from "../service/propertyAgentApprovalService";
 
 export async function approvePropertyAgentByOwnerController(req: Request, res: Response) {
-  const ownerUserId = (req as AuthenticatedRequest).user?.id;
-  if (!ownerUserId) return res.status(401).json({ message: "Authentication required" });
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
 
   try {
     const propertyAgent = await approvePropertyAgentByOwnerService({
       propertyId: String(req.params.id),
       agentId: String(req.params.agentId),
-      ownerUserId,
+      actor,
     });
     return res.status(200).json({ propertyAgent });
   } catch (error) {
