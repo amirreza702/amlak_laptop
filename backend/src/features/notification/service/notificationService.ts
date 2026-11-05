@@ -19,6 +19,7 @@
  */
 
 import type { Prisma } from "@prisma/client";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 import {
   createNotification,
@@ -67,12 +68,18 @@ export async function createNotificationService(
  * دریافت اعلان‌های یک User
  */
 export async function getUserNotificationsService(
-  userId: string
+  userId: string,
+  actor: { id: string; role: string; isActive?: boolean }
 ) {
   if (!userId) {
     throw new Error("شناسه کاربر الزامی است.");
   }
 
+  const allowed = await authorize("notification", "LIST_OWN", {
+    actor,
+    resource: { id: userId, data: { isSelf: actor.id === userId } },
+  });
+  if (!allowed) throw new Error("NOTIFICATION_ACCESS_FORBIDDEN");
   return findNotificationsByUserId(userId);
 }
 
@@ -81,7 +88,8 @@ export async function getUserNotificationsService(
  */
 export async function markNotificationAsReadService(
   notificationId: string,
-  userId: string
+  userId: string,
+  actor: { id: string; role: string; isActive?: boolean }
 ) {
   if (!notificationId) {
     throw new Error("شناسه اعلان الزامی است.");
@@ -91,10 +99,13 @@ export async function markNotificationAsReadService(
     throw new Error("شناسه کاربر الزامی است.");
   }
 
-  const notification = await markNotificationAsRead(
-    notificationId,
-    userId
-  );
+  const allowed = await authorize("notification", "UPDATE", {
+    actor,
+    resource: { id: notificationId, data: { isSelf: actor.id === userId } },
+  });
+  if (!allowed) throw new Error("NOTIFICATION_ACCESS_FORBIDDEN");
+
+  const notification = await markNotificationAsRead(notificationId, userId);
 
   if (!notification) {
     throw new Error("اعلان مورد نظر پیدا نشد.");
