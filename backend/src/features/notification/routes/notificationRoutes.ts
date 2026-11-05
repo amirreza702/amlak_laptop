@@ -4,7 +4,7 @@ import {
   markNotificationAsReadController,
 } from "../controller/notificationController";
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
-import { requireOwnNotification } from "../../auth/middleware/authorizationMiddleware";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { requireOwnNotification, requireOwnNotificationUser } from "../../auth/middleware/authorizationMiddleware";
 
 const router = Router();
