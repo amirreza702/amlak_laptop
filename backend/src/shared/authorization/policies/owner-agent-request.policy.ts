@@ -13,6 +13,7 @@ interface OwnerAgentRequestPolicyData {
   hasOwnerRelation?: boolean;
   isActiveAgentRelation?: boolean;
   isAgentAccepted?: boolean;
+  isAgentVerified?: boolean;
 }
 
 /**
@@ -41,7 +42,8 @@ export const ownerAgentRequestPolicy: AuthorizationPolicy = (
     return context.actor.role === "OWNER" &&
       data.isOwner === true &&
       data.status === "ACTIVE" &&
-      data.isAgentAccepted === true;
+      data.isAgentAccepted === true &&
+      data.isAgentVerified === true;
   }
 
   if (action === "ACCESS_OWNER_CONTACT") {
