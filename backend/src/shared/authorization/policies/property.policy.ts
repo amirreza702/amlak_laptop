@@ -13,6 +13,7 @@ interface PropertyPolicyData {
   isExpired?: boolean;
   isFinalApprovedAgent?: boolean;
   isAgentRegisteredProperty?: boolean;
+  isApprovedAgentContactAllowed?: boolean;
 }
 
 /**
@@ -66,6 +67,12 @@ export const propertyPolicy: AuthorizationPolicy = (
     if (isHashti) return true;
     if (data.isExpired) return isOwner || isFinalApprovedAgent;
     return isCreator || isOwner || isFinalApprovedAgent;
+  }
+
+  // شماره مشاور تأییدشده برای مالک فقط پس از پذیرش درخواست همکاری نمایش داده می‌شود.
+  if (action === "VIEW_APPROVED_AGENT_CONTACT") {
+    if (isHashti) return true;
+    return isOwner && Boolean(data.isApprovedAgentContactAllowed);
   }
 
   // اطلاعات مشاور ثبت‌کننده، مجوز مستقلی از اطلاعات خصوصی مالک دارد.
