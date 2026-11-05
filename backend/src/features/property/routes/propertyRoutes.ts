@@ -208,6 +208,7 @@ router.get(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
   requireVerifiedAgent,
+  requireHashtiPermission("DUPLICATES_MANAGE"),
   requirePropertyAccess(),
   findDuplicateMatchesController
 );
