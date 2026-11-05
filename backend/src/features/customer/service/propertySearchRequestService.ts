@@ -368,29 +368,27 @@ export const getActivePropertySearchRequests = async (
  * اطلاعات Customer در Repository انتخاب نشده،
  * بنابراین این Service نیز به customerId دسترسی ندارد.
  */
-export const getActivePropertySearchRequestById =
-  async (
-    requestId: string,
-    actor: AuthorizationActor
-  ) => {
-    const agent = actor.role === "AGENT" ? await findAgentProfileByUserId(actor.id) : null;
-    const request =
-      await findActivePropertySearchRequestById(
-        requestId
-      );
+export const getActivePropertySearchRequestById = async (
+  requestId: string,
+  actor: AuthorizationActor
+) => {
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: actor.id },
+      select: { id: true, role: true, isActive: true },
+    });
+    const agent = user?.role === "AGENT"
+      ? await tx.agent.findUnique({ where: { userId: actor.id }, select: { verificationStatus: true } })
+      : null;
+    const request = await findActivePropertySearchRequestById(requestId, tx);
+    if (!request) throw new Error("Active search request not found");
 
-    if (!request) {
-      throw new Error(
-        "Active search request not found"
-      );
-    }
-    const allowed = await authorize("searchRequest", "MARKETPLACE_READ", {
-      actor,
-      resource: { id: requestId, status: request.status, data: { status: request.status, isVerifiedAgent: agent?.verificationStatus === "VERIFIED" } },
+    const isVerifiedAgent = user?.isActive === true && user.role === "AGENT" && agent?.verificationStatus === "VERIFIED";
+    const allowed = user?.isActive === true && await authorize("searchRequest", "MARKETPLACE_READ", {
+      actor: user ? { id: user.id, role: user.role, isActive: user.isActive } : actor,
+      resource: { id: requestId, status: request.status, data: { status: request.status, isVerifiedAgent } },
     });
     if (!allowed) throw new Error("Search request marketplace access denied");
-
     return request;
-  };
-
- 
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+};
