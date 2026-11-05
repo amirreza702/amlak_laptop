@@ -217,7 +217,7 @@ export const updateCurrentOwnerProfileService = async (
   const authenticatedUserId = actor.id;
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
-  const allowed = await authorize("owner", "UPDATE", { actor: { id: authenticatedUserId, role: "OWNER" }, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
+  const allowed = await authorize("owner", "UPDATE", { actor, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
   if (!allowed) throw new Error("OWNER_PROFILE_FORBIDDEN");
   return updateOwnerProfileService(owner.id, actor, data);
 };
@@ -229,7 +229,7 @@ export const getCurrentOwnerPropertiesService = async (actor: AuthorizationActor
   const authenticatedUserId = actor.id;
   const owner = await findOwnerProfileByUserId(authenticatedUserId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
-  const allowed = await authorize("owner", "LIST_OWN", { actor: { id: authenticatedUserId, role: "OWNER" }, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
+  const allowed = await authorize("owner", "LIST_OWN", { actor, resource: { id: owner.id, data: { isSelf: owner.userId === authenticatedUserId } } });
   if (!allowed) throw new Error("OWNER_PROFILE_FORBIDDEN");
   const records = await findOwnerPropertiesByOwnerId(owner.id);
   return shapeOwnerPropertyRecords(owner, actor, records);
