@@ -125,6 +125,8 @@ export async function updateManagedProfileController(req: Request, res: Response
 }
 
 export async function getManagedAuditLogsController(req: Request, res: Response) {
+  const actor = getActor(req);
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   const limit = parseIntegerQuery(req.query.limit, 20, 1, 100);
   const offset = parseIntegerQuery(req.query.offset, 0, 0, 1_000_000);
   if (limit === null || offset === null) return res.status(400).json({ message: "Invalid pagination parameters" });
