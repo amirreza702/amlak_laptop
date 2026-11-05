@@ -1,4 +1,4 @@
-import { ListingStatus, MediaType, Prisma, type PropertyMedia } from "@prisma/client";
+import { ListingStatus, MediaType, type Prisma, type PropertyMedia } from "@prisma/client";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
