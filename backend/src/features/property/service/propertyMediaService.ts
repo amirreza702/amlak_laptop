@@ -15,6 +15,7 @@ import { findPropertyAuthorizationContextById } from "../repository/propertyRepo
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 type PropertyMediaActor = AuthorizationActor;
 
@@ -24,6 +25,7 @@ async function authorizePropertyMedia(
   action: "MANAGE" | "READ_PRIVATE",
   db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const context = await findPropertyAuthorizationContextById(propertyId, db);
   if (!context) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, context);
