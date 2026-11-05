@@ -70,8 +70,11 @@ export const findPropertyById = async (
 };
 
 /** حداقل Context لازم برای تصمیم‌گیری مرکزی درباره تغییر وضعیت آگهی. */
-export const findPropertyAuthorizationContextById = async (id: string) => {
-  return prisma.property.findUnique({
+export const findPropertyAuthorizationContextById = async (
+  id: string,
+  db: DatabaseClient = prisma,
+) => {
+  return db.property.findUnique({
     where: { id },
     select: {
       id: true,
