@@ -125,5 +125,5 @@ export const restorePropertyService = async (
     });
     await tx.propertyArchive.delete({ where: { propertyId } });
     return archive;
-  });
+  }, { isolationLevel: "Serializable" });
 };
