@@ -5,6 +5,7 @@ import { prisma } from "../../../lib/prisma";
 import { findPropertyArchive } from "../repository/propertyArchiveRepository";
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import type { PropertyArchive } from "../types/propertyArchive";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
@@ -62,12 +63,12 @@ export async function removeArchivedPropertyMediaFiles(mediaIds: string[]) {
 export interface ArchivePropertyInput {
   propertyId: string;
   archivedReason?: string | null;
-  actor: { id: string; role: string };
+  actor: AuthorizationActor;
 }
 
 async function requireArchivePermission(
   propertyId: string,
-  actor: { id: string; role: string },
+  actor: AuthorizationActor,
   action: "ARCHIVE" | "VIEW_ARCHIVE" | "RESTORE",
   db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
