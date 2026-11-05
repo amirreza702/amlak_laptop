@@ -3,10 +3,15 @@ import {
   updateAgentVerification as updateAgentVerificationRepository,
   type AgentManagementQuery,
 } from "../repository/agentManagementRepository";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export const getManagedAgentsService = async (
+  actorUserId: string,
   query: AgentManagementQuery
-) => findManagedAgents(query);
+) => {
+  await requireAdminServicePermission(actorUserId, "AGENTS_MANAGE");
+  return findManagedAgents(query);
+};
 
 export const setAgentVerificationService = async (input: {
   agentId: string;
@@ -14,4 +19,7 @@ export const setAgentVerificationService = async (input: {
   reviewerUserId: string;
   reviewerMobile: string;
   notes: string | null;
-}) => updateAgentVerificationRepository(input);
+}) => {
+  await requireAdminServicePermission(input.reviewerUserId, "AGENTS_MANAGE");
+  return updateAgentVerificationRepository(input);
+};
