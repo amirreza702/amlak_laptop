@@ -84,24 +84,12 @@ export const getPropertySimilaritySummaryService = async (
       });
       const latitudePublic = fullCandidate.listing?.latitudePublic ?? null;
       const longitudePublic = fullCandidate.listing?.longitudePublic ?? null;
-      const {
-        owners: _owners,
-        agents: _agents,
-        createdByUser: _createdByUser,
-        createdByUserId: _createdByUserId,
-        creatorMobile: _creatorMobile,
-        deletedAt: _deletedAt,
-        registrationSource: _registrationSource,
-        listing: _listing,
-        ...publicFields
-      } = projected;
-
       return {
         property: {
           id: fullCandidate.id,
           propertyType: fullCandidate.propertyType,
-          city: fullCandidate.city,
-          district: fullCandidate.district,
+          city: projected.city ?? fullCandidate.city,
+          district: projected.district ?? fullCandidate.district,
           area: fullCandidate.area,
           rooms: fullCandidate.rooms,
           yearBuilt: fullCandidate.yearBuilt,
