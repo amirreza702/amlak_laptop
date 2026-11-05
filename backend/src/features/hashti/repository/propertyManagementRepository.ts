@@ -69,6 +69,8 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
         id: true,
         propertyType: true,
         registrationSource: true,
+        createdByUserId: true,
+        deletedAt: true,
         creatorMobile: true,
         ownerFirstName: true,
         ownerLastName: true,
@@ -114,6 +116,8 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             publishedAt: true,
             expiredAt: true,
             confirmUntil: true,
+            latitudePublic: true,
+            longitudePublic: true,
           },
         },
         owners: {
@@ -121,7 +125,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             ownerId: true,
             share: true,
             isPrimary: true,
-            owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            owner: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         agents: {
@@ -131,7 +135,7 @@ export async function findHashtiPropertyRecords(input: HashtiPropertyQuery) {
             approvedByOwner: true,
             approvedAt: true,
             isFirstRegistrant: true,
-            agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            agent: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         media: {
