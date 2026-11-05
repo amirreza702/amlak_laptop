@@ -24,6 +24,7 @@
  */
 
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   updatePropertyPrice,
@@ -46,12 +47,15 @@ export async function updatePropertyPriceController(
   req: Request<{ id: string }>,
   res: Response
 ) {
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
     const propertyId = req.params.id;
 
     const result = await updatePropertyPrice(
       propertyId,
-      req.body
+      req.body,
+      actor
     );
 
     res.status(200).json(result);
