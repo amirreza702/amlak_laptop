@@ -61,8 +61,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
       { listing: { is: null } },
       { listing: { is: { status: { notIn: [ListingStatus.PUBLISHED, ListingStatus.EXPIRED] } } } },
       { listing: { is: { status: ListingStatus.PUBLISHED, confirmUntil: { gt: now } } } },
-      // مشاورِ ایجادکننده، حتی پس از انقضای آگهی، برای مشاهده وضعیت و تمدید باید رکورد را ببیند.
-      { registrationSource: "AGENT", createdByUserId: input.userId },
       { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true } } },
     ],
   });
