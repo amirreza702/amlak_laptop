@@ -48,7 +48,7 @@ const authorizeRequest = (
 });
 
 export async function createOwnerAgentRequestService(
-  userId: string,
+  actor: AuthorizationActor,
   input: { propertyId?: unknown; description?: unknown },
 ) {
   const owner = await findOwnerProfileByUserId(userId);
@@ -62,7 +62,7 @@ export async function createOwnerAgentRequestService(
   if (!relation || !relation.property.isActive) throw new Error("Property does not belong to owner");
 
   const canManage = await authorizePropertyAction(
-    { id: userId, role: "OWNER", isActive: true },
+    actor,
     "MANAGE",
     relation.property,
   );
@@ -75,11 +75,12 @@ export async function createOwnerAgentRequestService(
 }
 
 /** فهرست درخواست‌های متعلق به مالک نشست جاری؛ شناسه پروفایل از URL اخذ نمی‌شود. */
-export async function getOwnerAgentRequestsService(userId: string) {
+export async function getOwnerAgentRequestsService(actor: AuthorizationActor) {
+  const userId = actor.id;
   const owner = await findOwnerProfileByUserId(userId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
-  const actor = { id: userId, role: "OWNER", isActive: true };
+  
   const requests = await findOwnerAgentRequests(owner.id);
   const authorized = await Promise.all(requests.map(async (request) => {
     const allowed = await authorizeRequest(actor, "LIST_OWNER", request, {
@@ -90,7 +91,8 @@ export async function getOwnerAgentRequestsService(userId: string) {
   return authorized.filter((request): request is NonNullable<typeof request> => request !== null);
 }
 
-export async function closeOwnerAgentRequestService(userId: string, requestId: string) {
+export async function closeOwnerAgentRequestService(actor: AuthorizationActor, requestId: string) {
+  const userId = actor.id;
   const owner = await findOwnerProfileByUserId(userId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
@@ -111,12 +113,13 @@ export async function closeOwnerAgentRequestService(userId: string, requestId: s
 }
 
 /** فهرست درخواست‌های فعال برای مشاور تأییدشده صاحب نشست جاری. */
-export async function getActiveOwnerAgentRequestsService(userId: string) {
+export async function getActiveOwnerAgentRequestsService(actor: AuthorizationActor) {
+  const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
   const requests = await findActiveOwnerAgentRequests(agent.id);
-  const actor = { id: userId, role: "AGENT", isActive: true };
+  const actor = actor;
   const authorized = await Promise.all(requests.map(async (request) => {
     const allowed = await authorizeRequest(actor, "LIST_AGENT", request, {
       isAgent: true,
@@ -135,7 +138,7 @@ export async function getActiveOwnerAgentRequestsService(userId: string) {
  * شناسه Agent فقط از User نشست resolve می‌شود و Policy وضعیت درخواست را کنترل می‌کند.
  */
 export async function respondToOwnerAgentRequestService(
-  userId: string,
+  actor: AuthorizationActor,
   requestId: string,
   response: "ACCEPTED" | "REJECTED",
 ) {
@@ -196,7 +199,8 @@ export async function respondToOwnerAgentRequestService(
  * دسترسی به اطلاعات مالک فقط برای مشاور پذیرفته‌شده و دارای تأیید نهایی مالک.
  * دسترسی دقیق ملک با Policy ملک و شناسه همان مالک درخواست کنترل می‌شود.
  */
-export async function accessOwnerRequestContactService(userId: string, requestId: string) {
+export async function accessOwnerRequestContactService(actor: AuthorizationActor, requestId: string) {
+  const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent || agent.verificationStatus !== "VERIFIED") {
     throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
