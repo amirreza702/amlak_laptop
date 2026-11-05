@@ -61,6 +61,9 @@ export async function getManagedUsersController(req: Request, res: Response) {
     });
     return res.status(200).json({ users: result.users, pagination: { total: result.total, limit, offset } });
   } catch (error) {
+    if (error instanceof Error && error.message === "ADMIN_PERMISSION_FORBIDDEN") {
+      return res.status(403).json({ message: "You do not have permission to view managed users" });
+    }
     console.error("Failed to list managed users:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -117,7 +120,7 @@ export async function updateManagedProfileController(req: Request, res: Response
     });
     return res.status(200).json({ profile });
   } catch (error) {
-    if (error instanceof Error && (error.message === "HASHTI_PERMISSION_REQUIRED" || error.message === "SUPER_ADMIN_PERMISSION_REQUIRED")) return res.status(403).json({ message: "You do not have permission to manage this profile" });
+    if (error instanceof Error && (error.message === "HASHTI_PERMISSION_REQUIRED" || error.message === "SUPER_ADMIN_PERMISSION_REQUIRED" || error.message === "ADMIN_PERMISSION_FORBIDDEN")) return res.status(403).json({ message: "You do not have permission to manage this profile" });
     if (error instanceof Error && error.message === "PROFILE_NOT_FOUND") return res.status(404).json({ message: "Profile not found" });
     console.error("Failed to update managed profile:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -143,6 +146,9 @@ export async function getManagedAuditLogsController(req: Request, res: Response)
     const result = await getAdminAuditLogsService(actor.id, query);
     return res.status(200).json({ logs: result.logs, pagination: { total: result.total, limit, offset } });
   } catch (error) {
+    if (error instanceof Error && error.message === "ADMIN_PERMISSION_FORBIDDEN") {
+      return res.status(403).json({ message: "You do not have permission to view audit history" });
+    }
     console.error("Failed to get managed user history:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
