@@ -185,6 +185,7 @@ export function requirePropertyCreator(paramName = "id") {
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
+          listing: { select: { status: true, confirmUntil: true } },
           owners: {
             select: { ownerId: true, owner: { select: { userId: true } } },
           },
@@ -308,6 +309,7 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
+          listing: { select: { status: true, confirmUntil: true } },
         },
       });
       const allowed = property
