@@ -195,7 +195,8 @@ export async function getPropertyMediaFileService(mediaId: string, propertyId?: 
   )) {
     throw new Error("تصویر هنوز عمومی نیست یا مهلت انتشار ملک به پایان رسیده است.");
   }
-  return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
+  const bytes = stripWebpMetadata(await readFile(storedFilePath(media.id)));
+  return { bytes, contentType: "image/webp" as const };
 }
 
 export async function deletePropertyMediaService(propertyId: string, mediaId: string, actor: PropertyMediaActor) {
