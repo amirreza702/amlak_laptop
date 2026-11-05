@@ -12,7 +12,7 @@ export const findAgentSearchRequestOwner = (requestId: string, userId: string, d
 export const updateAgentSearchRequest = (
   requestId: string,
   userId: string,
-  data: Prisma.PropertySearchRequestUpdateInput,
+  data: Prisma.PropertySearchRequestUpdateManyMutationInput,
   db: Db = prisma,
 ) => db.propertySearchRequest.updateMany({
   where: { id: requestId, createdByUserId: userId, createdByRole: "AGENT" },
