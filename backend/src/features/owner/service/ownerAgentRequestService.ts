@@ -152,7 +152,7 @@ export async function respondToOwnerAgentRequestService(
     if (!request) throw new Error("ACTIVE_OWNER_REQUEST_NOT_FOUND");
 
     const allowed = await authorizeRequest(
-      { id: userId, role: "AGENT", isActive: true },
+      actor,
       "RESPOND",
       request,
       {
@@ -217,7 +217,7 @@ export async function accessOwnerRequestContactService(actor: AuthorizationActor
   });
   const agentRelation = request.property.agents.find((item) => item.agentId === agent.id) ?? null;
   const canAccessRequestContact = await authorizeRequest(
-    { id: userId, role: "AGENT", isActive: true },
+    actor,
     "ACCESS_OWNER_CONTACT",
     request,
     {
@@ -236,7 +236,7 @@ export async function accessOwnerRequestContactService(actor: AuthorizationActor
   if (!canAccessRequestContact) throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
 
   const visibility = await getPropertyVisibility(
-    { id: userId, role: "AGENT", isActive: true },
+    actor,
     request.property,
     request.ownerId,
   );
