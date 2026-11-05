@@ -258,24 +258,39 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
         },
       });
 
-      if (!property || property.deletedAt) {
-        return res.status(403).json({ message: "You do not have access to this property" });
+      const isExpired = Boolean(
+        property &&
+        (
+          property.listing?.status === "EXPIRED" ||
+          (property.listing?.status === "PUBLISHED" &&
+            (!property.listing.confirmUntil || property.listing.confirmUntil <= new Date()))
+        )
+      );
+
+      const allowed = property
+        ? await authorize("property", "READ_PRIVATE", {
+            actor: { id: user.id, role: user.role },
+            resource: {
+              id: propertyId,
+              data: {
+                isDeleted: Boolean(property.deletedAt),
+                isExpired,
+                isCreator: property.createdByUserId === user.id,
+                isRelatedOwner: property.owners.length > 0,
+                isFinalApprovedAgent: property.agents.length > 0,
+              },
+            },
+          })
+        : false;
+
+      if (!allowed) {
+        return res.status(403).json({
+          message: isExpired
+            ? "Expired properties are restricted to the owner, approved agent, and Hashti"
+            : "You do not have access to this property",
+        });
       }
-
-      const isExpired =
-        property.listing?.status === "EXPIRED" ||
-        (property.listing?.status === "PUBLISHED" &&
-          (!property.listing.confirmUntil || property.listing.confirmUntil <= new Date()));
-
-      if (isExpired) {
-        const isRelatedOwner = user.role === "OWNER" && property.owners.length > 0;
-        const isFinalApprovedAgent = user.role === "AGENT" && property.agents.length > 0;
-        if (isRelatedOwner || isFinalApprovedAgent) return next();
-        return res.status(403).json({ message: "Expired properties are restricted to the owner, approved agent, and Hashti" });
-      }
-
-      if (property.createdByUserId === user.id) return next();
-      return requirePropertyAccess(paramName, false)(req, res, next);
+      return next();
     } catch (error) {
       console.error("Property read authorization failed:", error);
       return res.status(500).json({ message: "Internal server error" });
