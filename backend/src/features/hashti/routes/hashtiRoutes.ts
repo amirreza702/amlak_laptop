@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 
 import { authMiddleware } from "../../auth/middleware/authMiddleware";
 import { requireRole } from "../../auth/middleware/requireRole";
+import { requireAdminPermission } from "../../admin/middleware/requireAdminPermission";
 import {
   getManagedAgentsController,
   setAgentVerificationController,
@@ -19,6 +20,7 @@ router.get(
   "/hashti/agents",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("AGENTS_MANAGE"),
   getManagedAgentsController
 );
 
@@ -27,6 +29,7 @@ router.patch(
   "/hashti/agents/:agentId/verification",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("AGENTS_MANAGE"),
   setAgentVerificationController
 );
 
@@ -37,6 +40,7 @@ router.get(
   "/hashti/admin-audit-logs",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("AUDIT_READ"),
   getAdminAuditLogsController
 );
 
