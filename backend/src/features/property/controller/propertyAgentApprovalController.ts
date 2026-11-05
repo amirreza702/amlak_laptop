@@ -18,8 +18,10 @@ export async function approvePropertyAgentByOwnerController(req: Request, res: R
     if (message === "OWNER_PROFILE_NOT_FOUND" || message === "ملک مورد نظر پیدا نشد.") {
       return res.status(404).json({ message });
     }
-    if (message === "این مالک به ملک مورد نظر متصل نیست.") {
-      return res.status(403).json({ message });
+    if (message === "این مالک به ملک مورد نظر متصل نیست." || message === "AGENT_NOT_VERIFIED") {
+      return res.status(403).json({
+        message: message === "AGENT_NOT_VERIFIED" ? "مشاور هنوز تأیید هشتی را دریافت نکرده است." : message,
+      });
     }
     return res.status(400).json({ message });
   }
