@@ -63,7 +63,7 @@ export async function updatePropertyListingStatusController(
       await updatePropertyListingStatus(
         propertyId,
         req.body,
-        { id: (req as AuthenticatedRequest).user!.id, role: (req as AuthenticatedRequest).user!.role }
+        (req as AuthenticatedRequest).user!
       );
 
     /**
