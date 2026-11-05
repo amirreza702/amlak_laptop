@@ -190,6 +190,7 @@ export const getAuthenticatedUserService = async (sessionToken: string) => {
     role: session.user.role,
     isSuperAdmin: session.user.isSuperAdmin,
     adminPermissions: session.user.adminPermissions,
+    isActive: session.user.isActive,
     expiresAt,
   };
 };
