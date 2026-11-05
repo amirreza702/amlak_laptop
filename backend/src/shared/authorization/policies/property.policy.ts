@@ -63,6 +63,7 @@ export const propertyPolicy: AuthorizationPolicy = (
   // نتیجه بگیرد که اجازه افشای موقعیت یا هویت مالک را هم دارد.
   if (action === "VIEW_EXACT_LOCATION" || action === "VIEW_OWNER_DETAILS") {
     if (isHashti) return true;
+    if (data.isExpired) return isOwner || isFinalApprovedAgent;
     return isOwner || isCreator || isFinalApprovedAgent;
   }
 
