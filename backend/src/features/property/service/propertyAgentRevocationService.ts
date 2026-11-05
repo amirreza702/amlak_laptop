@@ -4,6 +4,7 @@
  */
 
 import { Prisma, PropertyAgentStatus, PropertyHistoryAction } from "@prisma/client";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { prisma } from "../../../lib/prisma";
 import { findOwnerProfileByUserId } from "../../owner/repository/ownerRepository";
 import { findAgentProfileByUserId } from "../../agent/repository/agentRepository";
@@ -15,11 +16,11 @@ import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 export interface RevokePropertyAgentInput {
   propertyId: string;
   agentId: string;
-  ownerUserId: string;
+  actor: AuthorizationActor;
 }
 
 export async function revokePropertyAgent(data: RevokePropertyAgentInput) {
-  const owner = await findOwnerProfileByUserId(data.ownerUserId);
+  const owner = await findOwnerProfileByUserId(data.actor.id);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
   return prisma.$transaction(async (tx) => {
@@ -27,7 +28,7 @@ export async function revokePropertyAgent(data: RevokePropertyAgentInput) {
     if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
     const allowed = await authorizePropertyAction(
-      { id: data.ownerUserId, role: "OWNER", isActive: true },
+      data.actor,
       "MANAGE",
       property,
     );
@@ -64,7 +65,8 @@ export async function revokePropertyAgent(data: RevokePropertyAgentInput) {
 }
 
 /** لغو رابطه تأییدشده توسط خود مشاور؛ مجوز رابطه از Policy مرکزی گرفته می‌شود. */
-export async function revokePropertyAgentByAgent(propertyId: string, userId: string) {
+export async function revokePropertyAgentByAgent(propertyId: string, actor: AuthorizationActor) {
+  const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
@@ -73,7 +75,7 @@ export async function revokePropertyAgentByAgent(propertyId: string, userId: str
     if (!property) throw new Error("APPROVED_AGENT_RELATION_NOT_FOUND");
 
     const allowed = await authorizePropertyAction(
-      { id: userId, role: "AGENT", isActive: true },
+      actor,
       "REVOKE_OWN_RELATION",
       property,
     );
