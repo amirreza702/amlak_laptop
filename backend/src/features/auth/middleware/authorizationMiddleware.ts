@@ -119,6 +119,7 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          id: true,
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
@@ -180,6 +181,7 @@ export function requirePropertyCreator(paramName = "id") {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          id: true,
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
@@ -228,6 +230,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          id: true,
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
