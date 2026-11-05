@@ -52,9 +52,10 @@ export async function updatePropertyController(
     /**
      * اجرای Use Case
      */
-    const updatedProperty = await updatePropertyService(propertyId, data);
+    if (!user) throw new Error("Authentication required");
+    const updatedProperty = await updatePropertyService(propertyId, data, user);
     const safeProperty = user
-      ? await getPropertyDetailsForActor(propertyId, { id: user.id, role: user.role })
+      ? await getPropertyDetailsForActor(propertyId, user)
       : null;
 
     /**
