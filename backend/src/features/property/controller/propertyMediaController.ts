@@ -102,6 +102,7 @@ export async function getPublicPropertyMediaContentController(req: Request<{ med
   try {
     const file = await getPropertyMediaFileService(req.params.mediaId, undefined, true);
     res.setHeader("Content-Type", file.contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cache-Control", "no-store");
     res.end(file.bytes);
   } catch {
@@ -114,6 +115,7 @@ export async function getPrivatePropertyMediaContentController(req: Request<{ id
   try {
     const file = await getPropertyMediaFileService(req.params.mediaId, req.params.id, false, mediaActor(req));
     res.setHeader("Content-Type", file.contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cache-Control", "private, no-store");
     res.end(file.bytes);
   } catch {
