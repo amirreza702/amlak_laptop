@@ -21,7 +21,7 @@ export async function requireVerifiedAgent(req: Request, res: Response, next: Ne
     }
 
     const allowed = await authorize("agent", "OPERATE", {
-      actor: { id: user.id, role: user.role },
+      actor: { id: user.id, role: user.role, isActive: user.isActive },
       resource: { id: agent.id, data: { isVerified: agent.verificationStatus === "VERIFIED" } },
     });
     if (!allowed) {
