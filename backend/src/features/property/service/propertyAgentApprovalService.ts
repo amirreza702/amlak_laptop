@@ -4,6 +4,7 @@
  */
 
 import { Prisma, PropertyHistoryAction } from "@prisma/client";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { prisma } from "../../../lib/prisma";
 import { authorize } from "../../../shared/authorization/authorization.core";
 import { findOwnerProfileByUserId } from "../../owner/repository/ownerRepository";
@@ -15,13 +16,13 @@ import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 export interface ApprovePropertyAgentInput {
   propertyId: string;
   agentId: string;
-  ownerUserId: string;
+  actor: AuthorizationActor;
 }
 
 export async function approvePropertyAgentByOwnerService(
   data: ApprovePropertyAgentInput,
 ) {
-  const owner = await findOwnerProfileByUserId(data.ownerUserId);
+  const owner = await findOwnerProfileByUserId(data.actor.id);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
   return prisma.$transaction(async (tx) => {
@@ -30,7 +31,7 @@ export async function approvePropertyAgentByOwnerService(
     if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
     const canManage = await authorizePropertyAction(
-      { id: data.ownerUserId, role: "OWNER", isActive: true },
+      data.actor,
       "MANAGE",
       property,
     );
@@ -66,7 +67,7 @@ export async function approvePropertyAgentByOwnerService(
       select: { id: true },
     });
     const canApproveAgent = await authorize("ownerAgentRequest", "APPROVE_AGENT", {
-      actor: { id: data.ownerUserId, role: "OWNER", isActive: true },
+      actor: data.actor,
       resource: {
         id: acceptedRequest?.id,
         status: "ACTIVE",
