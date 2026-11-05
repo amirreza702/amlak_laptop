@@ -262,7 +262,6 @@ export async function listAdminUsers(data: {
             firstName: true,
             lastName: true,
             agencyName: true,
-            verificationStatus: true,
           },
         },
       },
@@ -271,10 +270,7 @@ export async function listAdminUsers(data: {
   ]);
 
   return {
-    items: items.map((user) => ({
-      ...user,
-      agent: user.agent ? { ...user.agent, isVerified: user.agent.verificationStatus === "VERIFIED" } : null,
-    })),
+    items,
     total,
   };
 }
