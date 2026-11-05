@@ -340,6 +340,25 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
   };
 }
 
+/** فهرست اعلان‌ها فقط برای شناسه کاربر نشست؛ تصمیم مالکیت در Policy مرکزی است. */
+export function requireOwnNotificationUser(paramName = "userId") {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = currentUser(req, res);
+    if (!user) return;
+
+    const targetUserId = req.params[paramName];
+    const allowed = await authorize("notification", "LIST_OWN", {
+      actor: { id: user.id, role: user.role },
+      resource: { id: targetUserId, data: { isOwner: targetUserId === user.id } },
+    });
+
+    if (!allowed) {
+      return res.status(403).json({ message: "You cannot access another user's notifications" });
+    }
+    return next();
+  };
+}
+
 /** کنترل مالکیت اعلان از روی User جاری، نه userId دریافتی از Client. */
 export function requireOwnNotification(paramName = "id") {
   return async (req: Request, res: Response, next: NextFunction) => {
