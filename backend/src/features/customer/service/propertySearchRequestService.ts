@@ -23,6 +23,8 @@ import {
   findCustomerById,
 } from "../repository/customerRepository";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { findAgentProfileByUserId } from "../../agent/repository/agentRepository";
 
 import {
   createPropertySearchRequest,
@@ -390,7 +392,16 @@ export const getActivePropertySearchRequests =
     city?: string; transactionType?: string; propertyType?: string;
     minBudget?: string; maxBudget?: string; hashtiVerified?: string;
     createdFrom?: string; createdTo?: string;
-  } = {}) => {
+  } = {},
+  actor: AuthorizationActor
+  ) => {
+    const agent = actor.role === "AGENT" ? await findAgentProfileByUserId(actor.id) : null;
+    const marketplaceAllowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
+      actor,
+      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: agent?.verificationStatus === "VERIFIED" } },
+    });
+    if (!marketplaceAllowed) throw new Error("Search request marketplace access denied");
+
     const transactionTypes = ["SALE", "FULL_DEPOSIT", "RENT", "DEPOSIT_AND_RENT"];
     const propertyTypes = ["APARTMENT", "HOUSE", "VILLA", "LAND", "SHOP", "OFFICE", "GARDEN"];
     if (filters.transactionType && !transactionTypes.includes(filters.transactionType)) throw new Error("Invalid transaction type filter");
@@ -432,8 +443,10 @@ export const getActivePropertySearchRequests =
  */
 export const getActivePropertySearchRequestById =
   async (
-    requestId: string
+    requestId: string,
+    actor: AuthorizationActor
   ) => {
+    const agent = actor.role === "AGENT" ? await findAgentProfileByUserId(actor.id) : null;
     const request =
       await findActivePropertySearchRequestById(
         requestId
@@ -444,6 +457,11 @@ export const getActivePropertySearchRequestById =
         "Active search request not found"
       );
     }
+    const allowed = await authorize("searchRequest", "MARKETPLACE_READ", {
+      actor,
+      resource: { id: requestId, status: request.status, data: { status: request.status, isVerifiedAgent: agent?.verificationStatus === "VERIFIED" } },
+    });
+    if (!allowed) throw new Error("Search request marketplace access denied");
 
     return request;
   };
