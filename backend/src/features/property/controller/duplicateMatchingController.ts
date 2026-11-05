@@ -27,7 +27,7 @@ export async function findDuplicateMatchesController(
     const propertyId = req.params.id;
 
     const matches =
-      await findDuplicateMatchesService(propertyId, { id: user.id, role: user.role });
+      await findDuplicateMatchesService(propertyId, { id: user.id, role: user.role, isActive: user.isActive });
 
     return res.status(200).json({
       matches,
