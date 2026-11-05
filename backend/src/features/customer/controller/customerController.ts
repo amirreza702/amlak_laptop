@@ -20,6 +20,7 @@
  */
 
 import { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   getCustomerProfile,
@@ -38,9 +39,9 @@ export async function getCustomerProfileController(
   res: Response
 ) {
   try {
-    const result = await getCustomerProfile(
-      req.params.customerId
-    );
+    const userId = (req as AuthenticatedRequest).user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerProfile(req.params.customerId, userId);
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -51,6 +52,10 @@ export async function getCustomerProfileController(
       return res.status(404).json({
         message: error.message,
       });
+    }
+
+    if (error.message === "CUSTOMER_PROFILE_FORBIDDEN") {
+      return res.status(403).json({ message: "You cannot access another user's profile" });
     }
 
     /**
@@ -79,11 +84,13 @@ export async function updateCustomerProfileController(
   res: Response
 ) {
   try {
-    const result =
-      await updateCustomerProfileService(
-        req.params.customerId,
-        req.body
-      );
+    const userId = (req as AuthenticatedRequest).user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const result = await updateCustomerProfileService(
+      req.params.customerId,
+      userId,
+      req.body
+    );
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -127,6 +134,10 @@ export async function updateCustomerProfileController(
       return res.status(400).json({
         message: error.message,
       });
+    }
+
+    if (error.message === "CUSTOMER_PROFILE_FORBIDDEN") {
+      return res.status(403).json({ message: "You cannot access another user's profile" });
     }
 
     /**
