@@ -9,6 +9,7 @@ interface PropertyPolicyData {
   isAllowedAgentCreator?: boolean;
   isCreator?: boolean;
   isDeleted?: boolean;
+  isActive?: boolean;
   isRegisteredByCurrentAgent?: boolean;
   isExpired?: boolean;
   isFinalApprovedAgent?: boolean;
@@ -36,6 +37,7 @@ export const propertyPolicy: AuthorizationPolicy = (
 
   if (action === "FAVORITE") {
     return context.actor.role === "CUSTOMER" &&
+      data.isActive !== false &&
       !data.isExpired &&
       !data.isDeleted &&
       context.resource?.status === "PUBLISHED";
