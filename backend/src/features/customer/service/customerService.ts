@@ -24,6 +24,7 @@ import {
   findCustomerProfileById,
   updateCustomerProfile,
 } from "../repository/customerRepository";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 /**
  * ============================================================
@@ -38,7 +39,8 @@ import {
  * و Service لازم نیست بداند mobile در جدول User قرار دارد.
  */
 export const getCustomerProfile = async (
-  customerId: string
+  customerId: string,
+  authenticatedUserId: string
 ) => {
   const customer =
     await findCustomerProfileById(customerId);
@@ -47,7 +49,13 @@ export const getCustomerProfile = async (
     throw new Error("Customer not found");
   }
 
-  return customer;
+  const allowed = await authorize("customer", "READ", {
+    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    resource: { id: customer.id, data: { isSelf: customer.userId === authenticatedUserId } },
+  });
+  if (!allowed) throw new Error("CUSTOMER_PROFILE_FORBIDDEN");
+  const { userId: _userId, ...safeCustomer } = customer;
+  return safeCustomer;
 };
 
 /**
@@ -66,6 +74,7 @@ export const getCustomerProfile = async (
  */
 export const updateCustomerProfileService = async (
   customerId: string,
+  authenticatedUserId: string,
   data: {
     firstName?: string;
     lastName?: string;
@@ -82,6 +91,12 @@ export const updateCustomerProfileService = async (
   if (!customer) {
     throw new Error("Customer not found");
   }
+
+  const allowed = await authorize("customer", "UPDATE", {
+    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    resource: { id: customer.id, data: { isSelf: customer.userId === authenticatedUserId } },
+  });
+  if (!allowed) throw new Error("CUSTOMER_PROFILE_FORBIDDEN");
 
   /**
    * ----------------------------------------------------------
@@ -135,13 +150,10 @@ export const updateCustomerProfileService = async (
    *
    * خود عملیات Database در Repository انجام می‌شود.
    */
-  return updateCustomerProfile(customerId, {
-    ...(firstName !== undefined && {
-      firstName,
-    }),
-
-    ...(lastName !== undefined && {
-      lastName,
-    }),
+  const updated = await updateCustomerProfile(customerId, {
+    ...(firstName !== undefined && { firstName }),
+    ...(lastName !== undefined && { lastName }),
   });
+  const { userId: _userId, ...safeUpdated } = updated;
+  return safeUpdated;
 };
