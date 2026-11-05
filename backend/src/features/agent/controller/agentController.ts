@@ -18,8 +18,8 @@ type AgentRouteParams = {
   agentId: string;
 };
 
-function getAuthenticatedUserId(req: Request): string | undefined {
-  return (req as AuthenticatedRequest).user?.id;
+function getAuthenticatedActor(req: Request) {
+  return (req as AuthenticatedRequest).user;
 }
 
 /**
@@ -31,12 +31,12 @@ export async function getCurrentAgentProfileController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedUserId(req);
-    if (!userId) {
+    const actor = getAuthenticatedActor(req);
+    if (!actor) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    const result = await getCurrentAgentProfile(userId);
+    const result = await getCurrentAgentProfile(actor);
     return res.status(200).json(result);
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "AGENT_PROFILE_NOT_FOUND") {
@@ -56,9 +56,9 @@ export async function getAgentProfileController(
   res: Response
 ) {
   try {
-    const userId = getAuthenticatedUserId(req);
+    const actor = getAuthenticatedActor(req);
 
-    if (!userId) {
+    if (!actor) {
       return res.status(401).json({
         message: "Authentication required",
       });
@@ -66,7 +66,7 @@ export async function getAgentProfileController(
 
     const result = await getAgentProfile(
       req.params.agentId,
-      userId
+      actor
     );
 
     return res.status(200).json(result);
@@ -111,7 +111,7 @@ export async function updateAgentProfileController(
 
     const result = await updateAgentProfile(
       req.params.agentId,
-      userId,
+      actor,
       req.body
     );
 
