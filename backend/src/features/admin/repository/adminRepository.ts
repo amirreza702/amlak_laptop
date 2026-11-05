@@ -21,7 +21,7 @@ const userSelect = {
   adminPermissions: true, createdAt: true, updatedAt: true,
   customer: { select: { id: true, firstName: true, lastName: true } },
   owner: { select: { id: true, firstName: true, lastName: true } },
-  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true } },
+  agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, verificationStatus: true } },
 } satisfies Prisma.UserSelect;
 
 export async function createInitialSuperAdmin(data: { mobile: string; passwordHash: string }) {
