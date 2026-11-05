@@ -1,6 +1,6 @@
 import { findAgentProfileByUserId } from "../repository/agentRepository";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
-import { getPropertyVisibility } from "../../property/service/propertyAuthorizationService";
+import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 
 /** فهرست املاک مشاور؛ تصمیم محرمانگی برای هر ملک از Authorization Core گرفته می‌شود. */
 export async function getMyAgentPropertyRecords(userId: string, query: Omit<AgentPropertyQuery, "agentId" | "userId">) {
@@ -41,6 +41,16 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
         ? primaryOwner
         : null;
 
+    const safeProperty = projectPropertyForActor(propertyData, visibility, {
+      owner: visibleOwner ? {
+        firstName: visibleOwner.owner.firstName,
+        lastName: visibleOwner.owner.lastName,
+        mobile: visibleOwner.owner.user.mobile,
+      } : null,
+      owners: visibleOwner ? [visibleOwner] : [],
+      exposeCreatorContact: visibility.canViewOwnerDetails,
+    });
+
     const listing = record.property.listing
       ? {
           ...record.property.listing,
@@ -54,35 +64,15 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
       ...record,
       canManage: visibility.canManage,
       property: {
-        ...propertyData,
+        ...safeProperty,
         createdByUserId: visibility.canManage ? record.property.createdByUserId : null,
-        address: visibility.canViewExactLocation
-          ? record.property.address
-          : [record.property.city, record.property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
-        latitudeExact: visibility.canViewExactLocation
-          ? record.property.latitudeExact
-          : record.property.listing?.latitudePublic ?? null,
-        longitudeExact: visibility.canViewExactLocation
-          ? record.property.longitudeExact
-          : record.property.listing?.longitudePublic ?? null,
-        postalCode: visibility.canViewExactLocation ? record.property.postalCode : null,
-        owners: visibleOwner ? [visibleOwner] : [],
-        ownerFirstName: visibility.canViewOwnerDetails
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : record.property.ownerFirstName ?? visibleOwner?.owner.firstName) ?? null
-          : null,
-        ownerLastName: visibility.canViewOwnerDetails
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : record.property.ownerLastName ?? visibleOwner?.owner.lastName) ?? null
-          : null,
-        ownerMobile: visibility.canViewOwnerDetails
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : record.property.ownerMobile ?? visibleOwner?.owner.user.mobile) ?? null
-          : null,
         listing,
-        approvedAgentFirstName: approvedAgentRelation?.agent.firstName ?? null,
-        approvedAgentLastName: approvedAgentRelation?.agent.lastName ?? null,
-        approvedAgentMobile: approvedAgentRelation?.agent.user.mobile ?? null,
-        registrantFirstName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
-        registrantLastName: record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
-        creatorMobile: record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
+        approvedAgentFirstName: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.firstName ?? null : null,
+        approvedAgentLastName: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.lastName ?? null : null,
+        approvedAgentMobile: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.user.mobile ?? null : null,
+        registrantFirstName: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
+        registrantLastName: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
+        creatorMobile: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
       },
     };
   }));
