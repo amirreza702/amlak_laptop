@@ -1,3 +1,5 @@
+import "./policies";
+
 /**
  * Authorization Core
  *
