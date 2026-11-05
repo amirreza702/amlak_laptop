@@ -259,7 +259,10 @@ export const getHashtiDuplicateReviewQueueService = async () => {
 };
 
 /** انتشار فقط از صف مشابهت و پس از تصمیم‌گیری درباره تمام کاندیداهای فعلی مجاز است. */
-export const publishPropertyAfterDuplicateReviewService = async (propertyId: string) => {
+export const publishPropertyAfterDuplicateReviewService = async (
+  propertyId: string,
+  actor: { id: string; role: string },
+) => {
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
   if (reviews.length === 0) {
     throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
@@ -292,12 +295,15 @@ export const publishPropertyAfterDuplicateReviewService = async (propertyId: str
     }
   }
 
-  return updatePropertyListingStatus(propertyId, { status: ListingStatus.PUBLISHED });
+  return updatePropertyListingStatus(propertyId, { status: ListingStatus.PUBLISHED }, actor);
 };
 
 
 /** رد انتشار از صف مشابهت، فقط وقتی همه کاندیداها بررسی شده و حداقل یکی همان ملک باشد. */
-export const rejectPropertyAfterDuplicateReviewService = async (propertyId: string) => {
+export const rejectPropertyAfterDuplicateReviewService = async (
+  propertyId: string,
+  actor: { id: string; role: string },
+) => {
   const reviews = await findDuplicateReviewsForPrimaryProperty(propertyId);
   if (reviews.length === 0) {
     throw new Error("برای این ملک پرونده بررسی مشابهت ثبت نشده است.");
@@ -318,5 +324,5 @@ export const rejectPropertyAfterDuplicateReviewService = async (propertyId: stri
     throw new Error("برای رد انتشار باید دست‌کم یک کاندیدا به‌عنوان همان ملک تشخیص داده شده باشد.");
   }
 
-  return updatePropertyListingStatus(propertyId, { status: ListingStatus.REJECTED });
+  return updatePropertyListingStatus(propertyId, { status: ListingStatus.REJECTED }, actor);
 };
