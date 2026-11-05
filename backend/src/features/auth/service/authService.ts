@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { createHash, randomBytes } from "crypto";
 import { UserRole } from "@prisma/client";
+import { requireAdminServicePermission, requireSuperAdminServicePermission } from "../../admin/service/adminService";
 
 import {
   createSession,
@@ -210,9 +211,11 @@ export const logoutUserService = async (sessionToken: string) => {
  * کنترل دسترسی HASHTI در لایه Route انجام می‌شود.
  */
 export const adminResetUserPasswordService = async (
+  actorUserId: string,
   userId: string,
   newPassword: string
 ) => {
+  await requireSuperAdminServicePermission(actorUserId);
   if (!userId.trim()) {
     throw new Error("INVALID_USER_ID");
   }
@@ -264,12 +267,16 @@ export const adminResetUserPasswordWithAuditService = async (input: {
 };
 
 export const listAdminUsersService = async (data: {
+  actorUserId: string;
   search?: string;
   role?: UserRole;
   isActive?: boolean;
   page: number;
   limit: number;
 }) => {
+  await requireAdminServicePermission(data.actorUserId, "USERS_READ");
+  const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT];
+  if (data.role && !visibleRoles.some((role) => role === data.role)) throw new Error("INVALID_ROLE");
   return listAdminUsers({
     search: data.search,
     role: data.role,
