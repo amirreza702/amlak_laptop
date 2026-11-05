@@ -62,6 +62,7 @@ import { queuePropertyListingForHashtiReview } from "./propertyListingStatusServ
 import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 /**
  * ============================================================
@@ -357,6 +358,7 @@ export async function getPropertyById(id: string) {
  * Controller فقط نتیجه این Use Case را به HTTP response تبدیل می‌کند.
  */
 export async function getPropertyDetailsForActor(id: string, actor: AuthorizationActor) {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const property = await getPropertyById(id);
   const canReadPrivate = await authorizePropertyAction(actor, "READ_PRIVATE", property);
   if (!canReadPrivate) throw new Error("PROPERTY_ACCESS_FORBIDDEN");
@@ -459,6 +461,7 @@ export async function updatePropertyService(
   data: UpdatePropertyInput,
   actor: AuthorizationActor
 ): Promise<Property> {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   /**
    * ============================================================
    * 1. بررسی وجود Property
