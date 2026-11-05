@@ -20,7 +20,7 @@ export async function authorize(
   context: AuthorizationContext,
 ): Promise<boolean> {
   // حساب غیرفعال اجازه عبور ندارد؛ در صورت ارائه وضعیت حساب در Context.
-  if (context.actor.isActive === false) {
+  if (context.actor.isActive !== true) {
     return false;
   }
 
