@@ -97,7 +97,7 @@ export async function rejectHashtiPropertyAfterDuplicateReviewController(req: Re
   if (!user) return res.status(401).json({ message: "Authentication required" });
 
   try {
-    const result = await rejectPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role });
+    const result = await rejectPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role, isActive: user.isActive });
     return res.status(200).json({ rejected: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "رد انتشار پس از بررسی مشابهت ناموفق بود.";
