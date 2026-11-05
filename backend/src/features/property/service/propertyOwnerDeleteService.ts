@@ -65,6 +65,7 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
     },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
 
   const allowed = await authorizePropertyAction(
     { id: userId, role: "OWNER" },
@@ -75,7 +76,6 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
 
   // مالک مرتبط از طریق رابطه‌ای که Policy مرکزی تأیید کرده شناسایی می‌شود.
   const isRelatedOwner = property.owners.some((relation) => relation.owner.userId === userId);
-  if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
 
   return removePropertyFromOperationalUse(
     propertyId,
@@ -95,13 +95,13 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
     },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
   const allowed = await authorizePropertyAction(
     { id: userId, role: "AGENT" },
     "MANAGE",
     property,
   );
   if (!allowed) throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
-  if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
   return removePropertyFromOperationalUse(propertyId, userId,
     "مشاور ایجادکننده، ملک و آگهی را حذف کرد؛ سوابق مدیریتی و حسابرسی حفظ شدند.");
 }
@@ -118,13 +118,13 @@ export async function reactivateOwnPropertyService(propertyId: string, userId: s
     },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  if (property.deletedAt) throw new Error("PROPERTY_PERMANENTLY_DELETED");
   const allowed = await authorizePropertyAction(
     { id: userId, role: "OWNER" },
     "MANAGE",
     property,
   );
   if (!allowed) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
-  if (property.deletedAt) throw new Error("PROPERTY_PERMANENTLY_DELETED");
   if (property.isActive) throw new Error("PROPERTY_ALREADY_ACTIVE");
 
   const archive = await prisma.propertyArchive.findUnique({ where: { propertyId }, select: { propertyId: true } });
