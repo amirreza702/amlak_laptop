@@ -11,7 +11,7 @@ interface PropertyAgentAuthorizationRelation {
   status?: string;
   approvedByOwner?: boolean;
   approvedByOwnerId?: string | null;
-  agent?: { userId?: string | null } | null;
+  agent?: { userId?: string | null; verificationStatus?: string | null } | null;
 }
 
 export interface PropertyAuthorizationSubject {
@@ -145,15 +145,22 @@ export async function authorizePropertyAction(
     actor.role === "OWNER" &&
     owners.some((relation) => relation.owner?.userId === actor.id);
 
+  const hasVerifiedAgentRelation = agents.some((relation) =>
+    relation.agent?.userId === actor.id &&
+    relation.agent.verificationStatus === "VERIFIED"
+  );
+
   const isCreator =
     actor.role === "AGENT" &&
     property.registrationSource === "AGENT" &&
-    property.createdByUserId === actor.id;
+    property.createdByUserId === actor.id &&
+    hasVerifiedAgentRelation;
 
   const isFinalApprovedAgent =
     actor.role === "AGENT" &&
     agents.some((relation) =>
       relation.agent?.userId === actor.id &&
+      relation.agent.verificationStatus === "VERIFIED" &&
       relation.status === "ACTIVE" &&
       relation.approvedByOwner === true &&
       Boolean(relation.approvedByOwnerId) &&
