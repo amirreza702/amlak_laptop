@@ -359,6 +359,8 @@ export async function getPropertyById(id: string) {
  */
 export async function getPropertyDetailsForActor(id: string, actor: AuthorizationActor) {
   const property = await getPropertyById(id);
+  const canReadPrivate = await authorizePropertyAction(actor, "READ_PRIVATE", property);
+  if (!canReadPrivate) throw new Error("PROPERTY_ACCESS_FORBIDDEN");
   const visibility = await getPropertyVisibility(actor, property);
   if (actor.role === "HASHTI" && visibility.canViewExactLocation && visibility.canViewOwnerDetails) {
     return property;
