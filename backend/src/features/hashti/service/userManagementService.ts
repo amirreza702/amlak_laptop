@@ -2,11 +2,26 @@ import {
   findManagedUsers, getSuperAdminAccess, updateManagedProfile, updateManagedUserStatus,
   type ManagedProfileUpdate, type ManagedUserQuery,
 } from "../repository/userManagementRepository";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export const getSuperAdminAccessService = async (userId: string) => getSuperAdminAccess(userId);
-export const getManagedUsersService = async (query: ManagedUserQuery) => findManagedUsers(query);
+export const getManagedUsersService = async (actorUserId: string, query: ManagedUserQuery) => {
+  await requireAdminServicePermission(actorUserId, "USERS_READ");
+  return findManagedUsers(query);
+};
 export const setManagedUserStatusService = async (input: {
   userId: string; isActive: boolean; reason: string; actorUserId: string; actorMobile: string;
-}) => updateManagedUserStatus(input);
+}) => {
+  await requireAdminServicePermission(input.actorUserId, "USERS_MANAGE");
+  return updateManagedUserStatus(input);
+};
 
-export const updateManagedProfileService = async (input: ManagedProfileUpdate) => updateManagedProfile(input);
+export const updateManagedProfileService = async (input: ManagedProfileUpdate) => {
+  const permission = input.profileType === "OWNER"
+    ? "OWNERS_MANAGE"
+    : input.profileType === "AGENT"
+      ? "AGENTS_MANAGE"
+      : "USERS_MANAGE";
+  await requireAdminServicePermission(input.actorUserId, permission);
+  return updateManagedProfile(input);
+};
