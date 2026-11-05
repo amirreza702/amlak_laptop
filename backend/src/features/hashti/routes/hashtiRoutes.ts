@@ -49,6 +49,7 @@ router.get(
   "/hashti/properties",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("PROPERTIES_MANAGE"),
   getHashtiPropertyRecordsController
 );
 
@@ -57,6 +58,7 @@ router.patch(
   "/hashti/properties/:id/publish",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("PROPERTIES_MANAGE"),
   approveHashtiPropertyPublicationController
 );
 
@@ -64,12 +66,14 @@ router.get(
   "/hashti/duplicate-review-queue",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("DUPLICATES_MANAGE"),
   getHashtiDuplicateReviewQueueController
 );
 router.patch(
   "/hashti/properties/:id/publish-after-duplicate-review",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("DUPLICATES_MANAGE"),
   publishHashtiPropertyAfterDuplicateReviewController
 );
 
@@ -77,6 +81,7 @@ router.patch(
   "/hashti/properties/:id/reject-after-duplicate-review",
   authMiddleware,
   requireRole(UserRole.HASHTI),
+  requireAdminPermission("DUPLICATES_MANAGE"),
   rejectHashtiPropertyAfterDuplicateReviewController
 );
 
