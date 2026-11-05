@@ -71,7 +71,7 @@ export async function createAgentSearchRequestController(req: Request, res: Resp
     const result = await createCustomerSearchRequest(
       null,
       req.body,
-      { id: user.id, role: "AGENT", mobile: user.mobile }
+      { id: user.id, role: "AGENT", mobile: user.mobile, isVerifiedAgent: true }
     );
     return res.status(201).json(result);
   } catch (error: unknown) {
