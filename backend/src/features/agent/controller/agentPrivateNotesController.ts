@@ -128,6 +128,11 @@ export async function upsertAgentPrivateNoteAsAdminController(req: Request, res:
     const userId = currentUserId(req);
     if (!userId) return res.status(401).json({ message: "Authentication required" });
 
+    const { agentId, entityType, entityId, note } = req.body ?? {};
+    if (typeof note !== "string") {
+      return res.status(400).json({ message: "Invalid private note data" });
+    }
+
     const admin = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, isActive: true, isSuperAdmin: true },
@@ -137,8 +142,6 @@ export async function upsertAgentPrivateNoteAsAdminController(req: Request, res:
       resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
     });
     if (!allowed) return res.status(403).json({ message: "Super admin access required" });
-
-    const { agentId, entityType, entityId, note } = req.body ?? {};
     if (
       typeof agentId !== "string" || !agentId.trim() ||
       typeof entityType !== "string" || !allowedEntityTypes.has(entityType) ||
