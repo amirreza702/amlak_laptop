@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 const allowedEntityTypes = new Set(["property", "owner", "customer", "request"]);
 
@@ -17,6 +18,12 @@ export async function getMyPrivateNotesController(req: Request, res: Response) {
 
     const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
     if (!agent) return res.status(404).json({ message: "Agent profile not found" });
+
+    const allowed = await authorize("privateNote", "LIST_OWN", {
+      actor: { id: userId, role: "AGENT" },
+      resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Private note access denied" });
 
     const notes = await prisma.agentPrivateNote.findMany({
       where: { agentId: agent.id },
@@ -50,6 +57,12 @@ export async function upsertMyPrivateNoteController(req: Request, res: Response)
     const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
     if (!agent) return res.status(404).json({ message: "Agent profile not found" });
 
+    const allowed = await authorize("privateNote", "UPSERT_OWN", {
+      actor: { id: userId, role: "AGENT" },
+      resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Private note access denied" });
+
     const key = {
       agentId_entityType_entityId: {
         agentId: agent.id,
@@ -82,14 +95,11 @@ export async function getAllAgentPrivateNotesController(req: Request, res: Respo
       where: { id: userId },
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
-    if (
-      !admin ||
-      admin.role !== UserRole.HASHTI ||
-      !admin.isActive ||
-      !admin.isSuperAdmin
-    ) {
-      return res.status(403).json({ message: "Super admin access required" });
-    }
+    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", "LIST_ALL", {
+      actor: { id: userId, role: admin?.role ?? "HASHTI", isActive: admin?.isActive },
+      resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Super admin access required" });
 
     const notes = await prisma.agentPrivateNote.findMany({
       include: {
@@ -122,9 +132,11 @@ export async function upsertAgentPrivateNoteAsAdminController(req: Request, res:
       where: { id: userId },
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
-    if (!admin || admin.role !== UserRole.HASHTI || !admin.isActive || !admin.isSuperAdmin) {
-      return res.status(403).json({ message: "Super admin access required" });
-    }
+    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", "UPSERT_ANY", {
+      actor: { id: userId, role: admin?.role ?? "HASHTI", isActive: admin?.isActive },
+      resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Super admin access required" });
 
     const { agentId, entityType, entityId, note } = req.body ?? {};
     if (
