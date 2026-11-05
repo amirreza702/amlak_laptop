@@ -12,6 +12,7 @@
 import { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { getCurrentCustomerProfile } from "../service/currentCustomerProfileService";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 import {
   createCustomerSearchRequest,
@@ -343,11 +344,14 @@ export async function getActivePropertySearchRequestByIdController(
   res: Response
 ) {
   try {
-    const result =
-      await getActivePropertySearchRequestById(
-        req.params.requestId
-      );
-
+    const result = await getActivePropertySearchRequestById(req.params.requestId);
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
+    const allowed = await authorize("searchRequest", "MARKETPLACE_READ", {
+      actor: { id: user.id, role: user.role },
+      resource: { id: req.params.requestId, status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: true } },
+    });
+    if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
     return res.status(200).json(result);
   } catch (error: any) {
     if (
