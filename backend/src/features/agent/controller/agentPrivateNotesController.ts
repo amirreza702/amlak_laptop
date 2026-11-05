@@ -57,7 +57,7 @@ export async function upsertMyPrivateNoteController(req: Request, res: Response)
     const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
     if (!agent) return res.status(404).json({ message: "Agent profile not found" });
 
-    const allowed = await authorize("privateNote", "UPSERT_OWN", {
+    const allowed = await authorize("privateNote", note.trim() ? "UPSERT_OWN" : "DELETE_OWN", {
       actor: { id: userId, role: "AGENT" },
       resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
     });
@@ -132,7 +132,7 @@ export async function upsertAgentPrivateNoteAsAdminController(req: Request, res:
       where: { id: userId },
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
-    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", "UPSERT_ANY", {
+    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", note.trim() ? "UPSERT_ANY" : "DELETE_ANY", {
       actor: { id: userId, role: admin?.role ?? "HASHTI", isActive: admin?.isActive },
       resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
     });
