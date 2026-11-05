@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { ListingStatus } from "@prisma/client";
 import { getHashtiPropertyRecords, requestHashtiPropertyPublicationApproval } from "../service/propertyManagementService";
 import { publishPropertyAfterDuplicateReviewService, rejectPropertyAfterDuplicateReviewService } from "../../property/service/duplicateReviewService";
@@ -50,8 +51,11 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
   const propertyId = typeof req.params.id === "string" ? req.params.id : "";
   if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
 
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) return res.status(401).json({ message: "Authentication required" });
+
   try {
-    const result = await requestHashtiPropertyPublicationApproval(propertyId);
+    const result = await requestHashtiPropertyPublicationApproval(propertyId, { id: user.id, role: user.role });
     if (result.requiresDuplicateReview) {
       return res.status(200).json({
         ...result,
@@ -70,8 +74,11 @@ export async function approveHashtiPropertyPublicationController(req: Request, r
 export async function publishHashtiPropertyAfterDuplicateReviewController(req: Request, res: Response) {
   const propertyId = typeof req.params.id === "string" ? req.params.id : "";
   if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) return res.status(401).json({ message: "Authentication required" });
+
   try {
-    const result = await publishPropertyAfterDuplicateReviewService(propertyId);
+    const result = await publishPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role });
     return res.status(200).json({ published: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "تأیید انتشار پس از بررسی مشابهت ناموفق بود.";
@@ -84,8 +91,11 @@ export async function publishHashtiPropertyAfterDuplicateReviewController(req: R
 export async function rejectHashtiPropertyAfterDuplicateReviewController(req: Request, res: Response) {
   const propertyId = typeof req.params.id === "string" ? req.params.id : "";
   if (!propertyId) return res.status(400).json({ message: "شناسه ملک معتبر نیست." });
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) return res.status(401).json({ message: "Authentication required" });
+
   try {
-    const result = await rejectPropertyAfterDuplicateReviewService(propertyId);
+    const result = await rejectPropertyAfterDuplicateReviewService(propertyId, { id: user.id, role: user.role });
     return res.status(200).json({ rejected: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "رد انتشار پس از بررسی مشابهت ناموفق بود.";
