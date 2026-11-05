@@ -1,7 +1,6 @@
 import { findAgentProfileByUserId } from "../repository/agentRepository";
-import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
-import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /** فهرست املاک مشاور؛ تصمیم محرمانگی برای هر ملک از Authorization Core گرفته می‌شود. */
