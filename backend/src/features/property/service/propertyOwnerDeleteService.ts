@@ -2,6 +2,7 @@ import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { ListingStatus, PropertyHistoryAction } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
 const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
@@ -54,21 +55,26 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
     where: { id: propertyId },
     select: {
       id: true,
+      registrationSource: true,
       createdByUserId: true,
       deletedAt: true,
+      listing: { select: { status: true, confirmUntil: true } },
       owners: {
-        where: { owner: { is: { userId } } },
-        select: { ownerId: true },
-        take: 1,
+        select: { ownerId: true, owner: { select: { userId: true } } },
       },
     },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
 
-  // مالک مرتبط از طریق PropertyOwner مستقل از ایجادکننده حق حذف عملیاتی دارد.
-  const isCreator = property.createdByUserId === userId;
-  const isRelatedOwner = property.owners.length > 0;
-  if (!isCreator && !isRelatedOwner) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
+  const allowed = await authorizePropertyAction(
+    { id: userId, role: "OWNER" },
+    "MANAGE",
+    property,
+  );
+  if (!allowed) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
+
+  // مالک مرتبط از طریق رابطه‌ای که Policy مرکزی تأیید کرده شناسایی می‌شود.
+  const isRelatedOwner = property.owners.some((relation) => relation.owner.userId === userId);
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
 
   return removePropertyFromOperationalUse(
@@ -83,12 +89,18 @@ export async function deleteOwnPropertyService(propertyId: string, userId: strin
 export async function deleteAgentManagedOwnerPropertyService(propertyId: string, userId: string) {
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
-    select: { id: true, deletedAt: true, registrationSource: true, createdByUserId: true },
+    select: {
+      id: true, deletedAt: true, registrationSource: true, createdByUserId: true,
+      listing: { select: { status: true, confirmUntil: true } },
+    },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
-  if (property.registrationSource !== "AGENT" || property.createdByUserId !== userId) {
-    throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
-  }
+  const allowed = await authorizePropertyAction(
+    { id: userId, role: "AGENT" },
+    "MANAGE",
+    property,
+  );
+  if (!allowed) throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
   return removePropertyFromOperationalUse(propertyId, userId,
     "مشاور ایجادکننده، ملک و آگهی را حذف کرد؛ سوابق مدیریتی و حسابرسی حفظ شدند.");
@@ -96,15 +108,22 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
 
 /** فعال‌سازی عادی هرگز ملک حذف‌شده را احیا نمی‌کند. */
 export async function reactivateOwnPropertyService(propertyId: string, userId: string) {
-  const ownership = await prisma.propertyOwner.findFirst({
-    where: { propertyId, owner: { userId } }, select: { propertyId: true },
-  });
-  if (!ownership) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
-
   const property = await prisma.property.findUnique({
-    where: { id: propertyId }, select: { id: true, isActive: true, deletedAt: true },
+    where: { id: propertyId },
+    select: {
+      id: true, isActive: true, deletedAt: true, registrationSource: true,
+      createdByUserId: true,
+      listing: { select: { status: true, confirmUntil: true } },
+      owners: { select: { ownerId: true, owner: { select: { userId: true } } } },
+    },
   });
   if (!property) throw new Error("PROPERTY_NOT_FOUND");
+  const allowed = await authorizePropertyAction(
+    { id: userId, role: "OWNER" },
+    "MANAGE",
+    property,
+  );
+  if (!allowed) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
   if (property.deletedAt) throw new Error("PROPERTY_PERMANENTLY_DELETED");
   if (property.isActive) throw new Error("PROPERTY_ALREADY_ACTIVE");
 
