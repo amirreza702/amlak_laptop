@@ -3,6 +3,7 @@ import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware"
 
 import {
   updatePropertyService,
+  getPropertyDetailsForActor,
 } from "../service/propertyService";
 
 import type { UpdatePropertyInput } from "../types/updateProperty";
@@ -51,18 +52,17 @@ export async function updatePropertyController(
     /**
      * اجرای Use Case
      */
-    const updatedProperty =
-      await updatePropertyService(
-        propertyId,
-        data
-      );
+    const updatedProperty = await updatePropertyService(propertyId, data);
+    const safeProperty = user
+      ? await getPropertyDetailsForActor(propertyId, { id: user.id, role: user.role })
+      : null;
 
     /**
      * پاسخ موفق
      */
     // مسیر ویرایش مشاور فقط برای ثبت‌کننده همان ملک مجاز است؛
     // مشخصات مالک در پاسخ نیز فقط به همان مشاور بازگردانده می‌شود.
-    res.status(200).json({ property: updatedProperty });
+    res.status(200).json({ property: safeProperty });
   } catch (error) {
     /**
      * مدیریت خطای Business
