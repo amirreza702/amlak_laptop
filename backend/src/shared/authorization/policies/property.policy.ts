@@ -80,6 +80,11 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isOwner && Boolean(data.isApprovedAgentContactAllowed);
   }
 
+  // مشاور فقط می‌تواند رابطه همکاری نهاییِ متعلق به خودش را لغو کند.
+  if (action === "REVOKE_OWN_RELATION") {
+    return context.actor.role === "AGENT" && isFinalApprovedAgent;
+  }
+
   // اطلاعات مشاور ثبت‌کننده، مجوز مستقلی از اطلاعات خصوصی مالک دارد.
   if (action === "VIEW_REGISTRANT_DETAILS") {
     if (isHashti) return true;
