@@ -22,7 +22,10 @@ export async function getHashtiPropertyRecords(input: {
 }
 
 /** غربال انتشار: فقط تشابه فعلی ۸۰٪ یا بیشتر، ملک را به صف مشابهت می‌فرستد. */
-export async function requestHashtiPropertyPublicationApproval(propertyId: string) {
+export async function requestHashtiPropertyPublicationApproval(
+  propertyId: string,
+  actor: { id: string; role: string },
+) {
   const property = await findPropertyById(propertyId);
   if (!property?.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
   if (property.listing.status !== ListingStatus.PENDING_HASHTI_VERIFICATION) {
@@ -42,7 +45,7 @@ export async function requestHashtiPropertyPublicationApproval(propertyId: strin
 
   const result = await updatePropertyListingStatus(propertyId, {
     status: ListingStatus.PUBLISHED,
-  });
+  }, actor);
 
   return {
     published: true,
