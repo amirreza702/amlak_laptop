@@ -50,10 +50,10 @@ export async function addPropertyOwner(data: AddPropertyOwnerInput) {
       }),
       tx.propertyOwner.findUnique({
         where: { propertyId_ownerId: { propertyId: data.propertyId, ownerId: data.ownerId } },
-        select: { id: true },
+        select: { propertyId: true, ownerId: true },
       }),
       data.isPrimary
-        ? tx.propertyOwner.findFirst({ where: { propertyId: data.propertyId, isPrimary: true }, select: { id: true } })
+        ? tx.propertyOwner.findFirst({ where: { propertyId: data.propertyId, isPrimary: true }, select: { propertyId: true, ownerId: true } })
         : Promise.resolve(null),
       tx.propertyOwner.findMany({ where: { propertyId: data.propertyId }, select: { share: true } }),
     ]);
