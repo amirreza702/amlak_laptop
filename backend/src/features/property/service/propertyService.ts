@@ -62,7 +62,6 @@ import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { authorize } from "../../../shared/authorization/authorization.core";
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
-import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 /**
  * ============================================================
