@@ -9,10 +9,7 @@ export async function renewPropertyListingController(
   const user = (req as AuthenticatedRequest).user;
   if (!user) return res.status(401).json({ message: "Authentication required" });
   try {
-    const result = await renewExpiredPropertyListing(req.params.id, {
-      id: user.id,
-      role: user.role,
-    });
+    const result = await renewExpiredPropertyListing(req.params.id, user);
     return res.status(200).json({ message: "درخواست تمدید ثبت شد و آگهی پس از تأیید هشتی دوباره منتشر می‌شود.", ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
