@@ -58,7 +58,7 @@ import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
-import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
+import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { authorize } from "../../../shared/authorization/authorization.core";
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
