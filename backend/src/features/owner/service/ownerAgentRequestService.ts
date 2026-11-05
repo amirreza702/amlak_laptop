@@ -28,7 +28,7 @@ const isExpiredListing = (listing?: { status?: string | null; confirmUntil?: Dat
 
 const authorizeRequest = (
   actor: AuthorizationActor,
-  action: "LIST_OWNER" | "CLOSE" | "LIST_AGENT" | "RESPOND" | "APPROVE_AGENT" | "ACCESS_OWNER_CONTACT",
+  action: "CREATE" | "LIST_OWNER" | "CLOSE" | "REVOKE_AGENT" | "LIST_AGENT" | "RESPOND" | "APPROVE_AGENT" | "ACCESS_OWNER_CONTACT",
   request: { id: string; status: string },
   relationship: {
     isOwner?: boolean;
@@ -66,8 +66,14 @@ export async function createOwnerAgentRequestService(
       throw new Error("Property does not belong to owner");
     }
 
+    const canCreateRequest = await authorizeRequest(actor, "CREATE", { id: propertyId, status: "ACTIVE" }, {
+      isOwner: relation.ownerId === owner.id,
+      isPropertyActive: relation.property.isActive,
+      isPropertyDeleted: Boolean(relation.property.deletedAt),
+      isPropertyExpired: isExpiredListing(relation.property.listing),
+    });
     const canManage = await authorizePropertyAction(actor, "MANAGE", relation.property);
-    if (!canManage) throw new Error("Property does not belong to owner");
+    if (!canCreateRequest || !canManage) throw new Error("Property does not belong to owner");
 
     if (await findActiveOwnerRequestForProperty(owner.id, propertyId, tx)) {
       throw new Error("An active request already exists for this property");
