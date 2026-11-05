@@ -28,8 +28,8 @@ function parseFloorFilter(value: unknown): number | null | undefined {
 
 /** GET /agents/me/properties */
 export async function getMyAgentPropertyRecordsController(req: Request, res: Response) {
-  const userId = (req as AuthenticatedRequest).user?.id;
-  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
 
   if (req.query.query !== undefined && (typeof req.query.query !== "string" || req.query.query.length > 200)) {
     return res.status(400).json({ message: "query must be a string up to 200 characters" });
@@ -58,7 +58,7 @@ export async function getMyAgentPropertyRecordsController(req: Request, res: Res
     return res.status(400).json({ message: "Invalid property filters or pagination parameters" });
   }
   try {
-    const result = await getMyAgentPropertyRecords(userId, {
+    const result = await getMyAgentPropertyRecords(actor, {
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
       city: typeof req.query.city === "string" ? req.query.city.trim() : undefined,
       district: typeof req.query.district === "string" ? req.query.district.trim() : undefined,
