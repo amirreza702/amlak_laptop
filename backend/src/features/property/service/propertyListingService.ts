@@ -68,6 +68,7 @@ export async function createPropertyListingWithInitialPrice(
   actor: AuthorizationActor
 ) {
   if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   /**
    * ==========================================================
    * بررسی وجود Listing
