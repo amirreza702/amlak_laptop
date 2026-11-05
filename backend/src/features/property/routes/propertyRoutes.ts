@@ -54,6 +54,7 @@ router.get(
   authMiddleware,
   requireRole(...propertyManagers),
   requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyCreatorOrAccess("id"),
   getPropertyByIdController
 );
@@ -62,6 +63,7 @@ router.get(
   authMiddleware,
   requireRole(...propertyManagers),
   requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyCreatorOrAccess("id"),
   getPropertyMediaController
 );
@@ -72,6 +74,7 @@ router.get(
   authMiddleware,
   requireRole(...propertyManagers),
   requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyCreatorOrAccess("id"),
   getPrivatePropertyMediaContentController
 );
@@ -99,22 +102,23 @@ router.post(
 router.post(
   "/properties/:id/listing",
   authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyCreator(),
   createPropertyListingController
 );
 router.put(
   "/properties/:id/price",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreator(),
   updatePropertyPriceController
 );
 router.put(
   "/properties/:id/status",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreatorOrAccess("id"),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreatorOrAccess("id"),
   updatePropertyListingStatusController
 );
 router.get(
   "/properties/:id/confirmation",
-  authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent, requirePropertyAccess(),
+  authMiddleware, requireRole(...propertyManagers), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyAccess(),
   checkPropertyConfirmationController
 );
 router.put(
@@ -149,7 +153,7 @@ router.patch(
 
 router.patch(
   "/properties/:id",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreator(),
   updatePropertyController
 );
 
@@ -177,13 +181,13 @@ router.patch(
   revokePropertyAgentController
 );
 
-router.delete("/properties/:id/media/:mediaId", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(), deletePropertyMediaController);
-router.patch("/properties/:id/media/order", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(), reorderPropertyMediaController);
+router.delete("/properties/:id/media/:mediaId", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreator(), deletePropertyMediaController);
+router.patch("/properties/:id/media/order", authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreator(), reorderPropertyMediaController);
 
 // رسانه فقط توسط مالک/مشاور مرتبط یا کارکنان هشتی قابل افزودن است.
 router.post(
   "/properties/:id/media",
-  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requirePropertyCreator(),
+  authMiddleware, requireRole(...propertyEditors), requireVerifiedAgent, requireHashtiPermission("PROPERTIES_MANAGE"), requirePropertyCreator(),
   createPropertyMediaController
 );
 
@@ -236,6 +240,7 @@ router.post(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
   requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyAccess("id", false, true, true),
   createExactLocationAccessLogController
 );
@@ -244,6 +249,7 @@ router.get(
   authMiddleware,
   requireRole(UserRole.OWNER, UserRole.AGENT, UserRole.HASHTI),
   requireVerifiedAgent,
+  requireHashtiPermission("PROPERTIES_MANAGE"),
   requirePropertyAccess(),
   getExactLocationAccessLogsController
 );
