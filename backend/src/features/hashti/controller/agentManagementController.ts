@@ -53,7 +53,9 @@ export async function getManagedAgentsController(
   }
 
   try {
-    const result = await getManagedAgentsService({
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await getManagedAgentsService(actor.id, {
       verificationStatus: verificationStatus as AgentVerificationFilter,
       limit,
       offset,
