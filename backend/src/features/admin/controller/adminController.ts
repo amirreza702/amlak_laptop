@@ -35,6 +35,7 @@ function sendError(res: Response, error: unknown) {
     BOOTSTRAP_FORBIDDEN: [403, "Bootstrap secret is invalid or bootstrap is disabled"],
     ADMIN_PERMISSION_FORBIDDEN: [403, "You do not have the required admin permission"],
     ADMIN_PERMISSION_GRANT_FORBIDDEN: [403, "You cannot grant permissions that you do not hold"],
+    CANNOT_CHANGE_OWN_STATUS: [403, "You cannot change your own account status"],
   };
   const found = known[message];
   if (found) return res.status(found[0]).json({ message: found[1] });
