@@ -1,5 +1,4 @@
 /**
-import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
  * ============================================================
  * Notification Service
  * ============================================================
@@ -20,6 +19,7 @@ import type { AuthorizationActor } from "../../../shared/authorization/authoriza
  */
 
 import type { Prisma } from "@prisma/client";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { authorize } from "../../../shared/authorization/authorization.core";
 
 import {
