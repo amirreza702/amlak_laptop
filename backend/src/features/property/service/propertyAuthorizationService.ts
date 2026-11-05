@@ -33,6 +33,75 @@ export interface PropertyVisibility {
   canManage: boolean;
 }
 
+export interface PropertyOwnerPrivateDetails {
+  firstName?: string | null;
+  lastName?: string | null;
+  mobile?: string | null;
+}
+
+/**
+ * Projection واحد داده‌های حساس ملک پس از تصمیم Authorization Core.
+ * این تابع مجوز صادر نمی‌کند؛ فقط تصمیم Policy را به خروجی API اعمال می‌کند.
+ * همه مسیرهای نمایش ملک باید از این projection استفاده کنند.
+ */
+export function projectPropertyForActor<
+  T extends {
+    city?: string | null;
+    district?: string | null;
+    address?: string | null;
+    latitudeExact?: number | null;
+    longitudeExact?: number | null;
+    postalCode?: string | null;
+    ownerFirstName?: string | null;
+    ownerLastName?: string | null;
+    ownerMobile?: string | null;
+    creatorMobile?: string | null;
+    owners?: unknown[];
+    listing?: {
+      latitudePublic?: number | null;
+      longitudePublic?: number | null;
+    } | null;
+  },
+>(
+  property: T,
+  visibility: PropertyVisibility,
+  options: {
+    owner?: PropertyOwnerPrivateDetails | null;
+    owners?: unknown[];
+    exposeCreatorContact?: boolean;
+  } = {},
+) {
+  const canViewExactLocation = visibility.canViewExactLocation;
+  const canViewOwnerDetails = visibility.canViewOwnerDetails;
+
+  return {
+    ...property,
+    address: canViewExactLocation
+      ? property.address
+      : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
+    latitudeExact: canViewExactLocation
+      ? property.latitudeExact
+      : property.listing?.latitudePublic ?? null,
+    longitudeExact: canViewExactLocation
+      ? property.longitudeExact
+      : property.listing?.longitudePublic ?? null,
+    postalCode: canViewExactLocation ? property.postalCode : null,
+    ownerFirstName: canViewOwnerDetails
+      ? options.owner?.firstName ?? property.ownerFirstName ?? null
+      : null,
+    ownerLastName: canViewOwnerDetails
+      ? options.owner?.lastName ?? property.ownerLastName ?? null
+      : null,
+    ownerMobile: canViewOwnerDetails
+      ? options.owner?.mobile ?? property.ownerMobile ?? null
+      : null,
+    owners: canViewOwnerDetails ? options.owners ?? property.owners ?? [] : [],
+    creatorMobile: canViewOwnerDetails && options.exposeCreatorContact
+      ? property.creatorMobile ?? null
+      : null,
+  };
+}
+
 /**
  * تنها نقطه ساخت Context و تصمیم‌گیری درباره داده‌های خصوصی ملک.
  * این تابع داده یا رابطه را از دیتابیس نمی‌خواند؛ فقط اطلاعات آماده‌شده
