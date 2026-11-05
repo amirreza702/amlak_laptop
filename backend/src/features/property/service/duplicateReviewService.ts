@@ -241,7 +241,7 @@ export const reviewDuplicateService = async (
   return reviewDuplicate(
     data.duplicateReviewId,
     data.decision,
-    data.reviewedBy,
+    actor.id,
     data.notes
   );
 };
