@@ -4,7 +4,7 @@ import { getPropertySimilaritySummaryService, DUPLICATE_MATCHING_THRESHOLD } fro
 import { createPendingDuplicateReviewsForProperty } from "../../property/repository/duplicateReviewRepository";
 import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
 import { findPropertyById } from "../../property/repository/propertyRepository";
-import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 export async function getHashtiPropertyRecords(
