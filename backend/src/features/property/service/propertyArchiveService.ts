@@ -69,8 +69,9 @@ async function requireArchivePermission(
   propertyId: string,
   actor: { id: string; role: string },
   action: "ARCHIVE" | "VIEW_ARCHIVE" | "RESTORE",
+  db?: Prisma.TransactionClient,
 ) {
-  const property = await findPropertyAuthorizationContextById(propertyId);
+  const property = await findPropertyAuthorizationContextById(propertyId, db);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, property);
   if (!allowed) throw new Error("PROPERTY_ARCHIVE_FORBIDDEN");
@@ -78,10 +79,11 @@ async function requireArchivePermission(
 }
 
 export const archivePropertyService = async (data: ArchivePropertyInput): Promise<PropertyArchive> => {
-  await requireArchivePermission(data.propertyId, data.actor, "ARCHIVE");
-  const result = await prisma.$transaction((tx) =>
-    archivePropertyInTransaction(tx, data.propertyId, data.archivedReason),
-  );
+  const result = await prisma.$transaction(async (tx) => {
+    // مجوز در همان تراکنش و با Context تازه بررسی می‌شود تا بین بررسی و آرشیو فاصله ناامن ایجاد نشود.
+    await requireArchivePermission(data.propertyId, data.actor, "ARCHIVE", tx);
+    return archivePropertyInTransaction(tx, data.propertyId, data.archivedReason);
+  });
   if (!result) throw new Error("این ملک قبلاً آرشیو شده است.");
   await removeArchivedPropertyMediaFiles(result.mediaIds);
   return result.archive;
@@ -101,13 +103,13 @@ export const restorePropertyService = async (
   propertyId: string,
   actor: { id: string; role: string },
 ): Promise<PropertyArchive> => {
-  const property = await requireArchivePermission(propertyId, actor, "RESTORE");
-  if (property.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
-
-  const archive = await findPropertyArchive(propertyId);
-  if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
-
   return prisma.$transaction(async (tx) => {
+    const property = await requireArchivePermission(propertyId, actor, "RESTORE", tx);
+    if (property.deletedAt) throw new Error("ملک حذف‌شده قابل بازیابی نیست.");
+
+    const archive = await tx.propertyArchive.findUnique({ where: { propertyId } });
+    if (!archive) throw new Error("آرشیو این ملک پیدا نشد.");
+
     await tx.property.update({ where: { id: propertyId }, data: { isActive: true } });
     await tx.propertyHistory.create({
       data: {
