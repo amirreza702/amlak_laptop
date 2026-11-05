@@ -53,7 +53,7 @@ export async function createCustomerSearchRequestController(
     const result = await createCustomerSearchRequest(
       profile.id,
       req.body,
-      { id: user.id, role: "CUSTOMER", mobile: user.mobile }
+      { ...user, mobile: user.mobile }
     );
 
     return res.status(201).json(result);
@@ -82,7 +82,7 @@ export async function createAgentSearchRequestController(req: Request, res: Resp
     const result = await createCustomerSearchRequest(
       null,
       req.body,
-      { id: user.id, role: "AGENT", mobile: user.mobile, isVerifiedAgent }
+      { ...user, mobile: user.mobile, isVerifiedAgent }
     );
     return res.status(201).json(result);
   } catch (error: unknown) {
@@ -106,9 +106,9 @@ export async function getCustomerSearchRequestController(
   res: Response
 ) {
   try {
-    const userId = (req as AuthenticatedRequest).user?.id;
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const result = await getCustomerSearchRequest(req.params.customerId, req.params.requestId, userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerSearchRequest(req.params.customerId, req.params.requestId, actor);
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -130,9 +130,9 @@ export async function getCustomerSearchRequestsController(
   res: Response
 ) {
   try {
-    const userId = (req as AuthenticatedRequest).user?.id;
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-    const result = await getCustomerSearchRequests(req.params.customerId, userId);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerSearchRequests(req.params.customerId, actor);
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -155,12 +155,13 @@ export async function closeCustomerSearchRequestController(
   res: Response
 ) {
   try {
-    const result =
-      await closeCustomerSearchRequest(
-        req.params.customerId,
-        req.params.requestId,
-        (req as AuthenticatedRequest).user?.id ?? ""
-      );
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await closeCustomerSearchRequest(
+      req.params.customerId,
+      req.params.requestId,
+      actor
+    );
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -220,13 +221,14 @@ export async function updateCustomerSearchRequestController(
   res: Response
 ) {
   try {
-    const result =
-      await updateCustomerSearchRequest(
-        req.params.customerId,
-        req.params.requestId,
-        (req as AuthenticatedRequest).user?.id ?? "",
-        req.body
-      );
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await updateCustomerSearchRequest(
+      req.params.customerId,
+      req.params.requestId,
+      actor,
+      req.body
+    );
 
     return res.status(200).json(result);
   } catch (error: any) {
