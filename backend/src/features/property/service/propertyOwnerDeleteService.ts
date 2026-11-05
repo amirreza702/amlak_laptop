@@ -70,7 +70,7 @@ export async function deleteOwnPropertyService(propertyId: string, actor: { id: 
 
   const allowed = await authorizePropertyAction(
     actor,
-    "MANAGE",
+    "DELETE_AS_OWNER",
     property,
   );
   if (!allowed) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
@@ -100,7 +100,7 @@ export async function deleteAgentManagedOwnerPropertyService(propertyId: string,
   if (property.deletedAt) throw new Error("PROPERTY_ALREADY_DELETED");
   const allowed = await authorizePropertyAction(
     actor,
-    "MANAGE",
+    "DELETE_AS_AGENT_CREATOR",
     property,
   );
   if (!allowed) throw new Error("PROPERTY_NOT_REGISTERED_BY_AGENT");
@@ -124,7 +124,7 @@ export async function reactivateOwnPropertyService(propertyId: string, actor: { 
   if (property.deletedAt) throw new Error("PROPERTY_PERMANENTLY_DELETED");
   const allowed = await authorizePropertyAction(
     actor,
-    "MANAGE",
+    "REACTIVATE_AS_OWNER",
     property,
   );
   if (!allowed) throw new Error("PROPERTY_NOT_OWNED_BY_USER");
