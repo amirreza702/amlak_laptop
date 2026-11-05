@@ -26,8 +26,13 @@ export async function getPublishedPublicPropertyById(id: string) {
     ? firstRegistrantRelation.agent
     : null;
   const approvedAgentRelation = agents.find(
-    (relation) => relation.status === "ACTIVE" && relation.approvedByOwner &&
-      relation.agent.verificationStatus === "VERIFIED" && relation.agent.user.isActive === true
+    (relation) =>
+      relation.status === "ACTIVE" &&
+      relation.approvedByOwner &&
+      Boolean(relation.approvedByOwnerId) &&
+      owners.some((ownerRelation) => ownerRelation.ownerId === relation.approvedByOwnerId) &&
+      relation.agent.verificationStatus === "VERIFIED" &&
+      relation.agent.user.isActive === true
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
   const primaryOwner = publicOwners[0]?.owner?.user.isActive === true
