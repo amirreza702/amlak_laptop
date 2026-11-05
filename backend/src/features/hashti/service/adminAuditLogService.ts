@@ -4,6 +4,7 @@ import {
   type AdminAuditLogQuery,
   type CreateAdminAuditLogInput,
 } from "../repository/adminAuditLogRepository";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export const writeAdminAuditLogService = async (
   input: CreateAdminAuditLogInput
