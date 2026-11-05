@@ -103,7 +103,7 @@ export const findOwnerRequestForAccess = (requestId: string, agentId: string) =>
       owner: { select: { firstName: true, lastName: true } },
       property: {
         select: {
-          id: true, registrationSource: true, createdByUserId: true, deletedAt: true,
+          id: true, isActive: true, registrationSource: true, createdByUserId: true, deletedAt: true,
           address: true, postalCode: true, city: true, district: true,
           listing: { select: { status: true, confirmUntil: true } },
           owners: {
