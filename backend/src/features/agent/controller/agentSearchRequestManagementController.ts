@@ -4,7 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { authorize } from "../../../shared/authorization/authorization.core";
 
-function userId(req: Request) { return (req as AuthenticatedRequest).user?.id; }
+function getActor(req: Request) { return (req as AuthenticatedRequest).user; }
 async function isVerifiedAgentUser(id: string): Promise<boolean> {
  const agent = await prisma.agent.findUnique({ where: { userId: id }, select: { verificationStatus: true } });
  return agent?.verificationStatus === "VERIFIED";
@@ -16,7 +16,8 @@ const transactionTypes = new Set(Object.values(TransactionType));
 /** Update/delete are scoped in SQL to the authenticated agent creator. */
 export async function updateOwnAgentSearchRequestController(req: Request, res: Response) {
  try {
-  const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
+  const actor = getActor(req); if (!actor) return res.status(401).json({ message: "Authentication required" });
+  const id = actor.id;
   const { transactionType, propertyType, city, budget, description, requesterFirstName, requesterLastName, requesterMobile } = req.body ?? {};
   if ((transactionType !== undefined && !transactionTypes.has(transactionType)) || (propertyType !== undefined && !propertyTypes.has(propertyType)) || (city !== undefined && (typeof city !== "string" || !city.trim())) || (budget !== undefined && (!Number.isFinite(Number(budget)) || Number(budget) < 0)) || (description !== undefined && description !== null && typeof description !== "string") || (requesterFirstName !== undefined && requesterFirstName !== null && typeof requesterFirstName !== "string") || typeof requesterLastName !== "string" || !requesterLastName.trim() || typeof requesterMobile !== "string" || !requesterMobile.trim()) return res.status(400).json({ message: "نام خانوادگی و شماره تماس مشتری الزامی است." });
   const isVerifiedAgent = await isVerifiedAgentUser(id);
@@ -24,7 +25,7 @@ export async function updateOwnAgentSearchRequestController(req: Request, res: R
   const existing = await prisma.propertySearchRequest.findFirst({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!existing) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
   const allowed = await authorize("searchRequest", "MANAGE_OWN", {
-   actor: { id, role: "AGENT" },
+   actor,
    resource: { id: existing.id, status: existing.status, data: { isCreator: existing.createdByUserId === id, createdByRole: existing.createdByRole, status: existing.status, isVerifiedAgent } },
   });
   if (!allowed) return res.status(403).json({ message: "Search request management denied" });
@@ -35,13 +36,14 @@ export async function updateOwnAgentSearchRequestController(req: Request, res: R
 
 export async function deleteOwnAgentSearchRequestController(req: Request, res: Response) {
  try {
-  const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
+  const actor = getActor(req); if (!actor) return res.status(401).json({ message: "Authentication required" });
+  const id = actor.id;
   const isVerifiedAgent = await isVerifiedAgentUser(id);
   if (!isVerifiedAgent) return res.status(403).json({ message: "Agent verification is required" });
   const existing = await prisma.propertySearchRequest.findFirst({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!existing) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
   const allowed = await authorize("searchRequest", "MANAGE_OWN", {
-   actor: { id, role: "AGENT" },
+   actor,
    resource: { id: existing.id, status: existing.status, data: { isCreator: existing.createdByUserId === id, createdByRole: existing.createdByRole, status: existing.status, isVerifiedAgent } },
   });
   if (!allowed) return res.status(403).json({ message: "Search request management denied" });
@@ -53,10 +55,11 @@ export async function deleteOwnAgentSearchRequestController(req: Request, res: R
 /** همه درخواست‌های جست‌وجو برای مشاور؛ بدون افشای شناسه داخلی ثبت‌کننده. */
 export async function getAllAgentSearchRequestsController(req: Request, res: Response) {
  try {
-  const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
+  const actor = getActor(req); if (!actor) return res.status(401).json({ message: "Authentication required" });
+  const id = actor.id;
   const isVerifiedAgent = await isVerifiedAgentUser(id);
   const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
-   actor: { id, role: "AGENT" },
+   actor,
    resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent } },
   });
   if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
