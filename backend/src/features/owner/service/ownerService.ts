@@ -147,7 +147,10 @@ const shapeOwnerPropertyRecords = async (
   // نمایش شماره مشاور همچنان تابع رابطه همکاری پذیرفته‌شده است؛
   // تصمیم محرمانگی داده‌های ملک و مالک از Policy مرکزی می‌آید.
   const approvedAgent = agents.find((relation) =>
-    relation.status === "ACTIVE" && relation.approvedByOwner
+    relation.status === "ACTIVE" &&
+    relation.approvedByOwner &&
+    relation.agent.verificationStatus === "VERIFIED" &&
+    relation.agent.user.isActive === true
   ) ?? null;
   const ownerApprovedThisAgent = Boolean(approvedAgent && ownerAgentRequests.some((request) =>
     request.responses.some((response) => response.agentId === approvedAgent.agentId)
@@ -166,12 +169,19 @@ const shapeOwnerPropertyRecords = async (
     property: {
       ...safeProperty,
       agents: record.property.registrationSource === "AGENT"
-        ? agents.filter((relation) => relation.isFirstRegistrant && relation.status === "ACTIVE")
+        ? agents.filter((relation) =>
+            relation.isFirstRegistrant &&
+            relation.status === "ACTIVE" &&
+            relation.agent.verificationStatus === "VERIFIED" &&
+            relation.agent.user.isActive === true
+          )
         : agents.map((relation) => ({
             ...relation,
             agent: {
               ...relation.agent,
-              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner && canViewApprovedAgentContact ? relation.agent.user.mobile : "" },
+              user: { mobile: relation.status === "ACTIVE" && relation.approvedByOwner &&
+                relation.agent.verificationStatus === "VERIFIED" && relation.agent.user.isActive === true &&
+                canViewApprovedAgentContact ? relation.agent.user.mobile : "" },
             },
           })),
     },
