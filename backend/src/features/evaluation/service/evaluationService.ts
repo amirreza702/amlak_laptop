@@ -707,6 +707,13 @@ export async function getEvaluationStatusService(
   target: { agentId?: string; propertyId?: string },
 ) {
   if (!target.agentId && !target.propertyId) throw new Error("Evaluation target is required");
+  const evaluator = await findEvaluatorUserById(evaluatorUserId);
+  if (!evaluator || !evaluator.isActive) throw new Error("Evaluation authorization denied");
+  const allowed = await authorize("evaluation", "READ_STATUS", {
+    actor: { id: evaluator.id, role: evaluator.role, isActive: evaluator.isActive },
+    resource: { data: { type } },
+  });
+  if (!allowed) throw new Error("Evaluation authorization denied");
   const lookupTarget = type === "OWNER_TO_AGENT" ? { agentId: target.agentId } : target;
   return findEvaluationByEvaluatorAndTarget(evaluatorUserId, type, lookupTarget);
 }
