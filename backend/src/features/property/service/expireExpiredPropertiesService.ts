@@ -40,6 +40,22 @@ export async function expireExpiredProperties(input: {
     if (!property.listing) continue;
 
     const changed = await prisma.$transaction(async (tx) => {
+      if (input.performedBy) {
+        const freshActor = await tx.user.findUnique({
+          where: { id: input.performedBy },
+          select: { id: true, role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
+        });
+        const freshAllowed = Boolean(freshActor) && await authorize("admin", "EXPIRE_LISTING", {
+          actor: { id: freshActor!.id, role: freshActor!.role, isActive: freshActor!.isActive },
+          resource: { data: {
+            isActive: freshActor!.isActive,
+            isSuperAdmin: freshActor!.isSuperAdmin,
+            permissions: freshActor!.adminPermissions,
+          } },
+        });
+        if (!freshAllowed) throw new Error("HASHTI_PERMISSION_REQUIRED");
+      }
+
       const result = await tx.propertyListing.updateMany({
         where: { id: property.listing!.id, status: ListingStatus.PUBLISHED },
         data: { status: ListingStatus.EXPIRED, expiredAt: now },
