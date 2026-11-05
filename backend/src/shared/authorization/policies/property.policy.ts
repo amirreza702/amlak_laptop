@@ -72,6 +72,9 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isHashti;
   }
 
+  if (action === "DELETE_AS_OWNER" || action === "REACTIVATE_AS_OWNER") return isOwner;
+  if (action === "DELETE_AS_AGENT_CREATOR") return context.actor.role === "AGENT" && isCreator;
+
   if (action === "ARCHIVE") return isHashti;
   if (action === "VIEW_ARCHIVE") return isHashti || isOwner;
   if (action === "RESTORE") return isHashti || isOwner;
