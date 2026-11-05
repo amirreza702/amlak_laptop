@@ -94,7 +94,7 @@ export async function listOwners(data: { search?: string; isActive?: boolean; pa
 }
 
 export async function getOwner(ownerId: string) {
-  return prisma.owner.findUnique({ where: { id: ownerId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, properties: { include: { property: { select: { id: true, city: true, district: true, address: true, status: true } } } }, _count: { select: { properties: true, evaluations: true } } } });
+  return prisma.owner.findUnique({ where: { id: ownerId }, include: { user: { select: { id: true, mobile: true, role: true, isActive: true, createdAt: true, updatedAt: true } }, properties: { include: { property: { select: { id: true, city: true, district: true, status: true } } } }, _count: { select: { properties: true, evaluations: true } } } });
 }
 
 export async function listAgents(data: { search?: string; isActive?: boolean; isVerified?: boolean; page: number; limit: number }) {
