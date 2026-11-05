@@ -41,8 +41,10 @@ export async function findManagedUsers(query: ManagedUserQuery) {
   const dateRange = parsedDate && !Number.isNaN(parsedDate.getTime())
     ? { gte: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()), lt: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1) }
     : undefined;
+  const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT] as const;
+  if (query.role && !visibleRoles.includes(query.role)) throw new Error("INVALID_ROLE");
   const where: Prisma.UserWhereInput = {
-    ...(query.role ? { role: query.role } : {}),
+    role: query.role ?? { in: [...visibleRoles] },
     ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
     ...(search ? {
       OR: [
@@ -79,8 +81,7 @@ export async function findManagedUsers(query: ManagedUserQuery) {
         customer: { select: { id: true, firstName: true, lastName: true } },
         owner: { select: { id: true, firstName: true, lastName: true } },
         agent: { select: {
-          id: true, firstName: true, lastName: true, agencyName: true, address: true,
-          verificationStatus: true, verificationReviewedAt: true, verificationNotes: true,
+          id: true, firstName: true, lastName: true, agencyName: true,
         } },
       },
     }),
@@ -89,13 +90,17 @@ export async function findManagedUsers(query: ManagedUserQuery) {
   return { users: rows, total };
 }
 
+export async function findManagedUserRole(userId: string) {
+  return prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+}
+
 export async function updateManagedUserStatus(input: {
   userId: string; isActive: boolean; reason: string; actorUserId: string; actorMobile: string;
 }) {
   return prisma.$transaction(async (tx) => {
     const actor = await tx.user.findUnique({
       where: { id: input.actorUserId },
-      select: { role: true, isActive: true, isSuperAdmin: true },
+      select: { role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
     });
     if (!actor || actor.role !== UserRole.HASHTI || !actor.isActive) {
       throw new Error("HASHTI_PERMISSION_REQUIRED");
@@ -106,17 +111,14 @@ export async function updateManagedUserStatus(input: {
       select: { id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true },
     });
     if (!current) throw new Error("USER_NOT_FOUND");
-    if (current.role === UserRole.HASHTI && !actor.isSuperAdmin) {
+    if (current.role === UserRole.HASHTI && !actor.isSuperAdmin && !actor.adminPermissions.includes("STAFF_MANAGE")) {
       throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
+    }
+    if (current.isSuperAdmin && !input.isActive) {
+      throw new Error("SUPER_ADMIN_CANNOT_BE_DISABLED");
     }
     if (current.id === input.actorUserId) throw new Error("CANNOT_CHANGE_OWN_STATUS");
 
-    if (!input.isActive && current.isSuperAdmin && current.isActive) {
-      const others = await tx.user.count({
-        where: { isSuperAdmin: true, isActive: true, id: { not: current.id } },
-      });
-      if (others === 0) throw new Error("LAST_SUPER_ADMIN_REQUIRED");
-    }
     if (current.isActive === input.isActive) return { user: current, changed: false };
 
     const updated = await tx.user.update({
