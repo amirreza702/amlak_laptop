@@ -51,6 +51,7 @@ export async function createOwnerAgentRequestService(
   actor: AuthorizationActor,
   input: { propertyId?: unknown; description?: unknown },
 ) {
+  const userId = actor.id;
   const owner = await findOwnerProfileByUserId(userId);
   if (!owner) throw new Error("OWNER_PROFILE_NOT_FOUND");
 
@@ -100,7 +101,7 @@ export async function closeOwnerAgentRequestService(actor: AuthorizationActor, r
   if (!request) throw new Error("Active owner request not found");
 
   const allowed = await authorizeRequest(
-    { id: userId, role: "OWNER", isActive: true },
+    actor,
     "CLOSE",
     request,
     { isOwner: request.ownerId === owner.id },
@@ -119,7 +120,7 @@ export async function getActiveOwnerAgentRequestsService(actor: AuthorizationAct
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
   const requests = await findActiveOwnerAgentRequests(agent.id);
-  const actor = actor;
+  
   const authorized = await Promise.all(requests.map(async (request) => {
     const allowed = await authorizeRequest(actor, "LIST_AGENT", request, {
       isAgent: true,
@@ -142,6 +143,7 @@ export async function respondToOwnerAgentRequestService(
   requestId: string,
   response: "ACCEPTED" | "REJECTED",
 ) {
+  const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
