@@ -58,7 +58,7 @@ import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
-import { getPropertyVisibility } from "./propertyAuthorizationService";
+import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
@@ -347,8 +347,6 @@ export async function getPropertyById(id: string) {
  */
 export async function getPropertyDetailsForActor(id: string, actor: AuthorizationActor) {
   const property = await getPropertyById(id);
-  if (actor.role === "HASHTI") return property;
-
   const visibility = await getPropertyVisibility(actor, property);
   const owners = property.owners ?? [];
   const agents = property.agents ?? [];
@@ -393,39 +391,31 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
     ? createdByUser?.agent ?? null
     : null;
 
+  const ownerDetails = actor.role === "OWNER"
+    ? ownOwner?.owner
+    : isApprovedAgent
+      ? approvedOwnerRelation?.owner
+      : visibleOwner?.owner;
+
+  const safeProperty = projectPropertyForActor(baseProperty, visibility, {
+    owner: ownerDetails ? {
+      firstName: ownerDetails.firstName,
+      lastName: ownerDetails.lastName,
+      mobile: ownerDetails.user.mobile,
+    } : null,
+    exposeCreatorContact: visibility.canViewOwnerDetails,
+  });
+
   return {
-    ...baseProperty,
-    address: visibility.canViewExactLocation
-      ? property.address
-      : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
-    latitudeExact: visibility.canViewExactLocation
-      ? property.latitudeExact
-      : property.listing?.latitudePublic ?? null,
-    longitudeExact: visibility.canViewExactLocation
-      ? property.longitudeExact
-      : property.listing?.longitudePublic ?? null,
-    postalCode: visibility.canViewExactLocation ? property.postalCode : null,
-    ownerFirstName: actor.role === "OWNER"
-      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.firstName ?? null : null)
-      : visibility.canViewOwnerDetails
-        ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : property.ownerFirstName ?? visibleOwner?.owner.firstName) ?? null
-        : null,
-    ownerLastName: actor.role === "OWNER"
-      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.lastName ?? null : null)
-      : visibility.canViewOwnerDetails
-        ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : property.ownerLastName ?? visibleOwner?.owner.lastName) ?? null
-        : null,
-    ownerMobile: actor.role === "OWNER"
-      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.user.mobile ?? null : null)
-      : visibility.canViewOwnerDetails
-        ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : property.ownerMobile ?? visibleOwner?.owner.user.mobile) ?? null
-        : null,
-    registrantFirstName: registrant?.firstName ?? null,
-    registrantLastName: registrant?.lastName ?? null,
-    registrantMobile: property.registrationSource === "AGENT" ? property.creatorMobile : null,
-    approvedAgentFirstName: visibleApprovedAgent?.firstName ?? null,
-    approvedAgentLastName: visibleApprovedAgent?.lastName ?? null,
-    approvedAgentMobile: visibleApprovedAgent?.user.mobile ?? null,
+    ...safeProperty,
+    registrantFirstName: visibility.canViewOwnerDetails ? registrant?.firstName ?? null : null,
+    registrantLastName: visibility.canViewOwnerDetails ? registrant?.lastName ?? null : null,
+    registrantMobile: visibility.canViewOwnerDetails && property.registrationSource === "AGENT"
+      ? property.creatorMobile
+      : null,
+    approvedAgentFirstName: visibility.canViewOwnerDetails ? visibleApprovedAgent?.firstName ?? null : null,
+    approvedAgentLastName: visibility.canViewOwnerDetails ? visibleApprovedAgent?.lastName ?? null : null,
+    approvedAgentMobile: visibility.canViewOwnerDetails ? visibleApprovedAgent?.user.mobile ?? null : null,
   };
 }
 
