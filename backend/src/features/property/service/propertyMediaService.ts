@@ -87,6 +87,7 @@ function stripWebpMetadata(bytes: Buffer): Buffer {
       }
       hasExtendedHeader = true;
       const safeHeader = Buffer.from(payload);
+      if ((safeHeader[0] & 0x02) !== 0) throw new Error("بارگذاری تصویر متحرک مجاز نیست.");
       // Remove ICC profile, EXIF and XMP flags; their chunks are not retained.
       safeHeader[0] = safeHeader[0] & ~0x2c;
       safeChunks.push(makeWebpChunk(type, safeHeader));
