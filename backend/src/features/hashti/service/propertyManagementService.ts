@@ -4,18 +4,34 @@ import { getPropertySimilaritySummaryService, DUPLICATE_MATCHING_THRESHOLD } fro
 import { createPendingDuplicateReviewsForProperty } from "../../property/repository/duplicateReviewRepository";
 import { updatePropertyListingStatus } from "../../property/service/propertyListingStatusService";
 import { findPropertyById } from "../../property/repository/propertyRepository";
+import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
-export async function getHashtiPropertyRecords(input: {
-  status?: ListingStatus;
-  query?: string;
-  limit: number;
-  offset: number;
-}) {
+export async function getHashtiPropertyRecords(
+  input: {
+    status?: ListingStatus;
+    query?: string;
+    limit: number;
+    offset: number;
+  },
+  actor: AuthorizationActor,
+) {
   const result = await findHashtiPropertyRecords(input);
-  const properties = result.properties.map(({ _count, ...record }) => ({
-    ...record,
-    requiresDuplicateReview: _count.duplicateReviewsAsPrimary > 0,
-    maximumSimilarityScore: null,
+  const properties = await Promise.all(result.properties.map(async ({ _count, ...record }) => {
+    // حتی پنل هشتی نیز از همان Core عبور می‌کند؛ دسترسی گسترده هشتی
+    // نتیجه Policy است، نه دور زدن Authorization در سرویس.
+    const visibility = await getPropertyVisibility(actor, record);
+    const safeProperty = projectPropertyForActor(record, visibility, {
+      owners: record.owners,
+      exposeCreatorContact: visibility.canViewRegistrantDetails,
+      creatorMobile: record.creatorMobile,
+    });
+
+    return {
+      ...safeProperty,
+      requiresDuplicateReview: _count.duplicateReviewsAsPrimary > 0,
+      maximumSimilarityScore: null,
+    };
   }));
 
   return { ...result, properties };
