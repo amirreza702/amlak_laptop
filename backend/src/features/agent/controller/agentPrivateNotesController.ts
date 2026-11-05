@@ -59,7 +59,7 @@ export async function upsertMyPrivateNoteController(req: Request, res: Response)
     if (!agent) return res.status(404).json({ message: "Agent profile not found" });
 
     const allowed = await authorize("privateNote", note.trim() ? "UPSERT_OWN" : "DELETE_OWN", {
-      actor: { id: userId, role: "AGENT" },
+      actor,
       resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
     });
     if (!allowed) return res.status(403).json({ message: "Private note access denied" });
@@ -139,7 +139,7 @@ export async function upsertAgentPrivateNoteAsAdminController(req: Request, res:
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
     const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", note.trim() ? "UPSERT_ANY" : "DELETE_ANY", {
-      actor: { id: userId, role: admin?.role ?? "HASHTI", isActive: admin?.isActive },
+      actor: { ...currentActor(req)!, isActive: admin?.isActive === true },
       resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
     });
     if (!allowed) return res.status(403).json({ message: "Super admin access required" });
