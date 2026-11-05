@@ -131,7 +131,11 @@ export async function authorizePropertyAction(
   actor: AuthorizationActor,
   action: AuthorizationAction,
   property: PropertyAuthorizationSubject,
-  options: { allowAgentCreator?: boolean; expectedApproverOwnerId?: string } = {},
+  options: {
+    allowAgentCreator?: boolean;
+    expectedApproverOwnerId?: string;
+    allowApprovedAgentContact?: boolean;
+  } = {},
 ): Promise<boolean> {
   const owners = property.owners ?? [];
   const agents = property.agents ?? [];
@@ -180,6 +184,7 @@ export async function authorizePropertyAction(
         isAllowedAgentCreator: Boolean(options.allowAgentCreator && isCreator),
         isRegisteredByCurrentAgent: isCreator,
         isAgentRegisteredProperty: property.registrationSource === "AGENT",
+        isApprovedAgentContactAllowed: Boolean(options.allowApprovedAgentContact),
       },
     },
   });
