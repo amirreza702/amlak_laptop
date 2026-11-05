@@ -27,6 +27,22 @@ export async function requireAdminServicePermission(actorUserId: string, permiss
   if (!allowed) throw new Error("ADMIN_PERMISSION_FORBIDDEN");
 }
 
+export async function requireSuperAdminServicePermission(actorUserId: string) {
+  const account = await prisma.user.findUnique({
+    where: { id: actorUserId },
+    select: { role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
+  });
+  const allowed = Boolean(account) && await authorize("admin", "SUPER_ADMIN", {
+    actor: { id: actorUserId, role: account!.role, isActive: account!.isActive },
+    resource: { data: {
+      isActive: account!.isActive,
+      isSuperAdmin: account!.isSuperAdmin,
+      permissions: account!.adminPermissions,
+    } },
+  });
+  if (!allowed) throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
+}
+
 function pageArgs(page: number, limit: number) {
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new Error("INVALID_PAGINATION");
