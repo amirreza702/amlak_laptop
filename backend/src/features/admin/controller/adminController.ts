@@ -33,6 +33,7 @@ function sendError(res: Response, error: unknown) {
     SUPER_ADMIN_ALREADY_EXISTS: [409, "The initial super-admin has already been created"],
     STAFF_MOBILE_EXISTS: [409, "A user with this mobile number already exists"],
     BOOTSTRAP_FORBIDDEN: [403, "Bootstrap secret is invalid or bootstrap is disabled"],
+    ADMIN_PERMISSION_FORBIDDEN: [403, "You do not have the required admin permission"],
   };
   const found = known[message];
   if (found) return res.status(found[0]).json({ message: found[1] });
@@ -140,7 +141,7 @@ export async function setOwnerStatusController(req: Request, res: Response) {
     const actorUserId = actorId(req);
     if (!actorUserId) return res.status(401).json({ message: "Authentication required" });
     if (typeof req.body?.isActive !== "boolean") return res.status(400).json({ message: "isActive must be a boolean" });
-    const owner = await adminOwnerDetails(routeParam(req, "ownerId"));
+    const owner = await adminOwnerDetails(actorUserId, routeParam(req, "ownerId"));
     const item = await adminSetUserStatus({ actorUserId, userId: owner.user.id, isActive: req.body.isActive, reason: req.body.reason, permission: "OWNERS_MANAGE" });
     return res.status(200).json({ item });
   } catch (error) { return sendError(res, error); }
@@ -158,7 +159,7 @@ export async function setAgentStatusController(req: Request, res: Response) {
     const actorUserId = actorId(req);
     if (!actorUserId) return res.status(401).json({ message: "Authentication required" });
     if (typeof req.body?.isActive !== "boolean") return res.status(400).json({ message: "isActive must be a boolean" });
-    const agent = await adminAgentDetails(routeParam(req, "agentId"));
+    const agent = await adminAgentDetails(actorUserId, routeParam(req, "agentId"));
     const item = await adminSetUserStatus({ actorUserId, userId: agent.user.id, isActive: req.body.isActive, reason: req.body.reason, permission: "AGENTS_MANAGE" });
     return res.status(200).json({ item });
   } catch (error) { return sendError(res, error); }
