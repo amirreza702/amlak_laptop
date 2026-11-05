@@ -31,6 +31,10 @@ export async function createEvaluationController(
       });
     }
 
+    if (error.message === "Evaluation authorization denied") {
+      return res.status(403).json({ message: "Evaluation access is not allowed" });
+    }
+
     if (
       error.message ===
       "Evaluator user is inactive"
