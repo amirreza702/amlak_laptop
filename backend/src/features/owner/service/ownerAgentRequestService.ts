@@ -146,26 +146,32 @@ export async function respondToOwnerAgentRequestService(
   requestId: string,
   response: "ACCEPTED" | "REJECTED",
 ) {
-  const userId = actor.id;
-  const agent = await findAgentProfileByUserId(userId);
-  if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
-
   return prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: actor.id },
+      select: { id: true, role: true, isActive: true },
+    });
+    if (!user || user.role !== "AGENT" || user.isActive !== true || actor.role !== "AGENT") {
+      throw new Error("AGENT_NOT_AUTHORIZED_FOR_OWNER_REQUEST");
+    }
+    const agent = await tx.agent.findUnique({
+      where: { userId: user.id },
+      select: { id: true, verificationStatus: true },
+    });
+    if (!agent || agent.verificationStatus !== "VERIFIED") {
+      throw new Error("AGENT_NOT_AUTHORIZED_FOR_OWNER_REQUEST");
+    }
+    const freshActor = { id: user.id, role: user.role, isActive: user.isActive };
     const request = await findOwnerAgentRequestForResponse(requestId, tx);
     if (!request) throw new Error("ACTIVE_OWNER_REQUEST_NOT_FOUND");
 
-    const allowed = await authorizeRequest(
-      actor,
-      "RESPOND",
-      request,
-      {
-        isAgent: true,
-        isVerifiedAgent: agent.verificationStatus === "VERIFIED",
-        isPropertyActive: request.property.isActive,
-        isPropertyDeleted: Boolean(request.property.deletedAt),
-        isPropertyExpired: isExpiredListing(request.property.listing),
-      },
-    );
+    const allowed = await authorizeRequest(freshActor, "RESPOND", request, {
+      isAgent: true,
+      isVerifiedAgent: true,
+      isPropertyActive: request.property.isActive,
+      isPropertyDeleted: Boolean(request.property.deletedAt),
+      isPropertyExpired: isExpiredListing(request.property.listing),
+    });
     if (!allowed) throw new Error("AGENT_NOT_AUTHORIZED_FOR_OWNER_REQUEST");
 
     const relation = await tx.propertyAgent.findUnique({
