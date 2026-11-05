@@ -1,10 +1,7 @@
 /**
  * Shared Authorization types.
- *
- * این فایل فقط قرارداد مشترک Core و Policyها را تعریف می‌کند.
- * هیچ وابستگی به Express، Prisma یا Feature خاصی ندارد.
+ * Core and Policies remain independent from Express and Prisma.
  */
-
 export type AuthorizationResource =
   | "property"
   | "owner"
@@ -12,7 +9,10 @@ export type AuthorizationResource =
   | "customer"
   | "searchRequest"
   | "notification"
-  | "ownerAgentRequest";
+  | "ownerAgentRequest"
+  | "roleAccess"
+  | "admin"
+  | "privateNote";
 
 export type AuthorizationAction = string;
 
@@ -22,16 +22,9 @@ export interface AuthorizationActor {
   isActive?: boolean;
 }
 
-export interface AuthorizationContext<
-  TResource = unknown,
-  TRelationship = unknown,
-> {
+export interface AuthorizationContext<TResource = unknown, TRelationship = unknown> {
   actor: AuthorizationActor;
-  resource?: {
-    id?: string;
-    status?: string;
-    data?: TResource;
-  };
+  resource?: { id?: string; status?: string; data?: TResource };
   relationship?: TRelationship;
   metadata?: Record<string, unknown>;
 }
