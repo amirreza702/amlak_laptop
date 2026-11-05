@@ -41,9 +41,10 @@ export const createCustomerPropertyFavorite = async (
  */
 export const findCustomerPropertyFavorite = async (
   customerId: string,
-  propertyId: string
+  propertyId: string,
+  db: DatabaseClient = prisma,
 ): Promise<CustomerPropertyFavorite | null> => {
-  return prisma.customerPropertyFavorite.findUnique({
+  return db.customerPropertyFavorite.findUnique({
     where: {
       customerId_propertyId: {
         customerId,
@@ -75,9 +76,10 @@ export const deleteCustomerPropertyFavorite = async (
  * دریافت تمام علاقه‌مندی‌های یک مشتری
  */
 export const findCustomerPropertyFavorites = async (
-  customerId: string
+  customerId: string,
+  db: DatabaseClient = prisma,
 ): Promise<CustomerPropertyFavorite[]> => {
-  return prisma.customerPropertyFavorite.findMany({
+  return db.customerPropertyFavorite.findMany({
     where: {
       customerId,
       property: { is: { isActive: true } },
@@ -89,8 +91,8 @@ export const findCustomerPropertyFavorites = async (
 };
 
 /** جست‌وجوی مشاوران تأییدشده‌ای که هنوز در علاقه‌مندی این مشتری نیستند. */
-export const searchAgentsForCustomerFavorites = (customerId: string, query: string) =>
-  prisma.agent.findMany({
+export const searchAgentsForCustomerFavorites = (customerId: string, query: string, db: DatabaseClient = prisma) =>
+  db.agent.findMany({
     where: {
       verificationStatus: "VERIFIED",
       user: { isActive: true },
@@ -108,27 +110,27 @@ export const searchAgentsForCustomerFavorites = (customerId: string, query: stri
 
 
 /** ثبت علاقه‌مندی مشاور */
-export const createCustomerAgentFavorite = (customerId: string, agentId: string) =>
-  prisma.customerAgentFavorite.create({
+export const createCustomerAgentFavorite = (customerId: string, agentId: string, db: DatabaseClient = prisma) =>
+  db.customerAgentFavorite.create({
     data: { customerId, agentId },
     include: { agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, verificationStatus: true } } },
   });
 
 /** یافتن علاقه‌مندی مشاور */
-export const findCustomerAgentFavorite = (customerId: string, agentId: string) =>
-  prisma.customerAgentFavorite.findUnique({
+export const findCustomerAgentFavorite = (customerId: string, agentId: string, db: DatabaseClient = prisma) =>
+  db.customerAgentFavorite.findUnique({
     where: { customerId_agentId: { customerId, agentId } },
   });
 
 /** حذف علاقه‌مندی مشاور */
-export const deleteCustomerAgentFavorite = (customerId: string, agentId: string) =>
-  prisma.customerAgentFavorite.delete({
+export const deleteCustomerAgentFavorite = (customerId: string, agentId: string, db: DatabaseClient = prisma) =>
+  db.customerAgentFavorite.delete({
     where: { customerId_agentId: { customerId, agentId } },
   });
 
 /** دریافت مشاوران علاقه‌مندی‌شده مشتری */
-export const findCustomerAgentFavorites = (customerId: string) =>
-  prisma.customerAgentFavorite.findMany({
+export const findCustomerAgentFavorites = (customerId: string, db: DatabaseClient = prisma) =>
+  db.customerAgentFavorite.findMany({
     where: { customerId, agent: { user: { isActive: true } } },
     orderBy: { createdAt: "desc" },
     include: {
