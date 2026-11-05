@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PropertyType, TransactionType, UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 function userId(req: Request) { return (req as AuthenticatedRequest).user?.id; }
 function routeParam(req: Request, key: string): string { const value = req.params[key]; return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
@@ -16,6 +17,11 @@ export async function updateOwnAgentSearchRequestController(req: Request, res: R
   if ((transactionType !== undefined && !transactionTypes.has(transactionType)) || (propertyType !== undefined && !propertyTypes.has(propertyType)) || (city !== undefined && (typeof city !== "string" || !city.trim())) || (budget !== undefined && (!Number.isFinite(Number(budget)) || Number(budget) < 0)) || (description !== undefined && description !== null && typeof description !== "string") || (requesterFirstName !== undefined && requesterFirstName !== null && typeof requesterFirstName !== "string") || typeof requesterLastName !== "string" || !requesterLastName.trim() || typeof requesterMobile !== "string" || !requesterMobile.trim()) return res.status(400).json({ message: "نام خانوادگی و شماره تماس مشتری الزامی است." });
   const existing = await prisma.propertySearchRequest.findFirst({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!existing) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
+  const allowed = await authorize("searchRequest", "MANAGE_OWN", {
+   actor: { id, role: "AGENT" },
+   resource: { id: existing.id, status: existing.status, data: { isCreator: existing.createdByUserId === id, createdByRole: existing.createdByRole, status: existing.status, isVerifiedAgent: true } },
+  });
+  if (!allowed) return res.status(403).json({ message: "Search request management denied" });
   const updated = await prisma.propertySearchRequest.update({ where: { id: existing.id }, data: { ...(transactionType !== undefined ? { transactionType } : {}), ...(propertyType !== undefined ? { propertyType } : {}), ...(city !== undefined ? { city: city.trim() } : {}), ...(budget !== undefined ? { budget } : {}), ...(description !== undefined ? { description } : {}), requesterFirstName: typeof requesterFirstName === "string" ? requesterFirstName.trim() || null : null, requesterLastName: requesterLastName.trim(), requesterMobile: requesterMobile.trim() } });
   return res.status(200).json(updated);
  } catch (error) { console.error("Could not update agent search request:", error); return res.status(500).json({ message: "Internal server error" }); }
@@ -24,7 +30,14 @@ export async function updateOwnAgentSearchRequestController(req: Request, res: R
 export async function deleteOwnAgentSearchRequestController(req: Request, res: Response) {
  try {
   const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
-  const result = await prisma.propertySearchRequest.deleteMany({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
+  const existing = await prisma.propertySearchRequest.findFirst({ where: { id: routeParam(req, "requestId"), createdByUserId: id, createdByRole: UserRole.AGENT } });
+  if (!existing) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
+  const allowed = await authorize("searchRequest", "MANAGE_OWN", {
+   actor: { id, role: "AGENT" },
+   resource: { id: existing.id, status: existing.status, data: { isCreator: existing.createdByUserId === id, createdByRole: existing.createdByRole, status: existing.status, isVerifiedAgent: true } },
+  });
+  if (!allowed) return res.status(403).json({ message: "Search request management denied" });
+  const result = await prisma.propertySearchRequest.deleteMany({ where: { id: existing.id, createdByUserId: id, createdByRole: UserRole.AGENT } });
   if (!result.count) return res.status(404).json({ message: "Search request not found or not owned by this agent" });
   return res.status(204).send();
  } catch (error) { console.error("Could not delete agent search request:", error); return res.status(500).json({ message: "Internal server error" }); }
@@ -33,6 +46,11 @@ export async function deleteOwnAgentSearchRequestController(req: Request, res: R
 export async function getAllAgentSearchRequestsController(req: Request, res: Response) {
  try {
   const id = userId(req); if (!id) return res.status(401).json({ message: "Authentication required" });
+  const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
+   actor: { id, role: "AGENT" },
+   resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: true } },
+  });
+  if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
   const rows = await prisma.propertySearchRequest.findMany({
    // در ابزار مدیریت مشتریان مشاور فقط درخواست‌های باز و فعال نمایش داده می‌شوند.
    where: { status: "ACTIVE" },
