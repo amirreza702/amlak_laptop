@@ -41,7 +41,7 @@ export const findOwnerAgentRequests = (ownerId: string) =>
       responses: {
         select: {
           status: true,
-          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, user: { select: { mobile: true } } } },
+          agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, verificationStatus: true, user: { select: { mobile: true, isActive: true } } } },
         },
         orderBy: { createdAt: "asc" },
       },
