@@ -257,23 +257,36 @@ function collectFormFields(record: Record<string, unknown>): DisplayField[] {
   return fields;
 }
 
-function findCoordinates(value: unknown, depth = 0): { latitude: number; longitude: number } | null {
-  if (!value || typeof value !== "object" || Array.isArray(value) || depth > 4) return null;
-  const data = value as Record<string, unknown>;
-  const latitudeValue = data.latitudeExact ?? data.latitude ?? data.lat;
-  const longitudeValue = data.longitudeExact ?? data.longitude ?? data.lng ?? data.lon;
-  const latitude = typeof latitudeValue === "number" ? latitudeValue : Number(latitudeValue);
-  const longitude = typeof longitudeValue === "number" ? longitudeValue : Number(longitudeValue);
-  if (latitudeValue !== null && latitudeValue !== undefined && longitudeValue !== null && longitudeValue !== undefined &&
-      Number.isFinite(latitude) && Number.isFinite(longitude) &&
-      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180 &&
-      (latitude !== 0 || longitude !== 0)) {
-    return { latitude, longitude };
+type SafeMapLocation = { latitude: number; longitude: number; precision: "EXACT" | "APPROXIMATE" };
+
+function findAuthorizedMapLocation(record: Record<string, unknown>): SafeMapLocation | null {
+  // فقط فیلد صریحی که API پس از Authorization Core ساخته مجاز به نمایش است.
+  // از جست‌وجوی بازگشتی latitudeExact/lat در روابط خام خودداری می‌کنیم.
+  const property = record.property;
+  const candidates = [
+    record.mapLocation,
+    property && typeof property === "object" && !Array.isArray(property)
+      ? (property as Record<string, unknown>).mapLocation
+      : null,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) continue;
+    const location = candidate as Record<string, unknown>;
+    const latitude = typeof location.latitude === "number" ? location.latitude : Number.NaN;
+    const longitude = typeof location.longitude === "number" ? location.longitude : Number.NaN;
+    if (
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 && latitude <= 90 &&
+      longitude >= -180 && longitude <= 180 &&
+      (latitude !== 0 || longitude !== 0) &&
+      (location.precision === "EXACT" || location.precision === "APPROXIMATE")
+    ) {
+      return { latitude, longitude, precision: location.precision };
+    }
   }
-  for (const child of Object.values(data)) {
-    const found = findCoordinates(child, depth + 1);
-    if (found) return found;
-  }
+
   return null;
 }
 
@@ -283,7 +296,7 @@ function FormDetails({ record }: { record: unknown }) {
   }
 
   const data = record as Record<string, unknown>;
-  const coordinates = findCoordinates(data);
+  const coordinates = findAuthorizedMapLocation(data);
   const fields = collectFormFields(data);
 
   if (!fields.length) {
@@ -291,7 +304,7 @@ function FormDetails({ record }: { record: unknown }) {
   }
 
   return <div className="space-y-4">
-    {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label="موقعیت رکورد" />}
+    {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label={coordinates.precision === "EXACT" ? "موقعیت دقیق ملک" : "محدوده تقریبی ملک"} />}
     <dl className="grid gap-3 sm:grid-cols-2">
       {fields.map(({ key, label, value }, index) => <FormField key={key + "-" + index} fieldKey={key} label={label} value={value} />)}
     </dl>
