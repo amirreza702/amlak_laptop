@@ -15,9 +15,12 @@ export async function requireSuperAdmin(req: Request, res: Response, next: NextF
       where: { id: user.id },
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
-    const allowed = Boolean(current && current.role === UserRole.HASHTI) && await authorize("admin", "SUPER_ADMIN", {
-      actor: { id: user.id, role: current?.role ?? user.role, isActive: current?.isActive },
-      resource: { data: { isActive: current?.isActive, isSuperAdmin: current?.isSuperAdmin } },
+    if (!current || current.role !== UserRole.HASHTI || current.isActive !== true) {
+      return res.status(403).json({ message: "Super-admin permission required" });
+    }
+    const allowed = await authorize("admin", "SUPER_ADMIN", {
+      actor: { id: user.id, role: current.role, isActive: current.isActive },
+      resource: { data: { isActive: current.isActive, isSuperAdmin: current.isSuperAdmin } },
     });
     if (!allowed) return res.status(403).json({ message: "Super-admin permission required" });
     return next();
