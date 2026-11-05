@@ -77,7 +77,7 @@ export async function adminUsers(actorUserId: string, input: { search?: string; 
   await requireAdminServicePermission(actorUserId, "USERS_READ");
   pageArgs(input.page, input.limit);
   const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT];
-  if (input.role && !visibleRoles.includes(input.role as UserRole)) throw new Error("INVALID_ROLE");
+  if (input.role && !visibleRoles.some((role) => role === input.role)) throw new Error("INVALID_ROLE");
   return listAdminUsers({ ...input, role: input.role as UserRole | undefined });
 }
 export const adminUserDetails = async (actorUserId: string, userId: string) => {
