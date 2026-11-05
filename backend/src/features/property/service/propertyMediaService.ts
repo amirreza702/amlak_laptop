@@ -38,7 +38,7 @@ export async function createPropertyMediaService(data: {
   if (data.type !== MediaType.IMAGE && data.type !== MediaType.MAIN_IMAGE) throw new Error("فقط فایل تصویری مجاز است.");
   const property = await findPropertyById(data.propertyId);
   if (!property || property.deletedAt) throw new Error("ملک مورد نظر پیدا نشد یا حذف شده است.");
-  if (property.listing && [ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(property.listing.status)) {
+  if (property.listing && ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED] as ListingStatus[]).includes(property.listing.status)) {
     throw new Error("بارگذاری تصویر برای این وضعیت آگهی مجاز نیست؛ ابتدا آگهی را برای بررسی انتشار به هشتی ارسال کنید.");
   }
   if (await countActivePropertyMedia(data.propertyId) >= maxImagesPerProperty) {
@@ -73,7 +73,8 @@ export async function getPropertyMediaService(propertyId: string): Promise<Prope
 export async function getPropertyMediaFileService(mediaId: string, propertyId?: string, publicOnly = false) {
   const media = await findPropertyMediaById(mediaId);
   if (!media || !media.isActive || (propertyId && media.propertyId !== propertyId)) throw new Error("تصویر مورد نظر پیدا نشد.");
-  if (publicOnly && (media.property.listing?.status !== "PUBLISHED" || !media.property.listing.confirmUntil || media.property.listing.confirmUntil <= new Date())) {
+  const listing = media.property.listing;
+  if (publicOnly && (!listing || listing.status !== "PUBLISHED" || !listing.confirmUntil || listing.confirmUntil <= new Date())) {
     throw new Error("تصویر هنوز عمومی نیست یا مهلت انتشار ملک به پایان رسیده است.");
   }
   return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
