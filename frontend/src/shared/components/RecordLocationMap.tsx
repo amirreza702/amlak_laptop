@@ -32,9 +32,6 @@ export default function RecordLocationMap({ latitude, longitude, label }: Record
           </CircleMarker>
         </MapContainer>
       </div>
-      <p className="text-xs text-slate-500" dir="ltr">
-        {latitude.toFixed(6)}, {longitude.toFixed(6)}
-      </p>
     </section>
   );
 }
