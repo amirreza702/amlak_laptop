@@ -188,6 +188,17 @@ export function requirePropertyCreator(paramName = "id") {
           owners: {
             select: { ownerId: true, owner: { select: { userId: true } } },
           },
+          agents: {
+            where: { agent: { is: { userId: user.id } }, status: "ACTIVE" },
+            select: {
+              agentId: true,
+              status: true,
+              approvedByOwner: true,
+              approvedByOwnerId: true,
+              agent: { select: { userId: true, verificationStatus: true } },
+            },
+            take: 1,
+          },
         },
       });
       const allowed = property
@@ -242,14 +253,13 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
             where: {
               agent: { is: { userId: user.id } },
               status: "ACTIVE",
-              approvedByOwner: true,
             },
             select: {
               agentId: true,
               status: true,
               approvedByOwner: true,
               approvedByOwnerId: true,
-              agent: { select: { userId: true } },
+              agent: { select: { userId: true, verificationStatus: true } },
             },
             take: 1,
           },
