@@ -66,9 +66,31 @@ export async function searchProperties(filters: PropertySearchFilters) {
 
   const properties = await prisma.property.findMany({
     where: { ...propertyWhere, listing: listingWhere },
-    include: {
-      listing: true,
-      media: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
+    select: {
+      id: true,
+      propertyType: true,
+      city: true,
+      district: true,
+      area: true,
+      rooms: true,
+      yearBuilt: true,
+      floor: true,
+      updatedAt: true,
+      listing: {
+        select: {
+          transactionType: true,
+          latitudePublic: true,
+          longitudePublic: true,
+          salePrice: true,
+          depositAmount: true,
+          rentAmount: true,
+        },
+      },
+      media: {
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        select: { type: true, url: true, sortOrder: true },
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
