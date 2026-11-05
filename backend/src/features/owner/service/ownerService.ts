@@ -107,17 +107,17 @@ const shapeOwnerPropertyRecords = async (
   owner: { userId: string; firstName: string; lastName: string; user: { mobile: string } },
   records: Awaited<ReturnType<typeof findOwnerPropertiesByOwnerId>>
 ) => Promise.all(records.map(async (record) => {
-  const { agents, ownerAgentRequests, ...propertyData } = record.property;
+  const { agents, ownerAgentRequests, owners: ownerRelations, ...propertyData } = record.property;
 
   // مالکیت و سطح نمایش ملک از Policy مرکزی تعیین می‌شود؛ این سرویس فقط
   // روابط آماده‌شده توسط Repository را به Core می‌دهد.
   const visibility = await getPropertyVisibility(
     { id: owner.userId, role: "OWNER" },
-    { ...record.property, owners: record.property.owners },
+    { ...record.property, owners: ownerRelations },
   );
   const safeProperty = projectPropertyForActor(propertyData, visibility, {
     owner,
-    owners: record.property.owners,
+    owners: [],
   });
 
   // نمایش شماره مشاور همچنان تابع رابطه همکاری پذیرفته‌شده است؛
