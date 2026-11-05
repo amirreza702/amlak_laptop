@@ -51,6 +51,9 @@ import { prisma } from "../../../lib/prisma";
 
 import { createPropertyHistory } from "../repository/propertyHistoryRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * ============================================================
@@ -59,13 +62,19 @@ import { queuePropertyListingForHashtiReview } from "./propertyListingStatusServ
  */
 export async function updatePropertyPrice(
   propertyId: string,
-  data: UpdatePropertyPriceInput
+  data: UpdatePropertyPriceInput,
+  actor: AuthorizationActor
 ) {
   /**
    * ==========================================================
    * پیدا کردن Listing فعلی
    * ==========================================================
    */
+  const authorizationContext = await findPropertyAuthorizationContextById(propertyId);
+  if (!authorizationContext) throw new Error("ملک مورد نظر پیدا نشد.");
+  const initiallyAllowed = await authorizePropertyAction(actor, "MANAGE", authorizationContext);
+  if (!initiallyAllowed) throw new Error("شما اجازه تغییر قیمت این ملک را ندارید.");
+
   const listing =
     await findPropertyListingByPropertyId(propertyId);
 
@@ -219,13 +228,20 @@ export async function updatePropertyPrice(
    */
  return prisma.$transaction(
   async (tx: Prisma.TransactionClient) => {
+    const freshContext = await findPropertyAuthorizationContextById(propertyId, tx);
+    if (!freshContext) throw new Error("ملک مورد نظر پیدا نشد.");
+    const allowed = await authorizePropertyAction(actor, "MANAGE", freshContext);
+    if (!allowed) throw new Error("شما اجازه تغییر قیمت این ملک را ندارید.");
+    const currentListing = await findPropertyListingByPropertyId(propertyId, tx);
+    if (!currentListing) throw new Error("برای این ملک اطلاعات قیمت ثبت نشده است.");
+
     /**
      * ------------------------------------------------------
      * تغییر قیمت فعلی
      * ------------------------------------------------------
      */
     const updatedListing = await updatePropertyListing(
-      listing.id,
+      currentListing.id,
       updateData,
       tx
     );
@@ -280,5 +296,5 @@ export async function updatePropertyPrice(
       history,
     };
   }
-);
+, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
