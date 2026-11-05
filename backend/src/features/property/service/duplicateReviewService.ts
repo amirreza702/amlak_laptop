@@ -15,6 +15,7 @@ import { authorize } from "../../../shared/authorization/authorization.core";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import { updatePropertyListingStatus } from "./propertyListingStatusService";
 import { getPropertySimilaritySummaryService } from "./duplicateMatchingService";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 import type { DuplicateReview } from "../types/duplicateReview";
 
@@ -47,6 +48,7 @@ import {
  */
 
 async function requireDuplicatePropertyPermission(propertyId: string, actor: AuthorizationActor, action: string) {
+  await requireAdminServicePermission(actor.id, "DUPLICATES_MANAGE");
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, property);
@@ -249,6 +251,7 @@ export const reviewDuplicateService = async (
 
 /** صف بررسی مشابهت، گروه‌بندی‌شده بر اساس ملک اصلی و فقط با آخرین تصمیم هر کاندیدا. */
 export const getHashtiDuplicateReviewQueueService = async (actor: AuthorizationActor) => {
+  await requireAdminServicePermission(actor.id, "DUPLICATES_MANAGE");
   const allowed = await authorize("property", "VIEW_DUPLICATE_REVIEW_QUEUE", { actor, resource: { data: {} } });
   if (!allowed) throw new Error("DUPLICATE_REVIEW_FORBIDDEN");
   const properties = await findHashtiDuplicateReviewQueue();
