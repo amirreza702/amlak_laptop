@@ -1,4 +1,4 @@
-import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType, PropertyAgentStatus, PropertyType, TransactionType, type Prisma } from "@prisma/client";
+import { DocumentType, LandTenure, ListingStatus, OccupancyStatus, OwnershipType, PropertyAgentStatus, PropertyType, RegistrationSource, TransactionType, type Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 
 export interface AgentPropertyQuery {
@@ -55,13 +55,25 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   // املاک غیرفعال یا حذف‌شده در پنل مشاور نمایش داده نمی‌شوند.
   fieldConditions.push({ isActive: true });
   fieldConditions.push({ deletedAt: null });
+  // آگهی مالک‌محور فقط در فهرست مشاور منتخب نهایی نمایش داده می‌شود.
+  fieldConditions.push({
+    OR: [
+      { registrationSource: RegistrationSource.AGENT },
+      { agents: { some: {
+        agentId: input.agentId,
+        status: PropertyAgentStatus.ACTIVE,
+        approvedByOwner: true,
+        approvedByOwnerId: { not: null },
+      } } },
+    ],
+  });
   // آگهی منقضی فقط برای مشاوری در فهرست می‌ماند که تأیید نهایی فعال مالک را دارد.
   fieldConditions.push({
     OR: [
       { listing: { is: null } },
       { listing: { is: { status: { notIn: [ListingStatus.PUBLISHED, ListingStatus.EXPIRED] } } } },
       { listing: { is: { status: ListingStatus.PUBLISHED, confirmUntil: { gt: now } } } },
-      { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true } } },
+      { agents: { some: { agentId: input.agentId, status: PropertyAgentStatus.ACTIVE, approvedByOwner: true, approvedByOwnerId: { not: null } } } },
     ],
   });
   if (input.areaMin !== undefined || input.areaMax !== undefined) {
