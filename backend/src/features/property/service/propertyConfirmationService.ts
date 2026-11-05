@@ -6,7 +6,7 @@ import type { AuthorizationActor } from "../../../shared/authorization/authoriza
 export async function checkPropertyConfirmation(propertyId: string, actor: AuthorizationActor) {
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
-  const allowed = await authorizePropertyAction(actor, "ACCESS", property);
+  const allowed = await authorizePropertyAction(actor, "ACCESS", property, { allowAgentCreator: true });
   if (!allowed) throw new Error("PROPERTY_CONFIRMATION_FORBIDDEN");
 
   const confirmUntil = property.listing?.confirmUntil ?? null;
