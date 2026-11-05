@@ -12,14 +12,14 @@ import {
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 export async function revokePropertyAgentController(req: Request, res: Response) {
-  const ownerUserId = (req as AuthenticatedRequest).user?.id;
-  if (!ownerUserId) return res.status(401).json({ message: "Authentication required" });
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
 
   try {
     const propertyAgent = await revokePropertyAgent({
       propertyId: String(req.params.id),
       agentId: String(req.params.agentId),
-      ownerUserId,
+      actor,
     });
     return res.status(200).json({ propertyAgent });
   } catch (error) {
@@ -36,10 +36,10 @@ export async function revokePropertyAgentController(req: Request, res: Response)
 
 /** لغو رابطه تأییدشده از سوی مشاور واردشده. */
 export async function revokePropertyAgentByAgentController(req: Request, res: Response) {
-  const userId = (req as AuthenticatedRequest).user?.id;
-  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
-    const propertyAgent = await revokePropertyAgentByAgent(String(req.params.id), userId);
+    const propertyAgent = await revokePropertyAgentByAgent(String(req.params.id), actor);
     return res.status(200).json({ propertyAgent, message: "رابطه همکاری لغو شد و مالک مطلع گردید." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
