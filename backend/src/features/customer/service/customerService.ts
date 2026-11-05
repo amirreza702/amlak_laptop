@@ -25,6 +25,7 @@ import {
   updateCustomerProfile,
 } from "../repository/customerRepository";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * ============================================================
@@ -40,8 +41,9 @@ import { authorize } from "../../../shared/authorization/authorization.core";
  */
 export const getCustomerProfile = async (
   customerId: string,
-  authenticatedUserId: string
+  actor: AuthorizationActor
 ) => {
+  const authenticatedUserId = actor.id;
   const customer =
     await findCustomerProfileById(customerId);
 
@@ -50,7 +52,7 @@ export const getCustomerProfile = async (
   }
 
   const allowed = await authorize("customer", "READ", {
-    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    actor,
     resource: { id: customer.id, data: { isSelf: customer.userId === authenticatedUserId } },
   });
   if (!allowed) throw new Error("CUSTOMER_PROFILE_FORBIDDEN");
@@ -74,12 +76,13 @@ export const getCustomerProfile = async (
  */
 export const updateCustomerProfileService = async (
   customerId: string,
-  authenticatedUserId: string,
+  actor: AuthorizationActor,
   data: {
     firstName?: string;
     lastName?: string;
   }
-) => {
+ ) => {
+  const authenticatedUserId = actor.id;
   /**
    * ----------------------------------------------------------
    * بررسی وجود Customer
@@ -93,7 +96,7 @@ export const updateCustomerProfileService = async (
   }
 
   const allowed = await authorize("customer", "UPDATE", {
-    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    actor,
     resource: { id: customer.id, data: { isSelf: customer.userId === authenticatedUserId } },
   });
   if (!allowed) throw new Error("CUSTOMER_PROFILE_FORBIDDEN");
