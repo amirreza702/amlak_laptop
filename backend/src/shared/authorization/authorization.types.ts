@@ -20,7 +20,7 @@ export type AuthorizationAction = string;
 export interface AuthorizationActor {
   id: string;
   role: string;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 export interface AuthorizationContext<TResource = unknown, TRelationship = unknown> {
