@@ -1,4 +1,5 @@
 import { findAgentProfileByUserId } from "../repository/agentRepository";
+import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
 import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
@@ -11,7 +12,32 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
 
   const result = await findAgentPropertyRecords({ ...query, agentId: agent.id, userId });
 
-  const properties = await Promise.all(result.properties.map(async (record) => {
+  // رابطه تأیید نهایی فقط وقتی معتبر است که مالک تأییدکننده واقعاً به همین ملک متصل باشد.
+  const visibleRecords = await Promise.all(result.properties.map(async (record) => {
+    const selectedRelation = record.property.agents.find((item) =>
+      item.agentId === agent.id &&
+      item.status === "ACTIVE" &&
+      item.approvedByOwner === true &&
+      Boolean(item.approvedByOwnerId) &&
+      record.property.owners.some((owner) => owner.ownerId === item.approvedByOwnerId)
+    ) ?? null;
+    const listing = record.property.listing;
+    const isExpired = listing?.status === "EXPIRED" ||
+      (listing?.status === "PUBLISHED" && (!listing.confirmUntil || listing.confirmUntil.getTime() <= Date.now()));
+
+    if (record.property.registrationSource === "OWNER" && !selectedRelation) return null;
+    if (isExpired && !selectedRelation) return null;
+
+    const canRead = await authorizePropertyAction(actor, "READ_PRIVATE", record.property);
+    // ملک فعالِ ثبت‌شده توسط مشاور دیگر، فقط به‌صورت خلاصه و تقریبی در فهرست عمومی مشاوران دیده می‌شود.
+    if (record.property.registrationSource === "OWNER" && !canRead) return null;
+    return record;
+  }));
+  const authorizedRecords = visibleRecords.filter(
+    (record): record is NonNullable<typeof record> => record !== null,
+  );
+
+  const properties = await Promise.all(authorizedRecords.map(async (record) => {
     const visibility = await getPropertyVisibility(actor, record.property);
 
     // استخراج رابطه تأییدشده فقط برای تعیین اینکه اطلاعات کدام مالک نمایش داده شود؛
@@ -87,5 +113,6 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
     };
   }));
 
-  return { ...result, properties };
+  const hiddenOnPage = result.properties.length - authorizedRecords.length;
+  return { ...result, total: Math.max(authorizedRecords.length, result.total - hiddenOnPage), properties };
 }
