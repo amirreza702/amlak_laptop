@@ -41,6 +41,7 @@ export const propertyPolicy: AuthorizationPolicy = (
   }
 
   if (action === "MANAGE") {
+    if (isHashti) return true;
     return Boolean(
       data.isCreator ||
       (context.actor.role === "OWNER" && data.isRelatedOwner),
