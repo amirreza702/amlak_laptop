@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
-import { getPropertyVisibility } from "../../property/service/propertyAuthorizationService";
+import { authorizePropertyAction, getPropertyVisibility } from "../../property/service/propertyAuthorizationService";
 import {
   closeOwnerAgentRequest,
   createOwnerAgentRequest,
@@ -14,12 +14,18 @@ import {
   findOwnerAgentRequestForResponse,
 } from "../repository/ownerAgentRequestRepository";
 
-export async function createOwnerAgentRequestService(ownerId: string, input: { propertyId?: unknown; description?: unknown }) {
+export async function createOwnerAgentRequestService(ownerId: string, userId: string, input: { propertyId?: unknown; description?: unknown }) {
   const propertyId = typeof input.propertyId === "string" ? input.propertyId.trim() : "";
   const description = typeof input.description === "string" ? input.description.trim().slice(0, 2000) : "";
   if (!propertyId) throw new Error("Property ID is required");
   const relation = await findOwnedProperty(ownerId, propertyId);
   if (!relation || !relation.property.isActive) throw new Error("Property does not belong to owner");
+  const canManage = await authorizePropertyAction(
+    { id: userId, role: "OWNER" },
+    "MANAGE",
+    relation.property,
+  );
+  if (!canManage) throw new Error("Property does not belong to owner");
   if (await findActiveOwnerRequestForProperty(ownerId, propertyId)) throw new Error("An active request already exists for this property");
   return createOwnerAgentRequest({ ownerId, propertyId, description: description || null });
 }
