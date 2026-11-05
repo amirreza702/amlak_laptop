@@ -50,6 +50,7 @@ export const findOwnerProfileById = async (
 
     select: {
       id: true,
+      userId: true,
       firstName: true,
       lastName: true,
 
@@ -71,6 +72,7 @@ export const findOwnerProfileByUserId = async (userId: string) => {
     where: { userId },
     select: {
       id: true,
+      userId: true,
       firstName: true,
       lastName: true,
       user: { select: { mobile: true } },
@@ -122,7 +124,15 @@ export const findOwnerPropertiesByOwnerId = async (ownerId: string) =>
           latitudeExact: true, longitudeExact: true, area: true, rooms: true, floor: true,
           isActive: true, occupancyStatus: true,
           listing: {
-            select: { transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, status: true, publishedAt: true },
+            select: { transactionType: true, salePrice: true, depositAmount: true, rentAmount: true, status: true, publishedAt: true, confirmUntil: true, latitudePublic: true, longitudePublic: true },
+          },
+          owners: {
+            select: {
+              ownerId: true,
+              isPrimary: true,
+              share: true,
+              owner: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            },
           },
           agents: {
             select: {
