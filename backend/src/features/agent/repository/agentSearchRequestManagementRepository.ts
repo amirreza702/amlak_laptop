@@ -29,11 +29,11 @@ export const findActiveAgentSearchRequests = (db: Db = prisma) =>
     where: { status: "ACTIVE" },
     select: {
       id: true, customerId: true, requesterMobile: true, requesterFirstName: true, requesterLastName: true,
-      customer: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+      customer: { select: { firstName: true, lastName: true, user: { select: { mobile: true, isActive: true } } } },
       transactionType: true, propertyType: true, city: true, budget: true,
       description: true, hashtiVerified: true, status: true,
       createdByRole: true, createdByUserId: true,
-      createdByUser: { select: { mobile: true, agent: { select: { firstName: true, lastName: true } } } },
+      createdByUser: { select: { mobile: true, isActive: true, agent: { select: { firstName: true, lastName: true, verificationStatus: true } } } },
       createdAt: true, updatedAt: true,
     },
     orderBy: { createdAt: "desc" },
