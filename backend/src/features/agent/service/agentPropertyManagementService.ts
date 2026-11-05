@@ -67,14 +67,14 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
           : record.property.listing?.longitudePublic ?? null,
         postalCode: visibility.canViewExactLocation ? record.property.postalCode : null,
         owners: visibleOwner ? [visibleOwner] : [],
-        ownerFirstName: visibleOwner
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : record.property.ownerFirstName ?? visibleOwner.owner.firstName) ?? null
+        ownerFirstName: visibility.canViewOwnerDetails
+          ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : record.property.ownerFirstName ?? visibleOwner?.owner.firstName) ?? null
           : null,
-        ownerLastName: visibleOwner
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : record.property.ownerLastName ?? visibleOwner.owner.lastName) ?? null
+        ownerLastName: visibility.canViewOwnerDetails
+          ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : record.property.ownerLastName ?? visibleOwner?.owner.lastName) ?? null
           : null,
-        ownerMobile: visibleOwner
-          ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : record.property.ownerMobile ?? visibleOwner.owner.user.mobile) ?? null
+        ownerMobile: visibility.canViewOwnerDetails
+          ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : record.property.ownerMobile ?? visibleOwner?.owner.user.mobile) ?? null
           : null,
         listing,
         approvedAgentFirstName: approvedAgentRelation?.agent.firstName ?? null,
