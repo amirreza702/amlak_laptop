@@ -6,21 +6,22 @@ import { authorize } from "../../../shared/authorization/authorization.core";
 
 const allowedEntityTypes = new Set(["property", "owner", "customer", "request"]);
 
-function currentUserId(req: Request): string | undefined {
-  return (req as AuthenticatedRequest).user?.id;
+function currentActor(req: Request) {
+  return (req as AuthenticatedRequest).user;
 }
 
 /** هر مشاور فقط یادداشت‌های خودش را دریافت می‌کند. */
 export async function getMyPrivateNotesController(req: Request, res: Response) {
   try {
-    const userId = currentUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const actor = currentActor(req);
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const userId = actor.id;
 
     const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
     if (!agent) return res.status(404).json({ message: "Agent profile not found" });
 
     const allowed = await authorize("privateNote", "LIST_OWN", {
-      actor: { id: userId, role: "AGENT" },
+      actor,
       resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
     });
     if (!allowed) return res.status(403).json({ message: "Private note access denied" });
@@ -96,7 +97,7 @@ export async function getAllAgentPrivateNotesController(req: Request, res: Respo
       select: { role: true, isActive: true, isSuperAdmin: true },
     });
     const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", "LIST_ALL", {
-      actor: { id: userId, role: admin?.role ?? "HASHTI", isActive: admin?.isActive },
+      actor: { ...currentActor(req)!, isActive: admin?.isActive === true },
       resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
     });
     if (!allowed) return res.status(403).json({ message: "Super admin access required" });
