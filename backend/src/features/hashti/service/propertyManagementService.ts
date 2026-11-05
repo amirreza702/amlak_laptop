@@ -6,6 +6,7 @@ import { updatePropertyListingStatus } from "../../property/service/propertyList
 import { findPropertyAuthorizationContextById } from "../../property/repository/propertyRepository";
 import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export async function getHashtiPropertyRecords(
   input: {
@@ -16,6 +17,7 @@ export async function getHashtiPropertyRecords(
   },
   actor: AuthorizationActor,
 ) {
+  await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const result = await findHashtiPropertyRecords(input);
   const properties = await Promise.all(result.properties.map(async ({ _count, ...record }) => {
     // حتی پنل هشتی نیز از همان Core عبور می‌کند؛ دسترسی گسترده هشتی
@@ -42,6 +44,7 @@ export async function requestHashtiPropertyPublicationApproval(
   propertyId: string,
   actor: AuthorizationActor,
 ) {
+  await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property || property.deletedAt || !property.listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
   const canApprove = await authorizePropertyAction(actor, "APPROVE_PUBLICATION", property);
