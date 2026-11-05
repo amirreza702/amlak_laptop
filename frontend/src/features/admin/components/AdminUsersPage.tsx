@@ -6,9 +6,7 @@ import { type AdminUser, type UserRole } from "@/features/auth/api/authApi";
 import { useAdminUsers } from "@/features/admin/hooks/useAdminUsers";
 import { formatPersianDate, formatPersianDateTime } from "@/shared/utils/date";
 
-const roles: Record<UserRole, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" };
-const creatorRoleName = (user: AdminUser) => { const role = user.customer?.createdByRole ?? user.owner?.createdByRole; return role ? roles[role] : "نامشخص (رکورد قدیمی)"; };
-const creatorIdentity = (user: AdminUser) => user.customer?.createdByUser?.mobile ?? user.owner?.createdByUser?.mobile ?? "نامشخص (رکورد قدیمی)";
+const roles: Record<Exclude<UserRole, "HASHTI">, string> = { CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور" };
 const profileName = (user: AdminUser) => {
   const profile = user.customer ?? user.owner ?? user.agent;
   return profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : "—";
@@ -28,7 +26,7 @@ export default function AdminUsersPage() {
           <div>
             <p className="text-sm font-semibold text-amber-700">هشتی / مدیریت</p>
             <h1 className="mt-1 text-2xl font-black sm:text-3xl">مدیریت کاربران</h1>
-            <p className="mt-2 text-sm text-slate-600">جست‌وجو و مشاهده فهرست مشتریان، مالکان، مشاوران و کارکنان هشتی</p>
+            <p className="mt-2 text-sm text-slate-600">جست‌وجو و مشاهده فهرست مشتریان، مالکان و مشاوران</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm">تعداد نتایج: <strong>{total.toLocaleString("fa-IR")}</strong></div>
         </header>
@@ -42,7 +40,7 @@ export default function AdminUsersPage() {
             </label>
             <label className="space-y-1 text-sm font-medium">نقش
               <select value={role} onChange={event => { setRole(event.target.value as UserRole | ""); setPage(1); }} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal">
-                <option value="">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option><option value="HASHTI">کارمند هشتی</option>
+                <option value="">همه نقش‌ها</option><option value="CUSTOMER">مشتری</option><option value="OWNER">مالک</option><option value="AGENT">مشاور</option>
               </select>
             </label>
             <label className="space-y-1 text-sm font-medium">وضعیت حساب
@@ -57,11 +55,11 @@ export default function AdminUsersPage() {
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             {loading ? <p className="p-8 text-center text-sm text-slate-600">در حال دریافت اطلاعات…</p> : users.length === 0 ? <p className="p-8 text-center text-sm text-slate-600">کاربری با این مشخصات پیدا نشد.</p> : (
               <div className="overflow-x-auto"><table className="w-full min-w-[900px] border-collapse text-right text-sm">
-                <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش حساب</th><th className="px-4 py-3">ایجادکننده</th><th className="px-4 py-3">نقش ایجادکننده</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تأیید مشاور</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
+                <thead className="bg-slate-100 text-slate-700"><tr><th className="px-4 py-3">نام و نام خانوادگی</th><th className="px-4 py-3">شماره موبایل</th><th className="px-4 py-3">نقش حساب</th><th className="px-4 py-3">وضعیت حساب</th><th className="px-4 py-3">تاریخ ثبت</th><th className="px-4 py-3">جزئیات</th><th className="px-4 py-3">مدیریت حساب</th></tr></thead>
                 <tbody>{users.map(user => <RecordDetailsRow key={user.id} record={user} title="رکورد" className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td><td className="px-4 py-3">{user.customer || user.owner ? creatorIdentity(user) : "—"}</td><td className="px-4 py-3">{user.customer || user.owner ? creatorRoleName(user) : "—"}</td>
+                  <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
-                  <td className="px-4 py-3">{user.agent ? (user.agent.isVerified ? "تأییدشده" : "تأییدنشده") : "—"}</td><td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || Boolean(user.isSuperAdmin)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
+                  <td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || false} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
                 </RecordDetailsRow>)}</tbody>
               </table></div>
             )}
@@ -73,7 +71,7 @@ export default function AdminUsersPage() {
               </div>
             </footer>
           </section>
-          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-3 text-sm">شناسه: <span dir="ltr">{selectedUser.id}</span></p><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {formatPersianDateTime(selectedUser.createdAt)} | آخرین بروزرسانی: {formatPersianDateTime(selectedUser.updatedAt)}</p>{(selectedUser.customer || selectedUser.owner) && <p className="mt-1 text-sm">ایجادکننده: <span dir="ltr">{creatorIdentity(selectedUser)}</span> | نقش ایجادکننده: {creatorRoleName(selectedUser)}</p>}{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"} | تأیید مشاور: {selectedUser.agent.isVerified ? "تأییدشده" : "تأییدنشده"}</p>}{selectedUser.role === "HASHTI" && <p className="mt-1 text-sm">سطح دسترسی: {selectedUser.isSuperAdmin ? "مدیر ارشد هشتی" : (selectedUser.adminPermissions || []).join("، ") || "بدون مجوز"}</p>}</section>}
+          {selectedUser && <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><h2 className="font-bold">جزئیات حساب {profileName(selectedUser)}</h2><button onClick={() => setSelectedUser(null)} className="rounded border px-3 py-1">بستن</button></div><p className="mt-1 text-sm">موبایل: <span dir="ltr">{selectedUser.mobile}</span> | نقش: {roles[selectedUser.role]} | وضعیت: {selectedUser.isActive ? "فعال" : "غیرفعال"}</p><p className="mt-1 text-sm">تاریخ ایجاد: {formatPersianDateTime(selectedUser.createdAt)} | آخرین بروزرسانی: {formatPersianDateTime(selectedUser.updatedAt)}</p>{selectedUser.agent && <p className="mt-1 text-sm">آژانس: {selectedUser.agent.agencyName || "—"}</p>}</section>}
         </>}
       </div>
     </main>
