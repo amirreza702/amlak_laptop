@@ -39,6 +39,7 @@ import {
   findEvaluationByEvaluatorAndTarget,
 } from "../repository/evaluationRepository";
 import { findPropertyAuthorizationContextById } from "../../property/repository/propertyRepository";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 /**
  * ============================================================
@@ -127,6 +128,17 @@ export const createEvaluationService = async (
 
   if (!evaluator.isActive) {
     throw new Error("Evaluator user is inactive");
+  }
+
+  const evaluatorAgent = evaluator.role === "AGENT"
+    ? await findAgentByUserId(data.evaluatorUserId)
+    : null;
+  if (evaluator.role === "AGENT" &&
+      (!evaluatorAgent || evaluatorAgent.verificationStatus !== "VERIFIED")) {
+    throw new Error("AGENT_VERIFICATION_REQUIRED");
+  }
+  if (evaluator.role === "HASHTI") {
+    await requireAdminServicePermission(evaluator.id, "AGENTS_MANAGE");
   }
 
   if (
@@ -269,10 +281,7 @@ export const createEvaluationService = async (
         );
       }
 
-      const agent =
-        await findAgentByUserId(
-          data.evaluatorUserId
-        );
+      const agent = evaluatorAgent;
 
       if (!agent) {
         throw new Error(
