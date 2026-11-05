@@ -60,7 +60,7 @@ export interface CreateDuplicateReviewInput {
 
 export const createDuplicateReviewService = async (
   data: CreateDuplicateReviewInput,
-  actor: { id: string; role: string },
+  actor: { id: string; role: string; isActive?: boolean },
 ): Promise<DuplicateReview> => {
   /**
    * Primary و Candidate نباید یک ملک باشند.
