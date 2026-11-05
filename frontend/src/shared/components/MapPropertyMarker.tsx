@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Polygon, Popup } from "react-leaflet";
+import { Circle, Popup } from "react-leaflet";
 
 import type { MapProperty } from "./map/RealMap";
 
@@ -11,46 +11,17 @@ interface MapPropertyMarkerProps {
 }
 
 /**
- * محدوده عمومی نامنظم آگهی؛ هیچ نقطه مرکزی روی نقشه رسم نمی‌شود.
- * تمام رأس‌ها حداکثر ۲۵۰ متر از مختصات عمومی فاصله دارند.
+ * محدوده عمومی دایره‌ای آگهی با شعاع دقیق ۳۰۰ متر حول مختصات عمومی.
+ * هیچ نشانگری برای مرکز عمومی یا موقعیت دقیق ملک رسم نمی‌شود.
  */
-function getApproximateAreaPositions(
-  property: MapProperty
-): Array<[number, number]> {
-  const seed = Array.from(property.id).reduce(
-    (value, character) =>
-      (Math.imul(value, 31) + character.charCodeAt(0)) | 0,
-    7
-  );
-  const latitudeRadians = (property.latitude * Math.PI) / 180;
-  const longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadians)), 0.2);
-  const vertexCount = 16;
-
-  return Array.from({ length: vertexCount }, (_, index) => {
-    const raw =
-      Math.sin((seed + 1) * 0.0001 + (index + 1) * 127.1) * 43758.5453;
-    const random = raw - Math.floor(raw);
-    const angle = (index / vertexCount) * Math.PI * 2;
-    const radiusMeters = 200 + random * 50;
-    const latitudeOffset = (Math.cos(angle) * radiusMeters) / 111_320;
-    const longitudeOffset =
-      (Math.sin(angle) * radiusMeters) / (111_320 * longitudeScale);
-
-    return [
-      property.latitude + latitudeOffset,
-      property.longitude + longitudeOffset,
-    ];
-  });
-}
-
-/** فقط برای آگهی انتخاب‌شده محدوده تقریبی را نمایش می‌دهد. */
 export function MapPropertyMarker({
   property,
   onSelect,
 }: MapPropertyMarkerProps) {
   return (
-    <Polygon
-      positions={getApproximateAreaPositions(property)}
+    <Circle
+      center={[property.latitude, property.longitude]}
+      radius={300}
       pathOptions={{
         color: "#ea580c",
         weight: 2,
@@ -96,6 +67,6 @@ export function MapPropertyMarker({
           </Link>
         </div>
       </Popup>
-    </Polygon>
+    </Circle>
   );
 }
