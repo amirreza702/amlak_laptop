@@ -22,7 +22,7 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
       ? approvedAgentRelation
       : null;
     const approvedOwnerRelation = selectedAgentRelation?.approvedByOwnerId
-      ? record.property.owners.find((owner) => owner.ownerId === selectedAgentRelation.approvedByOwnerId) ?? null
+      ? ownerRelations.find((owner) => owner.ownerId === selectedAgentRelation.approvedByOwnerId) ?? null
       : null;
     const isApprovedAgent = Boolean(
       visibility.canViewOwnerDetails &&
@@ -32,9 +32,10 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     const {
       createdByUser,
       agents: _agents,
+      owners: ownerRelations,
       ...propertyData
     } = record.property;
-    const primaryOwner = record.property.owners[0] ?? null;
+    const primaryOwner = ownerRelations[0] ?? null;
     const visibleOwner = isApprovedAgent
       ? approvedOwnerRelation
       : visibility.canManage && visibility.canViewOwnerDetails
@@ -47,7 +48,14 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
         lastName: visibleOwner.owner.lastName,
         mobile: visibleOwner.owner.user.mobile,
       } : null,
-      owners: visibleOwner ? [visibleOwner] : [],
+      owners: visibleOwner ? [{
+        share: visibleOwner.share,
+        isPrimary: visibleOwner.isPrimary,
+        owner: {
+          firstName: visibleOwner.owner.firstName,
+          lastName: visibleOwner.owner.lastName,
+        },
+      }] : [],
       exposeCreatorContact: visibility.canViewRegistrantDetails,
       creatorMobile: createdByUser?.mobile ?? record.property.creatorMobile,
     });
