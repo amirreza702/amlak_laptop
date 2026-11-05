@@ -11,8 +11,12 @@ export const writeAdminAuditLogService = async (
 ) => createAdminAuditLogRepository(input);
 
 export const getAdminAuditLogsService = async (
+  actorUserId: string,
   query: AdminAuditLogQuery
-) => findAdminAuditLogs(query);
+) => {
+  await requireAdminServicePermission(actorUserId, "AUDIT_READ");
+  return findAdminAuditLogs(query);
+};
 
 
 /**
