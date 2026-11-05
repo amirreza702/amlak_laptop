@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   findDuplicateMatchesService,
@@ -21,12 +22,12 @@ export async function findDuplicateMatchesController(
   res: Response
 ) {
   try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
     const propertyId = req.params.id;
 
     const matches =
-      await findDuplicateMatchesService(
-        propertyId
-      );
+      await findDuplicateMatchesService(propertyId, { id: user.id, role: user.role });
 
     return res.status(200).json({
       matches,
