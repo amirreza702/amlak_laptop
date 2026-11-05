@@ -7,6 +7,7 @@ import { findPropertyAuthorizationContextById } from "../repository/propertyRepo
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import type { PropertyArchive } from "../types/propertyArchive";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
 const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
@@ -72,6 +73,7 @@ async function requireArchivePermission(
   action: "ARCHIVE" | "VIEW_ARCHIVE" | "RESTORE",
   db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const property = await findPropertyAuthorizationContextById(propertyId, db);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, property);
