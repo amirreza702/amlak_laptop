@@ -73,9 +73,23 @@ export function projectPropertyForActor<
 ) {
   const canViewExactLocation = visibility.canViewExactLocation;
   const canViewOwnerDetails = visibility.canViewOwnerDetails;
+  const mapLatitude = canViewExactLocation
+    ? property.latitudeExact
+    : property.listing?.latitudePublic ?? null;
+  const mapLongitude = canViewExactLocation
+    ? property.longitudeExact
+    : property.listing?.longitudePublic ?? null;
 
   return {
     ...property,
+    // تنها مختصات مجاز برای نقشه؛ فرانت نباید از روابط تو‌در‌تو مختصات را حدس بزند.
+    mapLocation: mapLatitude != null && mapLongitude != null
+      ? {
+          latitude: mapLatitude,
+          longitude: mapLongitude,
+          precision: canViewExactLocation ? "EXACT" as const : "APPROXIMATE" as const,
+        }
+      : null,
     address: canViewExactLocation
       ? property.address
       : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
