@@ -16,6 +16,7 @@ interface PropertyAgentAuthorizationRelation {
 
 export interface PropertyAuthorizationSubject {
   id: string;
+  isActive?: boolean;
   registrationSource?: string | null;
   createdByUserId?: string | null;
   deletedAt?: Date | string | null;
@@ -176,6 +177,7 @@ export async function authorizePropertyAction(
       status: property.listing?.status ?? undefined,
       data: {
         isDeleted: Boolean(property.deletedAt),
+        isActive: property.isActive !== false,
         isExpired,
         isCreator,
         isRelatedOwner,
