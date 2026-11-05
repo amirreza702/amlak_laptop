@@ -12,7 +12,8 @@ export type AuthorizationResource =
   | "ownerAgentRequest"
   | "roleAccess"
   | "admin"
-  | "privateNote";
+  | "privateNote"
+  | "evaluation";
 
 export type AuthorizationAction = string;
 
