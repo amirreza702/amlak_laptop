@@ -42,7 +42,7 @@ export async function findManagedUsers(query: ManagedUserQuery) {
     ? { gte: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate()), lt: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1) }
     : undefined;
   const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT] as const;
-  if (query.role && !visibleRoles.includes(query.role)) throw new Error("INVALID_ROLE");
+  if (query.role && !visibleRoles.some((role) => role === query.role)) throw new Error("INVALID_ROLE");
   const where: Prisma.UserWhereInput = {
     role: query.role ?? { in: [...visibleRoles] },
     ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
