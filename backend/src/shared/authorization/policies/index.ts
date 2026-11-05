@@ -8,6 +8,7 @@ import { privateNotePolicy } from "./private-note.policy";
 import { searchRequestPolicy } from "./search-request.policy";
 import { agentPolicy } from "./agent.policy";
 import { createProfilePolicy } from "./profile.policy";
+import { evaluationPolicy } from "./evaluation.policy";
 
 registerAuthorizationPolicy("property", propertyPolicy);
 registerAuthorizationPolicy("owner", createProfilePolicy("OWNER"));
@@ -19,3 +20,4 @@ registerAuthorizationPolicy("ownerAgentRequest", ownerAgentRequestPolicy);
 registerAuthorizationPolicy("roleAccess", roleAccessPolicy);
 registerAuthorizationPolicy("admin", adminPolicy);
 registerAuthorizationPolicy("privateNote", privateNotePolicy);
+registerAuthorizationPolicy("evaluation", evaluationPolicy);
