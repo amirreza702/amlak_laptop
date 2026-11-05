@@ -83,10 +83,7 @@ export async function getPropertyByIdController(
   if (!user) return res.status(401).json({ message: "Authentication required" });
 
   try {
-    const property = await getPropertyDetailsForActor(req.params.id, {
-      id: user.id,
-      role: user.role,
-    });
+    const property = await getPropertyDetailsForActor(req.params.id, user);
     return res.status(200).json(property);
   } catch (error: any) {
     return res.status(404).json({
