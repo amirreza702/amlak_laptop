@@ -140,8 +140,25 @@ export async function getPropertyByIdController(
       : null;
     const registrant = property.registrationSource === "AGENT" ? createdByUser?.agent ?? null : null;
 
+    // نشانی و مختصات دقیق فقط برای مالک مرتبط، مشاور ثبت‌کننده،
+    // یا مشاوری که تأیید نهایی مالک را دارد نمایش داده می‌شود.
+    const canViewExactLocation =
+      (user.role === "OWNER" && Boolean(ownOwner)) ||
+      (user.role === "AGENT" && (isAgentCreator || isApprovedAgent));
+
     return res.status(200).json({
       ...baseProperty,
+      // برای سایر مشاوران فقط شهر، منطقه و نقطه جابه‌جاشده عمومی ارسال می‌شود.
+      address: canViewExactLocation
+        ? property.address
+        : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
+      latitudeExact: canViewExactLocation
+        ? property.latitudeExact
+        : property.listing?.latitudePublic ?? null,
+      longitudeExact: canViewExactLocation
+        ? property.longitudeExact
+        : property.listing?.longitudePublic ?? null,
+      postalCode: canViewExactLocation ? property.postalCode : null,
       ownerFirstName,
       ownerLastName,
       ownerMobile,
