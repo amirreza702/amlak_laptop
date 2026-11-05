@@ -27,8 +27,7 @@ export const propertyPolicy: AuthorizationPolicy = (
 
   const isHashti = context.actor.role === "HASHTI";
   const isOwner = context.actor.role === "OWNER" && Boolean(data.isRelatedOwner);
-  const isAgentCreator =
-    context.actor.role === "AGENT" && Boolean(data.isCreator);
+  const isCreator = Boolean(data.isCreator);
   const isFinalApprovedAgent =
     context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
 
