@@ -47,13 +47,13 @@ export async function getOwnerProfileController(
   res: Response
 ) {
   try {
-    const owner =
-      await getOwnerProfile(
-        req.params.ownerId
-      );
+    const userId = getAuthenticatedOwnerUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const owner = await getOwnerProfile(req.params.ownerId, userId);
 
     return res.status(200).json(owner);
   } catch (error: any) {
+    if (error.message === "OWNER_PROFILE_FORBIDDEN") return res.status(403).json({ message: "You cannot access another user's profile" });
     if (error.message === "Owner not found") {
       return res.status(404).json({
         message: error.message,
@@ -83,14 +83,13 @@ export async function updateOwnerProfileController(
   res: Response
 ) {
   try {
-    const owner =
-      await updateOwnerProfileService(
-        req.params.ownerId,
-        req.body
-      );
+    const userId = getAuthenticatedOwnerUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const owner = await updateOwnerProfileService(req.params.ownerId, userId, req.body);
 
     return res.status(200).json(owner);
   } catch (error: any) {
+    if (error.message === "OWNER_PROFILE_FORBIDDEN") return res.status(403).json({ message: "You cannot access another user's profile" });
     if (error.message === "Owner not found") {
       return res.status(404).json({
         message: error.message,
@@ -129,9 +128,12 @@ export async function getOwnerPropertiesController(
   res: Response
 ) {
   try {
-    const properties = await getOwnerPropertiesService(req.params.ownerId);
+    const userId = getAuthenticatedOwnerUserId(req);
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const properties = await getOwnerPropertiesService(req.params.ownerId, userId);
     return res.status(200).json({ properties });
   } catch (error: any) {
+    if (error.message === "OWNER_PROFILE_FORBIDDEN") return res.status(403).json({ message: "You cannot access another user's properties" });
     if (error.message === "Owner not found") return res.status(404).json({ message: error.message });
     console.error("Error getting owner properties:", error);
     return res.status(500).json({ message: "Internal server error" });
