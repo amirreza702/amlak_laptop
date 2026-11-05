@@ -75,9 +75,14 @@ export const createCustomerSearchRequest = async (
   },
   creator: AuthorizationActor & { mobile: string; isVerifiedAgent?: boolean }
 ) => {
+  const agentProfile = creator.role === "AGENT"
+    ? await findAgentProfileByUserId(creator.id)
+    : null;
+  const isVerifiedAgent = creator.role === "AGENT" &&
+    agentProfile?.verificationStatus === "VERIFIED";
   const creationAllowed = await authorize("searchRequest", "CREATE", {
     actor: creator,
-    resource: { data: { isVerifiedAgent: creator.isVerifiedAgent === true } },
+    resource: { data: { isVerifiedAgent } },
   });
   if (!creationAllowed) throw new Error("Search request creation is not authorized");
 
