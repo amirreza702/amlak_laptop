@@ -133,12 +133,14 @@ export async function deleteOwnAgentSearchRequestService(actor: AuthorizationAct
 }
 
 export async function getAllAgentSearchRequestsService(actor: AuthorizationActor) {
-  const verified = await prisma.$transaction(async (tx) => getVerifiedAgentActor(tx, actor));
-  const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
-    actor: verified.actor,
-    resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: true } },
-  });
-  if (!allowed) throw new Error("SEARCH_REQUEST_MARKETPLACE_FORBIDDEN");
-  const rows = await findActiveAgentSearchRequests();
-  return rows.map((row) => requestData(row, actor.id));
+  return prisma.$transaction(async (tx) => {
+    const verified = await getVerifiedAgentActor(tx, actor);
+    const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
+      actor: verified.actor,
+      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: true } },
+    });
+    if (!allowed) throw new Error("SEARCH_REQUEST_MARKETPLACE_FORBIDDEN");
+    const rows = await findActiveAgentSearchRequests(tx);
+    return rows.map((row) => requestData(row, actor.id));
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
