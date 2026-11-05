@@ -16,13 +16,18 @@ function requestData(row: Awaited<ReturnType<typeof findActiveAgentSearchRequest
   } = row;
   const isCreatedByMe = createdByUserId === viewerUserId;
   const isAgentCreated = request.createdByRole === "AGENT";
-  const mayViewCustomer = !isAgentCreated || isCreatedByMe;
+  const customerAccountActive = customer?.user.isActive === true;
+  const creatorIsVerifiedAndActive = createdByUser?.isActive === true &&
+    createdByUser.agent?.verificationStatus === "VERIFIED";
+  const mayViewCustomer = isAgentCreated
+    ? isCreatedByMe
+    : customerAccountActive;
   const customerFirstName = mayViewCustomer ? (requesterFirstName ?? customer?.firstName ?? null) : null;
   const customerLastName = mayViewCustomer ? (requesterLastName ?? customer?.lastName ?? null) : null;
   const customerMobile = mayViewCustomer ? (requesterMobile ?? customer?.user.mobile ?? null) : null;
-  const creatorFirstName = createdByUser?.agent?.firstName ?? null;
-  const creatorLastName = createdByUser?.agent?.lastName ?? null;
-  const creatorMobile = isAgentCreated ? createdByUser?.mobile ?? null : customerMobile;
+  const creatorFirstName = creatorIsVerifiedAndActive ? createdByUser?.agent?.firstName ?? null : null;
+  const creatorLastName = creatorIsVerifiedAndActive ? createdByUser?.agent?.lastName ?? null : null;
+  const creatorMobile = isAgentCreated && creatorIsVerifiedAndActive ? createdByUser?.mobile ?? null : customerMobile;
   const customerName = [customerFirstName, customerLastName].filter(Boolean).join(" ");
   const creatorName = [creatorFirstName, creatorLastName].filter(Boolean).join(" ");
 
