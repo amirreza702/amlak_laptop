@@ -32,7 +32,7 @@ function addTextContains(where: Record<string, any>, field: string, value?: stri
 }
 
 export async function searchProperties(filters: PropertySearchFilters) {
-  const propertyWhere: Record<string, any> = { isActive: true };
+  const propertyWhere: Record<string, any> = { isActive: true, deletedAt: null };
   if (filters.propertyType) propertyWhere.propertyType = filters.propertyType;
   if (filters.city) propertyWhere.city = { contains: filters.city, mode: "insensitive" };
   if (filters.district) propertyWhere.district = { contains: filters.district, mode: "insensitive" };
@@ -58,7 +58,7 @@ export async function searchProperties(filters: PropertySearchFilters) {
   addTextContains(propertyWhere, "heatingSystem", filters.heatingSystem);
   addTextContains(propertyWhere, "coolingSystem", filters.coolingSystem);
 
-  const listingWhere: Record<string, any> = { status: "PUBLISHED" satisfies ListingStatus };
+  const listingWhere: Record<string, any> = { status: "PUBLISHED" satisfies ListingStatus, confirmUntil: { gt: new Date() } };
   if (filters.transactionType) listingWhere.transactionType = filters.transactionType;
   addNumberRange(listingWhere, "salePrice", filters.minSalePrice, filters.maxSalePrice);
   addNumberRange(listingWhere, "depositAmount", filters.minDepositAmount, filters.maxDepositAmount);
