@@ -16,11 +16,11 @@ export function requireAdminPermission(permission: AdminPermission) {
     try {
       const account = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { isActive: true, isSuperAdmin: true, adminPermissions: true },
+        select: { role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
       });
-      const allowed = account
+      const allowed = account && account.role === UserRole.HASHTI
         ? await authorize("admin", "PERMISSION", {
-            actor: { id: user.id, role: user.role, isActive: account.isActive },
+            actor: { id: user.id, role: account.role, isActive: account.isActive },
             resource: {
               data: {
                 isActive: account.isActive,
