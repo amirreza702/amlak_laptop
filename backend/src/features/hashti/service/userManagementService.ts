@@ -2,12 +2,13 @@ import {
   findManagedUsers, findManagedUserRole, getSuperAdminAccess, updateManagedProfile, updateManagedUserStatus,
   type ManagedProfileUpdate, type ManagedUserQuery,
 } from "../repository/userManagementRepository";
-import { requireAdminServicePermission } from "../../admin/service/adminService";
+import { hasAdminServicePermission, requireAdminServicePermission } from "../../admin/service/adminService";
 
 export const getSuperAdminAccessService = async (userId: string) => getSuperAdminAccess(userId);
 export const getManagedUsersService = async (actorUserId: string, query: ManagedUserQuery) => {
   await requireAdminServicePermission(actorUserId, "USERS_READ");
-  return findManagedUsers(query);
+  const includeAgentPrivateData = await hasAdminServicePermission(actorUserId, "AGENTS_MANAGE");
+  return findManagedUsers(query, includeAgentPrivateData);
 };
 export const setManagedUserStatusService = async (input: {
   userId: string; isActive: boolean; reason: string; actorUserId: string; actorMobile: string;
