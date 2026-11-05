@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../../../lib/prisma";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
 import type { AuthenticatedRequest } from "./authMiddleware";
 
 type ProfileKind = "customer" | "owner" | "agent";
@@ -121,10 +122,9 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
           registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
+          listing: { select: { status: true, confirmUntil: true } },
           owners: {
-            where: { owner: { is: { userId: user.id } } },
-            select: { ownerId: true },
-            take: 1,
+            select: { ownerId: true, owner: { select: { userId: true } } },
           },
           agents: {
             where: {
@@ -132,29 +132,25 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
               status: "ACTIVE",
               ...(requireApprovedAgent ? { approvedByOwner: true } : {}),
             },
-            select: { agentId: true },
+            select: {
+              agentId: true,
+              status: true,
+              approvedByOwner: true,
+              approvedByOwnerId: true,
+              agent: { select: { userId: true } },
+            },
             take: 1,
           },
         },
       });
 
       const allowed = property
-        ? await authorize("property", "ACCESS", {
-            actor: { id: user.id, role: user.role },
-            resource: {
-              id: propertyId,
-              data: {
-                isDeleted: Boolean(property.deletedAt),
-                isRelatedOwner: user.role === "OWNER" && property.owners.length > 0,
-                isApprovedAgent: user.role === "AGENT" && property.agents.length > 0,
-                isAllowedAgentCreator:
-                  allowAgentCreator &&
-                  user.role === "AGENT" &&
-                  property.registrationSource === "AGENT" &&
-                  property.createdByUserId === user.id,
-              },
-            },
-          })
+        ? await authorizePropertyAction(
+            { id: user.id, role: user.role },
+            "ACCESS",
+            property,
+            { allowAgentCreator },
+          )
         : false;
 
       if (!allowed) {
@@ -184,27 +180,20 @@ export function requirePropertyCreator(paramName = "id") {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
           owners: {
-            where: { owner: { is: { userId: user.id } } },
-            select: { ownerId: true },
-            take: 1,
+            select: { ownerId: true, owner: { select: { userId: true } } },
           },
         },
       });
       const allowed = property
-        ? await authorize("property", "MANAGE", {
-            actor: { id: user.id, role: user.role },
-            resource: {
-              id: propertyId,
-              data: {
-                isCreator: property.createdByUserId === user.id,
-                isRelatedOwner: user.role === "OWNER" && property.owners.length > 0,
-                isDeleted: Boolean(property.deletedAt),
-              },
-            },
-          })
+        ? await authorizePropertyAction(
+            { id: user.id, role: user.role },
+            "MANAGE",
+            property,
+          )
         : false;
       if (!allowed) {
         return res.status(403).json({ message: "Only the property creator or a related owner can manage this property" });
@@ -239,13 +228,12 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
       const property = await prisma.property.findUnique({
         where: { id: propertyId },
         select: {
+          registrationSource: true,
           createdByUserId: true,
           deletedAt: true,
           listing: { select: { status: true, confirmUntil: true } },
           owners: {
-            where: { owner: { is: { userId: user.id } } },
-            select: { ownerId: true },
-            take: 1,
+            select: { ownerId: true, owner: { select: { userId: true } } },
           },
           agents: {
             where: {
@@ -253,7 +241,13 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
               status: "ACTIVE",
               approvedByOwner: true,
             },
-            select: { agentId: true },
+            select: {
+              agentId: true,
+              status: true,
+              approvedByOwner: true,
+              approvedByOwnerId: true,
+              agent: { select: { userId: true } },
+            },
             take: 1,
           },
         },
@@ -269,19 +263,11 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
       );
 
       const allowed = property
-        ? await authorize("property", "READ_PRIVATE", {
-            actor: { id: user.id, role: user.role },
-            resource: {
-              id: propertyId,
-              data: {
-                isDeleted: Boolean(property.deletedAt),
-                isExpired,
-                isCreator: property.createdByUserId === user.id,
-                isRelatedOwner: property.owners.length > 0,
-                isFinalApprovedAgent: property.agents.length > 0,
-              },
-            },
-          })
+        ? await authorizePropertyAction(
+            { id: user.id, role: user.role },
+            "READ_PRIVATE",
+            property,
+          )
         : false;
 
       if (!allowed) {
@@ -312,22 +298,21 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
     }
 
     try {
-      const property = await prisma.property.findFirst({
-        where: {
-          id: propertyId,
-          registrationSource: "AGENT",
-          createdByUserId: user.id,
+      const property = await prisma.property.findUnique({
+        where: { id: propertyId },
+        select: {
+          id: true,
+          registrationSource: true,
+          createdByUserId: true,
+          deletedAt: true,
         },
-        select: { id: true },
       });
       const allowed = property
-        ? await authorize("property", "EDIT_OWN_REGISTRATION", {
-            actor: { id: user.id, role: user.role },
-            resource: {
-              id: propertyId,
-              data: { isRegisteredByCurrentAgent: true },
-            },
-          })
+        ? await authorizePropertyAction(
+            { id: user.id, role: user.role },
+            "EDIT_OWN_REGISTRATION",
+            property,
+          )
         : false;
       if (!allowed) {
         return res.status(403).json({ message: "Agents may edit only properties they registered" });
