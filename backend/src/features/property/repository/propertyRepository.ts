@@ -147,7 +147,8 @@ export const findPropertyByIdWithContacts = async (id: string) => {
       createdByUser: {
         select: {
           mobile: true,
-          agent: { select: { firstName: true, lastName: true } },
+          isActive: true,
+          agent: { select: { firstName: true, lastName: true, verificationStatus: true } },
         },
       },
     },
