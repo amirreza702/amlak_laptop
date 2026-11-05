@@ -338,10 +338,7 @@ export const createEvaluationService = async (
         );
       }
 
-      const agent =
-        await findAgentByUserId(
-          data.evaluatorUserId
-        );
+      const agent = evaluatorAgent;
 
       if (!agent) {
         throw new Error(
@@ -606,10 +603,7 @@ export const createEvaluationService = async (
         );
       }
 
-      const agent =
-        await findAgentByUserId(
-          data.evaluatorUserId
-        );
+      const agent = evaluatorAgent;
 
       if (!agent) {
         throw new Error(
