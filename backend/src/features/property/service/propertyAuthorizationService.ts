@@ -30,6 +30,7 @@ export interface PropertyAuthorizationSubject {
 export interface PropertyVisibility {
   canViewExactLocation: boolean;
   canViewOwnerDetails: boolean;
+  canManage: boolean;
 }
 
 /**
@@ -86,10 +87,11 @@ export async function getPropertyVisibility(
     },
   };
 
-  const [canViewExactLocation, canViewOwnerDetails] = await Promise.all([
+  const [canViewExactLocation, canViewOwnerDetails, canManage] = await Promise.all([
     authorize("property", "VIEW_EXACT_LOCATION", context),
     authorize("property", "VIEW_OWNER_DETAILS", context),
+    authorize("property", "MANAGE", context),
   ]);
 
-  return { canViewExactLocation, canViewOwnerDetails };
+  return { canViewExactLocation, canViewOwnerDetails, canManage };
 }
