@@ -17,9 +17,9 @@ export const setManagedUserStatusService = async (input: {
 };
 
 export const updateManagedProfileService = async (input: ManagedProfileUpdate) => {
-  const permission = input.profileType === "OWNER"
+  const permission = input.profileType === "owner"
     ? "OWNERS_MANAGE"
-    : input.profileType === "AGENT"
+    : input.profileType === "agent"
       ? "AGENTS_MANAGE"
       : "USERS_MANAGE";
   await requireAdminServicePermission(input.actorUserId, permission);
