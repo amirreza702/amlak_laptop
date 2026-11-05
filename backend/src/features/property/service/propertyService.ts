@@ -58,6 +58,8 @@ import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
 import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
+import { getPropertyVisibility } from "./propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * ============================================================
@@ -337,6 +339,88 @@ export async function getPropertyById(id: string) {
    * Property به همراه Listing را برمی‌گردانیم.
    */
   return property;
+}
+
+/**
+ * ساخت پاسخ جزئیات ملک بر اساس تصمیم‌های Authorization Core.
+ * Controller فقط نتیجه این Use Case را به HTTP response تبدیل می‌کند.
+ */
+export async function getPropertyDetailsForActor(id: string, actor: AuthorizationActor) {
+  const property = await getPropertyById(id);
+  if (actor.role === "HASHTI") return property;
+
+  const visibility = await getPropertyVisibility(actor, property);
+  const owners = property.owners ?? [];
+  const agents = property.agents ?? [];
+
+  const ownOwner = owners.find((relation) => relation.owner.userId === actor.id) ?? null;
+  const approvedAgent = agents.find((relation) =>
+    relation.status === "ACTIVE" &&
+    relation.approvedByOwner &&
+    relation.agent.userId === actor.id
+  ) ?? null;
+  const approvedOwnerRelation = approvedAgent?.approvedByOwnerId
+    ? owners.find((relation) => relation.ownerId === approvedAgent.approvedByOwnerId) ?? null
+    : null;
+  const isApprovedAgent = Boolean(
+    approvedAgent &&
+    approvedOwnerRelation &&
+    visibility.canViewOwnerDetails
+  );
+
+  const primaryOwner = owners.find((relation) => relation.isPrimary) ?? owners[0] ?? null;
+  const visibleOwner = actor.role === "OWNER"
+    ? (visibility.canViewOwnerDetails ? ownOwner : null)
+    : isApprovedAgent
+      ? approvedOwnerRelation
+      : visibility.canViewOwnerDetails
+        ? primaryOwner
+        : null;
+
+  const {
+    owners: _owners,
+    agents: _agents,
+    createdByUser,
+    creatorMobile: _creatorMobile,
+    createdByUserId: _createdByUserId,
+    ...baseProperty
+  } = property;
+
+  const visibleApprovedAgent = property.registrationSource === "OWNER"
+    ? approvedAgent?.agent ?? null
+    : null;
+  const registrant = property.registrationSource === "AGENT"
+    ? createdByUser?.agent ?? null
+    : null;
+
+  return {
+    ...baseProperty,
+    address: visibility.canViewExactLocation
+      ? property.address
+      : [property.city, property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
+    latitudeExact: visibility.canViewExactLocation
+      ? property.latitudeExact
+      : property.listing?.latitudePublic ?? null,
+    longitudeExact: visibility.canViewExactLocation
+      ? property.longitudeExact
+      : property.listing?.longitudePublic ?? null,
+    postalCode: visibility.canViewExactLocation ? property.postalCode : null,
+    ownerFirstName: visibleOwner
+      ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : property.ownerFirstName ?? visibleOwner.owner.firstName) ?? null
+      : null,
+    ownerLastName: visibleOwner
+      ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : property.ownerLastName ?? visibleOwner.owner.lastName) ?? null
+      : null,
+    ownerMobile: visibleOwner
+      ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : property.ownerMobile ?? visibleOwner.owner.user.mobile) ?? null
+      : null,
+    registrantFirstName: registrant?.firstName ?? null,
+    registrantLastName: registrant?.lastName ?? null,
+    registrantMobile: property.registrationSource === "AGENT" ? property.creatorMobile : null,
+    approvedAgentFirstName: visibleApprovedAgent?.firstName ?? null,
+    approvedAgentLastName: visibleApprovedAgent?.lastName ?? null,
+    approvedAgentMobile: visibleApprovedAgent?.user.mobile ?? null,
+  };
 }
 
 /**
