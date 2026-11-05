@@ -26,6 +26,8 @@ export async function createDuplicateReviewController(
   res: Response
 ) {
   try {
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
     const primaryPropertyId = req.params.id;
     const { candidatePropertyId } = req.body;
 
@@ -33,7 +35,7 @@ export async function createDuplicateReviewController(
       await createDuplicateReviewService({
         primaryPropertyId,
         candidatePropertyId,
-      });
+      }, { id: user.id, role: user.role });
 
     return res.status(201).json({
       duplicateReview,
