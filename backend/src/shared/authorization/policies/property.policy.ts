@@ -35,6 +35,15 @@ export const propertyPolicy: AuthorizationPolicy = (
   const isFinalApprovedAgent =
     context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
 
+  // ثبت سابقه فقط برای کاربری مجاز به مشاهده موقعیت دقیق؛
+  // مشاهده سوابق محدود به هشتی و مالک مرتبط ملک است.
+  if (action === "CREATE_EXACT_LOCATION_ACCESS_LOG") {
+    return isHashti || isOwner || isFinalApprovedAgent || isCreator;
+  }
+  if (action === "VIEW_EXACT_LOCATION_ACCESS_LOGS") {
+    return isHashti || isOwner;
+  }
+
   if (action === "FAVORITE") {
     return context.actor.role === "CUSTOMER" &&
       data.isActive !== false &&
