@@ -1,7 +1,8 @@
-import { ListingStatus, MediaType, type PropertyMedia } from "@prisma/client";
+import { ListingStatus, MediaType, Prisma, type PropertyMedia } from "@prisma/client";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { prisma } from "../../../lib/prisma";
 import {
   createPropertyMedia,
   findPropertyMedia,
@@ -10,19 +11,25 @@ import {
   deactivatePropertyMedia,
   updatePropertyMediaOrder,
 } from "../repository/propertyMediaRepository";
-import { findPropertyById, findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
+import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
-type PropertyMediaActor = { id: string; role: string; isActive?: boolean };
+type PropertyMediaActor = AuthorizationActor;
 
-async function authorizePropertyMedia(propertyId: string, actor: PropertyMediaActor, action: "MANAGE" | "READ_PRIVATE") {
-  const context = await findPropertyAuthorizationContextById(propertyId);
+async function authorizePropertyMedia(
+  propertyId: string,
+  actor: PropertyMediaActor,
+  action: "MANAGE" | "READ_PRIVATE",
+  db: Prisma.TransactionClient | typeof prisma = prisma,
+) {
+  const context = await findPropertyAuthorizationContextById(propertyId, db);
   if (!context) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, context);
   if (!allowed) throw new Error("PROPERTY_MEDIA_ACCESS_FORBIDDEN");
   return context;
 }
-import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 
 const storageRoot = () => path.resolve(process.env.HASHTI_UPLOAD_DIR || path.join(process.cwd(), "uploads"));
 const storedFilePath = (id: string) => path.join(storageRoot(), "properties", id + ".webp");
@@ -47,16 +54,7 @@ export async function createPropertyMediaService(data: {
   sortOrder?: number;
   actor: PropertyMediaActor;
 }): Promise<PropertyMedia> {
-  await authorizePropertyMedia(data.propertyId, data.actor, "MANAGE");
   if (data.type !== MediaType.IMAGE && data.type !== MediaType.MAIN_IMAGE) throw new Error("فقط فایل تصویری مجاز است.");
-  const property = await findPropertyById(data.propertyId);
-  if (!property || property.deletedAt) throw new Error("ملک مورد نظر پیدا نشد یا حذف شده است.");
-  if (property.listing && ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED] as ListingStatus[]).includes(property.listing.status)) {
-    throw new Error("بارگذاری تصویر برای این وضعیت آگهی مجاز نیست؛ ابتدا آگهی را برای بررسی انتشار به هشتی ارسال کنید.");
-  }
-  if (await countActivePropertyMedia(data.propertyId) >= maxImagesPerProperty) {
-    throw new Error("حداکثر ۲۰ تصویر برای هر ملک قابل ثبت است.");
-  }
   if (!Number.isInteger(data.sortOrder ?? 0) || (data.sortOrder ?? 0) < 0) {
     throw new Error("ترتیب نمایش تصویر معتبر نیست.");
   }
@@ -66,21 +64,41 @@ export async function createPropertyMediaService(data: {
   const destination = storedFilePath(id);
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, bytes, { flag: "wx", mode: 0o640 });
-  let media: PropertyMedia;
+
   try {
-    media = await createPropertyMedia(data.propertyId, data.type, "/public/property-media/" + id, data.sortOrder ?? 0, id);
+    return await prisma.$transaction(async (tx) => {
+      const context = await authorizePropertyMedia(data.propertyId, data.actor, "MANAGE", tx);
+      if (context.deletedAt) throw new Error("ملک مورد نظر پیدا نشده یا حذف شده است.");
+      const property = await tx.property.findUnique({
+        where: { id: data.propertyId },
+        select: { isActive: true, listing: { select: { status: true } } },
+      });
+      if (!property) throw new Error("ملک مورد نظر پیدا نشده است.");
+      if (property.listing && ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED] as ListingStatus[]).includes(property.listing.status)) {
+        throw new Error("بارگذاری تصویر برای این وضعیت آگهی مجاز نیست؛ ابتدا آگهی را برای بررسی انتشار به هشتی ارسال کنید.");
+      }
+      if (await countActivePropertyMedia(data.propertyId, tx) >= maxImagesPerProperty) {
+        throw new Error("حداکثر ۲۰ تصویر برای هر ملک قابل ثبت است.");
+      }
+      const media = await createPropertyMedia(
+        data.propertyId,
+        data.type,
+        "/public/property-media/" + id,
+        data.sortOrder ?? 0,
+        id,
+        tx,
+      );
+      await queuePropertyListingForHashtiReview(data.propertyId, tx, data.actor.id);
+      return media;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
     await unlink(destination).catch(() => undefined);
     throw error;
   }
-  await queuePropertyListingForHashtiReview(data.propertyId);
-  return media;
 }
 
 export async function getPropertyMediaService(propertyId: string, actor: PropertyMediaActor): Promise<PropertyMedia[]> {
   await authorizePropertyMedia(propertyId, actor, "READ_PRIVATE");
-  const property = await findPropertyById(propertyId);
-  if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
   return findPropertyMedia(propertyId);
 }
 
@@ -106,23 +124,28 @@ export async function getPropertyMediaFileService(mediaId: string, propertyId?: 
 }
 
 export async function deletePropertyMediaService(propertyId: string, mediaId: string, actor: PropertyMediaActor) {
-  await authorizePropertyMedia(propertyId, actor, "MANAGE");
-  const media = await findPropertyMediaById(mediaId);
-  if (!media || media.propertyId !== propertyId || !media.isActive) throw new Error("تصویر مورد نظر پیدا نشد.");
-  await deactivatePropertyMedia(mediaId, propertyId);
-  await queuePropertyListingForHashtiReview(propertyId);
+  await prisma.$transaction(async (tx) => {
+    await authorizePropertyMedia(propertyId, actor, "MANAGE", tx);
+    const media = await findPropertyMediaById(mediaId, tx);
+    if (!media || media.propertyId !== propertyId || !media.isActive) throw new Error("تصویر مورد نظر پیدا نشد.");
+    const deleted = await deactivatePropertyMedia(mediaId, propertyId, tx);
+    if (!deleted.count) throw new Error("تصویر مورد نظر پیدا نشد.");
+    await queuePropertyListingForHashtiReview(propertyId, tx, actor.id);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   await unlink(storedFilePath(mediaId)).catch(() => undefined);
 }
 
 export async function reorderPropertyMediaService(propertyId: string, orderedIds: string[], actor: PropertyMediaActor) {
-  await authorizePropertyMedia(propertyId, actor, "MANAGE");
-  const current = await findPropertyMedia(propertyId);
-  if (!Array.isArray(orderedIds) || orderedIds.length !== current.length ||
-      new Set(orderedIds).size !== orderedIds.length ||
-      current.some((media) => !orderedIds.includes(media.id))) {
-    throw new Error("ترتیب تصاویر باید شامل تمام تصاویر فعال همین ملک باشد.");
-  }
-  await updatePropertyMediaOrder(propertyId, orderedIds);
-  await queuePropertyListingForHashtiReview(propertyId);
-  return findPropertyMedia(propertyId);
+  return prisma.$transaction(async (tx) => {
+    await authorizePropertyMedia(propertyId, actor, "MANAGE", tx);
+    const current = await findPropertyMedia(propertyId, tx);
+    if (!Array.isArray(orderedIds) || orderedIds.length !== current.length ||
+        new Set(orderedIds).size !== orderedIds.length ||
+        current.some((media) => !orderedIds.includes(media.id))) {
+      throw new Error("ترتیب تصاویر باید شامل تمام تصاویر فعال همین ملک باشد.");
+    }
+    await updatePropertyMediaOrder(propertyId, orderedIds, tx);
+    await queuePropertyListingForHashtiReview(propertyId, tx, actor.id);
+    return findPropertyMedia(propertyId, tx);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
