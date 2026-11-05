@@ -19,7 +19,8 @@
  * ============================================================
  */
 
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
+import { prisma } from "../../../lib/prisma";
 import {
   findCustomerById,
 } from "../repository/customerRepository";
@@ -76,55 +77,70 @@ export const createCustomerSearchRequest = async (
   },
   creator: AuthorizationActor & { mobile: string; isVerifiedAgent?: boolean }
 ) => {
-  const agentProfile = creator.role === "AGENT"
-    ? await findAgentProfileByUserId(creator.id)
-    : null;
-  const isVerifiedAgent = creator.role === "AGENT" &&
-    agentProfile?.verificationStatus === "VERIFIED";
-  const creationAllowed = await authorize("searchRequest", "CREATE", {
-    actor: creator,
-    resource: { data: { isVerifiedAgent } },
-  });
-  if (!creationAllowed) throw new Error("Search request creation is not authorized");
-
-  let requesterFirstName: string | null;
-  let requesterLastName: string;
-  let requesterMobile: string;
-
-  // اطلاعات مشتری دارای حساب از پروفایل متصل به نشست معتبر خوانده می‌شود.
-  if (creator.role === "CUSTOMER") {
-    if (!customerId) throw new Error("Customer not found");
-    const customer = await findCustomerById(customerId);
-    if (!customer || customer.userId !== creator.id) throw new Error("Customer not found");
-    requesterFirstName = customer.firstName.trim() || null;
-    requesterLastName = customer.lastName.trim();
-    requesterMobile = creator.mobile;
-  } else {
-    if (customerId !== null) throw new Error("Agent-created requests cannot be assigned to a customer profile");
-    requesterFirstName = data.requesterFirstName?.trim() || null;
-    requesterLastName = data.requesterLastName?.trim() ?? "";
-    requesterMobile = data.requesterMobile?.trim() ?? "";
-    if (!requesterLastName) throw new Error("Customer last name is required");
-    if (!requesterMobile) throw new Error("Customer mobile is required");
-  }
-
   if (!data.city.trim()) throw new Error("City is required");
   if (data.budget === undefined || data.budget === null) throw new Error("Budget is required");
   if (!Number.isFinite(data.budget) || data.budget < 0) throw new Error("Budget cannot be negative");
 
-  return createPropertySearchRequest({
-    customerId,
-    createdByUserId: creator.id,
-    createdByRole: creator.role as UserRole,
-    requesterMobile,
-    requesterFirstName,
-    requesterLastName,
-    transactionType: data.transactionType,
-    propertyType: data.propertyType,
-    city: data.city.trim(),
-    budget: data.budget,
-    description: data.description?.trim() || null,
-  });
+  return prisma.$transaction(async (tx) => {
+    const currentUser = await tx.user.findUnique({
+      where: { id: creator.id },
+      select: { id: true, role: true, isActive: true, mobile: true },
+    });
+    if (!currentUser || currentUser.isActive !== true || currentUser.role !== creator.role) {
+      throw new Error("Search request creation is not authorized");
+    }
+
+    const agentProfile = currentUser.role === "AGENT"
+      ? await tx.agent.findUnique({ where: { userId: currentUser.id }, select: { verificationStatus: true } })
+      : null;
+    const isVerifiedAgent = currentUser.role === "AGENT" &&
+      agentProfile?.verificationStatus === "VERIFIED";
+    const freshActor = { id: currentUser.id, role: currentUser.role, isActive: currentUser.isActive };
+    const creationAllowed = await authorize("searchRequest", "CREATE", {
+      actor: freshActor,
+      resource: { data: { isVerifiedAgent } },
+    });
+    if (!creationAllowed) throw new Error("Search request creation is not authorized");
+
+    let requesterFirstName: string | null;
+    let requesterLastName: string;
+    let requesterMobile: string;
+
+    if (currentUser.role === "CUSTOMER") {
+      if (!customerId) throw new Error("Customer not found");
+      const customer = await tx.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true, userId: true, firstName: true, lastName: true },
+      });
+      if (!customer || customer.userId !== currentUser.id) throw new Error("Customer not found");
+      requesterFirstName = customer.firstName.trim() || null;
+      requesterLastName = customer.lastName.trim();
+      requesterMobile = currentUser.mobile;
+    } else {
+      if (currentUser.role !== "AGENT" || customerId !== null) {
+        throw new Error("Agent-created requests cannot be assigned to a customer profile");
+      }
+      requesterFirstName = data.requesterFirstName?.trim() || null;
+      requesterLastName = data.requesterLastName?.trim() ?? "";
+      requesterMobile = data.requesterMobile?.trim() ?? "";
+      if (!requesterLastName) throw new Error("Customer last name is required");
+      if (!requesterMobile) throw new Error("Customer mobile is required");
+    }
+
+    return createPropertySearchRequest({
+      customerId,
+      createdByUserId: currentUser.id,
+      createdByRole: currentUser.role as UserRole,
+      requesterMobile,
+      requesterFirstName,
+      requesterLastName,
+      transactionType: data.transactionType,
+      propertyType: data.propertyType,
+      city: data.city.trim(),
+      budget: data.budget,
+      description: data.description?.trim() || null,
+    }, tx);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 };
 
 /**
@@ -207,62 +223,25 @@ export const closeCustomerSearchRequest = async (
   requestId: string,
   actor: AuthorizationActor
 ) => {
-  const authenticatedUserId = actor.id;
-  /**
-   * ابتدا مشتری باید وجود داشته باشد.
-   */
-  const customer =
-    await findCustomerById(customerId);
+  return prisma.$transaction(async (tx) => {
+    const customer = await tx.customer.findUnique({
+      where: { id: customerId },
+      select: { id: true, userId: true },
+    });
+    const request = await findPropertySearchRequestById(requestId, tx);
+    if (!customer || !request) throw new Error("SEARCH_REQUEST_FORBIDDEN");
 
-  if (!customer) {
-    throw new Error(
-      "Customer not found"
-    );
-  }
+    const allowed = await authorize("searchRequest", "CLOSE", {
+      actor,
+      resource: { id: request.id, status: request.status, data: {
+        isOwner: customer.userId === actor.id && request.customerId === customerId,
+        status: request.status,
+      } },
+    });
+    if (!allowed || request.status !== "ACTIVE") throw new Error("SEARCH_REQUEST_FORBIDDEN");
 
-  /**
-   * درخواست باید وجود داشته باشد.
-   */
-  const request =
-    await findPropertySearchRequestById(
-      requestId
-    );
-
-  if (!request) {
-    throw new Error(
-      "Search request not found"
-    );
-  }
-
-  /**
-   * مشتری فقط می‌تواند درخواست خودش
-   * را تغییر دهد.
-   */
-  const allowed = await authorize("searchRequest", "CLOSE", {
-    actor,
-    resource: { id: request.id, status: request.status, data: {
-      isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
-      status: request.status,
-    } },
-  });
-  if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
-
-  /**
-   * فقط درخواست ACTIVE قابل بستن است.
-   */
-  if (request.status !== "ACTIVE") {
-    throw new Error(
-      "Only active search requests can be closed"
-    );
-  }
-
-  /**
-   * تغییر وضعیت به CLOSED
-   */
-  return updatePropertySearchRequestStatus(
-    requestId,
-    "CLOSED"
-  );
+    return updatePropertySearchRequestStatus(requestId, "CLOSED", tx);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 };
 
 /**
@@ -273,121 +252,43 @@ export const updateCustomerSearchRequest = async (
   requestId: string,
   actor: AuthorizationActor,
   data: {
-    transactionType?: 
-      | "SALE"
-      | "FULL_DEPOSIT"
-      | "RENT"
-      | "DEPOSIT_AND_RENT";
-
-    propertyType?:
-      | "APARTMENT"
-      | "HOUSE"
-      | "VILLA"
-      | "LAND"
-      | "SHOP"
-      | "OFFICE"
-      | "GARDEN";
-
+    transactionType?: "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
+    propertyType?: "APARTMENT" | "HOUSE" | "VILLA" | "LAND" | "SHOP" | "OFFICE" | "GARDEN";
     city?: string;
-
     budget?: number | null;
-
     description?: string | null;
   }
 ) => {
-  const authenticatedUserId = actor.id;
-  /**
-   * مشتری باید وجود داشته باشد.
-   */
-  const customer =
-    await findCustomerById(customerId);
-
-  if (!customer) {
-    throw new Error(
-      "Customer not found"
-    );
-  }
-
-  /**
-   * درخواست باید وجود داشته باشد.
-   */
-  const request =
-    await findPropertySearchRequestById(
-      requestId
-    );
-
-  if (!request) {
-    throw new Error(
-      "Search request not found"
-    );
-  }
-
-  /**
-   * مشتری فقط درخواست خودش را
-   * می‌تواند ویرایش کند.
-   */
-  const allowed = await authorize("searchRequest", "UPDATE", {
-    actor,
-    resource: { id: request.id, status: request.status, data: {
-      isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
-      status: request.status,
-    } },
-  });
-  if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
-
-  /**
-   * فقط درخواست ACTIVE قابل ویرایش است.
-   */
-  if (request.status !== "ACTIVE") {
-    throw new Error(
-      "Only active search requests can be updated"
-    );
-  }
-
-  /**
-   * اگر city ارسال شده باشد،
-   * نباید خالی باشد.
-   */
-  if (
-    data.city !== undefined &&
-    !data.city.trim()
-  ) {
-    throw new Error(
-      "City is required"
-    );
-  }
-
-  /**
-   * بودجه نباید منفی باشد.
-   */
-  if (data.budget === null) {
-    throw new Error("Budget is required");
-  }
-
-  if (
-    data.budget !== undefined &&
-    (!Number.isFinite(data.budget) || data.budget < 0)
-  ) {
+  if (data.city !== undefined && !data.city.trim()) throw new Error("City is required");
+  if (data.budget === null) throw new Error("Budget is required");
+  if (data.budget !== undefined && (!Number.isFinite(data.budget) || data.budget < 0)) {
     throw new Error("Budget cannot be negative");
   }
 
-  return updatePropertySearchRequest(
-    requestId,
-    {
+  return prisma.$transaction(async (tx) => {
+    const customer = await tx.customer.findUnique({
+      where: { id: customerId },
+      select: { id: true, userId: true },
+    });
+    const request = await findPropertySearchRequestById(requestId, tx);
+    if (!customer || !request) throw new Error("SEARCH_REQUEST_FORBIDDEN");
+
+    const allowed = await authorize("searchRequest", "UPDATE", {
+      actor,
+      resource: { id: request.id, status: request.status, data: {
+        isOwner: customer.userId === actor.id && request.customerId === customerId,
+        status: request.status,
+      } },
+    });
+    if (!allowed || request.status !== "ACTIVE") throw new Error("SEARCH_REQUEST_FORBIDDEN");
+
+    return updatePropertySearchRequest(requestId, {
       ...data,
       budget: data.budget ?? undefined,
-
-      city:
-        data.city !== undefined
-          ? data.city.trim()
-          : undefined,
-
-      description:
-        data.description !== undefined
-          ? data.description?.trim() || null
-          : undefined,
-    }
-  );
+      city: data.city !== undefined ? data.city.trim() : undefined,
+      description: data.description !== undefined ? data.description?.trim() || null : undefined,
+    }, tx);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 };
 
 /**
