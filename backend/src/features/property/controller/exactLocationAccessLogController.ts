@@ -56,7 +56,7 @@ export async function createExactLocationAccessLogController(
       accessLog,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error instanceof Error && error.message.includes("FORBIDDEN") ? 403 : 400).json({
       message:
         error instanceof Error
           ? error.message
