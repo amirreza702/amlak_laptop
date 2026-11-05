@@ -60,6 +60,7 @@ import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { authorize } from "../../../shared/authorization/authorization.core";
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 
@@ -85,6 +86,11 @@ export async function registerProperty(
   if (creator.role !== "OWNER" && creator.role !== "AGENT") {
     throw new Error("نقش ثبت‌کننده معتبر نیست.");
   }
+  const registrationAllowed = await authorize("property", "REGISTER", {
+    actor: creator,
+    resource: { data: { isDeleted: false, isActive: true } },
+  });
+  if (!registrationAllowed) throw new Error("ثبت ملک برای این حساب مجاز نیست.");
 
   if (!Number.isFinite(data.area) || data.area == null || data.area <= 0) {
     throw new Error("متراژ ملک باید بیشتر از صفر باشد.");
