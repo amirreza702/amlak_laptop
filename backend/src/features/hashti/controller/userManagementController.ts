@@ -55,7 +55,7 @@ export async function getManagedUsersController(req: Request, res: Response) {
   if (limit === null || offset === null) return res.status(400).json({ message: "Invalid pagination parameters" });
 
   try {
-    const result = await getManagedUsersService({
+    const result = await getManagedUsersService(getActor(req)?.id ?? "", {
       query: typeof req.query.query === "string" ? req.query.query.trim() : undefined,
       role: role ? role as UserRole : undefined, isActive, limit, offset,
     });
