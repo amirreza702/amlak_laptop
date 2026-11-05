@@ -39,6 +39,7 @@ import {
   findPropertyByPostalCode,
   findPropertyById,
   findPropertyByIdWithContacts,
+  findPropertyAuthorizationContextById,
   updateProperty,
 } from "../repository/propertyRepository";
 
@@ -61,7 +62,6 @@ import { queuePropertyListingForHashtiReview } from "./propertyListingStatusServ
 import { authorizePropertyAction, getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { authorize } from "../../../shared/authorization/authorization.core";
-import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 
 /**
  * ============================================================
