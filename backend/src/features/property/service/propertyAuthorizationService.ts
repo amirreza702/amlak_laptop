@@ -41,6 +41,7 @@ export interface PropertyVisibility {
 export async function getPropertyVisibility(
   actor: AuthorizationActor,
   property: PropertyAuthorizationSubject,
+  expectedApproverOwnerId?: string,
 ): Promise<PropertyVisibility> {
   const owners = property.owners ?? [];
   const agents = property.agents ?? [];
@@ -61,6 +62,7 @@ export async function getPropertyVisibility(
       relation.status === "ACTIVE" &&
       relation.approvedByOwner === true &&
       Boolean(relation.approvedByOwnerId) &&
+      (!expectedApproverOwnerId || relation.approvedByOwnerId === expectedApproverOwnerId) &&
       owners.some((owner) => owner.ownerId === relation.approvedByOwnerId),
     );
 
