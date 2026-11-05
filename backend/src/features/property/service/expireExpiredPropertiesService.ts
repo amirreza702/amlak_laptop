@@ -1,6 +1,7 @@
 import { ListingStatus, PropertyHistoryAction, UserRole } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
 import { findExpiredProperties } from "../repository/propertyRepository";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 /**
  * تنها نقطه اجرای انقضای آگهی‌هاست؛ هم Job زمان‌بندی‌شده و هم
@@ -15,12 +16,20 @@ export async function expireExpiredProperties(input: {
   const actor = input.performedBy
     ? await prisma.user.findUnique({
         where: { id: input.performedBy },
-        select: { id: true, mobile: true, role: true, isActive: true },
+        select: { id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
       })
     : null;
 
-  if (input.performedBy && (!actor || actor.role !== UserRole.HASHTI || !actor.isActive)) {
-    throw new Error("HASHTI_PERMISSION_REQUIRED");
+  if (input.performedBy) {
+    const allowed = Boolean(actor) && await authorize("admin", "EXPIRE_LISTING", {
+      actor: { id: actor!.id, role: actor!.role, isActive: actor!.isActive },
+      resource: { data: {
+        isActive: actor!.isActive,
+        isSuperAdmin: actor!.isSuperAdmin,
+        permissions: actor!.adminPermissions,
+      } },
+    });
+    if (!allowed) throw new Error("HASHTI_PERMISSION_REQUIRED");
   }
   if (input.force && (!actor || !input.propertyId)) throw new Error("HASHTI_PERMISSION_REQUIRED");
 
