@@ -304,7 +304,7 @@ function FormDetails({ record }: { record: unknown }) {
   }
 
   return <div className="space-y-4">
-    {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} label={coordinates.precision === "EXACT" ? "موقعیت دقیق ملک" : "محدوده تقریبی ملک"} />}
+    {coordinates && <RecordLocationMap latitude={coordinates.latitude} longitude={coordinates.longitude} precision={coordinates.precision} label={coordinates.precision === "EXACT" ? "موقعیت دقیق ملک" : "محدوده تقریبی ملک"} />}
     <dl className="grid gap-3 sm:grid-cols-2">
       {fields.map(({ key, label, value }, index) => <FormField key={key + "-" + index} fieldKey={key} label={label} value={value} />)}
     </dl>
