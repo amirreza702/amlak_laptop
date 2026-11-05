@@ -348,6 +348,9 @@ export async function getPropertyById(id: string) {
 export async function getPropertyDetailsForActor(id: string, actor: AuthorizationActor) {
   const property = await getPropertyById(id);
   const visibility = await getPropertyVisibility(actor, property);
+  if (actor.role === "HASHTI" && visibility.canViewExactLocation && visibility.canViewOwnerDetails) {
+    return property;
+  }
   const owners = property.owners ?? [];
   const agents = property.agents ?? [];
 
