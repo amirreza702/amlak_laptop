@@ -37,7 +37,7 @@ export async function archivePropertyController(
       await archivePropertyService({
         propertyId,
         archivedReason,
-        actor: { id: user.id, role: user.role },
+        actor: user,
       });
 
     return res.status(200).json({
@@ -70,7 +70,7 @@ export async function getPropertyArchiveController(
     if (!user) return res.status(401).json({ message: "Authentication required" });
 
     const propertyArchive =
-      await getPropertyArchiveService(propertyId, { id: user.id, role: user.role });
+      await getPropertyArchiveService(propertyId, user);
 
     return res.status(200).json({
       propertyArchive,
@@ -95,7 +95,7 @@ export async function restorePropertyController(
     if (!user) { res.status(401).json({ message: "Authentication required" }); return; }
 
     const archive =
-      await restorePropertyService(propertyId, { id: user.id, role: user.role });
+      await restorePropertyService(propertyId, user);
 
     res.status(200).json({
       archive,
