@@ -3,29 +3,45 @@ import type {
   AuthorizationPolicy,
 } from "../authorization.types";
 
-interface PropertyAccessData {
-  isRelatedOwner: boolean;
-  isApprovedAgent: boolean;
-  isAllowedAgentCreator: boolean;
+interface PropertyPolicyData {
+  isRelatedOwner?: boolean;
+  isApprovedAgent?: boolean;
+  isAllowedAgentCreator?: boolean;
+  isCreator?: boolean;
+  isDeleted?: boolean;
+  isRegisteredByCurrentAgent?: boolean;
 }
 
 /**
- * قوانین پایه دسترسی خصوصی به ملک.
- * دریافت اطلاعات ملک و روابط آن همچنان در Middleware/Repository فعلی است.
+ * قوانین دسترسی ملک.
+ * داده و روابط لازم همچنان توسط لایه فعلی بک‌اند دریافت می‌شوند.
  */
 export const propertyPolicy: AuthorizationPolicy = (
   action: string,
   context: AuthorizationContext,
 ): boolean => {
-  if (action !== "ACCESS") return false;
+  const data = context.resource?.data as PropertyPolicyData | undefined;
+  if (!data || data.isDeleted) return false;
 
-  const data = context.resource?.data as PropertyAccessData | undefined;
-  if (!data) return false;
+  if (action === "ACCESS") {
+    if (context.actor.role === "HASHTI") return true;
+    if (context.actor.role === "OWNER") return Boolean(data.isRelatedOwner);
+    if (context.actor.role === "AGENT") {
+      return Boolean(data.isApprovedAgent || data.isAllowedAgentCreator);
+    }
+    return false;
+  }
 
-  if (context.actor.role === "HASHTI") return true;
-  if (context.actor.role === "OWNER") return data.isRelatedOwner;
-  if (context.actor.role === "AGENT") {
-    return data.isApprovedAgent || data.isAllowedAgentCreator;
+  if (action === "MANAGE") {
+    return Boolean(
+      data.isCreator ||
+      (context.actor.role === "OWNER" && data.isRelatedOwner),
+    );
+  }
+
+  if (action === "EDIT_OWN_REGISTRATION") {
+    return context.actor.role === "AGENT" &&
+      Boolean(data.isRegisteredByCurrentAgent);
   }
 
   return false;
