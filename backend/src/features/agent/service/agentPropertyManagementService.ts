@@ -1,14 +1,15 @@
 import { findAgentProfileByUserId } from "../repository/agentRepository";
 import { findAgentPropertyRecords, type AgentPropertyQuery } from "../repository/agentPropertyManagementRepository";
 import { getPropertyVisibility, projectPropertyForActor } from "../../property/service/propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /** فهرست املاک مشاور؛ تصمیم محرمانگی برای هر ملک از Authorization Core گرفته می‌شود. */
-export async function getMyAgentPropertyRecords(userId: string, query: Omit<AgentPropertyQuery, "agentId" | "userId">) {
+export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query: Omit<AgentPropertyQuery, "agentId" | "userId">) {
+  const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
 
   const result = await findAgentPropertyRecords({ ...query, agentId: agent.id, userId });
-  const actor = { id: userId, role: "AGENT" };
 
   const properties = await Promise.all(result.properties.map(async (record) => {
     const visibility = await getPropertyVisibility(actor, record.property);
