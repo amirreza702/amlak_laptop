@@ -48,7 +48,8 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
         mobile: visibleOwner.owner.user.mobile,
       } : null,
       owners: visibleOwner ? [visibleOwner] : [],
-      exposeCreatorContact: visibility.canViewOwnerDetails,
+      exposeCreatorContact: visibility.canViewRegistrantDetails,
+      creatorMobile: createdByUser?.mobile ?? record.property.creatorMobile,
     });
 
     const listing = record.property.listing
@@ -70,9 +71,9 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
         approvedAgentFirstName: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.firstName ?? null : null,
         approvedAgentLastName: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.lastName ?? null : null,
         approvedAgentMobile: visibility.canViewOwnerDetails ? approvedAgentRelation?.agent.user.mobile ?? null : null,
-        registrantFirstName: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.agent?.firstName ?? null : null,
-        registrantLastName: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.agent?.lastName ?? null : null,
-        creatorMobile: visibility.canViewOwnerDetails && record.property.registrationSource === "AGENT" ? createdByUser?.mobile ?? record.property.creatorMobile : null,
+        registrantFirstName: visibility.canViewRegistrantDetails ? createdByUser?.agent?.firstName ?? null : null,
+        registrantLastName: visibility.canViewRegistrantDetails ? createdByUser?.agent?.lastName ?? null : null,
+        creatorMobile: safeProperty.creatorMobile,
       },
     };
   }));
