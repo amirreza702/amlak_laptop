@@ -34,6 +34,13 @@ export const propertyPolicy: AuthorizationPolicy = (
   const isFinalApprovedAgent =
     context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
 
+  if (action === "FAVORITE") {
+    return context.actor.role === "CUSTOMER" &&
+      !data.isExpired &&
+      !data.isDeleted &&
+      context.resource?.status === "PUBLISHED";
+  }
+
   if (action === "ACCESS") {
     if (isHashti) return true;
     // انقضای آگهی، دسترسی عمومیِ ایجادکننده را هم می‌بندد.
