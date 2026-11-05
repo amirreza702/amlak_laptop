@@ -4,6 +4,7 @@ import { findPropertyById, findPropertiesWithinRadius, findPropertyByIdWithConta
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import { calculatePropertySimilarity } from "./propertySimilarityService";
 import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 export const DUPLICATE_MATCHING_RADIUS_METERS = 1000;
 export const DUPLICATE_MATCHING_THRESHOLD = 0.80;
@@ -50,6 +51,7 @@ export const getPropertySimilaritySummaryService = async (
   propertyId: string,
   actor: AuthorizationActor,
 ): Promise<PropertySimilaritySummary> => {
+  await requireAdminServicePermission(actor.id, "DUPLICATES_MANAGE");
   const authorizationContext = await findPropertyAuthorizationContextById(propertyId);
   if (!authorizationContext) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, "VIEW_DUPLICATE_MATCHES", authorizationContext);
