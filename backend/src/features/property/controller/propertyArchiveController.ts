@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 
 import {
   archivePropertyService,
@@ -25,6 +26,8 @@ export async function archivePropertyController(
 ) {
   try {
     const propertyId = req.params.id;
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
 
     const {
       archivedReason = null,
@@ -34,6 +37,7 @@ export async function archivePropertyController(
       await archivePropertyService({
         propertyId,
         archivedReason,
+        actor: { id: user.id, role: user.role },
       });
 
     return res.status(200).json({
@@ -62,9 +66,11 @@ export async function getPropertyArchiveController(
 ) {
   try {
     const propertyId = req.params.id;
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
 
     const propertyArchive =
-      await getPropertyArchiveService(propertyId);
+      await getPropertyArchiveService(propertyId, { id: user.id, role: user.role });
 
     return res.status(200).json({
       propertyArchive,
@@ -85,9 +91,11 @@ export async function restorePropertyController(
 ): Promise<void> {
   try {
     const propertyId = String(req.params.id);
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) { res.status(401).json({ message: "Authentication required" }); return; }
 
     const archive =
-      await restorePropertyService(propertyId);
+      await restorePropertyService(propertyId, { id: user.id, role: user.role });
 
     res.status(200).json({
       archive,
