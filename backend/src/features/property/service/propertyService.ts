@@ -60,6 +60,8 @@ import { updatePropertyListing } from "../repository/propertyListingRepository";
 import { queuePropertyListingForHashtiReview } from "./propertyListingStatusService";
 import { getPropertyVisibility, projectPropertyForActor } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 /**
  * ============================================================
@@ -450,7 +452,8 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
 
 export async function updatePropertyService(
   propertyId: string,
-  data: UpdatePropertyInput
+  data: UpdatePropertyInput,
+  actor: AuthorizationActor
 ): Promise<Property> {
   /**
    * ============================================================
@@ -513,6 +516,11 @@ export async function updatePropertyService(
    * همه در یک Transaction.
    */
   return prisma.$transaction(async (tx) => {
+    const authorizationContext = await findPropertyAuthorizationContextById(propertyId, tx);
+    if (!authorizationContext) throw new Error("ملک مورد نظر پیدا نشد.");
+    const allowed = await authorizePropertyAction(actor, "MANAGE", authorizationContext);
+    if (!allowed) throw new Error("شما اجازه ویرایش این ملک را ندارید.");
+
     /**
      * ----------------------------------------------------------
      * Update Property
@@ -594,6 +602,6 @@ export async function updatePropertyService(
     }
 
     return updatedProperty;
-  });
+  }, { isolationLevel: "Serializable" });
 }
 
