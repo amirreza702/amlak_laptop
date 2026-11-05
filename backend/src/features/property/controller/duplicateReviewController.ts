@@ -35,7 +35,7 @@ export async function createDuplicateReviewController(
       await createDuplicateReviewService({
         primaryPropertyId,
         candidatePropertyId,
-      }, { id: user.id, role: user.role });
+      }, { id: user.id, role: user.role, isActive: user.isActive });
 
     return res.status(201).json({
       duplicateReview,
@@ -65,7 +65,7 @@ export async function getDuplicateReviewsController(
     const propertyId = req.params.id;
 
     const duplicateReviews =
-      await getDuplicateReviewsService(propertyId);
+      await getDuplicateReviewsService(propertyId, { id: user.id, role: user.role, isActive: user.isActive });
 
     return res.status(200).json({
       duplicateReviews,
@@ -114,7 +114,7 @@ export async function reviewDuplicateController(
         decision,
         reviewedBy: user.id,
         notes,
-      });
+      }, { id: user.id, role: user.role, isActive: user.isActive });
 
     return res.status(200).json({
       duplicateReview,
@@ -131,11 +131,13 @@ export async function reviewDuplicateController(
 
 /** GET /hashti/duplicate-review-queue — صف بررسی تشابه گروه‌بندی‌شده بر اساس ملک اصلی. */
 export async function getHashtiDuplicateReviewQueueController(
-  _req: Request,
+  req: Request,
   res: Response
 ) {
   try {
-    const properties = await getHashtiDuplicateReviewQueueService();
+    const user = (req as AuthenticatedRequest).user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
+    const properties = await getHashtiDuplicateReviewQueueService({ id: user.id, role: user.role, isActive: user.isActive });
     return res.status(200).json({ properties });
   } catch (error) {
     console.error("Could not load Hashti duplicate review queue:", error);
