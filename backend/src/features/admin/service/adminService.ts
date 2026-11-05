@@ -43,6 +43,22 @@ export async function requireSuperAdminServicePermission(actorUserId: string) {
   if (!allowed) throw new Error("SUPER_ADMIN_PERMISSION_REQUIRED");
 }
 
+/** A delegated staff manager may only grant permissions they personally hold, never STAFF_MANAGE. */
+async function validateAssignableStaffPermissions(actorUserId: string, permissions: AdminPermission[]) {
+  const actor = await prisma.user.findUnique({
+    where: { id: actorUserId },
+    select: { role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
+  });
+  if (!actor || actor.role !== UserRole.HASHTI || actor.isActive !== true) {
+    throw new Error("ADMIN_PERMISSION_FORBIDDEN");
+  }
+  if (actor.isSuperAdmin) return;
+  const assignable = new Set(actor.adminPermissions.filter((permission) => permission !== "STAFF_MANAGE"));
+  if (permissions.some((permission) => permission === "STAFF_MANAGE" || !assignable.has(permission))) {
+    throw new Error("ADMIN_PERMISSION_GRANT_FORBIDDEN");
+  }
+}
+
 function pageArgs(page: number, limit: number) {
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new Error("INVALID_PAGINATION");
@@ -123,7 +139,9 @@ export async function adminSetAgentVerification(input: { actorUserId: string; ag
 export async function adminUpdateStaffPermissions(input: { actorUserId: string; userId: string; permissions: unknown; reason: unknown }) {
   await requireAdminServicePermission(input.actorUserId, "STAFF_MANAGE");
   if (!Array.isArray(input.permissions) || input.permissions.some(p => typeof p !== "string" || !(ADMIN_PERMISSIONS as readonly string[]).includes(p))) throw new Error("INVALID_PERMISSIONS");
-  return updateStaffPermissions({ actorUserId: input.actorUserId, userId: input.userId, permissions: input.permissions as AdminPermission[], reason: reasonValue(input.reason) });
+  const permissions = input.permissions as AdminPermission[];
+  await validateAssignableStaffPermissions(input.actorUserId, permissions);
+  return updateStaffPermissions({ actorUserId: input.actorUserId, userId: input.userId, permissions, reason: reasonValue(input.reason) });
 }
 export async function adminAudit(actorUserId: string, input: { targetType?: string; targetId?: string; targetUserId?: string; actorUserId?: string; page: number; limit: number }) {
   await requireAdminServicePermission(actorUserId, "AUDIT_READ");
@@ -132,11 +150,13 @@ export async function adminAudit(actorUserId: string, input: { targetType?: stri
 export async function adminCreateStaffAccount(input: { actorUserId: string; mobile: unknown; password: unknown; permissions: unknown; reason: unknown }) {
   await requireAdminServicePermission(input.actorUserId, "STAFF_MANAGE");
   if (!Array.isArray(input.permissions) || input.permissions.some(p => typeof p !== "string" || !(ADMIN_PERMISSIONS as readonly string[]).includes(p))) throw new Error("INVALID_PERMISSIONS");
+  const permissions = input.permissions as AdminPermission[];
+  await validateAssignableStaffPermissions(input.actorUserId, permissions);
   const mobile = safeMobile(input.mobile);
   const passwordHash = await bcrypt.hash(safePassword(input.password), 12);
   return createStaffAccount({
     actorUserId: input.actorUserId, mobile, passwordHash,
-    permissions: input.permissions as AdminPermission[], reason: reasonValue(input.reason),
+    permissions, reason: reasonValue(input.reason),
   });
 }
 
