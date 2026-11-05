@@ -10,6 +10,7 @@ import {
   findAgentProfileByUserId,
   updateAgentProfile as updateAgentProfileRepository,
 } from "../repository/agentRepository";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 /**
  * دریافت پروفایل فقط برای مالک آن.
@@ -24,9 +25,11 @@ export const getAgentProfile = async (
     throw new Error("مشاور مورد نظر پیدا نشد.");
   }
 
-  if (agent.userId !== authenticatedUserId) {
-    throw new Error("AGENT_PROFILE_FORBIDDEN");
-  }
+  const allowed = await authorize("agent", "READ", {
+    actor: { id: authenticatedUserId, role: "AGENT" },
+    resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
+  });
+  if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
 
   // شناسه داخلی مالک نباید در پاسخ برگردد.
   const { userId: _userId, ...profile } = agent;
@@ -53,9 +56,11 @@ export const updateAgentProfile = async (
     throw new Error("مشاور مورد نظر پیدا نشد.");
   }
 
-  if (agent.userId !== authenticatedUserId) {
-    throw new Error("AGENT_PROFILE_FORBIDDEN");
-  }
+  const allowed = await authorize("agent", "UPDATE", {
+    actor: { id: authenticatedUserId, role: "AGENT" },
+    resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
+  });
+  if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
 
   const firstName =
     data.firstName !== undefined
@@ -114,6 +119,11 @@ export const getCurrentAgentProfile = async (
   if (!agent) {
     throw new Error("AGENT_PROFILE_NOT_FOUND");
   }
+  const allowed = await authorize("agent", "READ", {
+    actor: { id: authenticatedUserId, role: "AGENT" },
+    resource: { id: agent.id, data: { isSelf: agent.userId === authenticatedUserId } },
+  });
+  if (!allowed) throw new Error("AGENT_PROFILE_FORBIDDEN");
 
   const { userId: _userId, ...profile } = agent;
   return profile;
