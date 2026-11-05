@@ -46,7 +46,7 @@ export function requireOwnProfile(kind: ProfileKind, paramName: string) {
       }
 
       const allowed = await authorize(kind, req.method === "GET" ? "READ" : "UPDATE", {
-        actor: { id: user.id, role: user.role },
+        actor: user,
         resource: { id, data: { isSelf: found } },
       });
       if (!allowed) {
@@ -86,7 +86,7 @@ export function bindOwnProfileIdToBody(kind: ProfileKind, bodyField: string) {
       }
 
       const allowed = await authorize(kind, "BIND", {
-        actor: { id: user.id, role: user.role },
+        actor: user,
         resource: { id: profile?.id, data: { isSelf: Boolean(profile) } },
       });
       if (!allowed || !profile) {
@@ -147,7 +147,7 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
 
       const allowed = property
         ? await authorizePropertyAction(
-            { id: user.id, role: user.role },
+            user,
             "ACCESS",
             property,
             { allowAgentCreator },
@@ -193,7 +193,7 @@ export function requirePropertyCreator(paramName = "id") {
       });
       const allowed = property
         ? await authorizePropertyAction(
-            { id: user.id, role: user.role },
+            user,
             "MANAGE",
             property,
           )
@@ -268,7 +268,7 @@ export function requirePropertyCreatorOrAccess(paramName = "id") {
 
       const allowed = property
         ? await authorizePropertyAction(
-            { id: user.id, role: user.role },
+            user,
             "READ_PRIVATE",
             property,
           )
@@ -314,7 +314,7 @@ export function requireAgentOwnRegisteredProperty(paramName = "id") {
       });
       const allowed = property
         ? await authorizePropertyAction(
-            { id: user.id, role: user.role },
+            user,
             "EDIT_OWN_REGISTRATION",
             property,
           )
@@ -342,7 +342,7 @@ export function requireOwnNotificationUser(paramName = "userId") {
     }
 
     const allowed = await authorize("notification", "LIST_OWN", {
-      actor: { id: user.id, role: user.role },
+      actor: user,
       resource: { id: targetUserId, data: { isOwner: targetUserId === user.id } },
     });
 
@@ -370,7 +370,7 @@ export function requireOwnNotification(paramName = "id") {
         select: { id: true },
       });
       const allowed = await authorize("notification", "ACCESS", {
-        actor: { id: user.id, role: user.role },
+        actor: user,
         resource: { id, data: { isOwner: Boolean(notification) } },
       });
       if (!allowed) return res.status(404).json({ message: "Notification not found" });
@@ -409,7 +409,7 @@ export function requireOwnSearchRequest() {
           ? "CLOSE"
           : "UPDATE";
       const allowed = await authorize("searchRequest", action, {
-        actor: { id: user.id, role: user.role },
+        actor: user,
         resource: { id: requestId, status: request?.status, data: { isOwner: Boolean(request), status: request?.status } },
       });
       if (!allowed) return res.status(404).json({ message: "Search request not found" });
