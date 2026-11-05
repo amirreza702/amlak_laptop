@@ -3,8 +3,8 @@ import { Prisma } from "@prisma/client";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
-export const findOwnedProperty = (ownerId: string, propertyId: string) =>
-  prisma.propertyOwner.findUnique({
+export const findOwnedProperty = (ownerId: string, propertyId: string, db: Db = prisma) =>
+  db.propertyOwner.findUnique({
     where: { propertyId_ownerId: { ownerId, propertyId } },
     include: {
       property: {
@@ -17,24 +17,19 @@ export const findOwnedProperty = (ownerId: string, propertyId: string) =>
     },
   });
 
-export const findActiveOwnerRequestForProperty = (ownerId: string, propertyId: string) =>
-  prisma.ownerAgentRequest.findFirst({ where: { ownerId, propertyId, status: "ACTIVE" } });
+export const findActiveOwnerRequestForProperty = (ownerId: string, propertyId: string, db: Db = prisma) =>
+  db.ownerAgentRequest.findFirst({ where: { ownerId, propertyId, status: "ACTIVE" } });
 
-export const createOwnerAgentRequest = (data: { ownerId: string; propertyId: string; description: string | null }) =>
-  prisma.$transaction(async (tx) => {
-    const existing = await tx.ownerAgentRequest.findFirst({
-      where: { ownerId: data.ownerId, propertyId: data.propertyId, status: "ACTIVE" },
-      select: { id: true },
-    });
-    if (existing) throw new Error("An active request already exists for this property");
-    return tx.ownerAgentRequest.create({
-      data,
-      select: {
-        id: true, ownerId: true, propertyId: true, description: true, status: true, createdAt: true,
-        property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
-      },
-    });
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+export const createOwnerAgentRequest = (
+  data: { ownerId: string; propertyId: string; description: string | null },
+  db: Db = prisma,
+) => db.ownerAgentRequest.create({
+  data,
+  select: {
+    id: true, ownerId: true, propertyId: true, description: true, status: true, createdAt: true,
+    property: { select: { propertyType: true, city: true, district: true, area: true, agents: { select: { agentId: true, status: true, approvedByOwner: true } } } },
+  },
+});
 
 export const findOwnerAgentRequests = (ownerId: string) =>
   prisma.ownerAgentRequest.findMany({
@@ -53,14 +48,14 @@ export const findOwnerAgentRequests = (ownerId: string) =>
     },
   });
 
-export const findOwnerAgentRequestById = (requestId: string) =>
-  prisma.ownerAgentRequest.findUnique({
+export const findOwnerAgentRequestById = (requestId: string, db: Db = prisma) =>
+  db.ownerAgentRequest.findUnique({
     where: { id: requestId },
     select: { id: true, ownerId: true, propertyId: true, status: true },
   });
 
-export const closeOwnerAgentRequest = (ownerId: string, requestId: string) =>
-  prisma.ownerAgentRequest.updateMany({
+export const closeOwnerAgentRequest = (ownerId: string, requestId: string, db: Db = prisma) =>
+  db.ownerAgentRequest.updateMany({
     where: { id: requestId, ownerId, status: "ACTIVE" },
     data: { status: "CLOSED" },
   });
