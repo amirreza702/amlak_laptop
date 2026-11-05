@@ -26,7 +26,6 @@ async function authorizePropertyMedia(
   db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
   if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
-  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const context = await findPropertyAuthorizationContextById(propertyId, db);
   if (!context) throw new Error("ملک مورد نظر پیدا نشد.");
   const allowed = await authorizePropertyAction(actor, action, context);
