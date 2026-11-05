@@ -73,10 +73,10 @@ export const createCustomerSearchRequest = async (
     requesterLastName?: string;
     requesterMobile?: string;
   },
-  creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string; isVerifiedAgent?: boolean }
+  creator: AuthorizationActor & { mobile: string; isVerifiedAgent?: boolean }
 ) => {
   const creationAllowed = await authorize("searchRequest", "CREATE", {
-    actor: { id: creator.id, role: creator.role },
+    actor: creator,
     resource: { data: { isVerifiedAgent: creator.isVerifiedAgent === true } },
   });
   if (!creationAllowed) throw new Error("Search request creation is not authorized");
@@ -128,8 +128,9 @@ export const getCustomerSearchRequest =
   async (
     customerId: string,
     requestId: string,
-    authenticatedUserId: string
+    actor: AuthorizationActor
   ) => {
+    const authenticatedUserId = actor.id;
     const customer =
       await findCustomerById(customerId);
 
@@ -155,7 +156,7 @@ export const getCustomerSearchRequest =
      * درخواست مشتری دیگر
      */
     const allowed = await authorize("searchRequest", "READ", {
-      actor: { id: authenticatedUserId, role: "CUSTOMER" },
+      actor,
       resource: { id: request.id, status: request.status, data: {
         isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
         status: request.status,
@@ -172,8 +173,9 @@ export const getCustomerSearchRequest =
 export const getCustomerSearchRequests =
   async (
     customerId: string,
-    authenticatedUserId: string
+    actor: AuthorizationActor
   ) => {
+    const authenticatedUserId = actor.id;
     const customer =
       await findCustomerById(customerId);
 
@@ -184,7 +186,7 @@ export const getCustomerSearchRequests =
     }
 
     const allowed = await authorize("searchRequest", "LIST_OWN", {
-      actor: { id: authenticatedUserId, role: "CUSTOMER" },
+      actor,
       resource: { data: { isOwner: customer.userId === authenticatedUserId } },
     });
     if (!allowed) throw new Error("SEARCH_REQUEST_FORBIDDEN");
@@ -197,8 +199,9 @@ export const getCustomerSearchRequests =
 export const closeCustomerSearchRequest = async (
   customerId: string,
   requestId: string,
-  authenticatedUserId: string
+  actor: AuthorizationActor
 ) => {
+  const authenticatedUserId = actor.id;
   /**
    * ابتدا مشتری باید وجود داشته باشد.
    */
@@ -230,7 +233,7 @@ export const closeCustomerSearchRequest = async (
    * را تغییر دهد.
    */
   const allowed = await authorize("searchRequest", "CLOSE", {
-    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    actor,
     resource: { id: request.id, status: request.status, data: {
       isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
       status: request.status,
@@ -262,7 +265,7 @@ export const closeCustomerSearchRequest = async (
 export const updateCustomerSearchRequest = async (
   customerId: string,
   requestId: string,
-  authenticatedUserId: string,
+  actor: AuthorizationActor,
   data: {
     transactionType?: 
       | "SALE"
@@ -286,6 +289,7 @@ export const updateCustomerSearchRequest = async (
     description?: string | null;
   }
 ) => {
+  const authenticatedUserId = actor.id;
   /**
    * مشتری باید وجود داشته باشد.
    */
@@ -317,7 +321,7 @@ export const updateCustomerSearchRequest = async (
    * می‌تواند ویرایش کند.
    */
   const allowed = await authorize("searchRequest", "UPDATE", {
-    actor: { id: authenticatedUserId, role: "CUSTOMER" },
+    actor,
     resource: { id: request.id, status: request.status, data: {
       isOwner: customer.userId === authenticatedUserId && request.customerId === customerId,
       status: request.status,
