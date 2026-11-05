@@ -54,6 +54,7 @@ import { queuePropertyListingForHashtiReview } from "./propertyListingStatusServ
 import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 /**
  * ============================================================
@@ -65,6 +66,7 @@ export async function updatePropertyPrice(
   data: UpdatePropertyPriceInput,
   actor: AuthorizationActor
 ) {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   /**
    * ==========================================================
    * پیدا کردن Listing فعلی
