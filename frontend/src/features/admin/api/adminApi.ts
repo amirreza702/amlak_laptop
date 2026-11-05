@@ -52,6 +52,8 @@ export const ADMIN_PERMISSION_OPTIONS = [
   { value: "OWNERS_MANAGE", label: "مدیریت مالکان" },
   { value: "AGENTS_MANAGE", label: "مدیریت مشاوران" },
   { value: "STAFF_MANAGE", label: "مدیریت کارکنان" },
+  { value: "PROPERTIES_MANAGE", label: "مدیریت املاک و انتشار آگهی" },
+  { value: "DUPLICATES_MANAGE", label: "بررسی و مدیریت موارد تکراری" },
   { value: "AUDIT_READ", label: "مشاهده سوابق مدیریتی" },
 ] as const;
 export const createAdminStaff = (input: { mobile: string; password: string; permissions: string[]; reason: string }) =>
