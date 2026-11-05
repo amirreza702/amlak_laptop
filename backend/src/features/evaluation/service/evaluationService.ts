@@ -20,6 +20,8 @@
  * ============================================================
  */
 
+import { authorize } from "../../../shared/authorization/authorization.core";
+
 import {
   createEvaluation,
   findEvaluatorUserById,
@@ -73,6 +75,23 @@ interface CreateEvaluationInput {
 
   score?: number;
   comment?: string;
+}
+
+/**
+ * تصمیم نهایی ایجاد ارزیابی از مسیر Authorization مرکزی عبور می‌کند.
+ * فراخوانی این تابع فقط پس از بررسی رابطه هدف در شاخه مربوطه انجام می‌شود.
+ */
+async function createAuthorizedEvaluation(
+  evaluator: { id: string; role: string; isActive: boolean },
+  type: EvaluationType,
+  payload: Parameters<typeof createEvaluation>[0],
+) {
+  const allowed = await authorize("evaluation", "CREATE", {
+    actor: { id: evaluator.id, role: evaluator.role, isActive: evaluator.isActive },
+    resource: { data: { type, relationshipVerified: true } },
+  });
+  if (!allowed) throw new Error("Evaluation authorization denied");
+  return createEvaluation(payload);
 }
 
 /**
@@ -169,7 +188,7 @@ export const createEvaluationService = async (
         throw new Error("Agent must be in customer favorites before evaluation");
       }
 
-      return createEvaluation({
+      return createAuthorizedEvaluation(evaluator, data.type, {
         type: data.type,
         evaluatorUserId: data.evaluatorUserId,
         customerId: customer.id,
