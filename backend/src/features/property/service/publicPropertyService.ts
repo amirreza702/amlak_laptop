@@ -30,7 +30,9 @@ export async function getPublishedPublicPropertyById(id: string) {
       relation.agent.verificationStatus === "VERIFIED" && relation.agent.user.isActive === true
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
-  const primaryOwner = publicOwners[0]?.owner ?? null;
+  const primaryOwner = publicOwners[0]?.owner?.user.isActive === true
+    ? publicOwners[0].owner
+    : null;
 
   // اطلاعات تماس عمومی بر اساس منشأ آگهی و وضعیت تأیید مالک تعیین می‌شود،
   // نه بر اساس نقش یا هویت بازدیدکننده.
