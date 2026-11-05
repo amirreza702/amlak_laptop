@@ -34,9 +34,10 @@ type DatabaseClient =
  */
 export const findPropertyAgent = async (
   propertyId: string,
-  agentId: string
+  agentId: string,
+  db: DatabaseClient = prisma,
 ): Promise<PropertyAgent | null> => {
-  return prisma.propertyAgent.findUnique({
+  return db.propertyAgent.findUnique({
     where: {
       propertyId_agentId: {
         propertyId,
