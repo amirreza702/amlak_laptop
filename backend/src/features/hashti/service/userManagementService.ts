@@ -1,5 +1,5 @@
 import {
-  findManagedUsers, getSuperAdminAccess, updateManagedProfile, updateManagedUserStatus,
+  findManagedUsers, findManagedUserRole, getSuperAdminAccess, updateManagedProfile, updateManagedUserStatus,
   type ManagedProfileUpdate, type ManagedUserQuery,
 } from "../repository/userManagementRepository";
 import { requireAdminServicePermission } from "../../admin/service/adminService";
@@ -12,7 +12,16 @@ export const getManagedUsersService = async (actorUserId: string, query: Managed
 export const setManagedUserStatusService = async (input: {
   userId: string; isActive: boolean; reason: string; actorUserId: string; actorMobile: string;
 }) => {
-  await requireAdminServicePermission(input.actorUserId, "USERS_MANAGE");
+  const target = await findManagedUserRole(input.userId);
+  if (!target) throw new Error("USER_NOT_FOUND");
+  const permission = target.role === "HASHTI"
+    ? "STAFF_MANAGE"
+    : target.role === "OWNER"
+      ? "OWNERS_MANAGE"
+      : target.role === "AGENT"
+        ? "AGENTS_MANAGE"
+        : "USERS_MANAGE";
+  await requireAdminServicePermission(input.actorUserId, permission);
   return updateManagedUserStatus(input);
 };
 
