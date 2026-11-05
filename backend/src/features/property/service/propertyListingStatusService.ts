@@ -13,6 +13,8 @@ import {
   findPropertyListingByPropertyId,
   updatePropertyListing,
 } from "../repository/propertyListingRepository";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 import { archivePropertyInTransaction } from "./propertyArchiveService";
 
@@ -115,15 +117,24 @@ export async function updatePropertyListingStatus(
   data: UpdatePropertyListingStatusInput,
   actor: { id: string; role: string },
 ) {
-  const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { deletedAt: true } });
+  const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property || property.deletedAt) throw new Error("ملک حذف شده و تغییر وضعیت آگهی برای آن مجاز نیست.");
   const listing = await findPropertyListingByPropertyId(propertyId);
   if (!listing) throw new Error("برای این ملک اطلاعات معامله ثبت نشده است.");
   if (listing.status === data.status) return { listing, statusChanged: false };
 
   const hashtiOnly = data.status === ListingStatus.PUBLISHED || data.status === ListingStatus.REJECTED;
-  if (hashtiOnly && actor.role !== "HASHTI") {
-    throw new Error("تأیید یا رد انتشار فقط در اختیار هشتی است.");
+  const allowedByAuthorization = await authorizePropertyAction(
+    actor,
+    hashtiOnly ? "APPROVE_PUBLICATION" : "MANAGE",
+    property,
+  );
+  if (!allowedByAuthorization) {
+    throw new Error(
+      hashtiOnly
+        ? "تأیید یا رد انتشار فقط در اختیار هشتی است."
+        : "شما اجازه تغییر وضعیت آگهی این ملک را ندارید.",
+    );
   }
   if (!hashtiOnly && actor.role === "HASHTI" && data.status === ListingStatus.EXPIRED) {
     throw new Error("انقضا از مسیر اختصاصی هشتی یا سامانه انجام می‌شود.");
