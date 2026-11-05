@@ -10,7 +10,7 @@ import { prisma } from "../../../lib/prisma";
 import { authorize } from "../../../shared/authorization/authorization.core";
 
 
-async function requireAdminServicePermission(actorUserId: string, permission: AdminPermission) {
+export async function requireAdminServicePermission(actorUserId: string, permission: AdminPermission) {
   const account = await prisma.user.findUnique({
     where: { id: actorUserId },
     select: { id: true, role: true, isActive: true, isSuperAdmin: true, adminPermissions: true },
