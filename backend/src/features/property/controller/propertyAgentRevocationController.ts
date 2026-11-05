@@ -1,29 +1,6 @@
 /**
- * ============================================================
- * Property Agent Revocation Controller
- * ============================================================
- *
- * وظیفه:
- *
- * دریافت درخواست لغو همکاری Agent با Property
- * و ارسال آن به Service.
- *
- * جریان:
- *
- * HTTP Request
- *      ↓
- * Controller
- *      ↓
- * Revocation Service
- *      ↓
- * HTTP Response
- *
- * نکته:
- *
- * ownerId فعلاً از Body دریافت می‌شود.
- *
- * بعداً با Authentication،
- * ownerId از کاربر احراز هویت‌شده استخراج خواهد شد.
+ * Controller فقط پارامترهای هدف را از Route می‌گیرد؛
+ * هویت مالک/مشاور همواره از نشست احراز هویت‌شده استخراج می‌شود.
  */
 
 import type { Request, Response } from "express";
