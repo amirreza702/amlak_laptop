@@ -217,11 +217,11 @@ export async function listAdminUsers(data: {
   skip: number;
   take: number;
 }) {
-  const where: import("@prisma/client").Prisma.UserWhereInput = {};
-
-  if (data.role) {
-    where.role = data.role;
-  }
+  const visibleRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT] as const;
+  if (data.role && !visibleRoles.some((role) => role === data.role)) throw new Error("INVALID_ROLE");
+  const where: import("@prisma/client").Prisma.UserWhereInput = {
+    role: data.role ?? { in: [...visibleRoles] },
+  };
 
   if (typeof data.isActive === "boolean") {
     where.isActive = data.isActive;
@@ -252,12 +252,10 @@ export async function listAdminUsers(data: {
         mobile: true,
         role: true,
         isActive: true,
-        isSuperAdmin: true,
-        adminPermissions: true,
         createdAt: true,
         updatedAt: true,
-        customer: { select: { id: true, firstName: true, lastName: true, createdByRole: true, createdByUser: { select: { mobile: true } } } },
-        owner: { select: { id: true, firstName: true, lastName: true, createdByRole: true, createdByUser: { select: { mobile: true } } } },
+        customer: { select: { id: true, firstName: true, lastName: true } },
+        owner: { select: { id: true, firstName: true, lastName: true } },
         agent: {
           select: {
             id: true,
