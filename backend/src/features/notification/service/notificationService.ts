@@ -1,4 +1,5 @@
 /**
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
  * ============================================================
  * Notification Service
  * ============================================================
@@ -69,7 +70,7 @@ export async function createNotificationService(
  */
 export async function getUserNotificationsService(
   userId: string,
-  actor: { id: string; role: string; isActive?: boolean }
+  actor: AuthorizationActor
 ) {
   if (!userId) {
     throw new Error("شناسه کاربر الزامی است.");
@@ -89,7 +90,7 @@ export async function getUserNotificationsService(
 export async function markNotificationAsReadService(
   notificationId: string,
   userId: string,
-  actor: { id: string; role: string; isActive?: boolean }
+  actor: AuthorizationActor
 ) {
   if (!notificationId) {
     throw new Error("شناسه اعلان الزامی است.");
