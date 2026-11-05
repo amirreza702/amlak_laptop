@@ -165,7 +165,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
             ownerId: true,
             share: true,
             isPrimary: true,
-            owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            owner: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
         agents: {
@@ -178,7 +178,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
           select: {
             agentId: true, status: true, approvedByOwner: true, approvedByOwnerId: true, approvedAt: true,
             registeredAt: true, isFirstRegistrant: true,
-            agent: { select: { firstName: true, lastName: true, user: { select: { mobile: true } } } },
+            agent: { select: { userId: true, firstName: true, lastName: true, user: { select: { mobile: true } } } },
           },
         },
       },
@@ -188,10 +188,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const records = properties.map((property) => {
     const relation = property.agents.find((item) => item.agentId === input.agentId) ?? null;
     const isCreator = property.registrationSource === "AGENT" && property.createdByUserId === input.userId;
-    const hasUsableRelation = relation?.status === "ACTIVE" && (relation.approvedByOwner || isCreator);
-    // Keep the scoped relation rows for the service to derive approved-agent identity;
-    // the service removes the relation array before returning the API response.
-    const propertyData = property;
+    // Repository فقط داده و روابط را می‌خواند؛ تصمیم محرمانگی در Authorization Core است.
     return {
       propertyId: property.id,
       agentId: input.agentId,
@@ -201,20 +198,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
       registeredAt: relation?.registeredAt ?? null,
       isFirstRegistrant: relation?.isFirstRegistrant ?? false,
       hasAgentRelation: relation !== null,
-      property: {
-        ...propertyData,
-        // برای املاک فاقد رابطه، اطلاعات هویتی و موقعیت دقیق مالک محفوظ می‌ماند.
-        ...(hasUsableRelation ? {} : {
-          address: "برای مشاهده نشانی دقیق، ابتدا باید همکاری مالک با مشاور تأیید شود.",
-          latitudeExact: property.listing?.latitudePublic ?? null,
-          longitudeExact: property.listing?.longitudePublic ?? null,
-          owners: [],
-          listing: property.listing ? {
-            ...property.listing,
-            ...(property.listing.status === "PUBLISHED" ? {} : { salePrice: null, depositAmount: null, rentAmount: null }),
-          } : null,
-        }),
-      },
+      property,
     };
   });
 
