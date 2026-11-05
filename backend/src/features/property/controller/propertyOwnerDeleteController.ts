@@ -3,10 +3,10 @@ import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware"
 import { deleteOwnPropertyService, deleteAgentManagedOwnerPropertyService, reactivateOwnPropertyService } from "../service/propertyOwnerDeleteService";
 
 export async function deleteOwnPropertyController(req: Request, res: Response) {
-  const userId = (req as AuthenticatedRequest).user?.id;
-  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const actor = (req as AuthenticatedRequest).user;
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
-    const property = await deleteOwnPropertyService(String(req.params.id), userId);
+    const property = await deleteOwnPropertyService(String(req.params.id), actor);
     return res.status(200).json({ property, message: "ملک، آگهی و همکاری‌های فعال حذف شدند؛ سوابق مدیریتی و حسابرسی حفظ شده‌اند." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
@@ -23,7 +23,7 @@ export async function deleteAgentManagedOwnerPropertyController(req: Request, re
   const userId = (req as AuthenticatedRequest).user?.id;
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
-    const property = await deleteAgentManagedOwnerPropertyService(String(req.params.id), userId);
+    const property = await deleteAgentManagedOwnerPropertyService(String(req.params.id), actor);
     return res.status(200).json({ property, message: "ملک، آگهی و همکاری‌های فعال حذف شدند؛ سوابق مدیریتی و حسابرسی حفظ شده‌اند." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
@@ -41,7 +41,7 @@ export async function reactivateOwnPropertyController(req: Request, res: Respons
   const userId = (req as AuthenticatedRequest).user?.id;
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
-    const property = await reactivateOwnPropertyService(String(req.params.id), userId);
+    const property = await reactivateOwnPropertyService(String(req.params.id), actor);
     return res.status(200).json({ property, message: "ملک دوباره به فهرست فعال بازگردانده شد." });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
