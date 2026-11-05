@@ -78,6 +78,7 @@ export const findPropertyAuthorizationContextById = async (
     where: { id },
     select: {
       id: true,
+      isActive: true,
       registrationSource: true,
       createdByUserId: true,
       deletedAt: true,
