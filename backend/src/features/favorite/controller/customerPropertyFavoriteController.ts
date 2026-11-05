@@ -13,6 +13,13 @@
  */
 
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
+
+function requestActor(req: Request) {
+  const user = (req as AuthenticatedRequest).user;
+  if (!user) throw new Error("AUTHENTICATION_REQUIRED");
+  return { id: user.id, role: user.role, isActive: user.isActive };
+}
 
 import {
   addPropertyToFavoritesService,
@@ -48,10 +55,7 @@ export async function addPropertyToFavoritesController(
     }
 
     const favorite =
-      await addPropertyToFavoritesService(
-        customerId,
-        propertyId
-      );
+      await addPropertyToFavoritesService(customerId, propertyId, requestActor(req));
 
     return res.status(201).json(favorite);
   } catch (error) {
@@ -87,10 +91,7 @@ export async function removePropertyFromFavoritesController(
     }
 
     const favorite =
-      await removePropertyFromFavoritesService(
-        customerId,
-        propertyId
-      );
+      await removePropertyFromFavoritesService(customerId, propertyId, requestActor(req));
 
     return res.status(200).json(favorite);
   } catch (error) {
@@ -126,10 +127,7 @@ export async function isPropertyFavoriteController(
     }
 
     const isFavorite =
-      await isPropertyFavoriteService(
-        customerId,
-        propertyId
-      );
+      await isPropertyFavoriteService(customerId, propertyId, requestActor(req));
 
     return res.status(200).json({
       isFavorite,
@@ -164,7 +162,7 @@ export async function getCustomerFavoritesController(
     }
 
     const favorites =
-      await getCustomerFavoritesService(customerId);
+      await getCustomerFavoritesService(customerId, requestActor(req));
 
     return res.status(200).json(favorites);
   } catch (error) {
@@ -182,7 +180,7 @@ export async function searchAgentsForCustomerFavoritesController(req: Request, r
     const customerId = req.params.customerId;
     const query = typeof req.query.q === "string" ? req.query.q : "";
     if (!customerId || Array.isArray(customerId)) return res.status(400).json({ message: "شناسه مشتری نامعتبر است." });
-    return res.status(200).json(await searchAgentsForCustomerFavoritesService(customerId, query));
+    return res.status(200).json(await searchAgentsForCustomerFavoritesService(customerId, query, requestActor(req)));
   } catch (error) {
     return res.status(400).json({ message: error instanceof Error ? error.message : "جست‌وجوی مشاور ناموفق بود." });
   }
@@ -193,7 +191,7 @@ export async function addAgentToFavoritesController(req: Request, res: Response)
   try {
     const { customerId, agentId } = req.params;
     if (!customerId || Array.isArray(customerId) || !agentId || Array.isArray(agentId)) return res.status(400).json({ message: "شناسه مشتری یا مشاور نامعتبر است." });
-    return res.status(201).json(await addAgentToFavoritesService(customerId, agentId));
+    return res.status(201).json(await addAgentToFavoritesService(customerId, agentId, requestActor(req)));
   } catch (error) {
     return res.status(400).json({ message: error instanceof Error ? error.message : "افزودن مشاور به علاقه‌مندی ناموفق بود." });
   }
@@ -203,7 +201,7 @@ export async function removeAgentFromFavoritesController(req: Request, res: Resp
   try {
     const { customerId, agentId } = req.params;
     if (!customerId || Array.isArray(customerId) || !agentId || Array.isArray(agentId)) return res.status(400).json({ message: "شناسه مشتری یا مشاور نامعتبر است." });
-    return res.status(200).json(await removeAgentFromFavoritesService(customerId, agentId));
+    return res.status(200).json(await removeAgentFromFavoritesService(customerId, agentId, requestActor(req)));
   } catch (error) {
     return res.status(400).json({ message: error instanceof Error ? error.message : "حذف مشاور از علاقه‌مندی ناموفق بود." });
   }
@@ -213,7 +211,7 @@ export async function getCustomerFavoriteAgentsController(req: Request, res: Res
   try {
     const customerId = req.params.customerId;
     if (!customerId || Array.isArray(customerId)) return res.status(400).json({ message: "شناسه مشتری نامعتبر است." });
-    return res.status(200).json(await getCustomerFavoriteAgentsService(customerId));
+    return res.status(200).json(await getCustomerFavoriteAgentsService(customerId, requestActor(req)));
   } catch (error) {
     return res.status(400).json({ message: error instanceof Error ? error.message : "دریافت مشاوران علاقه‌مندی‌شده ناموفق بود." });
   }
