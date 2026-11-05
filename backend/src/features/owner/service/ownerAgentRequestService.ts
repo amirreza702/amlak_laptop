@@ -244,7 +244,7 @@ export async function accessOwnerRequestContactService(actor: AuthorizationActor
     }
 
     const request = await findOwnerRequestForAccess(requestId, agent.id, tx);
-    if (!request) throw new Error("Active owner request not found");
+    if (!request || request.owner.user.isActive !== true) throw new Error("Active owner request not found");
 
     const response = await tx.ownerAgentRequestResponse.findUnique({
       where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId: agent.id } },
@@ -282,6 +282,7 @@ export async function accessOwnerRequestContactService(actor: AuthorizationActor
         id: request.ownerId,
         firstName: request.owner.firstName,
         lastName: request.owner.lastName,
+        mobile: request.owner.user.mobile,
       },
       property: {
         id: request.propertyId,
