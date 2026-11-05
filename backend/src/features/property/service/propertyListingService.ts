@@ -52,6 +52,9 @@ import type { UpdatePropertyPriceInput } from "../types/updatePropertyPrice";
 
 import { prisma } from "../../../lib/prisma";
 import { getPublicCoordinates } from "../../../lib/publicCoordinates";
+import { findPropertyAuthorizationContextById } from "../repository/propertyRepository";
+import { authorizePropertyAction } from "./propertyAuthorizationService";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
 /**
  * ============================================================
@@ -60,7 +63,8 @@ import { getPublicCoordinates } from "../../../lib/publicCoordinates";
  */
 export async function createPropertyListingWithInitialPrice(
   propertyId: string,
-  data: UpdatePropertyPriceInput
+  data: UpdatePropertyPriceInput,
+  actor: AuthorizationActor
 ) {
   /**
    * ==========================================================
@@ -164,6 +168,11 @@ export async function createPropertyListingWithInitialPrice(
    */
   return prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
+      const authorizationContext = await findPropertyAuthorizationContextById(propertyId, tx);
+      if (!authorizationContext) throw new Error("ملک مورد نظر برای ایجاد آگهی پیدا نشد.");
+      const allowed = await authorizePropertyAction(actor, "MANAGE", authorizationContext);
+      if (!allowed) throw new Error("شما اجازه ثبت اطلاعات معامله برای این ملک را ندارید.");
+
       /**
        * ------------------------------------------------------
        * ایجاد Listing
