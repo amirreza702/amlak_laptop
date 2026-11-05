@@ -90,8 +90,8 @@ export const findActiveOwnerAgentRequests = (agentId: string) =>
     },
   });
 
-export const findOwnerRequestForAccess = (requestId: string, agentId: string) =>
-  prisma.ownerAgentRequest.findFirst({
+export const findOwnerRequestForAccess = (requestId: string, agentId: string, db: Db = prisma) =>
+  db.ownerAgentRequest.findFirst({
     where: { id: requestId, status: "ACTIVE", property: { isActive: true, deletedAt: null } },
     select: {
       id: true, ownerId: true, propertyId: true, status: true,
