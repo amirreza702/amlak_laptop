@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
+import { getPropertyVisibility } from "../../property/service/propertyAuthorizationService";
 import {
   closeOwnerAgentRequest,
   createOwnerAgentRequest,
@@ -79,20 +80,28 @@ export async function respondToOwnerAgentRequestService(agentId: string, request
  * دسترسی‌ها ثبت می‌شوند و درخواست تکراری دوباره‌شماری نمی‌شود.
  */
 export async function accessOwnerRequestContactService(agentId: string, requestId: string) {
-  const request = await findOwnerRequestForAccess(requestId);
+  const request = await findOwnerRequestForAccess(requestId, agentId);
   if (!request) throw new Error("Active owner request not found");
 
-  const [response, relation] = await Promise.all([
+  const [response] = await Promise.all([
     prisma.ownerAgentRequestResponse.findUnique({
       where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId } },
       select: { status: true },
     }),
-    prisma.propertyAgent.findUnique({
-      where: { propertyId_agentId: { propertyId: request.propertyId, agentId } },
-      select: { status: true, approvedByOwner: true },
-    }),
   ]);
-  if (response?.status !== "ACCEPTED" || relation?.status !== "ACTIVE" || !relation.approvedByOwner) {
+  const agentRelation = request.property.agents.find((item) => item.agentId === agentId) ?? null;
+  if (response?.status !== "ACCEPTED" || !agentRelation?.approvedByOwner) {
+    throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+  }
+
+  // دسترسی به نشانی و هویت مالک درخواست فقط با تصمیم Policy مرکزی مجاز است؛
+  // تأیید باید متعلق به همان مالکِ ایجادکننده درخواست باشد.
+  const visibility = await getPropertyVisibility(
+    { id: agentRelation.agent.userId, role: "AGENT" },
+    request.property,
+    request.ownerId,
+  );
+  if (!visibility.canViewExactLocation || !visibility.canViewOwnerDetails) {
     throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
   }
 
