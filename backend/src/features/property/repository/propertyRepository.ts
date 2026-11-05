@@ -69,6 +69,36 @@ export const findPropertyById = async (
   });
 };
 
+/** حداقل Context لازم برای تصمیم‌گیری مرکزی درباره تغییر وضعیت آگهی. */
+export const findPropertyAuthorizationContextById = async (id: string) => {
+  return prisma.property.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      registrationSource: true,
+      createdByUserId: true,
+      deletedAt: true,
+      listing: { select: { status: true, confirmUntil: true } },
+      owners: {
+        select: {
+          ownerId: true,
+          owner: { select: { userId: true } },
+        },
+      },
+      agents: {
+        where: { status: "ACTIVE" },
+        select: {
+          agentId: true,
+          status: true,
+          approvedByOwner: true,
+          approvedByOwnerId: true,
+          agent: { select: { userId: true } },
+        },
+      },
+    },
+  });
+};
+
 /** جزئیات ملک همراه روابط لازم برای اعمال محرمانگی مالک و مشاور تأییدشده. */
 export const findPropertyByIdWithContacts = async (id: string) => {
   return prisma.property.findUnique({
