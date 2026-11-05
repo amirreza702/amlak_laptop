@@ -12,6 +12,7 @@ interface PropertyPolicyData {
   isRegisteredByCurrentAgent?: boolean;
   isExpired?: boolean;
   isFinalApprovedAgent?: boolean;
+  isAgentRegisteredProperty?: boolean;
 }
 
 /**
@@ -62,8 +63,15 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isCreator || isOwner || isFinalApprovedAgent;
   }
 
-  // این دو مجوز مستقل‌اند تا هیچ endpoint نتواند از مجوز دیدن ملک
-  // نتیجه بگیرد که اجازه افشای موقعیت یا هویت مالک را هم دارد.
+  // اطلاعات مشاور ثبت‌کننده، مجوز مستقلی از اطلاعات خصوصی مالک دارد.
+  if (action === "VIEW_REGISTRANT_DETAILS") {
+    if (isHashti) return true;
+    if (!data.isAgentRegisteredProperty) return false;
+    if (data.isExpired) return isOwner || isFinalApprovedAgent;
+    return context.actor.role === "AGENT";
+  }
+
+  // مجوز موقعیت دقیق و اطلاعات مالک مستقل از سایر مجوزهاست.
   if (action === "VIEW_EXACT_LOCATION" || action === "VIEW_OWNER_DETAILS") {
     if (isHashti) return true;
     if (data.isExpired) return isOwner || isFinalApprovedAgent;
