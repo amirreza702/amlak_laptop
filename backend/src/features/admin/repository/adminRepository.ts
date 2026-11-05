@@ -140,6 +140,7 @@ export async function setUserStatus(data: { actorUserId: string; userId: string;
   return prisma.$transaction(async (tx) => {
     const before = await tx.user.findUnique({ where: { id: data.userId }, select: { id: true, mobile: true, role: true, isActive: true } });
     if (!before) throw new Error("USER_NOT_FOUND");
+    if (data.actorUserId === data.userId) throw new Error("CANNOT_CHANGE_OWN_STATUS");
     if (before.role === UserRole.HASHTI && data.isActive === false) {
       const superAdmin = await tx.user.findUnique({ where: { id: data.userId }, select: { isSuperAdmin: true } });
       if (superAdmin?.isSuperAdmin) throw new Error("SUPER_ADMIN_CANNOT_BE_DISABLED");
