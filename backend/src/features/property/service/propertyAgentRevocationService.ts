@@ -6,6 +6,7 @@
 import { Prisma, PropertyAgentStatus, PropertyHistoryAction } from "@prisma/client";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { prisma } from "../../../lib/prisma";
+import { authorize } from "../../../shared/authorization/authorization.core";
 import { findOwnerProfileByUserId } from "../../owner/repository/ownerRepository";
 import { findAgentProfileByUserId } from "../../agent/repository/agentRepository";
 import { authorizePropertyAction } from "./propertyAuthorizationService";
@@ -36,6 +37,18 @@ export async function revokePropertyAgent(data: RevokePropertyAgentInput) {
 
     const propertyAgent = await findPropertyAgent(data.propertyId, data.agentId, tx);
     if (!propertyAgent) throw new Error("این مشاور به ملک مورد نظر متصل نیست.");
+    const canRevoke = await authorize("ownerAgentRequest", "REVOKE_AGENT", {
+      actor: data.actor,
+      resource: {
+        id: data.propertyId,
+        status: propertyAgent.status,
+        data: {
+          isOwner: property.owners?.some((relation) => relation.ownerId === owner.id) === true,
+          isActiveAgentRelation: propertyAgent.status === PropertyAgentStatus.ACTIVE,
+        },
+      },
+    });
+    if (!canRevoke) throw new Error("این مالک مجاز به لغو همکاری مشاور نیست.");
     if (propertyAgent.status === PropertyAgentStatus.REVOKED) {
       throw new Error("همکاری این مشاور با ملک قبلاً لغو شده است.");
     }
