@@ -14,7 +14,7 @@ const profileName = (user: AdminUser) => {
 
 export default function AdminUsersPage() {
   const {
-    currentRole, currentUserId, users, searchInput, setSearchInput, reason, setReason,
+    currentRole, currentUserId, canManageUser, users, searchInput, setSearchInput, reason, setReason,
     role, setRole, active, setActive, page, setPage, total, totalPages, loading, error,
     selectedUser, setSelectedUser, submitSearch, changeUserStatus, showUserDetails,
   } = useAdminUsers();
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
                 <tbody>{users.map(user => <RecordDetailsRow key={user.id} record={user} title="رکورد" className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium">{profileName(user)}</td><td dir="ltr" className="px-4 py-3 text-right">{user.mobile}</td><td className="px-4 py-3">{roles[user.role]}</td>
                   <td className="px-4 py-3"><span className={user.isActive ? "rounded-md bg-emerald-50 px-2 py-1 text-emerald-800" : "rounded-md bg-red-50 px-2 py-1 text-red-800"}>{user.isActive ? "فعال" : "غیرفعال"}</span></td>
-                  <td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
+                  <td className="px-4 py-3 text-slate-600">{formatPersianDate(user.createdAt)}</td><td className="px-4 py-3"><button onClick={() => void showUserDetails(user)} className="rounded-md border px-3 py-1.5">مشاهده</button></td><td className="px-4 py-3"><button disabled={loading || user.id === currentUserId || !canManageUser(user)} onClick={() => void changeUserStatus(user)} className="rounded-md border px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40">{user.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}</button></td>
                 </RecordDetailsRow>)}</tbody>
               </table></div>
             )}
