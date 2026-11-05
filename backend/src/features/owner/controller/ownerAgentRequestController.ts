@@ -9,13 +9,13 @@ import {
   respondToOwnerAgentRequestService,
 } from "../service/ownerAgentRequestService";
 
-const actorId = (req: Request) => (req as AuthenticatedRequest).user?.id;
+const actor = (req: Request) => (req as AuthenticatedRequest).user;
 
 export async function createOwnerAgentRequestController(req: Request, res: Response) {
-  const userId = actorId(req);
-  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const currentActor = actor(req);
+  if (!currentActor) return res.status(401).json({ message: "Authentication required" });
   try {
-    return res.status(201).json(await createOwnerAgentRequestService(userId, req.body ?? {}));
+    return res.status(201).json(await createOwnerAgentRequestService(currentActor, req.body ?? {}));
   } catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "Property ID is required" || message === "An active request already exists for this property") {
@@ -32,7 +32,7 @@ export async function getOwnerAgentRequestsController(req: Request, res: Respons
   const userId = actorId(req);
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
-    return res.status(200).json({ requests: await getOwnerAgentRequestsService(userId) });
+    return res.status(200).json({ requests: await getOwnerAgentRequestsService(currentActor) });
   } catch (e) {
     if (e instanceof Error && e.message === "OWNER_PROFILE_NOT_FOUND") {
       return res.status(404).json({ message: "Owner profile not found" });
@@ -47,7 +47,7 @@ export async function closeOwnerAgentRequestController(req: Request, res: Respon
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   const requestId = typeof req.params.requestId === "string" ? req.params.requestId : "";
   try {
-    return res.status(200).json(await closeOwnerAgentRequestService(userId, requestId));
+    return res.status(200).json(await closeOwnerAgentRequestService(currentActor, requestId));
   } catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "Active owner request not found") return res.status(404).json({ message });
@@ -61,7 +61,7 @@ export async function getActiveOwnerAgentRequestsController(req: Request, res: R
   const userId = actorId(req);
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   try {
-    return res.status(200).json({ requests: await getActiveOwnerAgentRequestsService(userId) });
+    return res.status(200).json({ requests: await getActiveOwnerAgentRequestsService(currentActor) });
   } catch (e) {
     if (e instanceof Error && e.message === "AGENT_PROFILE_NOT_FOUND") {
       return res.status(404).json({ message: "Agent profile not found" });
@@ -81,7 +81,7 @@ export async function respondToOwnerAgentRequestController(req: Request, res: Re
 
   const requestId = typeof req.params.requestId === "string" ? req.params.requestId : "";
   try {
-    const result = await respondToOwnerAgentRequestService(userId, requestId, response);
+    const result = await respondToOwnerAgentRequestService(currentActor, requestId, response);
     return res.status(200).json({ response: result });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
@@ -104,7 +104,7 @@ export async function accessOwnerRequestContactController(req: Request, res: Res
   if (!userId) return res.status(401).json({ message: "Authentication required" });
   const requestId = typeof req.params.requestId === "string" ? req.params.requestId : "";
   try {
-    return res.status(200).json(await accessOwnerRequestContactService(userId, requestId));
+    return res.status(200).json(await accessOwnerRequestContactService(currentActor, requestId));
   } catch (e) {
     const message = e instanceof Error ? e.message : "";
     if (message === "Active owner request not found") return res.status(404).json({ message });
