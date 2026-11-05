@@ -132,7 +132,8 @@ export const propertyPolicy: AuthorizationPolicy = (
     if (isHashti) return true;
     if (!data.isAgentRegisteredProperty) return false;
     if (data.isExpired) return isOwner || isFinalApprovedAgent;
-    return context.actor.role === "AGENT";
+    return isCreator || isFinalApprovedAgent ||
+      (context.actor.role === "AGENT" && context.resource?.status === "PUBLISHED");
   }
 
   // مجوز موقعیت دقیق و اطلاعات مالک مستقل از سایر مجوزهاست.
