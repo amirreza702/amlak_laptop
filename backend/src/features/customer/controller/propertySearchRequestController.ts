@@ -323,7 +323,7 @@ export async function getActivePropertySearchRequestsController(
         hashtiVerified: typeof req.query.hashtiVerified === "string" ? req.query.hashtiVerified : undefined,
         createdFrom: typeof req.query.createdFrom === "string" ? req.query.createdFrom : undefined,
         createdTo: typeof req.query.createdTo === "string" ? req.query.createdTo : undefined,
-      });
+      }, user);
 
     const viewerUserId = (req as AuthenticatedRequest).user?.id;
     const safeResult = result.map(({ createdByUserId, ...request }) => ({ ...request, isCreatedByMe: Boolean(viewerUserId && createdByUserId === viewerUserId) }));
@@ -359,7 +359,7 @@ export async function getActivePropertySearchRequestByIdController(
   try {
     const user = (req as AuthenticatedRequest).user;
     if (!user) return res.status(401).json({ message: "Authentication required" });
-    const result = await getActivePropertySearchRequestById(req.params.requestId);
+    const result = await getActivePropertySearchRequestById(req.params.requestId, user);
     const isVerifiedAgent = await isVerifiedAgentUser(user.id);
     const allowed = await authorize("searchRequest", "MARKETPLACE_READ", {
       actor: { id: user.id, role: user.role, isActive: user.isActive },
