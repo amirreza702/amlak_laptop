@@ -30,7 +30,7 @@ export async function getSuperAdminAccess(userId: string) {
 }
 
 /** Search user accounts and role-specific profiles without selecting password data. */
-export async function findManagedUsers(query: ManagedUserQuery) {
+export async function findManagedUsers(query: ManagedUserQuery, includeAgentPrivateData = false) {
   const search = query.query?.trim();
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
   const numericSearch = search !== undefined && search.trim() !== "" && Number.isFinite(Number(search)) ? Number(search) : undefined;
