@@ -462,7 +462,7 @@ export async function updatePropertyService(
   propertyId: string,
   data: UpdatePropertyInput,
   actor: AuthorizationActor
-): Promise<Property> {
+) {
   if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   /**
    * ============================================================
@@ -524,7 +524,7 @@ export async function updatePropertyService(
    *
    * همه در یک Transaction.
    */
-  return prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const authorizationContext = await findPropertyAuthorizationContextById(propertyId, tx);
     if (!authorizationContext) throw new Error("ملک مورد نظر پیدا نشد.");
     const allowed = await authorizePropertyAction(actor, "MANAGE", authorizationContext);
@@ -612,5 +612,8 @@ export async function updatePropertyService(
 
     return updatedProperty;
   }, { isolationLevel: "Serializable" });
+
+  // پاسخ ویرایش از همان projection مجاز جزئیات ملک عبور می‌کند؛ خروجی خام Prisma افشا نمی‌شود.
+  return getPropertyDetailsForActor(propertyId, actor);
 }
 
