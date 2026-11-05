@@ -82,7 +82,11 @@ export const findCustomerPropertyFavorites = async (
   return db.customerPropertyFavorite.findMany({
     where: {
       customerId,
-      property: { is: { isActive: true } },
+      property: { is: {
+        isActive: true,
+        deletedAt: null,
+        listing: { is: { status: "PUBLISHED", confirmUntil: { gt: new Date() } } },
+      } },
     },
     orderBy: {
       createdAt: "desc",
@@ -131,7 +135,7 @@ export const deleteCustomerAgentFavorite = (customerId: string, agentId: string,
 /** دریافت مشاوران علاقه‌مندی‌شده مشتری */
 export const findCustomerAgentFavorites = (customerId: string, db: DatabaseClient = prisma) =>
   db.customerAgentFavorite.findMany({
-    where: { customerId, agent: { user: { isActive: true } } },
+    where: { customerId, agent: { verificationStatus: "VERIFIED", user: { isActive: true } } },
     orderBy: { createdAt: "desc" },
     include: {
       agent: { select: { id: true, firstName: true, lastName: true, agencyName: true, verificationStatus: true } },
