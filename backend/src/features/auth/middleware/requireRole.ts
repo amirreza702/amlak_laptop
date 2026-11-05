@@ -1,47 +1,30 @@
-
-import {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
-
+import type { Request, Response, NextFunction } from "express";
 import { UserRole } from "@prisma/client";
 import { AuthenticatedRequest } from "./authMiddleware";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
-/**
- * بررسی مجاز بودن نقش کاربر برای دسترسی به مسیر
- *
- * مثال:
- * router.post(
- *   "/owners/listings",
- *   authMiddleware,
- *   requireRole(UserRole.OWNER),
- *   controller
- * );
- */
+/** Route role gates are decisions of the shared Authorization Core. */
 export function requireRole(...allowedRoles: UserRole[]) {
-  return (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const authenticatedReq = req as AuthenticatedRequest;
-    const user = authenticatedReq.user;
-
-    // ابتدا باید هویت کاربر تأیید شده باشد.
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as AuthenticatedRequest).user;
     if (!user) {
-      return res.status(401).json({
-        message: "Authentication required",
-      });
+      return res.status(401).json({ message: "Authentication required" });
     }
 
-    // نقش کاربر باید جزو نقش‌های مجاز باشد.
-    if (!allowedRoles.includes(user.role as UserRole)) {
-      return res.status(403).json({
-        message: "You do not have permission to access this resource",
+    try {
+      const allowed = await authorize("roleAccess", "ALLOW", {
+        actor: { id: user.id, role: user.role },
+        metadata: { allowedRoles },
       });
+      if (!allowed) {
+        return res.status(403).json({
+          message: "You do not have permission to access this resource",
+        });
+      }
+      return next();
+    } catch (error) {
+      console.error("Central role authorization failed:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
-
-    return next();
   };
 }
