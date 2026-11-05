@@ -1,86 +1,49 @@
-import { Request, Response } from "express";
-import { UserRole } from "@prisma/client";
-import { prisma } from "../../../lib/prisma";
+import type { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
-import { authorize } from "../../../shared/authorization/authorization.core";
+import {
+  getAllAgentPrivateNotesService,
+  getMyPrivateNotesService,
+  upsertAgentPrivateNoteAsAdminService,
+  upsertMyPrivateNoteService,
+} from "../service/agentPrivateNotesService";
 
-const allowedEntityTypes = new Set(["property", "owner", "customer", "request"]);
-
-function currentActor(req: Request) {
+function getActor(req: Request) {
   return (req as AuthenticatedRequest).user;
 }
 
-/** هر مشاور فقط یادداشت‌های خودش را دریافت می‌کند. */
+/** یادداشت‌های مشاور جاری؛ مالکیت و مجوز در Service بررسی می‌شود. */
 export async function getMyPrivateNotesController(req: Request, res: Response) {
+  const actor = getActor(req);
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
-    const actor = currentActor(req);
-    if (!actor) return res.status(401).json({ message: "Authentication required" });
-    const userId = actor.id;
-
-    const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
-    if (!agent) return res.status(404).json({ message: "Agent profile not found" });
-
-    const allowed = await authorize("privateNote", "LIST_OWN", {
-      actor,
-      resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Private note access denied" });
-
-    const notes = await prisma.agentPrivateNote.findMany({
-      where: { agentId: agent.id },
-      orderBy: { updatedAt: "desc" },
-    });
+    const notes = await getMyPrivateNotesService(actor);
     return res.status(200).json({ notes });
   } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "AGENT_PROFILE_NOT_FOUND") return res.status(404).json({ message: "Agent profile not found" });
+    if (code === "PRIVATE_NOTE_FORBIDDEN") return res.status(403).json({ message: "Private note access denied" });
     console.error("Could not load agent private notes:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }
 
-/** ایجاد یا به‌روزرسانی یادداشت فقط برای مشاور صاحب نشست. */
+/** ایجاد، ویرایش یا حذف یادداشت شخصی مشاور جاری. */
 export async function upsertMyPrivateNoteController(req: Request, res: Response) {
+  const actor = getActor(req);
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
+  const { entityType, entityId, note } = req.body ?? {};
+  if (typeof entityType !== "string" || typeof entityId !== "string" ||
+      typeof note !== "string" || note.length > 10000) {
+    return res.status(400).json({ message: "Invalid private note data" });
+  }
   try {
-    const userId = currentUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-
-    const { entityType, entityId, note } = req.body ?? {};
-    if (
-      typeof entityType !== "string" ||
-      !allowedEntityTypes.has(entityType) ||
-      typeof entityId !== "string" ||
-      !entityId.trim() ||
-      typeof note !== "string" ||
-      note.length > 10000
-    ) {
-      return res.status(400).json({ message: "Invalid private note data" });
-    }
-
-    const agent = await prisma.agent.findUnique({ where: { userId }, select: { id: true } });
-    if (!agent) return res.status(404).json({ message: "Agent profile not found" });
-
-    const allowed = await authorize("privateNote", note.trim() ? "UPSERT_OWN" : "DELETE_OWN", {
-      actor,
-      resource: { id: agent.id, data: { isOwnAgentNote: true, isActive: true } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Private note access denied" });
-
-    const key = {
-      agentId_entityType_entityId: {
-        agentId: agent.id,
-        entityType,
-        entityId: entityId.trim(),
-      },
-    };
-    const saved = note.trim()
-      ? await prisma.agentPrivateNote.upsert({
-          where: key,
-          create: { ...key.agentId_entityType_entityId, note: note.trim() },
-          update: { note: note.trim() },
-        })
-      : await prisma.agentPrivateNote.deleteMany({ where: key.agentId_entityType_entityId }).then(() => null);
-
+    const saved = await upsertMyPrivateNoteService(actor, entityType, entityId, note);
     return res.status(200).json({ note: saved });
   } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "INVALID_PRIVATE_NOTE_DATA") return res.status(400).json({ message: "Invalid private note data" });
+    if (code === "AGENT_PROFILE_NOT_FOUND") return res.status(404).json({ message: "Agent profile not found" });
+    if (code === "PRIVATE_NOTE_FORBIDDEN") return res.status(403).json({ message: "Private note access denied" });
     console.error("Could not save agent private note:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -88,90 +51,37 @@ export async function upsertMyPrivateNoteController(req: Request, res: Response)
 
 /** فقط مدیر ارشد هشتی می‌تواند یادداشت‌های همه مشاوران را بخواند. */
 export async function getAllAgentPrivateNotesController(req: Request, res: Response) {
+  const actor = getActor(req);
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
   try {
-    const userId = currentUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-
-    const admin = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true, isActive: true, isSuperAdmin: true },
-    });
-    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", "LIST_ALL", {
-      actor: { ...currentActor(req)!, isActive: admin?.isActive === true },
-      resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Super admin access required" });
-
-    const notes = await prisma.agentPrivateNote.findMany({
-      include: {
-        agent: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            user: { select: { mobile: true } },
-          },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+    const notes = await getAllAgentPrivateNotesService(actor);
     return res.status(200).json({ notes });
   } catch (error) {
+    if (error instanceof Error && error.message === "PRIVATE_NOTE_SUPER_ADMIN_REQUIRED") {
+      return res.status(403).json({ message: "Super admin access required" });
+    }
     console.error("Could not load all agent private notes:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }
 
-
-/** مدیر ارشد می‌تواند یادداشت هر مشاور را ایجاد یا ویرایش کند؛ یادداشت همچنان در محدوده همان مشاور باقی می‌ماند. */
+/** مدیر ارشد می‌تواند یادداشت مشاور مشخص را ایجاد، ویرایش یا حذف کند. */
 export async function upsertAgentPrivateNoteAsAdminController(req: Request, res: Response) {
+  const actor = getActor(req);
+  if (!actor) return res.status(401).json({ message: "Authentication required" });
+  const { agentId, entityType, entityId, note } = req.body ?? {};
+  if (typeof agentId !== "string" || typeof entityType !== "string" ||
+      typeof entityId !== "string" || typeof note !== "string" || note.length > 10000) {
+    return res.status(400).json({ message: "Invalid private note data" });
+  }
   try {
-    const userId = currentUserId(req);
-    if (!userId) return res.status(401).json({ message: "Authentication required" });
-
-    const { agentId, entityType, entityId, note } = req.body ?? {};
-    if (typeof note !== "string") {
-      return res.status(400).json({ message: "Invalid private note data" });
-    }
-
-    const admin = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true, isActive: true, isSuperAdmin: true },
-    });
-    const allowed = Boolean(admin && admin.role === UserRole.HASHTI) && await authorize("privateNote", note.trim() ? "UPSERT_ANY" : "DELETE_ANY", {
-      actor: { ...currentActor(req)!, isActive: admin?.isActive === true },
-      resource: { data: { isSuperAdmin: admin?.isSuperAdmin, isActive: admin?.isActive } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Super admin access required" });
-    if (
-      typeof agentId !== "string" || !agentId.trim() ||
-      typeof entityType !== "string" || !allowedEntityTypes.has(entityType) ||
-      typeof entityId !== "string" || !entityId.trim() ||
-      typeof note !== "string" || note.length > 10000
-    ) {
-      return res.status(400).json({ message: "Invalid private note data" });
-    }
-
-    const agent = await prisma.agent.findUnique({ where: { id: agentId.trim() }, select: { id: true } });
-    if (!agent) return res.status(404).json({ message: "Agent profile not found" });
-
-    const key = {
-      agentId_entityType_entityId: {
-        agentId: agent.id,
-        entityType,
-        entityId: entityId.trim(),
-      },
-    };
-    const saved = note.trim()
-      ? await prisma.agentPrivateNote.upsert({
-          where: key,
-          create: { ...key.agentId_entityType_entityId, note: note.trim() },
-          update: { note: note.trim() },
-        })
-      : await prisma.agentPrivateNote.deleteMany({ where: key.agentId_entityType_entityId }).then(() => null);
-
+    const saved = await upsertAgentPrivateNoteAsAdminService(actor, agentId, entityType, entityId, note);
     return res.status(200).json({ note: saved });
   } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "INVALID_PRIVATE_NOTE_DATA") return res.status(400).json({ message: "Invalid private note data" });
+    if (code === "AGENT_PROFILE_NOT_FOUND") return res.status(404).json({ message: "Agent profile not found" });
+    if (code === "PRIVATE_NOTE_SUPER_ADMIN_REQUIRED") return res.status(403).json({ message: "Super admin access required" });
     console.error("Could not save agent private note as admin:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
