@@ -19,15 +19,18 @@
 import { prisma } from "../../../lib/prisma";
 import { Prisma } from "@prisma/client";
 
+type DatabaseClient = typeof prisma | Prisma.TransactionClient;
+
 /**
  * ایجاد درخواست جستجوی ملک
  */
 export const createPropertySearchRequest = async (
   data: Parameters<
     typeof prisma.propertySearchRequest.create
-  >[0]["data"]
+  >[0]["data"],
+  db: DatabaseClient = prisma,
 ) => {
-  return prisma.propertySearchRequest.create({
+  return db.propertySearchRequest.create({
     data,
   });
 };
@@ -36,9 +39,10 @@ export const createPropertySearchRequest = async (
  * دریافت یک درخواست جستجو
  */
 export const findPropertySearchRequestById = async (
-  id: string
+  id: string,
+  db: DatabaseClient = prisma,
 ) => {
-  return prisma.propertySearchRequest.findUnique({
+  return db.propertySearchRequest.findUnique({
     where: {
       id,
     },
@@ -52,9 +56,10 @@ export const findPropertySearchRequestById = async (
  */
 export const findPropertySearchRequestsByCustomerId =
   async (
-    customerId: string
+    customerId: string,
+    db: DatabaseClient = prisma,
   ) => {
-    return prisma.propertySearchRequest.findMany({
+    return db.propertySearchRequest.findMany({
       where: {
         customerId,
       },
@@ -70,9 +75,10 @@ export const findPropertySearchRequestsByCustomerId =
 export const updatePropertySearchRequestStatus =
   async (
     id: string,
-    status: string
+    status: string,
+    db: DatabaseClient = prisma,
   ) => {
-    return prisma.propertySearchRequest.update({
+    return db.propertySearchRequest.update({
       where: {
         id,
       },
@@ -95,9 +101,10 @@ export const updatePropertySearchRequest = async (
   id: string,
   data: Parameters<
     typeof prisma.propertySearchRequest.update
-  >[0]["data"]
+  >[0]["data"],
+  db: DatabaseClient = prisma,
 ) => {
-  return prisma.propertySearchRequest.update({
+  return db.propertySearchRequest.update({
     where: {
       id,
     },
@@ -120,7 +127,9 @@ export const findActivePropertySearchRequests =
     city?: string; transactionType?: string; propertyType?: string;
     minBudget?: number; maxBudget?: number; hashtiVerified?: boolean;
     createdFrom?: Date; createdTo?: Date;
-  } = {}) => {
+  } = {},
+    db: DatabaseClient = prisma,
+  ) => {
     const where: Prisma.PropertySearchRequestWhereInput = { status: "ACTIVE" };
     if (filters.city) where.city = { contains: filters.city, mode: "insensitive" };
     if (filters.transactionType) where.transactionType = filters.transactionType as "SALE" | "FULL_DEPOSIT" | "RENT" | "DEPOSIT_AND_RENT";
@@ -138,7 +147,7 @@ export const findActivePropertySearchRequests =
         ...(filters.createdTo ? { lte: filters.createdTo } : {}),
       };
     }
-    return prisma.propertySearchRequest.findMany({
+    return db.propertySearchRequest.findMany({
       where,
 
       select: {
@@ -175,9 +184,10 @@ export const findActivePropertySearchRequests =
  */
 export const findActivePropertySearchRequestById =
   async (
-    id: string
+    id: string,
+    db: DatabaseClient = prisma,
   ) => {
-    return prisma.propertySearchRequest.findFirst({
+    return db.propertySearchRequest.findFirst({
       where: {
         id,
         status: "ACTIVE",
