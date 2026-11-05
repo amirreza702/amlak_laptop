@@ -405,15 +405,21 @@ export async function getPropertyDetailsForActor(id: string, actor: Authorizatio
       ? property.longitudeExact
       : property.listing?.longitudePublic ?? null,
     postalCode: visibility.canViewExactLocation ? property.postalCode : null,
-    ownerFirstName: visibleOwner
-      ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : property.ownerFirstName ?? visibleOwner.owner.firstName) ?? null
-      : null,
-    ownerLastName: visibleOwner
-      ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : property.ownerLastName ?? visibleOwner.owner.lastName) ?? null
-      : null,
-    ownerMobile: visibleOwner
-      ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : property.ownerMobile ?? visibleOwner.owner.user.mobile) ?? null
-      : null,
+    ownerFirstName: actor.role === "OWNER"
+      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.firstName ?? null : null)
+      : visibility.canViewOwnerDetails
+        ? (isApprovedAgent ? approvedOwnerRelation?.owner.firstName : property.ownerFirstName ?? visibleOwner?.owner.firstName) ?? null
+        : null,
+    ownerLastName: actor.role === "OWNER"
+      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.lastName ?? null : null)
+      : visibility.canViewOwnerDetails
+        ? (isApprovedAgent ? approvedOwnerRelation?.owner.lastName : property.ownerLastName ?? visibleOwner?.owner.lastName) ?? null
+        : null,
+    ownerMobile: actor.role === "OWNER"
+      ? (visibility.canViewOwnerDetails ? ownOwner?.owner.user.mobile ?? null : null)
+      : visibility.canViewOwnerDetails
+        ? (isApprovedAgent ? approvedOwnerRelation?.owner.user.mobile : property.ownerMobile ?? visibleOwner?.owner.user.mobile) ?? null
+        : null,
     registrantFirstName: registrant?.firstName ?? null,
     registrantLastName: registrant?.lastName ?? null,
     registrantMobile: property.registrationSource === "AGENT" ? property.creatorMobile : null,
