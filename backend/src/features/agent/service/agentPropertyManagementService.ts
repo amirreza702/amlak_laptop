@@ -38,11 +38,14 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
 
   const properties = await Promise.all(authorizedRecords.map(async (record) => {
     const visibility = await getPropertyVisibility(actor, record.property);
+    const creatorIsVerifiedAndActive = createdByUser?.isActive === true &&
+      createdByUser.agent?.verificationStatus === "VERIFIED";
 
     // استخراج رابطه تأییدشده فقط برای تعیین اینکه اطلاعات کدام مالک نمایش داده شود؛
     // مجاز بودن نمایش را Policy مرکزی تعیین می‌کند.
     const {
       createdByUser,
+      creatorMobile: _creatorMobile,
       agents: _agents,
       owners: ownerRelations,
       ...propertyData
@@ -82,8 +85,8 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
           lastName: visibleOwner.owner.lastName,
         },
       }] : [],
-      exposeCreatorContact: visibility.canViewRegistrantDetails,
-      creatorMobile: createdByUser?.mobile ?? record.property.creatorMobile,
+      exposeCreatorContact: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive,
+      creatorMobile: creatorIsVerifiedAndActive ? createdByUser?.mobile ?? null : null,
     });
 
     const listing = record.property.listing
@@ -105,8 +108,8 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
         approvedAgentFirstName: isApprovedAgent ? approvedAgentRelation?.agent.firstName ?? null : null,
         approvedAgentLastName: isApprovedAgent ? approvedAgentRelation?.agent.lastName ?? null : null,
         approvedAgentMobile: isApprovedAgent ? approvedAgentRelation?.agent.user.mobile ?? null : null,
-        registrantFirstName: visibility.canViewRegistrantDetails ? createdByUser?.agent?.firstName ?? null : null,
-        registrantLastName: visibility.canViewRegistrantDetails ? createdByUser?.agent?.lastName ?? null : null,
+        registrantFirstName: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive ? createdByUser?.agent?.firstName ?? null : null,
+        registrantLastName: visibility.canViewRegistrantDetails && creatorIsVerifiedAndActive ? createdByUser?.agent?.lastName ?? null : null,
         creatorMobile: safeProperty.creatorMobile,
       },
     };
