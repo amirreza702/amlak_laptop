@@ -8,7 +8,8 @@
 
 import { prisma } from "../../../lib/prisma";
 
-import type { ExactLocationAccessLog } from "@prisma/client";
+import type { ExactLocationAccessLog, Prisma } from "@prisma/client";
+type Db = typeof prisma | Prisma.TransactionClient;
 
 /**
  * ثبت یک سابقه دسترسی به موقعیت دقیق ملک
@@ -16,9 +17,10 @@ import type { ExactLocationAccessLog } from "@prisma/client";
 export const createExactLocationAccessLog = async (
   propertyId: string,
   userId: string,
-  reason: string | null
+  reason: string | null,
+  db: Db = prisma,
 ): Promise<ExactLocationAccessLog> => {
-  return prisma.exactLocationAccessLog.create({
+  return db.exactLocationAccessLog.create({
     data: {
       propertyId,
       userId,
