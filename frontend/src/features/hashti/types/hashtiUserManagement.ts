@@ -12,17 +12,17 @@ export interface HashtiManagedUser {
   mobile: string;
   role: HashtiManagedRole;
   isActive: boolean;
-  isSuperAdmin: boolean;
+  isSuperAdmin?: boolean;
   createdAt: string;
   updatedAt: string;
   customer: HashtiProfileName | null;
   owner: HashtiProfileName | null;
   agent: (HashtiProfileName & {
     agencyName: string | null;
-    address: string | null;
-    verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
-    verificationReviewedAt: string | null;
-    verificationNotes: string | null;
+    address?: string | null;
+    verificationStatus?: "PENDING" | "VERIFIED" | "REJECTED";
+    verificationReviewedAt?: string | null;
+    verificationNotes?: string | null;
   }) | null;
 }
 
