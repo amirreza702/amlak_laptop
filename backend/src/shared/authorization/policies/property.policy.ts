@@ -50,6 +50,11 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isHashti;
   }
 
+  if (action === "RENEW") {
+    // تمدید فقط برای مالک مرتبط یا مشاور دارای تأیید نهایی مالک و فقط پس از انقضا مجاز است.
+    return Boolean(data.isExpired && (isOwner || isFinalApprovedAgent));
+  }
+
   if (action === "MANAGE") {
     if (isHashti) return true;
     // مجوز مشاهده مشاور تأییدشده، به‌تنهایی مجوز ویرایش نیست.
