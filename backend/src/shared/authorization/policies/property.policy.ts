@@ -15,8 +15,8 @@ interface PropertyPolicyData {
 }
 
 /**
- * قوانین دسترسی ملک.
- * داده و روابط لازم همچنان توسط لایه فعلی بک‌اند دریافت می‌شوند.
+ * سیاست واحد دسترسی به منابع ملکی.
+ * تصمیم درباره عملیات و داده‌های خصوصی فقط در این Policy انجام می‌شود.
  */
 export const propertyPolicy: AuthorizationPolicy = (
   action: string,
@@ -25,9 +25,16 @@ export const propertyPolicy: AuthorizationPolicy = (
   const data = context.resource?.data as PropertyPolicyData | undefined;
   if (!data || data.isDeleted) return false;
 
+  const isHashti = context.actor.role === "HASHTI";
+  const isOwner = context.actor.role === "OWNER" && Boolean(data.isRelatedOwner);
+  const isAgentCreator =
+    context.actor.role === "AGENT" && Boolean(data.isCreator);
+  const isFinalApprovedAgent =
+    context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
+
   if (action === "ACCESS") {
-    if (context.actor.role === "HASHTI") return true;
-    if (context.actor.role === "OWNER") return Boolean(data.isRelatedOwner);
+    if (isHashti) return true;
+    if (context.actor.role === "OWNER") return isOwner;
     if (context.actor.role === "AGENT") {
       return Boolean(data.isApprovedAgent || data.isAllowedAgentCreator);
     }
@@ -47,16 +54,16 @@ export const propertyPolicy: AuthorizationPolicy = (
   }
 
   if (action === "READ_PRIVATE") {
-    const isRelatedOwner =
-      context.actor.role === "OWNER" && Boolean(data.isRelatedOwner);
-    const isApprovedAgent =
-      context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
+    if (isHashti) return true;
+    if (data.isExpired) return isOwner || isFinalApprovedAgent;
+    return isCreator || isOwner || isFinalApprovedAgent;
+  }
 
-    if (data.isExpired) {
-      return isRelatedOwner || isApprovedAgent;
-    }
-
-    return Boolean(data.isCreator || isRelatedOwner || isApprovedAgent);
+  // این دو مجوز مستقل‌اند تا هیچ endpoint نتواند از مجوز دیدن ملک
+  // نتیجه بگیرد که اجازه افشای موقعیت یا هویت مالک را هم دارد.
+  if (action === "VIEW_EXACT_LOCATION" || action === "VIEW_OWNER_DETAILS") {
+    if (isHashti) return true;
+    return isOwner || isCreator || isFinalApprovedAgent;
   }
 
   return false;
