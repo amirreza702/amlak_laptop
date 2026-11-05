@@ -6,7 +6,15 @@ type Db = typeof prisma | Prisma.TransactionClient;
 export const findOwnedProperty = (ownerId: string, propertyId: string) =>
   prisma.propertyOwner.findUnique({
     where: { propertyId_ownerId: { ownerId, propertyId } },
-    include: { property: { select: { id: true, isActive: true } } },
+    include: {
+      property: {
+        select: {
+          id: true, isActive: true, registrationSource: true, createdByUserId: true, deletedAt: true,
+          listing: { select: { status: true, confirmUntil: true } },
+          owners: { select: { ownerId: true, owner: { select: { userId: true } } } },
+        },
+      },
+    },
   });
 
 export const findActiveOwnerRequestForProperty = (ownerId: string, propertyId: string) =>
