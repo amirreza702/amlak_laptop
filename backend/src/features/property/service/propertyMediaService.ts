@@ -74,7 +74,14 @@ export async function getPropertyMediaFileService(mediaId: string, propertyId?: 
   const media = await findPropertyMediaById(mediaId);
   if (!media || !media.isActive || (propertyId && media.propertyId !== propertyId)) throw new Error("تصویر مورد نظر پیدا نشد.");
   const listing = media.property.listing;
-  if (publicOnly && (!listing || listing.status !== "PUBLISHED" || !listing.confirmUntil || listing.confirmUntil <= new Date())) {
+  if (publicOnly && (
+    !media.property.isActive ||
+    media.property.deletedAt ||
+    !listing ||
+    listing.status !== "PUBLISHED" ||
+    !listing.confirmUntil ||
+    listing.confirmUntil <= new Date()
+  )) {
     throw new Error("تصویر هنوز عمومی نیست یا مهلت انتشار ملک به پایان رسیده است.");
   }
   return { bytes: await readFile(storedFilePath(media.id)), contentType: "image/webp" as const };
