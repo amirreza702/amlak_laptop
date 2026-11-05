@@ -123,7 +123,7 @@ export const findOwnerRequestForAccess = (requestId: string, agentId: string) =>
 export const findOwnerAgentRequestForResponse = (requestId: string, db: Db = prisma) =>
   db.ownerAgentRequest.findFirst({
     where: { id: requestId, status: "ACTIVE", property: { isActive: true } },
-    select: { id: true, propertyId: true },
+    select: { id: true, propertyId: true, status: true },
   });
 
 export const upsertOwnerAgentRequestResponse = (
