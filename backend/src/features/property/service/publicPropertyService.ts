@@ -20,11 +20,14 @@ export async function getPublishedPublicPropertyById(id: string) {
   const publicOwners = owners.filter((relation) => relation.addedByRole !== "HASHTI");
 
   const firstRegistrantRelation = agents.find((relation) => relation.isFirstRegistrant);
-  const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE"
+  const firstRegistrant = firstRegistrantRelation?.status === "ACTIVE" &&
+    firstRegistrantRelation.agent.verificationStatus === "VERIFIED" &&
+    firstRegistrantRelation.agent.user.isActive === true
     ? firstRegistrantRelation.agent
     : null;
   const approvedAgentRelation = agents.find(
-    (relation) => relation.status === "ACTIVE" && relation.approvedByOwner
+    (relation) => relation.status === "ACTIVE" && relation.approvedByOwner &&
+      relation.agent.verificationStatus === "VERIFIED" && relation.agent.user.isActive === true
   );
   const approvedAgent = approvedAgentRelation?.agent ?? null;
   const primaryOwner = publicOwners[0]?.owner ?? null;
