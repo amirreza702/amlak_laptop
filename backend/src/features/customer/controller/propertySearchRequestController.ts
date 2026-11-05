@@ -106,11 +106,9 @@ export async function getCustomerSearchRequestController(
   res: Response
 ) {
   try {
-    const result =
-      await getCustomerSearchRequest(
-        req.params.customerId,
-        req.params.requestId
-      );
+    const userId = (req as AuthenticatedRequest).user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerSearchRequest(req.params.customerId, req.params.requestId, userId);
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -132,10 +130,9 @@ export async function getCustomerSearchRequestsController(
   res: Response
 ) {
   try {
-    const result =
-      await getCustomerSearchRequests(
-        req.params.customerId
-      );
+    const userId = (req as AuthenticatedRequest).user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    const result = await getCustomerSearchRequests(req.params.customerId, userId);
 
     res.status(200).json(result);
   } catch (error: any) {
@@ -161,7 +158,8 @@ export async function closeCustomerSearchRequestController(
     const result =
       await closeCustomerSearchRequest(
         req.params.customerId,
-        req.params.requestId
+        req.params.requestId,
+        (req as AuthenticatedRequest).user?.id ?? ""
       );
 
     res.status(200).json(result);
@@ -184,10 +182,7 @@ export async function closeCustomerSearchRequestController(
       });
     }
 
-    if (
-      error.message ===
-      "Search request does not belong to customer"
-    ) {
+    if (error.message === "SEARCH_REQUEST_FORBIDDEN" || error.message === "Search request does not belong to customer") {
       return res.status(403).json({
         message: error.message,
       });
@@ -229,6 +224,7 @@ export async function updateCustomerSearchRequestController(
       await updateCustomerSearchRequest(
         req.params.customerId,
         req.params.requestId,
+        (req as AuthenticatedRequest).user?.id ?? "",
         req.body
       );
 
@@ -252,10 +248,7 @@ export async function updateCustomerSearchRequestController(
       });
     }
 
-    if (
-      error.message ===
-      "Search request does not belong to customer"
-    ) {
+    if (error.message === "SEARCH_REQUEST_FORBIDDEN" || error.message === "Search request does not belong to customer") {
       return res.status(403).json({
         message: error.message,
       });
