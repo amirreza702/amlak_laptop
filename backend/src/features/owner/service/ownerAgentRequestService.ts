@@ -205,102 +205,66 @@ export async function respondToOwnerAgentRequestService(
  * دسترسی دقیق ملک با Policy ملک و شناسه همان مالک درخواست کنترل می‌شود.
  */
 export async function accessOwnerRequestContactService(actor: AuthorizationActor, requestId: string) {
-  const userId = actor.id;
-  const agent = await findAgentProfileByUserId(userId);
-  if (!agent || agent.verificationStatus !== "VERIFIED") {
-    throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-  }
+  return prisma.$transaction(async (tx) => {
+    if (actor.role !== "AGENT" || actor.isActive !== true) {
+      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+    }
 
-  const request = await findOwnerRequestForAccess(requestId, agent.id);
-  if (!request) throw new Error("Active owner request not found");
+    const agent = await tx.agent.findUnique({
+      where: { userId: actor.id },
+      select: { id: true, verificationStatus: true },
+    });
+    if (!agent || agent.verificationStatus !== "VERIFIED") {
+      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+    }
 
-  const response = await prisma.ownerAgentRequestResponse.findUnique({
-    where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId: agent.id } },
-    select: { status: true },
-  });
-  const agentRelation = request.property.agents.find((item) => item.agentId === agent.id) ?? null;
-  const canAccessRequestContact = await authorizeRequest(
-    actor,
-    "ACCESS_OWNER_CONTACT",
-    request,
-    {
+    const request = await findOwnerRequestForAccess(requestId, agent.id, tx);
+    if (!request) throw new Error("Active owner request not found");
+
+    const response = await tx.ownerAgentRequestResponse.findUnique({
+      where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId: agent.id } },
+      select: { status: true },
+    });
+    const agentRelation = request.property.agents.find((item) => item.agentId === agent.id) ?? null;
+    const propertyContext = await findPropertyAuthorizationContextById(request.propertyId, tx);
+    if (!propertyContext || !propertyContext.isActive || propertyContext.deletedAt) {
+      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
+    }
+
+    const allowed = await authorizeRequest(actor, "ACCESS_OWNER_CONTACT", request, {
       isAgent: true,
       isVerifiedAgent: true,
-      isPropertyActive: request.property.isActive,
-      isPropertyDeleted: Boolean(request.property.deletedAt),
-      isPropertyExpired: isExpiredListing(request.property.listing),
+      isPropertyActive: propertyContext.isActive,
+      isPropertyDeleted: Boolean(propertyContext.deletedAt),
+      isPropertyExpired: isExpiredListing(propertyContext.listing),
       isAcceptedResponse: response?.status === "ACCEPTED",
       isActiveAgentRelation: agentRelation?.status === "ACTIVE",
       isApprovedByRequestOwner: agentRelation?.approvedByOwner === true &&
         agentRelation.approvedByOwnerId === request.ownerId,
-      hasOwnerRelation: request.property.owners.some((item) => item.ownerId === request.ownerId),
-    },
-  );
-  if (!canAccessRequestContact) throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-
-  const visibility = await getPropertyVisibility(
-    actor,
-    request.property,
-    request.ownerId,
-  );
-  if (!visibility.canViewExactLocation || !visibility.canViewOwnerDetails) {
-    throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-  }
-
-  const toPayload = (access: unknown) => ({
-    access,
-    owner: { id: request.ownerId, firstName: request.owner.firstName, lastName: request.owner.lastName },
-    property: {
-      id: request.propertyId,
-      city: request.property.city,
-      district: request.property.district,
-      address: request.property.address,
-      postalCode: request.property.postalCode,
-    },
-  });
-
-  const access = await prisma.$transaction(async (tx) => {
-    const freshRequest = await tx.ownerAgentRequest.findFirst({
-      where: { id: requestId, status: "ACTIVE" },
-      select: { id: true, ownerId: true, propertyId: true, status: true },
+      hasOwnerRelation: propertyContext.owners.some((item) => item.ownerId === request.ownerId),
     });
-    if (!freshRequest) throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-
-    const freshAgent = await tx.agent.findUnique({
-      where: { userId },
-      select: { id: true, verificationStatus: true },
-    });
-    const freshProperty = await findPropertyAuthorizationContextById(freshRequest.propertyId, tx);
-    if (!freshAgent || freshAgent.id !== agent.id || freshAgent.verificationStatus !== "VERIFIED" ||
-        !freshProperty || !freshProperty.isActive || freshProperty.deletedAt) {
-      throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-    }
-    const freshResponse = await tx.ownerAgentRequestResponse.findUnique({
-      where: { ownerAgentRequestId_agentId: { ownerAgentRequestId: requestId, agentId: freshAgent.id } },
-      select: { status: true },
-    });
-    const freshRelation = freshProperty.agents?.find((item) => item.agent?.userId === userId) ?? null;
-    const freshAllowed = await authorizeRequest(actor, "ACCESS_OWNER_CONTACT", freshRequest, {
-      isAgent: true,
-      isVerifiedAgent: true,
-      isPropertyActive: freshProperty.isActive,
-      isPropertyDeleted: Boolean(freshProperty.deletedAt),
-      isPropertyExpired: isExpiredListing(freshProperty.listing),
-      isAcceptedResponse: freshResponse?.status === "ACCEPTED",
-      isActiveAgentRelation: freshRelation?.status === "ACTIVE",
-      isApprovedByRequestOwner: freshRelation?.approvedByOwner === true &&
-        freshRelation.approvedByOwnerId === freshRequest.ownerId,
-      hasOwnerRelation: freshProperty.owners?.some((item) => item.ownerId === freshRequest.ownerId) === true,
-    });
-    const freshVisibility = await getPropertyVisibility(actor, freshProperty, freshRequest.ownerId);
-    if (!freshAllowed || !freshVisibility.canViewExactLocation || !freshVisibility.canViewOwnerDetails) {
+    const visibility = await getPropertyVisibility(actor, propertyContext, request.ownerId);
+    if (!allowed || !visibility.canViewExactLocation || !visibility.canViewOwnerDetails) {
       throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
     }
 
-    const existing = await findOwnerRequestAccessLog(freshAgent.id, requestId, tx);
-    if (existing) return existing;
-    return createOwnerRequestAccessLog(freshAgent.id, requestId, tx);
+    const access = await findOwnerRequestAccessLog(agent.id, requestId, tx)
+      ?? await createOwnerRequestAccessLog(agent.id, requestId, tx);
+
+    return {
+      access,
+      owner: {
+        id: request.ownerId,
+        firstName: request.owner.firstName,
+        lastName: request.owner.lastName,
+      },
+      property: {
+        id: request.propertyId,
+        city: request.property.city,
+        district: request.property.district,
+        address: request.property.address,
+        postalCode: request.property.postalCode,
+      },
+    };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-
-  return toPayload(access);
 }
