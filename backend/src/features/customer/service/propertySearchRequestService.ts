@@ -298,49 +298,65 @@ export const updateCustomerSearchRequest = async (
  *
  * اطلاعات تماس مشتری در این مرحله برگردانده نمی‌شود.
  */
-export const getActivePropertySearchRequests =
-  async (filters: {
+export const getActivePropertySearchRequests = async (
+  filters: {
     city?: string; transactionType?: string; propertyType?: string;
     minBudget?: string; maxBudget?: string; hashtiVerified?: string;
     createdFrom?: string; createdTo?: string;
   },
   actor: AuthorizationActor
-  ) => {
-    const agent = actor.role === "AGENT" ? await findAgentProfileByUserId(actor.id) : null;
-    const marketplaceAllowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
-      actor,
-      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent: agent?.verificationStatus === "VERIFIED" } },
-    });
-    if (!marketplaceAllowed) throw new Error("Search request marketplace access denied");
-
-    const transactionTypes = ["SALE", "FULL_DEPOSIT", "RENT", "DEPOSIT_AND_RENT"];
-    const propertyTypes = ["APARTMENT", "HOUSE", "VILLA", "LAND", "SHOP", "OFFICE", "GARDEN"];
-    if (filters.transactionType && !transactionTypes.includes(filters.transactionType)) throw new Error("Invalid transaction type filter");
-    if (filters.propertyType && !propertyTypes.includes(filters.propertyType)) throw new Error("Invalid property type filter");
-    const parseAmount = (value: string | undefined, label: string) => {
-      if (value === undefined || value.trim() === "") return undefined;
-      const amount = Number(value);
-      if (!Number.isFinite(amount) || amount < 0) throw new Error(`Invalid ${label} filter`);
-      return amount;
-    };
-    const minBudget = parseAmount(filters.minBudget, "minimum budget");
-    const maxBudget = parseAmount(filters.maxBudget, "maximum budget");
-    if (minBudget !== undefined && maxBudget !== undefined && minBudget > maxBudget) throw new Error("Minimum budget cannot exceed maximum budget");
-    const parseDate = (value: string | undefined, label: string) => {
-      if (!value) return undefined;
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) throw new Error(`Invalid ${label} date`);
-      return date;
-    };
-    const createdFrom = parseDate(filters.createdFrom, "start");
-    const createdTo = parseDate(filters.createdTo, "end");
-    if (createdFrom && createdTo && createdFrom > createdTo) throw new Error("Start date cannot exceed end date");
-    let hashtiVerified: boolean | undefined;
-    if (filters.hashtiVerified === "true") hashtiVerified = true;
-    else if (filters.hashtiVerified === "false") hashtiVerified = false;
-    else if (filters.hashtiVerified && filters.hashtiVerified !== "all") throw new Error("Invalid verification filter");
-    return findActivePropertySearchRequests({ city: filters.city?.trim() || undefined, transactionType: filters.transactionType, propertyType: filters.propertyType, minBudget, maxBudget, hashtiVerified, createdFrom, createdTo });
+) => {
+  const transactionTypes = ["SALE", "FULL_DEPOSIT", "RENT", "DEPOSIT_AND_RENT"];
+  const propertyTypes = ["APARTMENT", "HOUSE", "VILLA", "LAND", "SHOP", "OFFICE", "GARDEN"];
+  if (filters.transactionType && !transactionTypes.includes(filters.transactionType)) throw new Error("Invalid transaction type filter");
+  if (filters.propertyType && !propertyTypes.includes(filters.propertyType)) throw new Error("Invalid property type filter");
+  const parseAmount = (value: string | undefined, label: string) => {
+    if (value === undefined || value.trim() === "") return undefined;
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount < 0) throw new Error(`Invalid ${label} filter`);
+    return amount;
   };
+  const minBudget = parseAmount(filters.minBudget, "minimum budget");
+  const maxBudget = parseAmount(filters.maxBudget, "maximum budget");
+  if (minBudget !== undefined && maxBudget !== undefined && minBudget > maxBudget) throw new Error("Minimum budget cannot exceed maximum budget");
+  const parseDate = (value: string | undefined, label: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) throw new Error(`Invalid ${label} date`);
+    return date;
+  };
+  const createdFrom = parseDate(filters.createdFrom, "start");
+  const createdTo = parseDate(filters.createdTo, "end");
+  if (createdFrom && createdTo && createdFrom > createdTo) throw new Error("Start date cannot exceed end date");
+
+  let hashtiVerified: boolean | undefined;
+  if (filters.hashtiVerified === "true") hashtiVerified = true;
+  else if (filters.hashtiVerified === "false") hashtiVerified = false;
+  else if (filters.hashtiVerified && filters.hashtiVerified !== "all") throw new Error("Invalid verification filter");
+
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: actor.id },
+      select: { id: true, role: true, isActive: true },
+    });
+    const agent = user?.role === "AGENT"
+      ? await tx.agent.findUnique({ where: { userId: actor.id }, select: { verificationStatus: true } })
+      : null;
+    const freshActor = user ? { id: user.id, role: user.role, isActive: user.isActive } : actor;
+    const isVerifiedAgent = user?.isActive === true && user.role === "AGENT" && agent?.verificationStatus === "VERIFIED";
+    const allowed = user?.isActive === true && await authorize("searchRequest", "MARKETPLACE_LIST", {
+      actor: freshActor,
+      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent } },
+    });
+    if (!allowed) throw new Error("Search request marketplace access denied");
+    return findActivePropertySearchRequests({
+      city: filters.city?.trim() || undefined,
+      transactionType: filters.transactionType,
+      propertyType: filters.propertyType,
+      minBudget, maxBudget, hashtiVerified, createdFrom, createdTo,
+    }, tx);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+};
 
   /**
  * دریافت جزئیات یک درخواست فعال جستجوی ملک برای Agent
