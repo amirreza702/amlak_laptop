@@ -27,7 +27,7 @@ const isExpiredListing = (listing?: { status?: string | null; confirmUntil?: Dat
 
 const authorizeRequest = (
   actor: AuthorizationActor,
-  action: "LIST_OWNER" | "CLOSE" | "LIST_AGENT" | "RESPOND",
+  action: "LIST_OWNER" | "CLOSE" | "LIST_AGENT" | "RESPOND" | "APPROVE_AGENT" | "ACCESS_OWNER_CONTACT",
   request: { id: string; status: string },
   relationship: {
     isOwner?: boolean;
@@ -36,6 +36,11 @@ const authorizeRequest = (
     isPropertyActive?: boolean;
     isPropertyDeleted?: boolean;
     isPropertyExpired?: boolean;
+    isAcceptedResponse?: boolean;
+    isApprovedByRequestOwner?: boolean;
+    hasOwnerRelation?: boolean;
+    isActiveAgentRelation?: boolean;
+    isAgentAccepted?: boolean;
   },
 ) => authorize("ownerAgentRequest", action, {
   actor,
@@ -205,9 +210,24 @@ export async function accessOwnerRequestContactService(userId: string, requestId
     select: { status: true },
   });
   const agentRelation = request.property.agents.find((item) => item.agentId === agent.id) ?? null;
-  if (response?.status !== "ACCEPTED" || !agentRelation?.approvedByOwner) {
-    throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
-  }
+  const canAccessRequestContact = await authorizeRequest(
+    { id: userId, role: "AGENT", isActive: true },
+    "ACCESS_OWNER_CONTACT",
+    request,
+    {
+      isAgent: true,
+      isVerifiedAgent: true,
+      isPropertyActive: request.property.isActive,
+      isPropertyDeleted: Boolean(request.property.deletedAt),
+      isPropertyExpired: isExpiredListing(request.property.listing),
+      isAcceptedResponse: response?.status === "ACCEPTED",
+      isActiveAgentRelation: agentRelation?.status === "ACTIVE",
+      isApprovedByRequestOwner: agentRelation?.approvedByOwner === true &&
+        agentRelation.approvedByOwnerId === request.ownerId,
+      hasOwnerRelation: request.property.owners.some((item) => item.ownerId === request.ownerId),
+    },
+  );
+  if (!canAccessRequestContact) throw new Error("AGENT_NOT_APPROVED_FOR_OWNER_REQUEST");
 
   const visibility = await getPropertyVisibility(
     { id: userId, role: "AGENT", isActive: true },
