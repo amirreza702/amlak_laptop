@@ -22,6 +22,7 @@
 import {
   findCustomerById,
 } from "../repository/customerRepository";
+import { authorize } from "../../../shared/authorization/authorization.core";
 
 import {
   createPropertySearchRequest,
@@ -70,8 +71,14 @@ export const createCustomerSearchRequest = async (
     requesterLastName?: string;
     requesterMobile?: string;
   },
-  creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string }
+  creator: { id: string; role: "CUSTOMER" | "AGENT"; mobile: string; isVerifiedAgent?: boolean }
 ) => {
+  const creationAllowed = await authorize("searchRequest", "CREATE", {
+    actor: { id: creator.id, role: creator.role },
+    resource: { data: { isVerifiedAgent: creator.isVerifiedAgent === true } },
+  });
+  if (!creationAllowed) throw new Error("Search request creation is not authorized");
+
   let requesterFirstName: string | null;
   let requesterLastName: string;
   let requesterMobile: string;
