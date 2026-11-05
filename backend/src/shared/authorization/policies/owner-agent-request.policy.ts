@@ -5,6 +5,9 @@ interface OwnerAgentRequestPolicyData {
   isAgent?: boolean;
   isVerifiedAgent?: boolean;
   status?: string;
+  isPropertyActive?: boolean;
+  isPropertyDeleted?: boolean;
+  isPropertyExpired?: boolean;
 }
 
 /**
@@ -29,18 +32,14 @@ export const ownerAgentRequestPolicy: AuthorizationPolicy = (
       data.status === "ACTIVE";
   }
 
-  if (action === "LIST_AGENT") {
+  if (action === "LIST_AGENT" || action === "RESPOND") {
     return context.actor.role === "AGENT" &&
       data.isAgent === true &&
       data.isVerifiedAgent === true &&
-      data.status === "ACTIVE";
-  }
-
-  if (action === "RESPOND") {
-    return context.actor.role === "AGENT" &&
-      data.isAgent === true &&
-      data.isVerifiedAgent === true &&
-      data.status === "ACTIVE";
+      data.status === "ACTIVE" &&
+      data.isPropertyActive === true &&
+      data.isPropertyDeleted !== true &&
+      data.isPropertyExpired !== true;
   }
 
   return false;
