@@ -66,6 +66,7 @@ export const findCustomerProfileById = async (
 
     select: {
       id: true,
+      userId: true,
       firstName: true,
       lastName: true,
 
