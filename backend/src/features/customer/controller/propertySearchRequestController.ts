@@ -12,17 +12,6 @@
 import { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../../auth/middleware/authMiddleware";
 import { getCurrentCustomerProfile } from "../service/currentCustomerProfileService";
-import { authorize } from "../../../shared/authorization/authorization.core";
-import { prisma } from "../../../lib/prisma";
-
-async function isVerifiedAgentUser(userId: string): Promise<boolean> {
-  const agent = await prisma.agent.findUnique({
-    where: { userId },
-    select: { verificationStatus: true },
-  });
-  return agent?.verificationStatus === "VERIFIED";
-}
-
 import {
   createCustomerSearchRequest,
   getCustomerSearchRequest,
@@ -77,12 +66,10 @@ export async function createAgentSearchRequestController(req: Request, res: Resp
   }
 
   try {
-    const isVerifiedAgent = await isVerifiedAgentUser(user.id);
-    if (!isVerifiedAgent) return res.status(403).json({ message: "Agent verification is required" });
     const result = await createCustomerSearchRequest(
       null,
       req.body,
-      { ...user, mobile: user.mobile, isVerifiedAgent }
+      { ...user, mobile: user.mobile }
     );
     return res.status(201).json(result);
   } catch (error: unknown) {
@@ -308,13 +295,6 @@ export async function getActivePropertySearchRequestsController(
   try {
     const user = (req as AuthenticatedRequest).user;
     if (!user) return res.status(401).json({ message: "Authentication required" });
-    const isVerifiedAgent = await isVerifiedAgentUser(user.id);
-    const allowed = await authorize("searchRequest", "MARKETPLACE_LIST", {
-      actor: { id: user.id, role: user.role, isActive: user.isActive },
-      resource: { status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
-
     const result =
       await getActivePropertySearchRequests({
         city: typeof req.query.city === "string" ? req.query.city : undefined,
@@ -362,12 +342,6 @@ export async function getActivePropertySearchRequestByIdController(
     const user = (req as AuthenticatedRequest).user;
     if (!user) return res.status(401).json({ message: "Authentication required" });
     const result = await getActivePropertySearchRequestById(req.params.requestId, user);
-    const isVerifiedAgent = await isVerifiedAgentUser(user.id);
-    const allowed = await authorize("searchRequest", "MARKETPLACE_READ", {
-      actor: { id: user.id, role: user.role, isActive: user.isActive },
-      resource: { id: req.params.requestId, status: "ACTIVE", data: { status: "ACTIVE", isVerifiedAgent } },
-    });
-    if (!allowed) return res.status(403).json({ message: "Search request marketplace access denied" });
     return res.status(200).json(result);
   } catch (error: any) {
     if (
