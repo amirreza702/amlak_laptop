@@ -124,6 +124,9 @@ export async function updateManagedUserStatus(input: {
       data: { isActive: input.isActive },
       select: { id: true, mobile: true, role: true, isActive: true, isSuperAdmin: true, updatedAt: true },
     });
+    if (!input.isActive) {
+      await tx.session.deleteMany({ where: { userId: current.id } });
+    }
     await tx.adminAuditLog.create({
       data: {
         actorUserId: input.actorUserId, actorMobile: input.actorMobile, actorRole: UserRole.HASHTI,
