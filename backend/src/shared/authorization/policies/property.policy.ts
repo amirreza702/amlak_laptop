@@ -10,6 +10,8 @@ interface PropertyPolicyData {
   isCreator?: boolean;
   isDeleted?: boolean;
   isRegisteredByCurrentAgent?: boolean;
+  isExpired?: boolean;
+  isFinalApprovedAgent?: boolean;
 }
 
 /**
@@ -42,6 +44,19 @@ export const propertyPolicy: AuthorizationPolicy = (
   if (action === "EDIT_OWN_REGISTRATION") {
     return context.actor.role === "AGENT" &&
       Boolean(data.isRegisteredByCurrentAgent);
+  }
+
+  if (action === "READ_PRIVATE") {
+    const isRelatedOwner =
+      context.actor.role === "OWNER" && Boolean(data.isRelatedOwner);
+    const isApprovedAgent =
+      context.actor.role === "AGENT" && Boolean(data.isFinalApprovedAgent);
+
+    if (data.isExpired) {
+      return isRelatedOwner || isApprovedAgent;
+    }
+
+    return Boolean(data.isCreator || isRelatedOwner || isApprovedAgent);
   }
 
   return false;
