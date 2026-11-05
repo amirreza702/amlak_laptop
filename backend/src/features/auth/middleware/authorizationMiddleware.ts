@@ -335,6 +335,10 @@ export function requireOwnNotificationUser(paramName = "userId") {
     if (!user) return;
 
     const targetUserId = req.params[paramName];
+    if (typeof targetUserId !== "string" || !targetUserId.trim()) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
     const allowed = await authorize("notification", "LIST_OWN", {
       actor: { id: user.id, role: user.role },
       resource: { id: targetUserId, data: { isOwner: targetUserId === user.id } },
