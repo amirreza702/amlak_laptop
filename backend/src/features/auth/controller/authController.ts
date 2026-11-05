@@ -287,6 +287,7 @@ export async function adminResetUserPasswordController(
     }
 
     const user = await adminResetUserPasswordService(
+      resetActor?.id ?? "",
       userId,
       newPassword
     );
@@ -361,6 +362,8 @@ export async function listAdminUsersController(
   res: Response
 ) {
   try {
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
     const rawSearch = req.query.search;
     const rawRole = req.query.role;
     const rawIsActive = req.query.isActive;
@@ -379,10 +382,10 @@ export async function listAdminUsersController(
       return res.status(400).json({ message: "Invalid query parameters" });
     }
 
-    const allowedRoles = Object.values(UserRole);
+    const allowedRoles = [UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT];
     if (
       typeof rawRole === "string" &&
-      !allowedRoles.includes(rawRole as UserRole)
+      !allowedRoles.some((role) => role === rawRole)
     ) {
       return res.status(400).json({ message: "Invalid user role filter" });
     }
@@ -402,6 +405,7 @@ export async function listAdminUsersController(
     }
 
     const result = await listAdminUsersService({
+      actorUserId: actor.id,
       search: typeof rawSearch === "string" ? rawSearch.trim() : undefined,
       role: typeof rawRole === "string" ? rawRole as UserRole : undefined,
       isActive:
