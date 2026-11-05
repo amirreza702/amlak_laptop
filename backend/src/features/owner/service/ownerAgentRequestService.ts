@@ -19,11 +19,24 @@ import {
   findOwnerAgentRequestForResponse,
 } from "../repository/ownerAgentRequestRepository";
 
+const isExpiredListing = (listing?: { status?: string | null; confirmUntil?: Date | null } | null) => {
+  if (!listing) return false;
+  return listing.status === "EXPIRED" ||
+    (listing.status === "PUBLISHED" && (!listing.confirmUntil || listing.confirmUntil.getTime() <= Date.now()));
+};
+
 const authorizeRequest = (
   actor: AuthorizationActor,
   action: "LIST_OWNER" | "CLOSE" | "LIST_AGENT" | "RESPOND",
   request: { id: string; status: string },
-  relationship: { isOwner?: boolean; isAgent?: boolean; isVerifiedAgent?: boolean },
+  relationship: {
+    isOwner?: boolean;
+    isAgent?: boolean;
+    isVerifiedAgent?: boolean;
+    isPropertyActive?: boolean;
+    isPropertyDeleted?: boolean;
+    isPropertyExpired?: boolean;
+  },
 ) => authorize("ownerAgentRequest", action, {
   actor,
   resource: { id: request.id, status: request.status, data: { ...relationship, status: request.status } },
@@ -103,6 +116,9 @@ export async function getActiveOwnerAgentRequestsService(userId: string) {
     const allowed = await authorizeRequest(actor, "LIST_AGENT", request, {
       isAgent: true,
       isVerifiedAgent: agent.verificationStatus === "VERIFIED",
+      isPropertyActive: request.property.isActive,
+      isPropertyDeleted: Boolean(request.property.deletedAt),
+      isPropertyExpired: isExpiredListing(request.property.listing),
     });
     return allowed ? request : null;
   }));
@@ -132,6 +148,9 @@ export async function respondToOwnerAgentRequestService(
       {
         isAgent: true,
         isVerifiedAgent: agent.verificationStatus === "VERIFIED",
+        isPropertyActive: request.property.isActive,
+        isPropertyDeleted: Boolean(request.property.deletedAt),
+        isPropertyExpired: isExpiredListing(request.property.listing),
       },
     );
     if (!allowed) throw new Error("AGENT_NOT_AUTHORIZED_FOR_OWNER_REQUEST");
