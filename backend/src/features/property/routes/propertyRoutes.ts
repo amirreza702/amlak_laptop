@@ -161,7 +161,6 @@ router.patch(
   "/properties/:id/agents/:agentId/revoke",
   authMiddleware,
   requireRole(UserRole.OWNER),
-  bindOwnProfileIdToBody("owner", "ownerId"),
   // فقط وجود رابطه مالکیت در middleware بررسی می‌شود؛
   // تأیید هشتی برای مالک شرط لغو همکاری نیست.
   requirePropertyAccess("id", false),
