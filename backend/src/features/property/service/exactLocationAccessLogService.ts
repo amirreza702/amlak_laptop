@@ -15,6 +15,7 @@ import { findPropertyAuthorizationContextById } from "../repository/propertyRepo
 import { authorizePropertyAction } from "./propertyAuthorizationService";
 
 import type { ExactLocationAccessLog } from "@prisma/client";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { prisma } from "../../../lib/prisma";
 
 /**
@@ -25,7 +26,7 @@ import { prisma } from "../../../lib/prisma";
 
 export interface CreateExactLocationAccessLogInput {
   propertyId: string;
-  actor: { id: string; role: string; isActive?: boolean };
+  actor: AuthorizationActor;
   reason?: string | null;
 }
 
@@ -57,7 +58,7 @@ export const createExactLocationAccessLogService = async (
 
 export const getExactLocationAccessLogsService = async (
   propertyId: string,
-  actor: { id: string; role: string; isActive?: boolean },
+  actor: AuthorizationActor,
 ): Promise<ExactLocationAccessLog[]> => {
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
