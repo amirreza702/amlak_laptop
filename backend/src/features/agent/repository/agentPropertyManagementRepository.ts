@@ -52,8 +52,9 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   if (input.landTenure) fieldConditions.push({ landTenure: input.landTenure });
   if (input.floor !== undefined) fieldConditions.push({ floor: input.floor });
   if (input.totalUnits !== undefined) fieldConditions.push({ totalUnits: input.totalUnits });
-  // املاک غیرفعال‌شده توسط مالک/سامانه در پنل مشاور نمایش داده نمی‌شوند.
+  // املاک غیرفعال یا حذف‌شده در پنل مشاور نمایش داده نمی‌شوند.
   fieldConditions.push({ isActive: true });
+  fieldConditions.push({ deletedAt: null });
   // آگهی منقضی فقط برای مشاوری در فهرست می‌ماند که تأیید نهایی فعال مالک را دارد.
   fieldConditions.push({
     OR: [
@@ -141,6 +142,7 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
         rooms: true,
         floor: true,
         isActive: true,
+        deletedAt: true,
         createdAt: true,
         listing: {
           select: {
