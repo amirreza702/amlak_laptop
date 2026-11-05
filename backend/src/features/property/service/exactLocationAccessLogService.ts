@@ -17,6 +17,7 @@ import { authorizePropertyAction } from "./propertyAuthorizationService";
 import type { ExactLocationAccessLog } from "@prisma/client";
 import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 import { prisma } from "../../../lib/prisma";
+import { requireAdminServicePermission } from "../../admin/service/adminService";
 
 /**
  * ============================================================
@@ -33,6 +34,7 @@ export interface CreateExactLocationAccessLogInput {
 export const createExactLocationAccessLogService = async (
   data: CreateExactLocationAccessLogInput
 ): Promise<ExactLocationAccessLog> => {
+  if (data.actor.role === "HASHTI") await requireAdminServicePermission(data.actor.id, "PROPERTIES_MANAGE");
   return prisma.$transaction(async (tx) => {
     const property = await findPropertyAuthorizationContextById(data.propertyId, tx);
     if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
@@ -60,6 +62,7 @@ export const getExactLocationAccessLogsService = async (
   propertyId: string,
   actor: AuthorizationActor,
 ): Promise<ExactLocationAccessLog[]> => {
+  if (actor.role === "HASHTI") await requireAdminServicePermission(actor.id, "PROPERTIES_MANAGE");
   const property = await findPropertyAuthorizationContextById(propertyId);
   if (!property) throw new Error("ملک مورد نظر پیدا نشد.");
 
