@@ -131,14 +131,13 @@ export function requirePropertyAccess(paramName = "id", _requireVerifiedOwner = 
             where: {
               agent: { is: { userId: user.id } },
               status: "ACTIVE",
-              ...(requireApprovedAgent ? { approvedByOwner: true } : {}),
             },
             select: {
               agentId: true,
               status: true,
               approvedByOwner: true,
               approvedByOwnerId: true,
-              agent: { select: { userId: true } },
+              agent: { select: { userId: true, verificationStatus: true } },
             },
             take: 1,
           },
