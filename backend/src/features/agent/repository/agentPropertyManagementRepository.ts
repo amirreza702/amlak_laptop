@@ -46,7 +46,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
   const fieldConditions: Prisma.PropertyWhereInput[] = [];
   if (input.city?.trim()) fieldConditions.push({ city: contains(input.city.trim()) });
   if (input.district?.trim()) fieldConditions.push({ district: contains(input.district.trim()) });
-  if (input.address?.trim()) fieldConditions.push({ address: contains(input.address.trim()) });
   if (input.propertyType) fieldConditions.push({ propertyType: input.propertyType });
   if (input.documentType) fieldConditions.push({ documentType: input.documentType });
   if (input.ownershipType) fieldConditions.push({ ownershipType: input.ownershipType });
@@ -83,7 +82,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
 
   const searchConditions: Prisma.PropertyWhereInput[] = search ? [
     { id: contains(search) }, { city: contains(search) }, { district: contains(search) },
-    { address: contains(search) }, { postalCode: contains(search) },
     ...(exactPropertyType ? [{ propertyType: exactPropertyType }] : []),
     ...(exactOccupancyStatus ? [{ occupancyStatus: exactOccupancyStatus }] : []),
     ...(numericSearch !== undefined ? [{ area: numericSearch }, { rooms: numericSearch }, { floor: numericSearch }] : []),
@@ -93,8 +91,6 @@ export async function findAgentPropertyRecords(input: AgentPropertyQuery) {
     ...(exactTransactionType ? [{ listing: { is: { transactionType: exactTransactionType } } }] : []),
     ...(numericSearch !== undefined ? [{ owners: { some: { share: numericSearch } } }] : []),
     ...(boolSearch !== undefined ? [{ owners: { some: { isPrimary: boolSearch } } }] : []),
-    { owners: { some: { owner: { is: { firstName: contains(search) } } } } },
-    { owners: { some: { owner: { is: { lastName: contains(search) } } } } },
     ...(propertyIdsWithMatchingNotes.length ? [{ id: { in: propertyIdsWithMatchingNotes } }] : []),
     ...(exactPropertyAgentStatus ? [{ agents: { some: { agentId: input.agentId, status: exactPropertyAgentStatus } } }] : []),
     ...(boolSearch !== undefined ? [
