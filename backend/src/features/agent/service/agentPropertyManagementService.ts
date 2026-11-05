@@ -29,10 +29,6 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
       selectedAgentRelation &&
       approvedOwnerRelation
     );
-    const isCreator =
-      record.property.registrationSource === "AGENT" &&
-      record.property.createdByUserId === userId;
-
     const {
       createdByUser,
       agents: _agents,
@@ -41,7 +37,7 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
     const primaryOwner = record.property.owners[0] ?? null;
     const visibleOwner = isApprovedAgent
       ? approvedOwnerRelation
-      : isCreator && visibility.canViewOwnerDetails
+      : visibility.canManage && visibility.canViewOwnerDetails
         ? primaryOwner
         : null;
 
@@ -56,10 +52,10 @@ export async function getMyAgentPropertyRecords(userId: string, query: Omit<Agen
 
     return {
       ...record,
-      canManage: isCreator,
+      canManage: visibility.canManage,
       property: {
         ...propertyData,
-        createdByUserId: isCreator ? record.property.createdByUserId : null,
+        createdByUserId: visibility.canManage ? record.property.createdByUserId : null,
         address: visibility.canViewExactLocation
           ? record.property.address
           : [record.property.city, record.property.district, "محدوده تقریبی"].filter(Boolean).join("، "),
