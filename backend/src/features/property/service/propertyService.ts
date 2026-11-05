@@ -173,7 +173,7 @@ export async function registerProperty(
 
   const isNewProperty = !existingProperty;
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     let property: Property;
 
     if (existingProperty) {
@@ -318,6 +318,13 @@ export async function registerProperty(
 
     return { property, propertyAgent, isNewProperty };
   });
+  // نتیجه ثبت نیز باید از همان تصمیم و Projection مرکزی عبور کند؛
+  // به‌ویژه وقتی مشاور به‌واسطه کد پستی به ملک موجود دیگری متصل می‌شود.
+  const safeProperty = await getPropertyDetailsForActor(result.property.id, {
+    id: creator.id,
+    role: creator.role,
+  });
+  return { ...result, property: safeProperty as Property };
 }
 
 export async function getPropertyById(id: string) {
