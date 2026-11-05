@@ -95,7 +95,7 @@ export const findOwnerRequestForAccess = (requestId: string, agentId: string, db
     where: { id: requestId, status: "ACTIVE", property: { isActive: true, deletedAt: null } },
     select: {
       id: true, ownerId: true, propertyId: true, status: true,
-      owner: { select: { firstName: true, lastName: true } },
+      owner: { select: { firstName: true, lastName: true, user: { select: { mobile: true, isActive: true } } } },
       property: {
         select: {
           id: true, isActive: true, registrationSource: true, createdByUserId: true, deletedAt: true,
