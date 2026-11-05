@@ -9,21 +9,25 @@ export const findAgentProfileForNotes = (userId: string, db: Db = prisma) =>
 export const findAgentProfileByNotesId = (agentId: string, db: Db = prisma) =>
   db.agent.findUnique({ where: { id: agentId }, select: { id: true } });
 
-export const listAgentPrivateNotes = (agentId?: string, db: Db = prisma) =>
-  db.agentPrivateNote.findMany({
-    ...(agentId ? { where: { agentId } } : {}),
-    ...(agentId ? {} : {
-      include: {
-        agent: {
-          select: {
-            id: true, firstName: true, lastName: true,
-            user: { select: { mobile: true } },
-          },
+export const listAgentPrivateNotes = (agentId?: string, db: Db = prisma) => {
+  if (agentId) {
+    return db.agentPrivateNote.findMany({
+      where: { agentId },
+      orderBy: { updatedAt: "desc" },
+    });
+  }
+  return db.agentPrivateNote.findMany({
+    include: {
+      agent: {
+        select: {
+          id: true, firstName: true, lastName: true,
+          user: { select: { mobile: true } },
         },
       },
-    }),
+    },
     orderBy: { updatedAt: "desc" },
   });
+};
 
 export const saveAgentPrivateNote = (
   agentId: string,
