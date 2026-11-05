@@ -77,7 +77,7 @@ export async function queuePropertyListingForHashtiReview(
     const listing = await findPropertyListingByPropertyId(propertyId, tx);
     if (
       !listing ||
-      ![ListingStatus.PUBLISHED, ListingStatus.EXPIRED].includes(listing.status)
+      !([ListingStatus.PUBLISHED, ListingStatus.EXPIRED] as ListingStatus[]).includes(listing.status)
     ) {
       return { queued: false, listing };
     }
@@ -146,7 +146,7 @@ export async function updatePropertyListingStatus(
 
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const archiveImmediately = data.status === ListingStatus.SOLD || data.status === ListingStatus.RENTED;
-    const mediaToRemove = !archiveImmediately && [ListingStatus.DRAFT, ListingStatus.PAUSED].includes(data.status)
+    const mediaToRemove = !archiveImmediately && ([ListingStatus.DRAFT, ListingStatus.PAUSED] as ListingStatus[]).includes(data.status)
       ? await tx.propertyMedia.findMany({ where: { propertyId, isActive: true }, select: { id: true } })
       : [];
 
@@ -154,7 +154,7 @@ export async function updatePropertyListingStatus(
     if (approvalPublishedAt) {
       confirmUntil = calculateConfirmUntil(approvalPublishedAt);
       updateData.confirmUntil = confirmUntil;
-    } else if ([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED].includes(data.status)) {
+    } else if (([ListingStatus.DRAFT, ListingStatus.PAUSED, ListingStatus.SOLD, ListingStatus.RENTED] as ListingStatus[]).includes(data.status)) {
       updateData.confirmUntil = null;
     }
     const updatedListing = await updatePropertyListing(listing.id, updateData, tx);
