@@ -2,12 +2,19 @@ import { registerAuthorizationPolicy } from "../authorization.registry";
 import { propertyPolicy } from "./property.policy";
 import { selfOwnedResourcePolicy } from "./self-owned-resource.policy";
 import { ownerAgentRequestPolicy } from "./owner-agent-request.policy";
+import { roleAccessPolicy } from "./role-access.policy";
+import { adminPolicy } from "./admin.policy";
+import { privateNotePolicy } from "./private-note.policy";
+import { searchRequestPolicy } from "./search-request.policy";
+import { agentPolicy } from "./agent.policy";
 
-// ثبت Policyها در یک نقطه مشخص و هنگام بارگذاری Authorization Core.
 registerAuthorizationPolicy("property", propertyPolicy);
 registerAuthorizationPolicy("owner", selfOwnedResourcePolicy);
-registerAuthorizationPolicy("agent", selfOwnedResourcePolicy);
+registerAuthorizationPolicy("agent", agentPolicy);
 registerAuthorizationPolicy("customer", selfOwnedResourcePolicy);
 registerAuthorizationPolicy("notification", selfOwnedResourcePolicy);
-registerAuthorizationPolicy("searchRequest", selfOwnedResourcePolicy);
+registerAuthorizationPolicy("searchRequest", searchRequestPolicy);
 registerAuthorizationPolicy("ownerAgentRequest", ownerAgentRequestPolicy);
+registerAuthorizationPolicy("roleAccess", roleAccessPolicy);
+registerAuthorizationPolicy("admin", adminPolicy);
+registerAuthorizationPolicy("privateNote", privateNotePolicy);
