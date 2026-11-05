@@ -50,6 +50,10 @@ export const propertyPolicy: AuthorizationPolicy = (
     return isHashti;
   }
 
+  if (action === "ARCHIVE") return isHashti;
+  if (action === "VIEW_ARCHIVE") return isHashti || isOwner;
+  if (action === "RESTORE") return isHashti || isOwner;
+
   if (action === "RENEW") {
     // تمدید فقط برای مالک مرتبط یا مشاور دارای تأیید نهایی مالک و فقط پس از انقضا مجاز است.
     return Boolean(data.isExpired && (isOwner || isFinalApprovedAgent));
