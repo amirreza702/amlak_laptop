@@ -27,8 +27,9 @@ import { findAgentProfileById } from "../../agent/repository/agentRepository";
 import { findPropertyById } from "../../property/repository/propertyRepository";
 import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
 import { authorize } from "../../../shared/authorization/authorization.core";
+import type { AuthorizationActor } from "../../../shared/authorization/authorization.types";
 
-type FavoriteActor = { id: string; role: string; isActive?: boolean };
+type FavoriteActor = AuthorizationActor;
 
 async function authorizeCustomerFavoriteAccess(customerId: string, actor: FavoriteActor, action: "READ" | "UPDATE") {
   const customer = await findCustomerById(customerId);
