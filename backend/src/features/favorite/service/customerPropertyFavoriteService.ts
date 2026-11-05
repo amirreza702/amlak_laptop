@@ -26,6 +26,19 @@ import { findCustomerById } from "../../customer/repository/customerRepository";
 import { findAgentProfileById } from "../../agent/repository/agentRepository";
 import { findPropertyById } from "../../property/repository/propertyRepository";
 import { authorizePropertyAction } from "../../property/service/propertyAuthorizationService";
+import { authorize } from "../../../shared/authorization/authorization.core";
+
+type FavoriteActor = { id: string; role: string; isActive?: boolean };
+
+async function authorizeCustomerFavoriteAccess(customerId: string, actor: FavoriteActor, action: "READ" | "UPDATE") {
+  const customer = await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
+  const allowed = Boolean(customer) && await authorize("customer", action, {
+    actor,
+    resource: { id: customerId, data: { isSelf: customer?.userId === actor.id } },
+  });
+  if (!allowed) throw new Error("FAVORITE_ACCESS_FORBIDDEN");
+  return customer!;
+}
 
 import {
   createCustomerPropertyFavorite,
@@ -44,7 +57,8 @@ import {
  */
 export async function addPropertyToFavoritesService(
   customerId: string,
-  propertyId: string
+  propertyId: string,
+  actor: FavoriteActor
 ) {
   if (!customerId) {
     throw new Error("شناسه مشتری الزامی است.");
@@ -67,7 +81,7 @@ export async function addPropertyToFavoritesService(
   }
 
   const canFavorite = await authorizePropertyAction(
-    { id: customer.userId, role: "CUSTOMER" },
+    actor,
     "FAVORITE",
     property,
   );
@@ -104,7 +118,8 @@ export async function addPropertyToFavoritesService(
  */
 export async function removePropertyFromFavoritesService(
   customerId: string,
-  propertyId: string
+  propertyId: string,
+  actor: FavoriteActor
 ) {
   if (!customerId) {
     throw new Error("شناسه مشتری الزامی است.");
@@ -113,6 +128,8 @@ export async function removePropertyFromFavoritesService(
   if (!propertyId) {
     throw new Error("شناسه ملک الزامی است.");
   }
+
+  await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
 
   const favorite =
     await findCustomerPropertyFavorite(
@@ -137,7 +154,8 @@ export async function removePropertyFromFavoritesService(
  */
 export async function isPropertyFavoriteService(
   customerId: string,
-  propertyId: string
+  propertyId: string,
+  actor: FavoriteActor
 ) {
   if (!customerId) {
     throw new Error("شناسه مشتری الزامی است.");
@@ -146,6 +164,8 @@ export async function isPropertyFavoriteService(
   if (!propertyId) {
     throw new Error("شناسه ملک الزامی است.");
   }
+
+  await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
 
   const favorite =
     await findCustomerPropertyFavorite(
@@ -160,13 +180,14 @@ export async function isPropertyFavoriteService(
  * دریافت علاقه‌مندی‌های مشتری
  */
 export async function getCustomerFavoritesService(
-  customerId: string
+  customerId: string,
+  actor: FavoriteActor
 ) {
   if (!customerId) {
     throw new Error("شناسه مشتری الزامی است.");
   }
 
-  const customer = await findCustomerById(customerId);
+  await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
 
   if (!customer) {
     throw new Error("مشتری مورد نظر پیدا نشد.");
@@ -176,7 +197,8 @@ export async function getCustomerFavoritesService(
 }
 
 /** جست‌وجوی مشاوران قابل افزودن به علاقه‌مندی مشتری */
-export async function searchAgentsForCustomerFavoritesService(customerId: string, rawQuery: string) {
+export async function searchAgentsForCustomerFavoritesService(customerId: string, rawQuery: string, actor: FavoriteActor) {
+  await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
   if (!customerId) throw new Error("شناسه مشتری الزامی است.");
   const customer = await findCustomerById(customerId);
   if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
@@ -187,7 +209,8 @@ export async function searchAgentsForCustomerFavoritesService(customerId: string
 
 
 /** افزودن مشاور به علاقه‌مندی مشتری */
-export async function addAgentToFavoritesService(customerId: string, agentId: string) {
+export async function addAgentToFavoritesService(customerId: string, agentId: string, actor: FavoriteActor) {
+  await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
   if (!customerId || !agentId) throw new Error("شناسه مشتری و مشاور الزامی است.");
   const customer = await findCustomerById(customerId);
   if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
@@ -200,14 +223,16 @@ export async function addAgentToFavoritesService(customerId: string, agentId: st
 }
 
 /** حذف مشاور از علاقه‌مندی مشتری */
-export async function removeAgentFromFavoritesService(customerId: string, agentId: string) {
+export async function removeAgentFromFavoritesService(customerId: string, agentId: string, actor: FavoriteActor) {
+  await authorizeCustomerFavoriteAccess(customerId, actor, "UPDATE");
   if (!customerId || !agentId) throw new Error("شناسه مشتری و مشاور الزامی است.");
   if (!(await findCustomerAgentFavorite(customerId, agentId))) throw new Error("این مشاور در علاقه‌مندی‌های مشتری وجود ندارد.");
   return deleteCustomerAgentFavorite(customerId, agentId);
 }
 
 /** دریافت مشاوران علاقه‌مندی‌شده مشتری */
-export async function getCustomerFavoriteAgentsService(customerId: string) {
+export async function getCustomerFavoriteAgentsService(customerId: string, actor: FavoriteActor) {
+  await authorizeCustomerFavoriteAccess(customerId, actor, "READ");
   const customer = await findCustomerById(customerId);
   if (!customer) throw new Error("مشتری مورد نظر پیدا نشد.");
   return findCustomerAgentFavorites(customerId);
