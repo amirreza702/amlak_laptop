@@ -69,8 +69,7 @@ export const createDuplicateReviewService = async (
    */
   const primaryProperty =
     await findPropertyById(
-      data.primaryPropertyId,
-      actor
+      data.primaryPropertyId
     );
 
   if (!primaryProperty) {
@@ -103,7 +102,8 @@ export const createDuplicateReviewService = async (
    */
   const matches =
     await findDuplicateMatchesService(
-      data.primaryPropertyId
+      data.primaryPropertyId,
+      actor
     );
 
   /**
