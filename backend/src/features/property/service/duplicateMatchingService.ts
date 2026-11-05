@@ -51,7 +51,7 @@ export const getPropertySimilaritySummaryService = async (
 ): Promise<PropertySimilaritySummary> => {
   const authorizationContext = await findPropertyAuthorizationContextById(propertyId);
   if (!authorizationContext) throw new Error("ملک مورد نظر برای Matching پیدا نشد.");
-  const allowed = await authorizePropertyAction(actor, "VIEW_DUPLICATE_MATCHES", authorizationContext);
+  const allowed = await authorizePropertyAction(actor, "APPROVE_PUBLICATION", authorizationContext);
   if (!allowed) throw new Error("DUPLICATE_MATCHES_FORBIDDEN");
 
   const primaryProperty = await findPropertyById(propertyId);
