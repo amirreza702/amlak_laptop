@@ -40,7 +40,7 @@ export async function getHashtiManagementAccessController(req: Request, res: Res
 export async function getManagedUsersController(req: Request, res: Response) {
   const rawRole = req.query.role;
   const role = typeof rawRole === "string" ? rawRole.trim().toUpperCase() : "";
-  if (role && !Object.values(UserRole).includes(role as UserRole)) return res.status(400).json({ message: "Invalid role filter" });
+  if (role && ![UserRole.CUSTOMER, UserRole.OWNER, UserRole.AGENT].includes(role as UserRole)) return res.status(400).json({ message: "Invalid role filter" });
 
   let isActive: boolean | undefined;
   if (req.query.active !== undefined) {
@@ -81,7 +81,7 @@ export async function setManagedUserStatusController(req: Request, res: Response
     return res.status(200).json(result);
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
-    if (code === "HASHTI_PERMISSION_REQUIRED" || code === "SUPER_ADMIN_PERMISSION_REQUIRED") return res.status(403).json({ message: "You do not have permission to manage this account" });
+    if (code === "HASHTI_PERMISSION_REQUIRED" || code === "SUPER_ADMIN_PERMISSION_REQUIRED" || code === "ADMIN_PERMISSION_FORBIDDEN") return res.status(403).json({ message: "You do not have permission to manage this account" });
     if (code === "USER_NOT_FOUND") return res.status(404).json({ message: "User not found" });
     if (code === "CANNOT_CHANGE_OWN_STATUS") return res.status(409).json({ message: "You cannot change your own account status" });
     if (code === "LAST_SUPER_ADMIN_REQUIRED") return res.status(409).json({ message: "At least one active super admin must remain" });
