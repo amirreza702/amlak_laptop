@@ -8,6 +8,11 @@ interface OwnerAgentRequestPolicyData {
   isPropertyActive?: boolean;
   isPropertyDeleted?: boolean;
   isPropertyExpired?: boolean;
+  isAcceptedResponse?: boolean;
+  isApprovedByRequestOwner?: boolean;
+  hasOwnerRelation?: boolean;
+  isActiveAgentRelation?: boolean;
+  isAgentAccepted?: boolean;
 }
 
 /**
@@ -30,6 +35,26 @@ export const ownerAgentRequestPolicy: AuthorizationPolicy = (
     return context.actor.role === "OWNER" &&
       data.isOwner === true &&
       data.status === "ACTIVE";
+  }
+
+  if (action === "APPROVE_AGENT") {
+    return context.actor.role === "OWNER" &&
+      data.isOwner === true &&
+      data.status === "ACTIVE" &&
+      data.isAgentAccepted === true;
+  }
+
+  if (action === "ACCESS_OWNER_CONTACT") {
+    return context.actor.role === "AGENT" &&
+      data.isAgent === true &&
+      data.isVerifiedAgent === true &&
+      data.status === "ACTIVE" &&
+      data.isPropertyActive === true &&
+      data.isPropertyDeleted !== true &&
+      data.isAcceptedResponse === true &&
+      data.isActiveAgentRelation === true &&
+      data.isApprovedByRequestOwner === true &&
+      data.hasOwnerRelation === true;
   }
 
   if (action === "LIST_AGENT" || action === "RESPOND") {
