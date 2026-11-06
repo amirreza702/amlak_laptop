@@ -140,3 +140,129 @@ a {
     animation-duration: .01ms !important;
   }
 }
+
+
+/* Hashti workspace system — shared visual language for every role dashboard */
+.hashti-panel-shell {
+  --panel-ink: #102744;
+  --panel-muted: #68778a;
+  --panel-line: rgba(6,42,91,.10);
+  --panel-gold-line: rgba(184,150,80,.28);
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(184,150,80,.12), transparent 30%),
+    radial-gradient(ellipse at 0% 48%, rgba(6,42,91,.055), transparent 36%),
+    linear-gradient(145deg,#f8f9fb 0%,#f1f4f8 52%,#f8f7f4 100%);
+  color: var(--panel-ink);
+}
+.hashti-panel-shell > aside.hashti-panel-sidebar {
+  position: sticky;
+  top: 1.25rem;
+  align-self: start;
+  min-height: min(680px, calc(100vh - 2.5rem));
+  padding: 1.15rem .85rem;
+  border: 1px solid rgba(184,150,80,.26) !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.76) !important;
+  box-shadow: 0 18px 48px rgba(6,42,91,.075), inset 0 1px 0 rgba(255,255,255,.95);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+}
+.hashti-panel-sidebar > h2 {
+  margin: 0 .35rem 1rem;
+  padding: .7rem .75rem 1rem;
+  border-bottom: 1px solid var(--panel-gold-line);
+  color: #062a5b !important;
+  font-size: .92rem;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.hashti-panel-sidebar nav { gap: .38rem !important; }
+.hashti-panel-sidebar nav button {
+  min-height: 45px;
+  justify-content: flex-start !important;
+  padding: .72rem .85rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  color: #41536a !important;
+  background: transparent;
+  font-weight: 650;
+  transition: background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+}
+.hashti-panel-sidebar nav button:hover {
+  color: #062a5b !important;
+  border-color: rgba(184,150,80,.2) !important;
+  background: rgba(247,244,239,.9) !important;
+  transform: translateX(-2px);
+}
+.hashti-panel-sidebar nav button[aria-current="page"] {
+  color: #fff !important;
+  border-color: #062a5b !important;
+  background: linear-gradient(105deg,#062a5b 0%,#123e70 100%) !important;
+  box-shadow: inset -3px 0 0 #d9b77c, 0 7px 16px rgba(6,42,91,.15);
+}
+.hashti-panel-shell main,
+.hashti-panel-shell > div:not(.hashti-panel-sidebar) { min-width: 0; }
+.hashti-panel-shell main > section,
+.hashti-panel-shell main > div > section,
+.hashti-panel-shell main > div > header,
+.hashti-panel-shell main > section > div,
+.hashti-panel-shell [class*="rounded-xl"][class*="border"][class*="bg-white"] {
+  border-color: var(--panel-line);
+  border-radius: 13px;
+  box-shadow: 0 8px 28px rgba(6,42,91,.045), inset 0 1px 0 rgba(255,255,255,.8);
+}
+.hashti-panel-shell h2 { letter-spacing: -.025em; color: #102744; }
+.hashti-panel-shell input:not([type="checkbox"]):not([type="radio"]),
+.hashti-panel-shell select,
+.hashti-panel-shell textarea {
+  min-height: 42px;
+  border: 1px solid #d8dee7;
+  border-radius: 8px;
+  background: rgba(255,255,255,.92);
+  color: #102744;
+  box-shadow: inset 0 1px 2px rgba(6,42,91,.025);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.hashti-panel-shell input:focus,
+.hashti-panel-shell select:focus,
+.hashti-panel-shell textarea:focus {
+  border-color: #b89650 !important;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(184,150,80,.13) !important;
+}
+.hashti-panel-shell button:not(.hashti-panel-sidebar nav button) {
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.hashti-panel-shell button:active { transform: translateY(1px); }
+.hashti-panel-shell table { border-collapse: separate; border-spacing: 0; }
+.hashti-panel-shell table thead { background: #edf1f6 !important; color: #243b58; }
+.hashti-panel-shell table thead th { font-weight: 800; white-space: nowrap; }
+.hashti-panel-shell table tbody tr { transition: background-color .15s ease; }
+.hashti-panel-shell table tbody tr:hover { background: rgba(217,183,124,.09); }
+.hashti-panel-shell [role="alert"] { border-radius: 9px; }
+@media (min-width: 1024px) {
+  .hashti-panel-shell {
+    grid-template-columns: 258px minmax(0,1fr) !important;
+    gap: 1.35rem !important;
+    padding-inline: clamp(1rem,2vw,2rem) !important;
+    padding-top: 1.25rem !important;
+  }
+  .hashti-panel-shell > aside.hashti-panel-sidebar { max-height: calc(100vh - 2.5rem); overflow-y: auto; }
+}
+@media (max-width: 1023px) {
+  .hashti-panel-shell { padding-top: 1rem !important; }
+  .hashti-panel-shell > aside.hashti-panel-sidebar {
+    position: relative; top: auto; min-height: auto; padding: .7rem;
+  }
+  .hashti-panel-sidebar > h2 { margin-bottom: .5rem; padding-bottom: .65rem; }
+  .hashti-panel-sidebar nav { flex-direction: row; overflow-x: auto; padding-bottom: .2rem; }
+  .hashti-panel-sidebar nav button { flex: 0 0 auto; min-width: max-content; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hashti-panel-shell *, .hashti-panel-shell *::before, .hashti-panel-shell *::after {
+    scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important;
+  }
+}
