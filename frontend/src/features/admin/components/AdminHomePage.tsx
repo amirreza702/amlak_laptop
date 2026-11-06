@@ -37,7 +37,7 @@ export default function AdminHomePage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="hashti-panel-grid mx-auto grid max-w-none gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside aria-label="منوی ابزارهای مدیریت" className="hashti-panel-sidebar h-fit rounded-xl border border-slate-200 bg-white p-3">
           <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">منوی ابزارها</h2>
           <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
