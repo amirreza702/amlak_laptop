@@ -11,13 +11,14 @@ import { OwnerProfilePanel } from "./OwnerProfilePanel";
 import { PropertyRegistrationPanel } from "@/features/property/components/PropertyRegistrationPanel";
 import { Modal } from "@/shared/components/Modal";
 import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
+import { useDisclosure } from "@/shared/hooks/useDisclosure";
 
 
 export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const { items: notificationItems } = useUserNotifications(user.id);
   const unreadNotificationCount = notificationItems.filter((item) => !item.isRead).length;
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [propertyModalOpen, setPropertyModalOpen] = useState(false);
+  const propertyModal = useDisclosure();
   const {
     profile, firstName, setFirstName, lastName, setLastName,
     loadingProfile, savingProfile, profileError, message, saveProfile,
@@ -57,10 +58,10 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
 
             <section hidden={selectedTool !== "property-management"} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div><h2 className="text-lg font-bold">مدیریت املاک</h2><p className="mt-1 text-sm text-slate-600">املاک متصل به حساب مالک را مشاهده و مدیریت کنید.</p></div>
-        <button type="button" onClick={() => setPropertyModalOpen(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
+        <button type="button" onClick={() => propertyModal.open()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
       </section>
       <div hidden={selectedTool !== "property-management"}><OwnerPropertiesPanel user={user} mode="properties" /></div>
-      <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
+      <Modal open={propertyModal.isOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => propertyModal.close()} size="full">
         <PropertyRegistrationPanel mode="owner" accountMobile={user.mobile} />
       </Modal>
             <div hidden={selectedTool !== "agents"}><OwnerAgentRequestsPanel ownerId={profile?.id} /></div>
