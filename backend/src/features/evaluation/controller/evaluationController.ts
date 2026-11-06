@@ -34,6 +34,9 @@ export async function createEvaluationController(
     if (error.message === "Evaluation authorization denied") {
       return res.status(403).json({ message: "Evaluation access is not allowed" });
     }
+    if (error.message === "AGENT_VERIFICATION_REQUIRED" || error.message === "ADMIN_PERMISSION_FORBIDDEN") {
+      return res.status(403).json({ message: "You do not have permission to submit this evaluation" });
+    }
 
     if (
       error.message ===
