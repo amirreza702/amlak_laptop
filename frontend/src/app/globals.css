@@ -156,6 +156,12 @@ a {
     linear-gradient(145deg,#f8f9fb 0%,#f1f4f8 52%,#f8f7f4 100%);
   color: var(--panel-ink);
 }
+.hashti-panel-grid {
+  grid-template-columns: 258px minmax(0,1fr) !important;
+  gap: 1.35rem !important;
+  padding-inline: clamp(1rem,2vw,2rem) !important;
+}
+.hashti-panel-shell [class*="bg-[#043873]"] { background: linear-gradient(105deg,#062a5b,#123e70) !important; }
 .hashti-panel-shell > aside.hashti-panel-sidebar {
   position: sticky;
   top: 1.25rem;
@@ -233,7 +239,7 @@ a {
   background: #fff;
   box-shadow: 0 0 0 3px rgba(184,150,80,.13) !important;
 }
-.hashti-panel-shell button:not(.hashti-panel-sidebar nav button) {
+.hashti-panel-shell button {
   transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
 }
 .hashti-panel-shell button:active { transform: translateY(1px); }
@@ -250,6 +256,7 @@ a {
     padding-inline: clamp(1rem,2vw,2rem) !important;
     padding-top: 1.25rem !important;
   }
+  .hashti-panel-grid { grid-template-columns: minmax(0,1fr) !important; padding-inline: 1rem !important; }
   .hashti-panel-shell > aside.hashti-panel-sidebar { max-height: calc(100vh - 2.5rem); overflow-y: auto; }
 }
 @media (max-width: 1023px) {
