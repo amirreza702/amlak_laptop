@@ -156,6 +156,7 @@ a {
   box-shadow: inset -3px 0 0 #d9b77c, 0 4px 10px rgba(6,42,91,.12);
 }
 .hashti-panel-shell > main,
+.hashti-panel-shell > div:not(.hashti-panel-sidebar),
 .hashti-panel-grid > section,
 .hashti-panel-shell > section {
   grid-column: 2;
