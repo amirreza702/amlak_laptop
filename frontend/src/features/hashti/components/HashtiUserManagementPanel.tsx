@@ -226,7 +226,7 @@ export function HashtiUserManagementPanel() {
                       <td className="p-3">
                         <p>{({ CUSTOMER: "مشتری", OWNER: "مالک", AGENT: "مشاور", HASHTI: "کارمند هشتی" })[item.role]}</p>
                         <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${item.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{item.isActive ? "فعال" : "غیرفعال"}</span>
-                        {item.agent && <p className="mt-2 text-xs text-slate-600">وضعیت مشاور: {({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.agent.verificationStatus]}{item.agent.agencyName ? ` · ${item.agent.agencyName}` : ""}</p>}
+                        {item.agent && <p className="mt-2 text-xs text-slate-600">وضعیت مشاور: {(item.agent.verificationStatus ? ({ PENDING: "در انتظار", VERIFIED: "تأییدشده", REJECTED: "ردشده" })[item.agent.verificationStatus] : "نامشخص")}{item.agent.agencyName ? ` · ${item.agent.agencyName}` : ""}</p>}
                       </td>
                       <td className="p-3">
                         {profile ? <><p>{profile.firstName} {profile.lastName}</p><p className="mt-1 break-all font-mono text-xs text-slate-500" dir="ltr">{profile.id}</p>{profile.type === "agent" && profile.agencyName && <p className="mt-1 text-xs text-slate-600">{profile.agencyName}</p>}</> : <span className="text-slate-500">پروفایل ثبت نشده</span>}
