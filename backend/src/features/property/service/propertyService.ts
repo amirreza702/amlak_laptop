@@ -158,6 +158,9 @@ export async function registerProperty(
     if (!agent || agent.userId !== creator.id) {
       throw new Error("مشاور مورد نظر با حساب واردشده مطابقت ندارد.");
     }
+    if (agent.verificationStatus !== "VERIFIED") {
+      throw new Error("AGENT_VERIFICATION_REQUIRED");
+    }
   } else {
     const owner = await prisma.owner.findFirst({
       where: { id: data.ownerId!, userId: creator.id },
