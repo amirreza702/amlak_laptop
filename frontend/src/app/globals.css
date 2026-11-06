@@ -162,7 +162,8 @@ a {
   padding-inline: clamp(1rem,2vw,2rem) !important;
 }
 .hashti-panel-shell [class*="bg-[#043873]"] { background: linear-gradient(105deg,#062a5b,#123e70) !important; }
-.hashti-panel-shell > aside.hashti-panel-sidebar {
+.hashti-panel-shell > aside.hashti-panel-sidebar,
+.hashti-panel-grid > aside.hashti-panel-sidebar {
   position: sticky;
   top: 1.25rem;
   align-self: start;
