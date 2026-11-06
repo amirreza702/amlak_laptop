@@ -30,17 +30,17 @@ export function Modal({ open, title, description, onClose, children, size = "md"
 
   return (
     <div
-      className="fixed inset-0 z-[3000] flex items-center justify-center bg-[#071a32]/60 p-3 backdrop-blur-md sm:p-6"
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-[#102744]/48 p-3 backdrop-blur-lg sm:p-6"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
       role="presentation"
     >
       <section role="dialog" aria-modal="true" aria-label={title}
-        className={`flex max-h-[92dvh] w-full ${width} flex-col overflow-hidden rounded-xl border border-[#d9c8a7]/70 bg-white shadow-[0_28px_90px_rgba(3,24,49,.3)]`}
+        className={`flex max-h-[92dvh] w-full ${width} flex-col overflow-hidden rounded-[14px] border border-white/80 bg-white/95 shadow-[0_24px_72px_rgba(20,38,61,.22)] backdrop-blur-xl`}
         dir="rtl"
       >
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#e8edf2] bg-[#fbfcfd]/95 px-4 py-4 sm:px-6">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#e8edf2] bg-[#f8fafc]/90 px-4 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg font-black text-[#062a5b]">{title}</h2>
+            <h2 className="text-lg font-black text-[#14263d]">{title}</h2>
             {description && <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>}
           </div>
           <button type="button" onClick={onClose} aria-label="بستن پنجره" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-[#b89650] hover:bg-[#f7f4ef] hover:text-[#062a5b]">
