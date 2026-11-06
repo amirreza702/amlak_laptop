@@ -8,6 +8,7 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
   const userId = actor.id;
   const agent = await findAgentProfileByUserId(userId);
   if (!agent) throw new Error("AGENT_PROFILE_NOT_FOUND");
+  if (agent.verificationStatus !== "VERIFIED") throw new Error("AGENT_VERIFICATION_REQUIRED");
 
   const result = await findAgentPropertyRecords({ ...query, agentId: agent.id, userId });
 
