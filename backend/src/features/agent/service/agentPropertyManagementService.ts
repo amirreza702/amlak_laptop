@@ -39,8 +39,6 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
 
   const properties = await Promise.all(authorizedRecords.map(async (record) => {
     const visibility = await getPropertyVisibility(actor, record.property);
-    const creatorIsVerifiedAndActive = createdByUser?.isActive === true &&
-      createdByUser.agent?.verificationStatus === "VERIFIED";
 
     // استخراج رابطه تأییدشده فقط برای تعیین اینکه اطلاعات کدام مالک نمایش داده شود؛
     // مجاز بودن نمایش را Policy مرکزی تعیین می‌کند.
@@ -51,6 +49,8 @@ export async function getMyAgentPropertyRecords(actor: AuthorizationActor, query
       owners: ownerRelations,
       ...propertyData
     } = record.property;
+    const creatorIsVerifiedAndActive = createdByUser?.isActive === true &&
+      createdByUser.agent?.verificationStatus === "VERIFIED";
     const approvedAgentRelation = record.property.agents.find(
       (item) => item.status === "ACTIVE" && item.approvedByOwner
     ) ?? null;
