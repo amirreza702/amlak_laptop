@@ -18,6 +18,7 @@ export const findAgentById = async (agentId: string) => {
     select: {
       id: true,
       userId: true,
+      verificationStatus: true,
     },
   });
 };
