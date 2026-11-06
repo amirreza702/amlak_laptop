@@ -16,6 +16,7 @@ import { AgentPrivateNoteEditor } from "./AgentPrivateNoteEditor";
 import { agentApiRequest } from "../api/agentApi";
 import { Modal } from "@/shared/components/Modal";
 import { useUserNotifications } from "@/features/notification/hooks/useUserNotifications";
+import { useDisclosure } from "@/shared/hooks/useDisclosure";
 
 
 function displayMoney(value: string | number | null) {
@@ -36,7 +37,7 @@ const requestPropertyOptions = [{value:"APARTMENT",label:"آپارتمان"},{va
 export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onToolSelected?: () => void }) {
   const { items: notificationItems } = useUserNotifications(user.id);
   const unreadNotificationCount = notificationItems.filter((item) => !item.isRead).length;
-  const [propertyModalOpen, setPropertyModalOpen] = useState(false);
+  const propertyModal = useDisclosure();
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const {
     selectedTool, setSelectedTool,
@@ -170,10 +171,10 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
       {profileState === "verified" && selectedTool === "property-management" && <>
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div><h2 className="text-lg font-bold">مدیریت املاک</h2><p className="mt-1 text-sm text-slate-600">رکوردهای ملک مرتبط با حساب مشاور را مدیریت کنید.</p></div>
-          <button type="button" onClick={() => setPropertyModalOpen(true)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
+          <button type="button" onClick={() => propertyModal.open()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#043873] px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-900">ایجاد ملک جدید</button>
         </section>
         <AgentPropertyManagementPanel notes={privateNotes} savingNoteKey={savingNoteKey} saveNote={saveNote} noteError={noteError} noteMessage={noteMessage} />
-        <Modal open={propertyModalOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => setPropertyModalOpen(false)} size="full">
+        <Modal open={propertyModal.isOpen} title="ایجاد ملک جدید" description="مشخصات ملک و اطلاعات معامله را وارد کنید." onClose={() => propertyModal.close()} size="full">
           <PropertyRegistrationPanel mode="agent" onSavePrivateNote={async (propertyId, note) => { if (!(await saveNote("property", propertyId, note))) throw new Error("ذخیره یادداشت خصوصی ملک ناموفق بود."); }} />
         </Modal>
       </>}
