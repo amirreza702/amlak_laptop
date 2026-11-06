@@ -87,6 +87,7 @@ export async function setManagedUserStatusController(req: Request, res: Response
     if (code === "HASHTI_PERMISSION_REQUIRED" || code === "SUPER_ADMIN_PERMISSION_REQUIRED" || code === "ADMIN_PERMISSION_FORBIDDEN") return res.status(403).json({ message: "You do not have permission to manage this account" });
     if (code === "USER_NOT_FOUND") return res.status(404).json({ message: "User not found" });
     if (code === "CANNOT_CHANGE_OWN_STATUS") return res.status(409).json({ message: "You cannot change your own account status" });
+    if (code === "CANNOT_DISABLE_SUPER_ADMIN") return res.status(403).json({ message: "A super admin account cannot be disabled" });
     if (code === "LAST_SUPER_ADMIN_REQUIRED") return res.status(409).json({ message: "At least one active super admin must remain" });
     console.error("Failed to change managed user status:", error);
     return res.status(500).json({ message: "Internal server error" });
