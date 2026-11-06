@@ -117,7 +117,6 @@ export const findPropertyByIdWithContacts = async (id: string) => {
           owner: {
             select: {
               userId: true,
-              verificationStatus: true,
               firstName: true,
               lastName: true,
               user: { select: { mobile: true } },
