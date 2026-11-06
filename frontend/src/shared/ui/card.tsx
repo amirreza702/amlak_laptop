@@ -1,107 +1,22 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Card
- *
- * ظرف عمومی برای نمایش محتوای مرتبط در یک کارت.
- */
-
-function Card({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm",
-        className
-      )}
-      {...props}
-    />
-  );
+function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("rounded-xl border border-[#e2e7ee] bg-white/90 text-slate-900 shadow-[0_8px_28px_rgba(6,42,91,.045)] backdrop-blur-sm", className)} {...props} />;
 }
-
-/**
- * بخش بالایی کارت
- */
-function CardHeader({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex flex-col space-y-1.5 p-6", className)}
-      {...props}
-    />
-  );
+function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-col space-y-1.5 border-b border-[#edf0f4] p-5", className)} {...props} />;
 }
-
-/**
- * عنوان کارت
- */
-function CardTitle({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={cn(
-        "text-2xl font-semibold leading-none tracking-tight",
-        className
-      )}
-      {...props}
-    />
-  );
+function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className={cn("text-lg font-extrabold leading-7 tracking-tight text-[#102744]", className)} {...props} />;
 }
-
-/**
- * توضیح زیر عنوان کارت
- */
-function CardDescription({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-  return (
-    <p
-      className={cn("text-sm text-muted-foreground", className)}
-      {...props}
-    />
-  );
+function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn("text-sm leading-6 text-[#68778a]", className)} {...props} />;
 }
-
-/**
- * محتوای اصلی کارت
- */
-function CardContent({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("p-6 pt-0", className)} {...props} />
-  );
+function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-5", className)} {...props} />;
 }
-
-/**
- * بخش پایینی کارت
- */
-function CardFooter({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex items-center p-6 pt-0", className)}
-      {...props}
-    />
-  );
+function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex items-center gap-2 border-t border-[#edf0f4] p-5", className)} {...props} />;
 }
-
-export {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-};
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };
