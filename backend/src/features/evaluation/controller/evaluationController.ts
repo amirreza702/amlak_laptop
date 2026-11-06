@@ -17,8 +17,13 @@ export async function createEvaluationController(
   res: Response
 ) {
   try {
-    const result =
-      await createEvaluationService(req.body);
+    const actor = (req as AuthenticatedRequest).user;
+    if (!actor) return res.status(401).json({ message: "Authentication required" });
+    const result = await createEvaluationService({
+      ...req.body,
+      // ارزیاب فقط از نشست احراز هویت‌شده تعیین می‌شود؛ مقدار ارسالی کلاینت قابل اعتماد نیست.
+      evaluatorUserId: actor.id,
+    });
 
     return res.status(201).json(result);
   } catch (error: any) {
