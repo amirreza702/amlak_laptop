@@ -175,11 +175,21 @@ export async function registerProperty(
     ? await findPropertyByPostalCode(data.postalCode)
     : null;
 
-  // جلوگیری از اتصال ناخواسته حساب مالک به ملک موجود؛ رابطه تکراری باید جداگانه بررسی شود.
+  // مالک نمی‌تواند ملک موجود را دوباره ثبت کند.
   if (isOwnerRegistration && existingProperty) {
     throw new Error(
       "ملکی با این کد پستی قبلاً ثبت شده است؛ برای جلوگیری از ثبت ملک تکراری، اطلاعات آن را بررسی کنید."
     );
+  }
+
+  // ملک مالک‌محور فقط از مسیر درخواست همکاری قابل اتصال به مشاور است.
+  if (isAgentRegistration && existingProperty?.registrationSource === RegistrationSource.OWNER) {
+    throw new Error("این ملک توسط مالک ثبت شده است؛ برای همکاری باید از مسیر درخواست همکاری مالک اقدام کنید.");
+  }
+
+  // ثبت‌کننده دیگری نمی‌تواند با کد پستی به رابطه ملک متصل شود؛ اطلاعات عمومی آن در فهرست املاک قابل مشاهده است.
+  if (isAgentRegistration && existingProperty && existingProperty.createdByUserId !== creator.id) {
+    throw new Error("این ملک قبلاً توسط مشاور دیگری ثبت شده است و امکان ثبت مجدد آن وجود ندارد.");
   }
 
   const isNewProperty = !existingProperty;
@@ -293,6 +303,9 @@ export async function registerProperty(
     });
 
     if (existingAgent) {
+      if (existingAgent.status === "ACTIVE" && property.createdByUserId === creator.id) {
+        return { property, propertyAgent: existingAgent, isNewProperty };
+      }
       if (existingAgent.status === "REVOKED") {
         const propertyAgent = await tx.propertyAgent.update({
           where: {
