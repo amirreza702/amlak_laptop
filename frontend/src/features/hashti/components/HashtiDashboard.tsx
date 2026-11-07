@@ -1,5 +1,8 @@
 "use client";
 
+import { HashtiPanelWorkspace } from "@/shared/components/HashtiPanelWorkspace";
+
+
 
 import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useState, type ReactNode } from "react";
@@ -75,8 +78,9 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
   const visibleAdminAuditLogs = adminAuditLogs.filter((item) => matchesSearchFields(item, adminAuditSearch));
 
   return (
-    <div className="hashti-panel-shell mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 px-3 pt-20 pb-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6" dir="rtl">
-      <aside aria-label="منوی ابزارهای هشتی" className="hashti-panel-sidebar h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
+    <div className="hashti-panel-shell min-h-screen w-full text-slate-900" dir="rtl">
+      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
+      <aside aria-label="منوی ابزارهای هشتی" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">ابزارهای هشتی</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="بخش‌های پنل هشتی">
           {[
@@ -93,7 +97,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 w-full space-y-5">
+      <main className="hashti-panel-content min-w-0 w-full space-y-5">
       <section id="dashboard-home" hidden={selectedTool !== "dashboard-home"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#043873]"><ShieldCheck className="h-6 w-6" /></div>
@@ -296,6 +300,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
         <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingAction(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => { const action = pendingAction; setPendingAction(null); action?.run(); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white">تأیید و ادامه</button></div>
       </Modal>
       </main>
+      </HashtiPanelWorkspace>
     </div>
   );
 }
