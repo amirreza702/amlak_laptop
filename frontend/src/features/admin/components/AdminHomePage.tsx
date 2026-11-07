@@ -43,14 +43,14 @@ export default function AdminHomePage() {
       <HashtiPanelWorkspace className="mx-auto max-w-none px-4 py-6 sm:px-8">
         <aside aria-label="منوی ابزارهای مدیریت" className="hashti-panel-sidebar h-fit p-3">
           <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">منوی ابزارها</h2>
-          <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
             {tools.map(tool => (
               <button
                 key={tool.id}
                 type="button"
                 onClick={() => setSelectedTool(tool.id)}
                 aria-current={selectedTool === tool.id ? "page" : undefined}
-                className={`min-w-0 rounded-lg border border-transparent px-3 py-2.5 text-right text-sm font-semibold leading-5 transition lg:w-full ${selectedTool === tool.id ? "bg-[#062a5b] text-white" : "text-slate-700 hover:border-[#b89650]/20 hover:bg-[#f7f4ef]"}`}
+                className={`min-h-11 shrink-0 whitespace-nowrap rounded-lg border border-transparent px-3 py-2.5 text-right text-sm font-semibold leading-5 transition lg:w-full ${selectedTool === tool.id ? "bg-[#062a5b] text-white" : "text-slate-700 hover:border-slate-200 hover:bg-slate-100"}`}
               >
                 {tool.title}
               </button>
