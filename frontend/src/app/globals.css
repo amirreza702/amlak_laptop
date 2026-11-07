@@ -165,8 +165,8 @@ a {
 }
 .hashti-panel-sidebar nav button:hover {
   color: #062a5b !important;
-  border-color: rgba(184,150,80,.15) !important;
-  background: rgba(247,244,239,.8) !important;
+  border-color: #dce3eb !important;
+  background: #edf2f7 !important;
 }
 .hashti-panel-sidebar nav button[aria-current="page"] {
   color: #fff !important;
