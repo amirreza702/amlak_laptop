@@ -101,9 +101,21 @@ a {
 .hashti-panel-shell {
   position: relative;
   isolation: isolate;
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 5.25rem 1.1rem 1.1rem !important;
   color: #14263d;
+  background: transparent;
+}
+
+/* لایه اول مستقل از عرض والد، تمام viewport را می‌پوشاند. */
+.hashti-panel-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background: var(--hashti-layer-one);
 }
 .hashti-panel-workspace {
