@@ -31,6 +31,11 @@ body {
   font-family: "Vazirmatn Variable", sans-serif;
 }
 
+/* پس‌زمینهٔ پنل از خود صفحه تأمین می‌شود تا در تمام viewport و کل ارتفاع اسکرول ادامه داشته باشد. */
+body:has(.hashti-panel-shell) {
+  background: var(--hashti-layer-one, #eef0f2);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -101,22 +106,14 @@ a {
 .hashti-panel-shell {
   position: relative;
   isolation: isolate;
+  display: flow-root;
   width: 100%;
+  min-width: 0;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 5.25rem 1.1rem 1.1rem !important;
   color: #14263d;
   background: transparent;
-}
-
-/* لایه اول مستقل از عرض والد، تمام viewport را می‌پوشاند. */
-.hashti-panel-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: var(--hashti-layer-one);
 }
 .hashti-panel-workspace {
   display: grid;
