@@ -19,8 +19,8 @@ export function Button({ className, variant = "default", size = "md", type = "bu
         size === "md" && "min-h-10 px-4 py-2 text-sm",
         size === "lg" && "min-h-11 px-5 py-2.5 text-sm",
         variant === "default" && "bg-[#062a5b] text-white shadow-sm hover:bg-[#123f70]",
-        variant === "outline" && "border border-[#d5dce5] bg-white/85 text-[#17385f] hover:border-[#b89650] hover:bg-[#f8f6f2]",
-        variant === "secondary" && "border border-[#e6dfd1] bg-[#f7f4ef] text-[#062a5b] hover:bg-[#efe8dc]",
+        variant === "outline" && "border border-[#d5dce5] bg-white/85 text-[#17385f] hover:border-[#9eafc2] hover:bg-[#f1f4f8]",
+        variant === "secondary" && "border border-[#dce3eb] bg-[#f1f4f8] text-[#062a5b] hover:border-[#b9c6d5] hover:bg-[#e8eef5]",
         variant === "ghost" && "text-[#41536a] hover:bg-[#edf1f6] hover:text-[#062a5b]",
         variant === "danger" && "bg-red-700 text-white hover:bg-red-800",
         className
