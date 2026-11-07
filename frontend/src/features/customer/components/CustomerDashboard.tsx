@@ -1,5 +1,8 @@
 "use client";
 
+import { HashtiPanelWorkspace } from "@/shared/components/HashtiPanelWorkspace";
+
+
 
 import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import Link from "next/link";
@@ -211,14 +214,15 @@ export function CustomerDashboard() {
   ];
 
   return (
-    <main dir="rtl" className="hashti-panel-shell mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 overflow-x-hidden px-3 pt-20 pb-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-      <aside aria-label="ابزارهای پنل مشتری" className="hashti-panel-sidebar h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
+    <div dir="rtl" className="hashti-panel-shell min-h-screen w-full overflow-x-hidden text-slate-900">
+      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
+      <aside aria-label="ابزارهای پنل مشتری" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
           {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span>{item.id === "notifications" && typeof item.count === "number" && item.count > 0 && <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{item.count.toLocaleString("fa-IR")}</span>}</button>; })}
         </nav>
       </aside>
-      <div className="min-w-0 space-y-5">
+      <div className="hashti-panel-content min-w-0 space-y-5">
       <header hidden={tab === null} className="rounded-xl border border-slate-200 bg-white">
         <div className="flex w-full items-center justify-between gap-3 px-3 py-4 sm:px-5 lg:px-6">
           <Link href="/" className="text-lg font-black text-[#043873]">هشتی</Link>
@@ -398,7 +402,8 @@ export function CustomerDashboard() {
           }} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">تأیید عملیات</button></div>
         </div>
       </Modal>
-    </main>
+      </HashtiPanelWorkspace>
+    </div>
   );
 }
 
