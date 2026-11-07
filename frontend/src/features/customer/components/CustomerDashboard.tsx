@@ -215,14 +215,22 @@ export function CustomerDashboard() {
 
   return (
     <div dir="rtl" className="hashti-panel-shell min-h-screen w-full overflow-x-hidden text-slate-900">
-      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
-      <aside aria-label="ابزارهای پنل مشتری" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
+      <HashtiPanelWorkspace
+        className="mx-auto w-full max-w-none"
+        sidebarLabel="ابزارهای پنل مشتری"
+        contentClassName="min-w-0 space-y-5"
+        sidebar={
+          <>
+
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشتری</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشتری">
           {tabItems.map((item) => { const Icon = item.icon; return <button key={item.id} type="button" title={item.label} aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)} className={`flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${tab === item.id ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}><Icon className="h-4 w-4 shrink-0" /><span>{item.label}</span>{item.id === "notifications" && typeof item.count === "number" && item.count > 0 && <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{item.count.toLocaleString("fa-IR")}</span>}</button>; })}
         </nav>
-      </aside>
-      <div className="hashti-panel-content min-w-0 space-y-5">
+      
+          </>
+        }
+      >
+
       <header hidden={tab === null} className="rounded-xl border border-slate-200 bg-white">
         <div className="flex w-full items-center justify-between gap-3 px-3 py-4 sm:px-5 lg:px-6">
           <Link href="/" className="text-lg font-black text-[#043873]">هشتی</Link>
@@ -374,34 +382,7 @@ export function CustomerDashboard() {
           </>
         )}
       </section>
-      </div>
-      <Modal open={isCreateRequestOpen} title="ثبت درخواست جدید" description="مشخصات ملک موردنظرتان را وارد کنید." onClose={() => setIsCreateRequestOpen(false)} size="xl">
-        <CustomerSearchRequestPage
-          compact
-          onClose={() => {
-            setIsCreateRequestOpen(false);
-            if (profile && user) {
-              void runAction("refresh", async () => {
-                setActionMessage("درخواست جدید با موفقیت ثبت شد.");
-              });
-            }
-          }}
-        />
-      </Modal>
-      <Modal open={Boolean(confirmAction)} title={confirmAction?.kind === "close-request" ? "بستن درخواست" : "حذف از علاقه‌مندی‌ها"} description={confirmAction?.kind === "close-request" ? "پس از بستن درخواست، دیگر به‌عنوان درخواست فعال نمایش داده نمی‌شود." : "این ملک از فهرست علاقه‌مندی‌های شما حذف خواهد شد."} onClose={() => setConfirmAction(null)}>
-        <div className="space-y-4">
-          <p className="text-sm leading-7 text-slate-700">آیا از انجام این عملیات مطمئن هستید؟</p>
-          {actionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
-          <div className="flex justify-end gap-2"><button type="button" onClick={() => setConfirmAction(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => {
-            const action = confirmAction;
-            if (!action || !profile) return;
-            void runAction(action.id, async () => {
-              if (action.kind === "close-request") { await closeCustomerSearchRequest(profile.id, action.id); setActionMessage("درخواست بسته شد."); }
-              else { await removeCustomerFavorite(profile.id, action.id); setActionMessage("ملک از علاقه‌مندی‌ها حذف شد."); }
-            }).then((success) => { if (success) setConfirmAction(null); });
-          }} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">تأیید عملیات</button></div>
-        </div>
-      </Modal>
+      
       </HashtiPanelWorkspace>
     </div>
   );
