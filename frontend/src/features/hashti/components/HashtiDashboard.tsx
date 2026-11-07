@@ -79,8 +79,13 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
 
   return (
     <div className="hashti-panel-shell min-h-screen w-full text-slate-900" dir="rtl">
-      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
-      <aside aria-label="منوی ابزارهای هشتی" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
+      <HashtiPanelWorkspace
+        className="mx-auto w-full max-w-none"
+        sidebarLabel="منوی ابزارهای هشتی"
+        contentClassName="min-w-0 w-full space-y-5"
+        sidebar={
+          <>
+
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">ابزارهای هشتی</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="بخش‌های پنل هشتی">
           {[
@@ -96,8 +101,11 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
             <button key={target} type="button" aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} title={label} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}{target === "notifications" && unreadNotificationCount > 0 && <span className="mr-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadNotificationCount.toLocaleString("fa-IR")}</span>}</button>
           ))}
         </nav>
-      </aside>
-      <main className="hashti-panel-content min-w-0 w-full space-y-5">
+      
+          </>
+        }
+      >
+
       <section id="dashboard-home" hidden={selectedTool !== "dashboard-home"} className="scroll-mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#043873]"><ShieldCheck className="h-6 w-6" /></div>
@@ -299,7 +307,7 @@ export function HashtiDashboard({ user, onToolSelected }: { user: UserPublic; on
       <Modal open={Boolean(pendingAction)} title={pendingAction?.title ?? "تأیید عملیات"} description={pendingAction?.description} onClose={() => setPendingAction(null)}>
         <div className="flex justify-end gap-2"><button type="button" onClick={() => setPendingAction(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => { const action = pendingAction; setPendingAction(null); action?.run(); }} className="rounded-lg bg-[#043873] px-4 py-2.5 text-sm font-bold text-white">تأیید و ادامه</button></div>
       </Modal>
-      </main>
+      
       </HashtiPanelWorkspace>
     </div>
   );
