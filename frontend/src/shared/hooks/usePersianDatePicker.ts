@@ -137,7 +137,6 @@ export function usePersianDatePicker({
     setOpen,
     monthYear,
     time,
-    setTime,
     days,
     selectedParts,
     moveMonth,
