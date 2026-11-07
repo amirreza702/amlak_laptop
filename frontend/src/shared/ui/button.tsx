@@ -6,22 +6,23 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: "sm" | "md" | "lg";
 }
 
-/** دکمه مشترک هشتی؛ ظاهر یکسان برای همه پنل‌ها بدون تغییر رفتار یا دسترسی. */
+/** دکمه پایه هشتی با رنگ‌ها و حالت‌های تعاملی هماهنگ با سیستم طراحی. */
 export function Button({ className, variant = "default", size = "md", type = "button", ...props }: ButtonProps) {
   return (
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-semibold transition-[background,border-color,box-shadow,transform] duration-150",
-        "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#062a5b] focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-semibold",
+        "transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2",
+        "disabled:pointer-events-none disabled:opacity-50",
         size === "sm" && "min-h-9 px-3 text-xs",
         size === "md" && "min-h-10 px-4 py-2 text-sm",
         size === "lg" && "min-h-11 px-5 py-2.5 text-sm",
-        variant === "default" && "bg-[#062a5b] text-white shadow-sm hover:bg-[#123f70]",
-        variant === "outline" && "border border-[#d5dce5] bg-white/85 text-[#17385f] hover:border-[#9eafc2] hover:bg-[#f1f4f8]",
-        variant === "secondary" && "border border-[#dce3eb] bg-[#f1f4f8] text-[#062a5b] hover:border-[#b9c6d5] hover:bg-[#e8eef5]",
-        variant === "ghost" && "text-[#41536a] hover:bg-[#edf1f6] hover:text-[#062a5b]",
+        variant === "default" && "bg-brand-navy text-white shadow-sm hover:bg-brand-navy/90",
+        variant === "outline" && "border border-slate-300 bg-white/90 text-brand-navy hover:border-slate-400 hover:bg-slate-50",
+        variant === "secondary" && "border border-slate-200 bg-slate-100 text-brand-navy hover:border-slate-300 hover:bg-slate-200/70",
+        variant === "ghost" && "text-slate-600 hover:bg-slate-100 hover:text-brand-navy",
         variant === "danger" && "bg-red-700 text-white hover:bg-red-800",
         className
       )}
