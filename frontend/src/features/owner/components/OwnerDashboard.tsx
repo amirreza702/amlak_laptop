@@ -1,5 +1,8 @@
 "use client";
 
+import { HashtiPanelWorkspace } from "@/shared/components/HashtiPanelWorkspace";
+
+
 import { useState, type ReactNode } from "react";
 import { Building2, ShieldCheck, UserRoundCheck } from "lucide-react";
 import type { UserPublic } from "@/features/auth/api/authApi";
@@ -24,8 +27,9 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
     loadingProfile, savingProfile, profileError, message, saveProfile,
   } = useOwnerProfile(user.mobile);
   return (
-    <div dir="rtl" className="hashti-panel-shell mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 px-3 pt-20 pb-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-      <aside aria-label="ابزارهای پنل مالک" className="hashti-panel-sidebar h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
+    <div dir="rtl" className="hashti-panel-shell min-h-screen w-full text-slate-900">
+      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
+      <aside aria-label="ابزارهای پنل مالک" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مالک</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مالک">
           {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["agents", "مدیریت مشاوران"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
@@ -33,7 +37,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 w-full space-y-5">
+      <main className="hashti-panel-content min-w-0 w-full space-y-5">
       <div hidden={selectedTool !== "profile"} className="grid gap-3 sm:grid-cols-3">
         <SummaryCard icon={<Building2 className="h-5 w-5" />} label="املاک ثبت‌شده" value="از طریق API فعلی قابل فهرست‌کردن نیست" />
         <SummaryCard icon={<UserRoundCheck className="h-5 w-5" />} label="مشاوران مجاز" value="فهرست کامل در دسترس نیست" />
@@ -67,6 +71,7 @@ export function OwnerDashboard({ user, onToolSelected }: { user: UserPublic; onT
             <div hidden={selectedTool !== "agents"}><OwnerAgentRequestsPanel ownerId={profile?.id} /></div>
       <div hidden={selectedTool !== "notifications"}><UserNotificationsPanel userId={user.id} /></div>
       </main>
+      </HashtiPanelWorkspace>
     </div>
   );
 }
