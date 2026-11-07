@@ -47,6 +47,16 @@ button {
   cursor: pointer;
 }
 
+/* جلوگیری از باقی‌ماندن هالهٔ طلایی پس از کلیک؛ نشانگر تمرکز فقط سرمه‌ای است. */
+button:focus-visible {
+  outline: 2px solid #062a5b !important;
+  outline-offset: 2px;
+  --tw-ring-color: #062a5b !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  box-shadow: none !important;
+}
+
 /* کنتراست خوانا برای دکمه‌ها و کنترل‌های تعاملی با پس‌زمینهٔ تیره */
 :where(button, a, [role="button"])[class*="bg-[#043873]"],
 :where(button, a, [role="button"])[class*="bg-brand-navy"],
@@ -66,7 +76,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-brand-gold);
+  outline: 2px solid #062a5b;
   outline-offset: 2px;
 }
 
@@ -153,7 +163,7 @@ a {
   color: #fff !important;
   border-color: #062a5b !important;
   background: #062a5b !important;
-  box-shadow: inset -3px 0 0 #d9b77c, 0 4px 10px rgba(6,42,91,.12);
+  box-shadow: 0 2px 6px rgba(6,42,91,.10);
 }
 .hashti-panel-content {
   grid-column: 2;
