@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore, type ReactNode, type MouseEvent } from "react";
+import { useSyncExternalStore, type ReactNode, type MouseEvent } from "react";
+import { useDisclosure } from "@/shared/hooks/useDisclosure";
 import { createPortal } from "react-dom";
 import { Modal } from "@/shared/components/Modal";
 import dynamic from "next/dynamic";
@@ -313,14 +314,14 @@ function FormDetails({ record }: { record: unknown }) {
 
 /** ردیف قابل کلیک جدول؛ فقط فیلدهای شناخته‌شده فرم از داده مجاز همان پنل نمایش داده می‌شوند. */
 export function RecordDetailsRow({ record, title = "رکورد", className = "", children, onOpen }: RecordDetailsRowProps) {
-  const [open, setOpen] = useState(false);
+  const { isOpen: open, open: openDetails, close: closeDetails } = useDisclosure();
   const mounted = useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
 
   const openFromRow = (event: MouseEvent<HTMLTableRowElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest("button,a,input,select,textarea,[role='button'],[data-record-details-ignore='true']")) return;
     onOpen?.();
-    setOpen(true);
+    openDetails();
   };
 
   return <>
@@ -340,7 +341,7 @@ export function RecordDetailsRow({ record, title = "رکورد", className = "",
       {children}
     </tr>
     {mounted && open && createPortal(
-      <Modal open title={`جزئیات ${title}`} description="اطلاعات فرم ثبت و ویرایش موجود برای این رکورد" onClose={() => setOpen(false)} size="full">
+      <Modal open title={`جزئیات ${title}`} description="اطلاعات فرم ثبت و ویرایش موجود برای این رکورد" onClose={closeDetails} size="full">
         <FormDetails record={record} />
       </Modal>,
       document.body
