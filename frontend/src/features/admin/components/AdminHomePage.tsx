@@ -1,5 +1,8 @@
 "use client";
 
+import { HashtiPanelWorkspace } from "@/shared/components/HashtiPanelWorkspace";
+
+
 import { useState } from "react";
 import { useAdminHomeAccess } from "@/features/admin/hooks/useAdminHomeAccess";
 import AdminAgentsPage from "@/features/admin/components/AdminAgentsPage";
@@ -37,8 +40,8 @@ export default function AdminHomePage() {
         </div>
       </header>
 
-      <div className="hashti-panel-grid mx-auto grid max-w-none gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <aside aria-label="منوی ابزارهای مدیریت" className="hashti-panel-sidebar h-fit rounded-xl border border-slate-200 bg-white p-3">
+      <HashtiPanelWorkspace className="mx-auto max-w-none px-4 py-6 sm:px-8">
+        <aside aria-label="منوی ابزارهای مدیریت" className="hashti-panel-sidebar h-fit p-3">
           <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">منوی ابزارها</h2>
           <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
             {tools.map(tool => (
@@ -55,7 +58,7 @@ export default function AdminHomePage() {
           </nav>
         </aside>
 
-        <section className="min-w-0">
+        <section className="hashti-panel-content min-w-0">
           {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
           {selectedTool === "overview" ? (
             <div className="space-y-4">
@@ -80,7 +83,7 @@ export default function AdminHomePage() {
             : selectedTool === "property-monitoring" ? <AdminPropertyMonitoringPage />
             : <AdminAuditPage />}
         </section>
-      </div>
+      </HashtiPanelWorkspace>
     </div>
   );
 }
