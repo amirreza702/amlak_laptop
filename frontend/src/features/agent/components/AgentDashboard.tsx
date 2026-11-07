@@ -1,5 +1,8 @@
 "use client";
 
+import { HashtiPanelWorkspace } from "@/shared/components/HashtiPanelWorkspace";
+
+
 
 import { RecordDetailsRow } from "@/shared/components/RecordDetailsRow";
 import { useState, type FormEvent, type ReactNode } from "react";
@@ -127,8 +130,9 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
   };
 
   return (
-    <div dir="rtl" className="hashti-panel-shell mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-none grid-cols-1 gap-4 px-3 pt-20 pb-4 text-slate-900 sm:px-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
-      <aside aria-label="ابزارهای پنل مشاور" className="hashti-panel-sidebar h-fit min-w-0 rounded-xl border border-slate-200 bg-white p-3 lg:sticky lg:top-24">
+    <div dir="rtl" className="hashti-panel-shell min-h-screen w-full text-slate-900">
+      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
+      <aside aria-label="ابزارهای پنل مشاور" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشاور</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشاور">
           {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["owner-management", "مدیریت مالکان"], ["requests", "مدیریت مشتریان"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
@@ -136,7 +140,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
           ))}
         </nav>
       </aside>
-      <main className="min-w-0 w-full space-y-5">
+      <main className="hashti-panel-content min-w-0 w-full space-y-5">
       {profileState === "checking" && selectedTool === "profile" && (
         <section className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><LoaderCircle className="h-5 w-5 animate-spin" />در حال بررسی تأیید حساب مشاور...</section>
       )}
@@ -292,6 +296,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         <div className="flex justify-end gap-2"><button type="button" onClick={() => setDeletingRequestId(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => void deleteRequest()} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">حذف درخواست</button></div>
       </Modal>
       </main>
+      </HashtiPanelWorkspace>
     </div>
   );
 }
