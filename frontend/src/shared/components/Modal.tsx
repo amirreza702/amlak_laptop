@@ -43,7 +43,7 @@ export function Modal({ open, title, description, onClose, children, size = "md"
             <h2 className="text-lg font-black text-[#14263d]">{title}</h2>
             {description && <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="بستن پنجره" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-[#b89650] hover:bg-[#f7f4ef] hover:text-[#062a5b]">
+          <button type="button" onClick={onClose} aria-label="بستن پنجره" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#dce3eb] bg-white text-slate-600 transition hover:border-[#b9c6d5] hover:bg-[#f1f4f8] hover:text-[#062a5b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#062a5b]">
             <X className="h-5 w-5" />
           </button>
         </header>
