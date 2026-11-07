@@ -40,8 +40,13 @@ export default function AdminHomePage() {
         </div>
       </header>
 
-      <HashtiPanelWorkspace className="mx-auto max-w-none px-4 py-6 sm:px-8">
-        <aside aria-label="منوی ابزارهای مدیریت" className="hashti-panel-sidebar h-fit p-3">
+      <HashtiPanelWorkspace
+        className="mx-auto max-w-none px-4 py-6 sm:px-8"
+        sidebarLabel="منوی ابزارهای مدیریت"
+        contentClassName="min-w-0"
+        sidebar={
+          <>
+
           <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">منوی ابزارها</h2>
           <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
             {tools.map(tool => (
@@ -56,9 +61,11 @@ export default function AdminHomePage() {
               </button>
             ))}
           </nav>
-        </aside>
+        
+          </>
+        }
+      >
 
-        <section className="hashti-panel-content min-w-0">
           {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
           {selectedTool === "overview" ? (
             <div className="space-y-4">
@@ -82,7 +89,7 @@ export default function AdminHomePage() {
             : selectedTool === "agent-notes" ? <AdminAgentPrivateNotesPage />
             : selectedTool === "property-monitoring" ? <AdminPropertyMonitoringPage />
             : <AdminAuditPage />}
-        </section>
+        
       </HashtiPanelWorkspace>
     </div>
   );
