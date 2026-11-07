@@ -13,7 +13,7 @@ export function Button({ className, variant = "default", size = "md", type = "bu
       type={type}
       className={cn(
         "inline-flex items-center justify-center gap-2 font-semibold transition-[background,border-color,box-shadow,transform] duration-150",
-        "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b89650] focus-visible:ring-offset-2",
+        "rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#062a5b] focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
         size === "sm" && "min-h-9 px-3 text-xs",
         size === "md" && "min-h-10 px-4 py-2 text-sm",
