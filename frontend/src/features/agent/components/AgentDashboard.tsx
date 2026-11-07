@@ -131,16 +131,24 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
 
   return (
     <div dir="rtl" className="hashti-panel-shell min-h-screen w-full text-slate-900">
-      <HashtiPanelWorkspace className="mx-auto w-full max-w-none">
-      <aside aria-label="ابزارهای پنل مشاور" className="hashti-panel-sidebar h-fit min-w-0 p-3 lg:sticky lg:top-24">
+      <HashtiPanelWorkspace
+        className="mx-auto w-full max-w-none"
+        sidebarLabel="ابزارهای پنل مشاور"
+        contentClassName="min-w-0 w-full space-y-5"
+        sidebar={
+          <>
+
         <h2 className="px-3 pb-2 pt-1 text-sm font-bold text-slate-500">پنل مشاور</h2>
         <nav className="flex gap-2 overflow-x-auto lg:flex-col" aria-label="ابزارهای مشاور">
           {[["profile", "پروفایل"], ["property-management", "مدیریت املاک"], ["owner-management", "مدیریت مالکان"], ["requests", "مدیریت مشتریان"], ["notifications", "اعلان‌ها"]].map(([target, label]) => (
             <button key={target} type="button" title={label} aria-current={selectedTool === target ? "page" : undefined} onClick={() => { setSelectedTool(target); onToolSelected?.(); }} className={`flex min-h-11 shrink-0 items-center justify-center rounded-lg border px-3 py-2 text-right text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#043873] lg:w-full ${selectedTool === target ? "border-[#043873] bg-blue-50 text-[#043873]" : "border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-[#043873]"}`}>{label}{target === "notifications" && unreadNotificationCount > 0 && <span className="mr-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadNotificationCount.toLocaleString("fa-IR")}</span>}</button>
           ))}
         </nav>
-      </aside>
-      <main className="hashti-panel-content min-w-0 w-full space-y-5">
+      
+          </>
+        }
+      >
+
       {profileState === "checking" && selectedTool === "profile" && (
         <section className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><LoaderCircle className="h-5 w-5 animate-spin" />در حال بررسی تأیید حساب مشاور...</section>
       )}
@@ -295,7 +303,7 @@ export function AgentDashboard({ user, onToolSelected }: { user: UserPublic; onT
         {recordActionError && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{recordActionError}</p>}
         <div className="flex justify-end gap-2"><button type="button" onClick={() => setDeletingRequestId(null)} className="rounded-lg border px-4 py-2.5 text-sm">انصراف</button><button type="button" onClick={() => void deleteRequest()} className="rounded-lg bg-red-700 px-4 py-2.5 text-sm font-bold text-white">حذف درخواست</button></div>
       </Modal>
-      </main>
+      
       </HashtiPanelWorkspace>
     </div>
   );
