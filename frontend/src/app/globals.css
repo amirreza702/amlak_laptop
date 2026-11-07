@@ -62,6 +62,16 @@ button:focus-visible {
   box-shadow: none !important;
 }
 
+/* کلیک ماوس نباید هاله یا سایهٔ رنگی را پشت دکمه باقی بگذارد. */
+:where(button, a, [role="button"]):focus:not(:focus-visible),
+:where(button, a, [role="button"]):active {
+  --tw-ring-color: #062a5b !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* کنتراست خوانا برای دکمه‌ها و کنترل‌های تعاملی با پس‌زمینهٔ تیره */
 :where(button, a, [role="button"])[class*="bg-[#043873]"],
 :where(button, a, [role="button"])[class*="bg-brand-navy"],
