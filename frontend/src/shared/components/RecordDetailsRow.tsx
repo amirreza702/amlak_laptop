@@ -332,7 +332,7 @@ export function RecordDetailsRow({ record, title = "رکورد", className = "",
         if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onOpen?.();
-          setOpen(true);
+          openDetails();
         }
       }}
       tabIndex={0}
