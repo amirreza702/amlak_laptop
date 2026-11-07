@@ -96,16 +96,16 @@ a {
   color: #14263d;
   background: var(--hashti-layer-one);
 }
-.hashti-panel-grid {
+.hashti-panel-workspace {
   display: grid;
-  grid-template-columns: 236px minmax(0,1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   align-items: stretch;
   gap: 1rem;
   min-height: calc(100vh - 7.5rem);
   margin: 0 !important;
   padding: 1rem !important;
-  border: 1px solid rgba(255,255,255,.85);
-  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 18px;
   background: var(--hashti-layer-two);
   box-shadow: 0 9px 24px rgba(25,39,56,.055), inset 0 1px 0 rgba(255,255,255,.9);
 }
@@ -117,12 +117,12 @@ a {
   align-self: start;
   min-width: 0;
   padding: .9rem .75rem;
-  border: 1px solid rgba(255,255,255,.95) !important;
-  border-radius: 11px !important;
-  background: rgba(255,255,255,.58) !important;
-  box-shadow: 0 5px 15px rgba(25,39,56,.045), inset 0 1px 0 #fff;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .hashti-panel-sidebar > h2 {
   margin: 0 .25rem .8rem;
@@ -155,10 +155,7 @@ a {
   background: #062a5b !important;
   box-shadow: inset -3px 0 0 #d9b77c, 0 4px 10px rgba(6,42,91,.12);
 }
-.hashti-panel-shell > main,
-.hashti-panel-shell > div:not(.hashti-panel-sidebar),
-.hashti-panel-grid > section,
-.hashti-panel-shell > section {
+.hashti-panel-content {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
@@ -198,16 +195,16 @@ a {
 .hashti-panel-shell table tbody tr:hover { background: rgba(217,183,124,.07); }
 @media (min-width:1024px) {
   .hashti-panel-shell { padding: 5.25rem 1.1rem 1.1rem !important; }
-  .hashti-panel-grid { grid-template-columns: 236px minmax(0,1fr) !important; }
+  .hashti-panel-workspace { grid-template-columns: 236px minmax(0,1fr) !important; }
   .hashti-panel-sidebar { max-height: calc(100vh - 7rem); overflow-y: auto; }
 }
 @media (max-width:1023px) {
   .hashti-panel-shell { padding: 5rem .65rem .65rem !important; }
-  .hashti-panel-grid { grid-template-columns: minmax(0,1fr); gap: .7rem; padding: .7rem !important; }
+  .hashti-panel-workspace { grid-template-columns: minmax(0,1fr); gap: .7rem; padding: .7rem !important; }
   .hashti-panel-sidebar { grid-column:1; grid-row:1; position:relative; top:auto; max-height:none; padding:.55rem; }
   .hashti-panel-sidebar nav { flex-direction:row; overflow-x:auto; padding-bottom:.2rem; }
   .hashti-panel-sidebar nav button { flex:0 0 auto; min-width:max-content; }
-  .hashti-panel-shell > main,.hashti-panel-grid > section,.hashti-panel-shell > section { grid-column:1; grid-row:2; padding:.75rem; }
+  .hashti-panel-content { grid-column:1; grid-row:2; padding:.75rem; }
 }
 @media (prefers-reduced-motion:reduce) {
   .hashti-panel-shell *,.hashti-panel-shell *::before,.hashti-panel-shell *::after { transition-duration:.01ms !important; animation-duration:.01ms !important; }
